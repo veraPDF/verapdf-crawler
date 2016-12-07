@@ -18,8 +18,9 @@
             <artifactId>heritrix</artifactId>
             <version>3.3.0</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/heritrix.jar</systemPath>>
+            <systemPath>${project.basedir}/heritrix.jar</systemPath>
         </dependency>
+
     </dependencies>
 
 </project>
