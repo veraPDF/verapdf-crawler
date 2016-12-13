@@ -45,6 +45,17 @@ public class HeritrixClient {
         return getCrawlLogUri(job);
     }*/
 
+    public int getDownloadedCount(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
+        String status = getFullStatus(job);
+        DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        InputSource is = new InputSource();
+        is.setCharacterStream(new StringReader(status));
+        Document doc = db.parse(is);
+        NodeList nodes = doc.getElementsByTagName("uriTotalsReport");
+        nodes = ((Element)nodes.item(0)).getElementsByTagName("downloadedUriCount");
+        return Integer.parseInt(nodes.item(0).getTextContent());
+    }
+
     public void unpauseJob(String job) throws IOException, KeyManagementException, NoSuchAlgorithmException {
         HashMap<String, String> postDataParams = new HashMap<>();
         postDataParams.put("action","unpause");

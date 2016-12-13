@@ -1,8 +1,8 @@
 api/Domain.class
-engine/HeritrixClient$1.class
 app/LogiusWebApplication.class
+api/JobSingleUrl.class
+engine/HeritrixClient$1.class
 engine/HeritrixClient$2.class
 engine/HeritrixClient.class
 resources/CrawlJobResource.class
-api/JobSingleUrl.class
 engine/debugHelpers/OpenTrustManager.class

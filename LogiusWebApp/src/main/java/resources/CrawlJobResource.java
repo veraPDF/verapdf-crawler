@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import static javax.swing.text.html.FormSubmitEvent.MethodType.POST;
@@ -21,9 +23,12 @@ import static javax.swing.text.html.FormSubmitEvent.MethodType.POST;
 @Path("/")
 public class CrawlJobResource {
     private HeritrixClient client;
+    private HashMap<String, String> currentJobs;
 
-    public CrawlJobResource(HeritrixClient client) {
+    public CrawlJobResource(HeritrixClient client)
+    {
         this.client = client;
+        currentJobs = new HashMap<>();
     }
 
     @POST
@@ -40,6 +45,7 @@ public class CrawlJobResource {
             client.buildJob(job);
             client.launchJob(job);
             jobStatus = client.getCurrentJobStatus(job);
+            currentJobs.put(job, domain.getDomain());
         } catch (IOException e) {
             e.printStackTrace();
         } catch (KeyManagementException e) {
@@ -52,7 +58,14 @@ public class CrawlJobResource {
             e.printStackTrace();
         }
 
-        return new JobSingleUrl(job, domain.getDomain(), jobStatus, null);
+        return new JobSingleUrl(job, domain.getDomain(), jobStatus, 0, null);
+    }
+
+    @GET
+    @Timed
+    @Path("/list")
+    public HashMap<String, String> getJobs() {
+        return currentJobs;
     }
 
     @GET
@@ -62,9 +75,11 @@ public class CrawlJobResource {
         String jobStatus = "";
         String domain = "";
         String reportUrl = null;
+        int numberOfCrawledUrls = 0;
         try {
             jobStatus = client.getCurrentJobStatus(job);
             domain = client.getListOfCrawlUrls(job).get(0);
+            numberOfCrawledUrls = client.getDownloadedCount(job);
             if(client.isJobFinished(job)) {
                 reportUrl = client.getCrawlLogUri(job);
             }
@@ -80,6 +95,7 @@ public class CrawlJobResource {
             e.printStackTrace();
         }
 
-        return new JobSingleUrl(job, domain, jobStatus, reportUrl);
+        return new JobSingleUrl(job, domain, jobStatus, numberOfCrawledUrls
+                , reportUrl);
     }
 }

@@ -1,17 +1,19 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-<script src="script.js"></script>
+    <meta charset="UTF-8">
+    <title>Crawl jobs</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="main_script.js"></script>
 </head>
 <body>
-
 <form class="form">
-<input type="button" name="button" value="Crawl domain">
-<input type="text" name="text" value="Write url here" id=urlinput onkeypress="handleEvent">
+    <input type="button" name="button" value="Crawl domain">
+    <input type="text" name="text" value="Write url here" id=urlinput onkeypress="handleEvent">
 </form>
+<p>Current jobs:</p>
+<ul id="crawl_url_list">
+</ul>
 
-<p id="div1"></p>
-<a id="div2"></a>
 </body>
 </html>
-
