@@ -5,3 +5,9 @@ server:
   adminConnectors:
   - type: http
     port: 9001
+emailServer:
+  host: smtp.gmail.com
+  address: shemyanton@gmail.com	
+  user: shemyanton@gmail.com	
+  password: password
+  port: 587

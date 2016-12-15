@@ -45,4 +45,16 @@ function loadAllJobs() {
                 }
             }
     });
+
+    var crawlUrl = location.search.split("text=")[1];
+    if(crawlUrl && 0 === crawlUrl.length) {
+        document.getElementById("urlinput").value = crawlUrl;
+        main();
+    }
+}
+
+function keyListener(e) {
+    if(e.keyCode == 13) {
+        main();
+    }
 }
