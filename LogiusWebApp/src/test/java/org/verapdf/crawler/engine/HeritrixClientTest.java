@@ -3,13 +3,11 @@ package org.verapdf.crawler.engine;
 import org.apache.http.auth.AuthenticationException;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.verapdf.crawler.app.Sample;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;

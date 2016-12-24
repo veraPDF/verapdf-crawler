@@ -5,10 +5,6 @@ import org.verapdf.crawler.app.LogiusWebApplication;
 import org.verapdf.crawler.configuration.LogiusConfiguration;
 import org.verapdf.crawler.engine.HeritrixClient;
 
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-
 public class LogiusWebApplicationStub extends LogiusWebApplication{
     @Override
     public void run(LogiusConfiguration configuration,

@@ -8,10 +8,6 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.verapdf.crawler.resources.CrawlJobResource;
 
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-
 public class LogiusWebApplication extends Application<LogiusConfiguration> {
     public static void main(String[] args) throws Exception {
         new LogiusWebApplication().run(args);

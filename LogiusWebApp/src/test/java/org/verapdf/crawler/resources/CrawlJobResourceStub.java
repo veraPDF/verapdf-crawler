@@ -5,15 +5,9 @@ import org.verapdf.crawler.api.Domain;
 import org.verapdf.crawler.api.EmailServer;
 import org.verapdf.crawler.api.JobSingleUrl;
 import org.verapdf.crawler.engine.HeritrixClient;
-import org.verapdf.crawler.helpers.emailUtils.SendEmail;
-import org.xml.sax.SAXException;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.UUID;
 
