@@ -9,6 +9,10 @@ public class EmailAddress {
         // Jackson deserialization
     }
 
+    public EmailAddress(String address) {
+        emailAddress = address;
+    }
+
     @JsonProperty
     public String getEmailAddress() {
         return emailAddress;

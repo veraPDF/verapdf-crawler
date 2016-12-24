@@ -1,0 +1,13 @@
+server:
+  applicationConnectors:
+  - type: http 
+    port: 9002
+  adminConnectors:
+  - type: http
+    port: 9003
+emailServer:
+  host: smtp.gmail.com
+  address: shemyanton@gmail.com	
+  user: shemyanton@gmail.com	
+  password: password
+  port: 587

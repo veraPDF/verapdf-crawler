@@ -22,16 +22,20 @@ import java.util.UUID;
 @Produces(MediaType.APPLICATION_JSON)
 @Path("/")
 public class CrawlJobResource {
-    private HeritrixClient client;
-    private HashMap<String, String> currentJobs;
-    private String reportToEmail;
-    private EmailServer emailServer;
+    protected HeritrixClient client;
+    protected HashMap<String, String> currentJobs;
+    protected String reportToEmail;
+    protected EmailServer emailServer;
 
     public CrawlJobResource(HeritrixClient client, EmailServer emailServer)
     {
         this.client = client;
         this.emailServer = emailServer;
         currentJobs = new HashMap<>();
+    }
+
+    public String getreportEmail() {
+        return reportToEmail;
     }
 
     @POST
@@ -74,16 +78,16 @@ public class CrawlJobResource {
 
     @GET
     @Timed
-    @Path("/list")
-    public HashMap<String, String> getJobs() {
-        return currentJobs;
+    @Path("/get_target_email")
+    public EmailAddress setReportEmail() {
+        return new EmailAddress(reportToEmail);
     }
 
     @GET
     @Timed
-    @Path("/testEmail")
-    public void testEmail() {
-        SendEmail.send("anton.shemyakov@duallab.com", "Hi", "test", emailServer);
+    @Path("/list")
+    public HashMap<String, String> getJobs() {
+        return currentJobs;
     }
 
     @GET

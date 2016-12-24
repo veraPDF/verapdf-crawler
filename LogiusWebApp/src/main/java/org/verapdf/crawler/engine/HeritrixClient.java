@@ -1,49 +1,69 @@
 package org.verapdf.crawler.engine;
 
-import org.verapdf.crawler.helpers.debugHelpers.OpenTrustManager;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.AuthenticationException;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.entity.FileEntity;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContexts;
+import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
-import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSession;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.security.KeyManagementException;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class HeritrixClient {
 
     private String baseUrl;
-    private String username;
-    private String password;
+    private HttpClient httpClient;
 
-    public HeritrixClient(String url, String username, String password) {
+    public HeritrixClient(String url, int port, String username, String password) throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException, MalformedURLException {
         baseUrl = url;
-        this.username = username;
-        this.password = password;
+        // Configure credential provider
+        URL domain = new URL(baseUrl);
+        HttpHost targetHost = new HttpHost(domain.getHost(), domain.getPort(), "https");
+        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        credsProvider.setCredentials(
+                new AuthScope(targetHost.getHostName(), targetHost.getPort()),
+                new UsernamePasswordCredentials(username, password));
+        // Configure http client to ignore certificate issues
+        httpClient = HttpClients.custom()
+                .setSSLSocketFactory(new SSLConnectionSocketFactory(SSLContexts.custom()
+                        .loadTrustMaterial(null, (x509Certificates, s) -> true)
+                        .build(), (s, sslSession) -> true)).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).setDefaultCredentialsProvider(credsProvider).build();
     }
 
-    /*public String doJob(String job, List<String> crawlUrls) throws NoSuchAlgorithmException, IOException, KeyManagementException, InterruptedException, ParserConfigurationException, SAXException {
-        createJob(job, crawlUrls);
-        buildJob(job);
-        launchJob(job);
-        unpauseJob(job);
-        while(!isJobFinished(job)) {
-            Thread.sleep(sleepTime);
-        }
-        return getCrawlLogUri(job);
-    }*/
+    public void setHttpClient(HttpClient httpClient) {
+        this.httpClient = httpClient;
+    }
 
     public int getDownloadedCount(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
         String status = getFullStatus(job);
@@ -56,43 +76,46 @@ public class HeritrixClient {
         return Integer.parseInt(nodes.item(0).getTextContent());
     }
 
-    public void unpauseJob(String job) throws IOException, KeyManagementException, NoSuchAlgorithmException {
-        HashMap<String, String> postDataParams = new HashMap<>();
-        postDataParams.put("action","unpause");
+    public void unpauseJob(String job) throws IOException, KeyManagementException, NoSuchAlgorithmException, AuthenticationException {
+        HttpPost post = new HttpPost(baseUrl + "engine/job/" + job);
+        post.setEntity(new StringEntity("action=unpause"));
 
-        HttpURLConnection conn = buildPostRequest(postDataParams, baseUrl + "/org/verapdf/crawler/engine/job/" + job);
-
-        conn.getResponseCode();
+        httpClient.execute(post);
+        post.releaseConnection();
     }
 
     public void pauseJob(String job) throws IOException, KeyManagementException, NoSuchAlgorithmException {
-        HashMap<String, String> postDataParams = new HashMap<>();
-        postDataParams.put("action","pause");
+        HttpPost post = new HttpPost(baseUrl + "engine/job/" + job);
+        post.setEntity(new StringEntity("action=pause"));
 
-        HttpURLConnection conn = buildPostRequest(postDataParams, baseUrl + "/org/verapdf/crawler/engine/job/" + job);
-
-        conn.getResponseCode();
+        httpClient.execute(post);
+        post.releaseConnection();
     }
 
     public void terminateJob(String job) throws IOException, KeyManagementException, NoSuchAlgorithmException {
-        HashMap<String, String> postDataParams = new HashMap<>();
-        postDataParams.put("action","terminate");
+        HttpPost post = new HttpPost(baseUrl + "engine/job/" + job);
+        post.setEntity(new StringEntity("action=terminate"));
 
-        HttpURLConnection conn = buildPostRequest(postDataParams, baseUrl + "/org/verapdf/crawler/engine/job/" + job);
+        httpClient.execute(post);
+        post.releaseConnection();
+    }
 
-        conn.getResponseCode();
+    public void teardownJob(String job) throws IOException, KeyManagementException, NoSuchAlgorithmException {
+        HttpPost post = new HttpPost(baseUrl + "engine/job/" + job);
+        post.setEntity(new StringEntity("action=teardown"));
+
+        httpClient.execute(post);
+        post.releaseConnection();
     }
 
     public String createJob(String job, List<String> crawlUrls) throws IOException, KeyManagementException, NoSuchAlgorithmException {
-        HashMap<String, String> postDataParams = new HashMap<>();
-        postDataParams.put("createpath",job);
-        postDataParams.put("action","create");
+        HttpPost post = new HttpPost(baseUrl + "engine/job/" + job);
+        post.setEntity(new StringEntity("createpath=" + job +"&action=create"));
 
-        HttpURLConnection conn = buildPostRequest(postDataParams, baseUrl + "/org/verapdf/crawler/engine/" + job);
+        httpClient.execute(post);
+        post.releaseConnection();
 
-        conn.getResponseCode();
-
-        String configurationFile = createCrawlConfiguration(job, crawlUrls);
+        String configurationFile = createCrawlConfiguration(job, crawlUrls, "src/main/resources/" + job + "_configuration.cxml");
         submitConfigFile(job, configurationFile);
         new File(configurationFile).delete();
 
@@ -100,26 +123,25 @@ public class HeritrixClient {
     }
 
     public void launchJob(String job) throws IOException, KeyManagementException, NoSuchAlgorithmException {
-        HashMap<String, String> postDataParams = new HashMap<>();
-        postDataParams.put("action","launch");
+        HttpPost post = new HttpPost(baseUrl + "engine/job/" + job);
+        post.setEntity(new StringEntity("action=launch"));
 
-        HttpURLConnection conn = buildPostRequest(postDataParams, baseUrl + "/org/verapdf/crawler/engine/job/" + job);
-
-        conn.getResponseCode();
+        httpClient.execute(post);
+        post.releaseConnection();
     }
 
     public void buildJob(String job) throws IOException, KeyManagementException, NoSuchAlgorithmException {
-        HashMap<String, String> postDataParams = new HashMap<>();
-        postDataParams.put("action","build");
+        HttpPost post = new HttpPost(baseUrl + "engine/job/" + job);
+        post.setEntity(new StringEntity("action=build"));
 
-        HttpURLConnection conn = buildPostRequest(postDataParams, baseUrl + "/org/verapdf/crawler/engine/job/" + job);
-
-        conn.getResponseCode();
+        httpClient.execute(post);
+        post.releaseConnection();
     }
 
     public String getCrawlLogUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        HttpURLConnection conn = buildGetRequest(baseUrl + "/org/verapdf/crawler/engine/job/" + job);
-        String status = getResponseString(conn);
+        HttpGet get = new HttpGet(baseUrl + "engine/job/" + job);
+        String status = getResponseAsString(httpClient.execute(get));
+        get.releaseConnection();
         String result = getBetweenStrings(status, "<h3>Crawl Log <a href=\"", "?format=paged");
         result = baseUrl + result;
         result = result.replace("logs/crawl.log","mirror/PDFReport.txt");
@@ -141,24 +163,14 @@ public class HeritrixClient {
         return nodes.item(0).getTextContent();
     }
 
-    public List<String> getListOfPdfFiles(String logUrl) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        HttpURLConnection conn = buildGetRequest(logUrl);
-
-        ArrayList<String> result = new ArrayList<>();
-
-        BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-        String output;
-        while ((output = br.readLine()) != null) {
-            if(output.contains("application/pdf")) {
-                result.add(output);
-            }
-        }
-        return result;
+    public List<String> getListOfCrawlUrls(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        HttpGet get = new HttpGet(baseUrl + "engine/job/" + job + "/jobdir/crawler-beans.cxml");
+        String configXml = getResponseAsString(httpClient.execute(get));
+        get.releaseConnection();
+        return getListOfCrawlUrlsFromXml(configXml);
     }
 
-    public List<String> getListOfCrawlUrls(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        HttpURLConnection conn = buildGetRequest(baseUrl + "/org/verapdf/crawler/engine/job/" + job + "/jobdir/crawler-beans.cxml");
-        String configXml = getResponseString(conn);
+    public static List<String> getListOfCrawlUrlsFromXml(String configXml) throws IOException {
         String urls = getBetweenStrings(configXml, "# URLS HERE", "</prop>");
         ArrayList<String> result = new ArrayList<>(Arrays.asList(urls.split("\\s+")));
         if(result.get(0).equals(""))
@@ -166,41 +178,17 @@ public class HeritrixClient {
         return result;
     }
 
-    //<editor-fold desc="Private org.verapdf.crawler.helpers">
-    private String getFullStatus(String job) throws IOException, NoSuchAlgorithmException, KeyManagementException {
-        HttpURLConnection conn = buildGetRequest(baseUrl + "/org/verapdf/crawler/engine/job/" + job);
-        conn.addRequestProperty("Accept", "application/xml");
-        return getResponseString(conn);
-    }
-
-    private void submitConfigFile(String job, String filename) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        File file = new File(filename);
-
-        HttpURLConnection conn = buildRequest(baseUrl + "/org/verapdf/crawler/engine/job/" + job + "/jobdir/crawler-beans.cxml");
-        conn.setRequestMethod("PUT");
-        conn.setRequestProperty("Content-Length", String.valueOf(file.length()));
-        conn.setUseCaches(false);
-        conn.setDoOutput(true);
-
-        conn.connect();
-
-        OutputStream outputStream = conn.getOutputStream();
-        Files.copy(file.toPath(), outputStream);
-        outputStream.close();
-
-        conn.getResponseCode();
-    }
-
-    private String createCrawlConfiguration(String job, List<String> crawlUrls) throws IOException {
+    public static String createCrawlConfiguration(String job, List<String> crawlUrls, String targetfileName) throws IOException {
 
         StringBuilder sb = new StringBuilder();
         for(String url: crawlUrls) {
-            sb.append(url + "\n");
+            sb.append(url + " ");
         }
 
-        File source = new File("src/main/org.verapdf.crawler.resources/sample_configuration.cxml");
-        File destination = new File("src/main/org.verapdf.crawler.resources/" + job + "_configuration.cxml");
-        Files.copy(source.toPath(), destination.toPath());
+        File source = new File("src/main/resources/sample_configuration.cxml");
+        //File destination = new File("src/main/resources/" + job + "_configuration.cxml");
+        File destination = new File(targetfileName);
+        Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         Charset charset = StandardCharsets.UTF_8;
 
@@ -208,86 +196,42 @@ public class HeritrixClient {
         content = content.replace("******", crawlUrls.get(0));
         content = content.replace("######", sb.toString());
         Files.write(destination.toPath(), content.getBytes(charset));
-        return "src/main/org.verapdf.crawler.resources/" + job + "_configuration.cxml";
+        return targetfileName;
     }
 
-    private String getPostDataString(HashMap<String, String> params) throws UnsupportedEncodingException {
-        StringBuilder result = new StringBuilder();
-        boolean first = true;
-        for(Map.Entry<String, String> entry : params.entrySet()){
-            if (first)
-                first = false;
-            else
-                result.append("&");
+    //<editor-fold desc="Private helpers">
 
-            result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
-            result.append("=");
-            result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
+    private String getResponseAsString(HttpResponse response) throws IOException {
+        BufferedReader rd = new BufferedReader(
+                new InputStreamReader(response.getEntity().getContent()));
+
+        StringBuilder result = new StringBuilder();
+        String line;
+        while ((line = rd.readLine()) != null) {
+            result.append(line);
         }
         return result.toString();
     }
 
-    private HttpURLConnection buildPostRequest(HashMap<String, String> postDataParams, String stringUrl) throws IOException, KeyManagementException, NoSuchAlgorithmException {
-        HttpURLConnection conn = buildRequest(stringUrl);
+    private String getFullStatus(String job) throws IOException, NoSuchAlgorithmException, KeyManagementException {
+        HttpGet get = new HttpGet(baseUrl + "engine/job/" + job);
+        get.setHeader("Accept","application/xml");
 
-        conn.setRequestMethod("POST");
-        conn.setDoInput(true);
-        conn.setDoOutput(true);
-
-        OutputStream os = conn.getOutputStream();
-        BufferedWriter writer = new BufferedWriter(
-                new OutputStreamWriter(os, "UTF-8"));
-        writer.write(getPostDataString(postDataParams));
-
-        writer.flush();
-        writer.close();
-        os.close();
-
-        return conn;
+        String result = getResponseAsString(httpClient.execute(get));
+        get.releaseConnection();
+        return result;
     }
 
-    private HttpURLConnection buildGetRequest(String stringUrl) throws IOException, KeyManagementException, NoSuchAlgorithmException {
-        HttpURLConnection conn = buildRequest(stringUrl);
-
-        conn.setRequestMethod("GET");
-
-        return conn;
+    private void submitConfigFile(String job, String filename) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        File file = new File(filename);
+        HttpPut put = new HttpPut(baseUrl + "engine/job/" + job + "/jobdir/crawler-beans.cxml");
+        FileEntity entity = new FileEntity(file);
+        put.setEntity(entity);
+        httpClient.execute(put);
+        put.releaseConnection();
     }
 
-    private HttpURLConnection buildRequest(String stringUrl) throws IOException, KeyManagementException, NoSuchAlgorithmException {
-        Authenticator.setDefault(new Authenticator() {
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(username, password.toCharArray());
-            }
-        });
-
-        URL url = new URL(stringUrl);
-        HttpURLConnection conn;
-        conn = (HttpURLConnection) url.openConnection();
-
-        OpenTrustManager.apply((HttpsURLConnection) conn);
-        ((HttpsURLConnection) conn).setHostnameVerifier(
-                new HostnameVerifier(){
-                    public boolean verify(String arg0, SSLSession arg1) {
-                        return true;
-                    }
-                }
-        );
-
-        return conn;
-    }
-
-    private String getResponseString(HttpURLConnection conn) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-        StringBuilder sb = new StringBuilder();
-        String output;
-        while ((output = br.readLine()) != null) {
-            sb.append(output);
-        }
-        return sb.toString();
-    }
-
-    private String getBetweenStrings(String text, String textFrom, String textTo) {
+    private static String getBetweenStrings(String text, String textFrom, String textTo) {
 
         String result;
 
