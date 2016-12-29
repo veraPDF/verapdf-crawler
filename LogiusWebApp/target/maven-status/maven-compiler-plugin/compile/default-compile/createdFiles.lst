@@ -1,5 +1,3 @@
-org/verapdf/crawler/engine/HeritrixClient$2.class
-org/verapdf/crawler/engine/HeritrixClient$1.class
 org/verapdf/crawler/api/JobSingleUrl.class
 org/verapdf/crawler/api/Domain.class
 org/verapdf/crawler/helpers/emailUtils/GMailAuthenticator.class
@@ -7,7 +5,6 @@ org/verapdf/crawler/helpers/emailUtils/SendEmail.class
 org/verapdf/crawler/app/LogiusWebApplication.class
 org/verapdf/crawler/configuration/LogiusConfiguration.class
 org/verapdf/crawler/api/EmailServer.class
-org/verapdf/crawler/helpers/debugHelpers/OpenTrustManager.class
 org/verapdf/crawler/api/EmailAddress.class
 org/verapdf/crawler/resources/CrawlJobResource.class
 org/verapdf/crawler/engine/HeritrixClient.class

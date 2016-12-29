@@ -1,2 +1,5 @@
 /home/anton/Documents/Logius/LogiusWebApp/src/test/java/org/verapdf/crawler/engine/HeritrixClientTest.java
-/home/anton/Documents/Logius/LogiusWebApp/src/test/java/org/verapdf/crawler/app/LogiusWebApplicationTest.java
+/home/anton/Documents/Logius/LogiusWebApp/src/test/java/org/verapdf/crawler/resources/CrawlJobResourceStub.java
+/home/anton/Documents/Logius/LogiusWebApp/src/test/java/org/verapdf/crawler/resources/TestCeawlJobResource.java
+/home/anton/Documents/Logius/LogiusWebApp/src/test/java/org/verapdf/crawler/resources/LogiusWebApplicationStub.java
+/home/anton/Documents/Logius/LogiusWebApp/src/test/java/org/verapdf/crawler/engine/HttpClientStub.java

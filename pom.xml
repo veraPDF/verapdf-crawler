@@ -15,7 +15,7 @@
     <modules>
         <module>LogiusWebApp</module>
         <module>SampleWebApp</module>
-        <module>Heritrix</module>
+        <module>HeritrixExtention</module>
     </modules>
 
 </project>
