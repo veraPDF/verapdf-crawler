@@ -32,15 +32,13 @@ public class MyProcessor extends MirrorWriterProcessor {
         String mps = (String)curi.getData().get(A_MIRROR_PATH);
         try {
             ProcessorResult res = processor.process(new File(baseDir + File.separator + mps));
-            System.out.println("Document is valid: " + res.getValidationResult().isCompliant());
             FileWriter fw = new FileWriter(baseDir + File.separator + "PDFReport.txt", true);
-            fw.write(curi.getURI() + "\n");
+            Boolean isValid = res.getValidationResult().isCompliant();
+            fw.write(curi.getURI() + " " + isValid.toString() + "\n");
             fw.close();
-            throw new VeraPDFException();
         } catch (IOException e) {
             e.printStackTrace();
-        }
-        catch (VeraPDFException e) {
+        } catch (VeraPDFException e) {
             e.printStackTrace();
         }
     }
