@@ -1,10 +1,12 @@
 /home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/api/Domain.java
 /home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/api/EmailAddress.java
+/home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/api/ValidationStatistics.java
 /home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/app/LogiusWebApplication.java
 /home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/helpers/emailUtils/GMailAuthenticator.java
 /home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/resources/CrawlJobResource.java
 /home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/engine/HeritrixClient.java
 /home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/api/EmailServer.java
+/home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/resources/Main.java
 /home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/api/JobSingleUrl.java
 /home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/helpers/emailUtils/SendEmail.java
 /home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/configuration/LogiusConfiguration.java

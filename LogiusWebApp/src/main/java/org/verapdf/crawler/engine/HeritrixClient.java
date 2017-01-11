@@ -17,6 +17,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
+import org.verapdf.crawler.api.ValidationStatistics;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -39,6 +40,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
 
 public class HeritrixClient {
 
@@ -109,7 +111,7 @@ public class HeritrixClient {
     }
 
     public String createJob(String job, List<String> crawlUrls) throws IOException, KeyManagementException, NoSuchAlgorithmException {
-        HttpPost post = new HttpPost(baseUrl + "engine/job/" + job);
+        HttpPost post = new HttpPost(baseUrl + "engine/");
         post.setEntity(new StringEntity("createpath=" + job +"&action=create"));
 
         httpClient.execute(post);
@@ -138,7 +140,7 @@ public class HeritrixClient {
         post.releaseConnection();
     }
 
-    public String getCrawlLogUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    public String getPDFReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
         HttpGet get = new HttpGet(baseUrl + "engine/job/" + job);
         String status = getResponseAsString(httpClient.execute(get));
         get.releaseConnection();
@@ -199,6 +201,30 @@ public class HeritrixClient {
         return targetfileName;
     }
 
+    public ValidationStatistics getValidationStatistics(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        int numberOfPDFs = 0, numberOfValidPDFs = 0;
+        try {
+            Scanner sc = new Scanner(getLogFileByURL(getPDFReportUri(job)));
+            while(sc.hasNext()) {
+                sc.next(); // Read uri from the beginning of line
+                String line = sc.next();
+                if(isReportLineAValidPdf(line)) {
+                    numberOfValidPDFs++;
+                }
+                numberOfPDFs ++;
+            }
+        }
+        catch (IOException e) {
+            return new ValidationStatistics(0,0);
+        }
+
+        return new ValidationStatistics(numberOfPDFs, numberOfValidPDFs);
+    }
+
+    public Integer getODFFileCount(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        return Integer.parseInt(getLogFileByURL(getODFReportUri(job)));
+    }
+
     //<editor-fold desc="Private helpers">
 
     private String getResponseAsString(HttpResponse response) throws IOException {
@@ -246,5 +272,28 @@ public class HeritrixClient {
 
         return result;
     }
+
+    private String getLogFileByURL(String url) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        HttpGet get = new HttpGet(url);
+        InputStream response = httpClient.execute(get).getEntity().getContent();
+        Scanner sc = new Scanner(response);
+        StringBuilder result = new StringBuilder();
+        while(sc.hasNext()) {
+            result.append(sc.nextLine() + "\n");
+        }
+        get.releaseConnection();
+        if(result.toString().contains("The page you are looking for does not exist"))
+            return "";
+        return result.toString();
+    }
+
+    private boolean isReportLineAValidPdf(String line) {
+        return line.equals("true");
+    }
+
+    private String getODFReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        return getPDFReportUri(job).replace("PDFReport.txt", "ODFReport.txt");
+    }
+
     //</editor-fold>
 }

@@ -334,7 +334,7 @@
 
     <!-- DISPOSITION CHAIN -->
     <!-- first, processors are declared as top-level named beans  -->
-    <bean id="warcWriter" class="org.verapdf.crawler.extentionModules.MyProcessor">
+    <bean id="warcWriter" class="org.verapdf.crawler.extentionModules.PDFProcessor">
         <property name="shouldProcessRule">
             <bean class="org.archive.modules.deciderules.DecideRuleSequence">
                 <property name="rules">
@@ -374,6 +374,26 @@
         <!-- <property name="writeRevisitForNotModified" value="true" /> -->
         <!-- <property name="startNewFilesOnCheckpoint" value="true" /> -->
     </bean>
+    <bean id="odfProcessor" class="org.verapdf.crawler.extentionModules.ODFProcessor">
+        <property name="shouldProcessRule">
+            <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+                <property name="rules">
+                    <list>
+                        <bean class="org.archive.modules.deciderules.AcceptDecideRule">
+                        </bean>
+                        <bean class="org.archive.modules.deciderules.ContentTypeMatchesRegexDecideRule">
+                            <property name="decision" value="REJECT" />
+                            <property name="regex" value="^application/pdf.*"/>
+                        </bean>
+                        <bean class="org.archive.modules.deciderules.MatchesRegexDecideRule">
+                            <property name="decision" value="REJECT"/>
+                            <property name="regex" value=".*\.pdf"/>
+                        </bean>
+                    </list>
+                </property>
+            </bean>
+        </property>
+    </bean>
     <bean id="candidates" class="org.archive.crawler.postprocessor.CandidatesProcessor">
         <!-- <property name="seedsRedirectNewSeeds" value="true" /> -->
         <!-- <property name="processErrorOutlinks" value="false" /> -->
@@ -394,6 +414,7 @@
             <list>
                 <!-- write to aggregate archival files... -->
                 <ref bean="warcWriter"/>
+                <ref bean="odfProcessor"/>
                 <!-- ...send each outlink candidate URI to CandidateChain,
                      and enqueue those ACCEPTed to the frontier... -->
                 <ref bean="candidates"/>

@@ -1,9 +1,6 @@
 package org.verapdf.crawler.resources;
 
-import org.verapdf.crawler.api.Domain;
-import org.verapdf.crawler.api.EmailAddress;
-import org.verapdf.crawler.api.EmailServer;
-import org.verapdf.crawler.api.JobSingleUrl;
+import org.verapdf.crawler.api.*;
 import com.codahale.metrics.annotation.Timed;
 import org.verapdf.crawler.engine.HeritrixClient;
 import org.verapdf.crawler.helpers.emailUtils.SendEmail;
@@ -98,6 +95,7 @@ public class CrawlJobResource {
         String domain = "";
         String reportUrl = null;
         int numberOfCrawledUrls = 0;
+        JobSingleUrl result = new JobSingleUrl(job, domain, jobStatus, numberOfCrawledUrls, reportUrl);
         try {
             jobStatus = client.getCurrentJobStatus(job);
             domain = client.getListOfCrawlUrls(job).get(0);
@@ -109,8 +107,10 @@ public class CrawlJobResource {
                             "The crawl job on " + domain + " is finished.",
                             emailServer);
                 }
-                reportUrl = client.getCrawlLogUri(job);
+                reportUrl = client.getPDFReportUri(job);
             }
+            result = new JobSingleUrl(job, domain, jobStatus, numberOfCrawledUrls, reportUrl);
+            result.setStatistics(client.getValidationStatistics(job));
         } catch (IOException e) {
             e.printStackTrace();
         } catch (KeyManagementException e) {
@@ -122,8 +122,6 @@ public class CrawlJobResource {
         } catch (ParserConfigurationException e) {
             e.printStackTrace();
         }
-
-        return new JobSingleUrl(job, domain, jobStatus, numberOfCrawledUrls
-                , reportUrl);
+        return result;
     }
 }

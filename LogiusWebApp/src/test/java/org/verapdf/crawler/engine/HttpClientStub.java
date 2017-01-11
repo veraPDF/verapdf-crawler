@@ -40,7 +40,7 @@ public class HttpClientStub implements HttpClient{
             String data = rd.readLine();
             // Create job
             if(data.startsWith("createpath")) {
-                jobProgress.put(getJobFromRequest(post),0);
+                jobProgress.put(data.substring(data.indexOf("=") + 1,data.indexOf("&action")),0);
                 return new BasicHttpResponse(new BasicStatusLine(new HttpVersion(1,1),200,"OK"));
             }
             // Launch job
@@ -150,7 +150,7 @@ public class HttpClientStub implements HttpClient{
     }
 
     @Override
-    public HttpResponse execute(HttpUriRequest httpUriRequest, HttpContext httpContext) throws IOException, ClientProtocolException {
+    public HttpResponse execute(HttpUriRequest httpUriRequest, HttpContext httpContext) throws IOException {
         return null;
     }
 

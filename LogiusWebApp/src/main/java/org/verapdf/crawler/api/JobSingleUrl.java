@@ -9,6 +9,7 @@ public class JobSingleUrl {
     private String status;
     private int numberOfCrawledUrls;
     private String reportUrl;
+    private ValidationStatistics statistics;
 
     public JobSingleUrl() {
         // Jackson deserialization
@@ -20,6 +21,7 @@ public class JobSingleUrl {
         this.status = status;
         this.numberOfCrawledUrls = numberOfCrawledUrls;
         this.reportUrl = reportUrl;
+        this.statistics = new ValidationStatistics();
     }
 
     @JsonProperty
@@ -47,6 +49,12 @@ public class JobSingleUrl {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty
     public String getReportUrl() {return reportUrl;}
+
+    @JsonProperty
+    public ValidationStatistics getStatistics() { return statistics; }
+
+    @JsonProperty
+    public void setStatistics(ValidationStatistics statistics) { this.statistics = statistics; }
 
     public void setReportUrl(String reportUrl) { this.reportUrl = reportUrl; }
 }

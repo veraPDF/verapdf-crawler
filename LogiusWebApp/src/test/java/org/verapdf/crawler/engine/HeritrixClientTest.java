@@ -71,7 +71,7 @@ public class HeritrixClientTest {
             System.out.println(client.getCurrentJobStatus("test"));
         }
         assertEquals("Finished: FINISHED", client.getCurrentJobStatus("test"));
-        assertTrue(client.getCrawlLogUri("test").endsWith("PDFReport.txt"));
+        assertTrue(client.getPDFReportUri("test").endsWith("PDFReport.txt"));
         assertEquals(client.getDownloadedCount("test"), 6);
     }
 

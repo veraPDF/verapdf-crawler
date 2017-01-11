@@ -13,6 +13,11 @@ function checkStatus() {
             $("#crawl_url").text("Crawling url " + crawlUrl);
             if(undefined != number)
                 $("#number_of_crawled_urls").text(number + " urls crawled.");
+
+            valid = result.statistics.numberOfValidPDFs;
+            total = result.statistics.numberOfPDFs;
+            $("#valid").text(valid);
+            $("#total").text(total);
             if(status.substring(0, 8) == "Finished") {
                 $("#report_link").text(result.reportUrl);
                 $("#report_link").html("<a href=\"" + result.reportUrl + "\">Crawl log</a>");
