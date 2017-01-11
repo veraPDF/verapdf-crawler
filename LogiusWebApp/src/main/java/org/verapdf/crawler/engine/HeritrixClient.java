@@ -225,6 +225,20 @@ public class HeritrixClient {
         return Integer.parseInt(getLogFileByURL(getODFReportUri(job)));
     }
 
+    public String getOfficeReport(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        return getLogFileByURL(getOfficeReportUri(job));
+    }
+
+    public Integer getOfficeFileCount(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        Scanner sc = new Scanner(getOfficeReport(job));
+        Integer result = 0;
+        while(sc.hasNext()) {
+            sc.nextLine();
+            result++;
+        }
+        return result;
+    }
+
     //<editor-fold desc="Private helpers">
 
     private String getResponseAsString(HttpResponse response) throws IOException {
@@ -293,6 +307,10 @@ public class HeritrixClient {
 
     private String getODFReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
         return getPDFReportUri(job).replace("PDFReport.txt", "ODFReport.txt");
+    }
+
+    private String getOfficeReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        return getPDFReportUri(job).replace("PDFReport.txt", "OfficeReport.txt");
     }
 
     //</editor-fold>
