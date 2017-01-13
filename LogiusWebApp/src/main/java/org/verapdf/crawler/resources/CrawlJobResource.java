@@ -3,8 +3,7 @@ package org.verapdf.crawler.resources;
 import org.verapdf.crawler.api.*;
 import com.codahale.metrics.annotation.Timed;
 import org.verapdf.crawler.engine.HeritrixClient;
-import org.verapdf.crawler.engine.HeritrixReporter;
-import org.verapdf.crawler.helpers.emailUtils.SendEmail;
+import org.verapdf.crawler.report.HeritrixReporter;
 import org.xml.sax.SAXException;
 
 import javax.ws.rs.*;
@@ -23,7 +22,7 @@ import java.util.UUID;
 @Path("/")
 public class CrawlJobResource {
     private HeritrixClient client;
-    private HashMap<String, String> currentJobs;
+    protected HashMap<String, String> currentJobs;
     private String reportToEmail;
     private EmailServer emailServer;
     private HeritrixReporter reporter;

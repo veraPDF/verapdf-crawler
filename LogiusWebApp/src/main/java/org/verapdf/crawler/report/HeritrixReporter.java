@@ -1,10 +1,11 @@
-package org.verapdf.crawler.engine;
+package org.verapdf.crawler.report;
 
 import org.jopendocument.dom.OOUtils;
 import org.jopendocument.dom.spreadsheet.Sheet;
 import org.jopendocument.dom.spreadsheet.SpreadSheet;
 import org.verapdf.crawler.api.PDFValidationStatistics;
 import org.verapdf.crawler.api.SingleURLJobReport;
+import org.verapdf.crawler.engine.HeritrixClient;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -37,9 +38,7 @@ public class HeritrixReporter {
         return result;
     }
 
-    public File buildODSReport(String job) throws IOException, KeyManagementException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
-        SingleURLJobReport reportData = getReport(job);
-
+    public File buildODSReport(String job, SingleURLJobReport reportData) throws IOException, KeyManagementException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
         File file = new File("src/main/resources/sample_report.ods");
         final Sheet totalSheet = SpreadSheet.createFromFile(file).getSheet(0);
         totalSheet.ensureColumnCount(2);
@@ -57,12 +56,16 @@ public class HeritrixReporter {
         setLinesInSheet(spreadSheet.getSheet(2), reportData.getPdfStatistics().invalidPDFReport);
 
         File ODSReport = new File("src/main/resources/report.ods");
-        OOUtils.open(spreadSheet.saveAs(ODSReport));
         return ODSReport;
+
     }
 
-    public String buildHtmlReport(String job) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
+    public File buildODSReport(String job) throws IOException, KeyManagementException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
         SingleURLJobReport reportData = getReport(job);
+        return buildODSReport(job, reportData);
+    }
+
+    public String buildHtmlReport(String job, SingleURLJobReport reportData) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
         StringBuilder builder = new StringBuilder();
         builder.append("<p>Valid PDF files ");
         builder.append(reportData.getPdfStatistics().getNumberOfValidPDFs());
@@ -95,8 +98,9 @@ public class HeritrixReporter {
         return builder.toString();
     }
 
-    public boolean isJobFinished(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
-        return client.getCurrentJobStatus(job).startsWith("Finished");
+    public String buildHtmlReport(String job) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
+        SingleURLJobReport reportData = getReport(job);
+        return buildHtmlReport(job, reportData);
     }
 
     private String getInvalidPDFReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {

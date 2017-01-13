@@ -151,6 +151,10 @@ public class HeritrixClient {
         return nodes.item(0).getTextContent();
     }
 
+    public boolean isJobFinished(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
+        return getCurrentJobStatus(job).startsWith("Finished");
+    }
+
     public List<String> getListOfCrawlUrls(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
         HttpGet get = new HttpGet(baseUrl + "engine/job/" + job + "/jobdir/crawler-beans.cxml");
         String configXml = getResponseAsString(httpClient.execute(get));
@@ -196,6 +200,20 @@ public class HeritrixClient {
         result = result.replace("logs/crawl.log","mirror/Valid_PDF_Report.txt");
         result = result.replace("//engine", "/engine");
         return result;
+    }
+
+    public String getLogFileByURL(String url) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        HttpGet get = new HttpGet(url);
+        InputStream response = httpClient.execute(get).getEntity().getContent();
+        Scanner sc = new Scanner(response);
+        StringBuilder result = new StringBuilder();
+        while(sc.hasNext()) {
+            result.append(sc.nextLine() + "\n");
+        }
+        get.releaseConnection();
+        if(result.toString().contains("The page you are looking for does not exist"))
+            return "";
+        return result.toString();
     }
 
     //<editor-fold desc="Private helpers">
@@ -244,20 +262,6 @@ public class HeritrixClient {
         result = result.substring(0, result.indexOf(textTo));
 
         return result;
-    }
-
-    public String getLogFileByURL(String url) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        HttpGet get = new HttpGet(url);
-        InputStream response = httpClient.execute(get).getEntity().getContent();
-        Scanner sc = new Scanner(response);
-        StringBuilder result = new StringBuilder();
-        while(sc.hasNext()) {
-            result.append(sc.nextLine() + "\n");
-        }
-        get.releaseConnection();
-        if(result.toString().contains("The page you are looking for does not exist"))
-            return "";
-        return result.toString();
     }
 
     //</editor-fold>

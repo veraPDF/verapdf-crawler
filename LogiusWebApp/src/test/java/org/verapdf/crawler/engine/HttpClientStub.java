@@ -83,7 +83,34 @@ public class HttpClientStub implements HttpClient{
                 response.setEntity(new StringEntity(message));
                 return response;
             }
-
+            // Report request
+            if(get.getURI().getPath().endsWith("Valid_PDF_Report.txt")) {
+                String message = "validfile1.pdf\nvalidfile2.pdf\nvalidfile3.pdf\nvalidfile4.pdf\nvalidfile5.pdf";
+                HttpResponse response = new BasicHttpResponse(new BasicStatusLine(new HttpVersion(1,1),200,"OK"));
+                response.setEntity(new StringEntity(message));
+                return response;
+            }
+            // Report request
+            if(get.getURI().getPath().endsWith("Invalid_PDF_Report.txt")) {
+                String message = "invalidfile1.pdf\ninvalidfile2.pdf\ninvalidfile3.pdf";
+                HttpResponse response = new BasicHttpResponse(new BasicStatusLine(new HttpVersion(1,1),200,"OK"));
+                response.setEntity(new StringEntity(message));
+                return response;
+            }
+            // Report request
+            if(get.getURI().getPath().endsWith("ODFReport.txt")) {
+                String message = "text.odt\nspreadsheet.ods";
+                HttpResponse response = new BasicHttpResponse(new BasicStatusLine(new HttpVersion(1,1),200,"OK"));
+                response.setEntity(new StringEntity(message));
+                return response;
+            }
+            // Report request
+            if(get.getURI().getPath().endsWith("OfficeReport.txt")) {
+                String message = "file.doc\nfile.xlsx\nfile.ppt\nfile.docx";
+                HttpResponse response = new BasicHttpResponse(new BasicStatusLine(new HttpVersion(1,1),200,"OK"));
+                response.setEntity(new StringEntity(message));
+                return response;
+            }
             // Job status HTML request
             String message = "<h3>Crawl Log <a href=\"/engine/anypath/jobs/test/20161224163617/logs/crawl.log?format=paged";
             HttpResponse response = new BasicHttpResponse(new BasicStatusLine(new HttpVersion(1,1),200,"OK"));
