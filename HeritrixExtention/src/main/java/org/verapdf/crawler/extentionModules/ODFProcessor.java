@@ -8,7 +8,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class ODFProcessor extends MirrorWriterProcessor {
-    private static Integer ODFCount;
     private static final String[] supportedExtentions = {".odt",
                                                         ".odc",
                                                         ".odp",
@@ -18,11 +17,6 @@ public class ODFProcessor extends MirrorWriterProcessor {
                                                         ".pptx",
                                                         ".xls",
                                                         "xlsx"};
-
-    public ODFProcessor() {
-        super();
-        ODFCount = 0;
-    }
 
     @Override
     protected boolean shouldProcess(CrawlURI crawlURI) {
@@ -38,8 +32,6 @@ public class ODFProcessor extends MirrorWriterProcessor {
         boolean isODFFile = crawlURI.toString().endsWith(".odt") ||
                 crawlURI.toString().endsWith(".odc") ||
                 crawlURI.toString().endsWith(".odp");
-        if(isODFFile)
-            ODFCount++;
         try {
             File baseDir = getPath().getFile();
             if(!baseDir.exists()) {
@@ -47,8 +39,8 @@ public class ODFProcessor extends MirrorWriterProcessor {
             }
             FileWriter fw;
             if(isODFFile) {
-                fw = new FileWriter(baseDir.getAbsolutePath() + "/ODFReport.txt");
-                fw.write(ODFCount.toString());
+                fw = new FileWriter(baseDir.getAbsolutePath() + "/ODFReport.txt", true);
+                fw.write(crawlURI.toString());
             }
             else {
                 fw = new FileWriter(baseDir.getAbsolutePath() + "/OfficeReport.txt", true);

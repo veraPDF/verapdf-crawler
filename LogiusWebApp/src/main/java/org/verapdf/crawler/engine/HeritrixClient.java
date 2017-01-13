@@ -17,7 +17,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContexts;
-import org.verapdf.crawler.api.ValidationStatistics;
+import org.verapdf.crawler.api.PDFValidationStatistics;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -140,14 +140,23 @@ public class HeritrixClient {
         post.releaseConnection();
     }
 
-    public String getPDFReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    public String getValidPDFReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
         HttpGet get = new HttpGet(baseUrl + "engine/job/" + job);
         String status = getResponseAsString(httpClient.execute(get));
         get.releaseConnection();
         String result = getBetweenStrings(status, "<h3>Crawl Log <a href=\"", "?format=paged");
         result = baseUrl + result;
-        result = result.replace("logs/crawl.log","mirror/PDFReport.txt");
+        result = result.replace("logs/crawl.log","mirror/Valid_PDF_Report.txt");
+        result = result.replace("//engine", "/engine");
         return result;
+    }
+
+    public String getInvalidPDFReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        return getValidPDFReportUri(job).replace("Valid_PDF_Report.txt","Invalid_PDF_Report.txt");
+    }
+
+    public String getInvalidPDFReport(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        return getLogFileByURL(getInvalidPDFReportUri(job));
     }
 
     public boolean isJobFinished(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
@@ -201,42 +210,37 @@ public class HeritrixClient {
         return targetfileName;
     }
 
-    public ValidationStatistics getValidationStatistics(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        int numberOfPDFs = 0, numberOfValidPDFs = 0;
+    public PDFValidationStatistics getValidationStatistics(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        int numberOfInvalidPDFs = 0, numberOfValidPDFs = 0;
         try {
-            Scanner sc = new Scanner(getLogFileByURL(getPDFReportUri(job)));
-            while(sc.hasNext()) {
-                sc.next(); // Read uri from the beginning of line
-                String line = sc.next();
-                if(isReportLineAValidPdf(line)) {
-                    numberOfValidPDFs++;
-                }
-                numberOfPDFs ++;
-            }
+            numberOfValidPDFs = getNumberOfLines(getLogFileByURL(getValidPDFReportUri(job)));
+            numberOfInvalidPDFs = getNumberOfLines(getLogFileByURL(getInvalidPDFReportUri(job)));
         }
         catch (IOException e) {
-            return new ValidationStatistics(0,0);
+            return new PDFValidationStatistics(0,0, getInvalidPDFReportUri(job));
         }
 
-        return new ValidationStatistics(numberOfPDFs, numberOfValidPDFs);
+        return new PDFValidationStatistics(numberOfInvalidPDFs, numberOfValidPDFs, getInvalidPDFReportUri(job));
+    }
+
+    public String getODFReport(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        return getLogFileByURL(getODFReportUri(job));
     }
 
     public Integer getODFFileCount(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        return Integer.parseInt(getLogFileByURL(getODFReportUri(job)));
+        return getNumberOfLines(getODFReport(job));
     }
 
     public String getOfficeReport(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
         return getLogFileByURL(getOfficeReportUri(job));
     }
 
+    public String getOfficeReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        return getValidPDFReportUri(job).replace("Valid_PDF_Report.txt", "OfficeReport.txt");
+    }
+
     public Integer getOfficeFileCount(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        Scanner sc = new Scanner(getOfficeReport(job));
-        Integer result = 0;
-        while(sc.hasNext()) {
-            sc.nextLine();
-            result++;
-        }
-        return result;
+        return getNumberOfLines(getOfficeReport(job));
     }
 
     //<editor-fold desc="Private helpers">
@@ -301,16 +305,18 @@ public class HeritrixClient {
         return result.toString();
     }
 
-    private boolean isReportLineAValidPdf(String line) {
-        return line.equals("true");
-    }
-
     private String getODFReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        return getPDFReportUri(job).replace("PDFReport.txt", "ODFReport.txt");
+        return getValidPDFReportUri(job).replace("Valid_PDF_Report.txt", "ODFReport.txt");
     }
 
-    private String getOfficeReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        return getPDFReportUri(job).replace("PDFReport.txt", "OfficeReport.txt");
+    private Integer getNumberOfLines(String report) {
+        Scanner sc = new Scanner(report);
+        Integer result = 0;
+        while(sc.hasNext()) {
+            sc.nextLine();
+            result++;
+        }
+        return result;
     }
 
     //</editor-fold>

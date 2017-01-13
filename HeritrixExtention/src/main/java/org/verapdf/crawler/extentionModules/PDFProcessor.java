@@ -30,11 +30,21 @@ public class PDFProcessor extends MirrorWriterProcessor {
         String mps = (String)curi.getData().get(A_MIRROR_PATH);
         try {
             ProcessorResult res = processor.process(new File(baseDir + File.separator + mps));
-            FileWriter fw = new FileWriter(baseDir + File.separator + "PDFReport.txt", true);
+            FileWriter fw;
             Boolean isValid = res.getResultForTask(TaskType.VALIDATE).isExecuted() &&
                     res.getResultForTask(TaskType.VALIDATE).isSuccess();
             isValid = isValid && res.getValidationResult().isCompliant();
-            fw.write(curi.getURI() + " " + isValid.toString() + " \n");
+            if(isValid) {
+                fw = new FileWriter(baseDir + File.separator + "Valid_PDF_Report.txt", true);
+                fw.write(curi.getURI() + ", ");
+                fw.write(res.getValidationResult().getPDFAFlavour().toString());
+                fw.write(System.lineSeparator());
+            }
+            else {
+                fw = new FileWriter(baseDir + File.separator + "Invalid_PDF_Report.txt", true);
+                fw.write(curi.getURI());
+                fw.write(System.lineSeparator());
+            }
             fw.close();
         } catch (IOException e) {
             e.printStackTrace();

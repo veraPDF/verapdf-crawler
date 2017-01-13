@@ -3,7 +3,7 @@ package org.verapdf.crawler.resources;
 import com.codahale.metrics.annotation.Timed;
 import org.verapdf.crawler.api.Domain;
 import org.verapdf.crawler.api.EmailServer;
-import org.verapdf.crawler.api.JobSingleUrl;
+import org.verapdf.crawler.api.SingleURLJobReport;
 import org.verapdf.crawler.engine.HeritrixClient;
 
 import javax.ws.rs.*;
@@ -22,7 +22,7 @@ public class CrawlJobResourceStub extends CrawlJobResource {
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
     @Override
-    public JobSingleUrl startJob(Domain domain) {
+    public SingleURLJobReport startJob(Domain domain) {
         numberOfCrawledUrls = 0;
         ArrayList<String> list = new ArrayList<>();
         list.add(domain.getDomain());
@@ -31,13 +31,13 @@ public class CrawlJobResourceStub extends CrawlJobResource {
         String jobStatus = "Active: PREPARING";
         currentJobs.put(job, domain.getDomain());
 
-        return new JobSingleUrl(job, domain.getDomain(), jobStatus, 0, null);
+        return new SingleURLJobReport(job, domain.getDomain(), jobStatus, 0);
     }
 
     @GET
     @Timed
     @Path("/{job}")
-    public JobSingleUrl getJob(@PathParam("job") String job) {
+    public SingleURLJobReport getJob(@PathParam("job") String job) {
         String jobStatus = "";
         String domain = "";
         String reportUrl = null;
@@ -50,7 +50,6 @@ public class CrawlJobResourceStub extends CrawlJobResource {
         else if(numberOfCrawledUrls == 6) {
             reportUrl = "";
         }
-        return new JobSingleUrl(job, domain, jobStatus, numberOfCrawledUrls
-                , reportUrl);
+        return new SingleURLJobReport(job, domain, jobStatus, numberOfCrawledUrls);
     }
 }

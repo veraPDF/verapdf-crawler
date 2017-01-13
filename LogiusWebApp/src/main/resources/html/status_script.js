@@ -14,18 +14,13 @@ function checkStatus() {
             if(undefined != number)
                 $("#number_of_crawled_urls").text(number + " urls crawled.");
 
-            valid = result.statistics.numberOfValidPDFs;
-            total = result.statistics.numberOfPDFs;
+            valid = result.pdfStatistics.numberOfValidPDFs;
+            total = result.pdfStatistics.numberOfInvalidPDFs +
+            result.pdfStatistics.numberOfValidPDFs;
             $("#valid").text(valid);
             $("#total").text(total);
-            if(status.substring(0, 8) == "Finished") {
-                $("#report_link").text(result.reportUrl);
-                $("#report_link").html("<a href=\"" + result.reportUrl + "\">Crawl log</a>");
-            }
-            else {
-                $("#report_link").text("");
+            if(status.substring(0, 8) != "Finished")
                 setTimeout(checkStatus, 1000);
-            }
 	    }
 	});
 }
