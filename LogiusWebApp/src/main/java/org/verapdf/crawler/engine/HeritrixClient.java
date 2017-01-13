@@ -140,29 +140,6 @@ public class HeritrixClient {
         post.releaseConnection();
     }
 
-    public String getValidPDFReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        HttpGet get = new HttpGet(baseUrl + "engine/job/" + job);
-        String status = getResponseAsString(httpClient.execute(get));
-        get.releaseConnection();
-        String result = getBetweenStrings(status, "<h3>Crawl Log <a href=\"", "?format=paged");
-        result = baseUrl + result;
-        result = result.replace("logs/crawl.log","mirror/Valid_PDF_Report.txt");
-        result = result.replace("//engine", "/engine");
-        return result;
-    }
-
-    public String getInvalidPDFReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        return getValidPDFReportUri(job).replace("Valid_PDF_Report.txt","Invalid_PDF_Report.txt");
-    }
-
-    public String getInvalidPDFReport(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        return getLogFileByURL(getInvalidPDFReportUri(job));
-    }
-
-    public boolean isJobFinished(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
-        return getCurrentJobStatus(job).startsWith("Finished");
-    }
-
     public String getCurrentJobStatus(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
         String status = getFullStatus(job);
 
@@ -210,37 +187,15 @@ public class HeritrixClient {
         return targetfileName;
     }
 
-    public PDFValidationStatistics getValidationStatistics(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        int numberOfInvalidPDFs = 0, numberOfValidPDFs = 0;
-        try {
-            numberOfValidPDFs = getNumberOfLines(getLogFileByURL(getValidPDFReportUri(job)));
-            numberOfInvalidPDFs = getNumberOfLines(getLogFileByURL(getInvalidPDFReportUri(job)));
-        }
-        catch (IOException e) {
-            return new PDFValidationStatistics(0,0, getInvalidPDFReportUri(job));
-        }
-
-        return new PDFValidationStatistics(numberOfInvalidPDFs, numberOfValidPDFs, getInvalidPDFReportUri(job));
-    }
-
-    public String getODFReport(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        return getLogFileByURL(getODFReportUri(job));
-    }
-
-    public Integer getODFFileCount(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        return getNumberOfLines(getODFReport(job));
-    }
-
-    public String getOfficeReport(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        return getLogFileByURL(getOfficeReportUri(job));
-    }
-
-    public String getOfficeReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        return getValidPDFReportUri(job).replace("Valid_PDF_Report.txt", "OfficeReport.txt");
-    }
-
-    public Integer getOfficeFileCount(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        return getNumberOfLines(getOfficeReport(job));
+    public String getValidPDFReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        HttpGet get = new HttpGet(baseUrl + "engine/job/" + job);
+        String status = getResponseAsString(httpClient.execute(get));
+        get.releaseConnection();
+        String result = getBetweenStrings(status, "<h3>Crawl Log <a href=\"", "?format=paged");
+        result = baseUrl + result;
+        result = result.replace("logs/crawl.log","mirror/Valid_PDF_Report.txt");
+        result = result.replace("//engine", "/engine");
+        return result;
     }
 
     //<editor-fold desc="Private helpers">
@@ -291,7 +246,7 @@ public class HeritrixClient {
         return result;
     }
 
-    private String getLogFileByURL(String url) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    public String getLogFileByURL(String url) throws NoSuchAlgorithmException, IOException, KeyManagementException {
         HttpGet get = new HttpGet(url);
         InputStream response = httpClient.execute(get).getEntity().getContent();
         Scanner sc = new Scanner(response);
@@ -303,20 +258,6 @@ public class HeritrixClient {
         if(result.toString().contains("The page you are looking for does not exist"))
             return "";
         return result.toString();
-    }
-
-    private String getODFReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        return getValidPDFReportUri(job).replace("Valid_PDF_Report.txt", "ODFReport.txt");
-    }
-
-    private Integer getNumberOfLines(String report) {
-        Scanner sc = new Scanner(report);
-        Integer result = 0;
-        while(sc.hasNext()) {
-            sc.nextLine();
-            result++;
-        }
-        return result;
     }
 
     //</editor-fold>

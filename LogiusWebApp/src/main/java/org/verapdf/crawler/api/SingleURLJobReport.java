@@ -1,5 +1,6 @@
 package org.verapdf.crawler.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -10,9 +11,12 @@ public class SingleURLJobReport {
     private int numberOfCrawledUrls;
     private PDFValidationStatistics pdfStatistics;
 
-    private Integer numberOfODFDocuments;
-    private Integer numberOfOfficeDocuments;
+    private int numberOfODFDocuments;
+    private int numberOfOfficeDocuments;
     private String officeReportURL;
+
+    @JsonIgnore
+    public String officeReport;
 
     public SingleURLJobReport() {
         // Jackson deserialization

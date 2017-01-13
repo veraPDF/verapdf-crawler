@@ -10,3 +10,4 @@ org/verapdf/crawler/api/EmailServer.class
 org/verapdf/crawler/api/EmailAddress.class
 org/verapdf/crawler/resources/CrawlJobResource.class
 org/verapdf/crawler/engine/HeritrixClient.class
+org/verapdf/crawler/engine/HeritrixReporter.class
