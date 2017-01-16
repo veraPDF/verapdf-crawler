@@ -38,7 +38,7 @@ public class CrawlJobResource {
         currentJobs = new HashMap<>();
         inactiveJobs = new ArrayList<>();
         reporter = new HeritrixReporter(client);
-    }
+        }
 
     public String getreportEmail() {
         return reportToEmail;
@@ -48,6 +48,7 @@ public class CrawlJobResource {
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
     public SingleURLJobReport startJob(Domain domain) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
+
         String jobURL = getExistingJobURLbyCrawlURL(domain.getDomain());
         String job = UUID.randomUUID().toString();
         if(jobURL.equals("")) { // Brand new URL
@@ -61,7 +62,7 @@ public class CrawlJobResource {
             currentJobs.put(job, domain.getDomain());
 
             jobURL = client.getValidPDFReportUri(job).replace("mirror/Valid_PDF_Report.txt","");
-            FileWriter writer = new FileWriter("src/main/resources/crawled_urls.txt", true);
+            FileWriter writer = new FileWriter(client.baseDirectory + "/src/main/resources/crawled_urls.txt", true);
             writer.write(domain.getDomain() + " " + jobURL);
             writer.write(System.lineSeparator());
             writer.close();
@@ -146,7 +147,7 @@ public class CrawlJobResource {
 
     // Return empty string if not found
     private String getExistingJobURLbyCrawlURL(String URL) throws FileNotFoundException {
-        Scanner scanner = new Scanner(new File("src/main/resources/crawled_urls.txt"));
+        Scanner scanner = new Scanner(new File(client.baseDirectory + "/src/main/resources/crawled_urls.txt"));
         while(scanner.hasNext()) {
             if(URL.equals(scanner.next())) {
                 return scanner.next();

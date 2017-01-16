@@ -5,7 +5,13 @@ import org.verapdf.crawler.app.LogiusWebApplication;
 import org.verapdf.crawler.configuration.LogiusConfiguration;
 import org.verapdf.crawler.engine.HeritrixClient;
 
+import java.io.File;
+
 public class LogiusWebApplicationStub extends LogiusWebApplication{
+    public String getBaseDirectory() {
+        return  new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile().getParent();
+    }
+
     @Override
     public void run(LogiusConfiguration configuration,
                     Environment environment) {

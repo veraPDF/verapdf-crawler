@@ -15,7 +15,8 @@ public class TestCeawlJobResource {
     @BeforeClass
     public static void initialize() throws Exception {
         application = new LogiusWebApplicationStub();
-        String[] args = new String[]{"server","src/test/resources/config.yml"};
+        String[] args = new String[]{"server", ((LogiusWebApplicationStub)application).getBaseDirectory() +
+                "/src/test/resources/config.yml"};
         application.run(args);
     }
 

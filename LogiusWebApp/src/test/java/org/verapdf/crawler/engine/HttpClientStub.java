@@ -31,6 +31,12 @@ public class HttpClientStub implements HttpClient{
 
     private HashMap<String, List<String>> crawlUrls = new HashMap<>();
     private HashMap<String,Integer> jobProgress = new HashMap<>();
+    private String baseDirectory;
+
+    public HttpClientStub() {
+        super();
+        baseDirectory = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile().getParent();
+    }
 
     @Override
     public HttpResponse execute(HttpUriRequest request) throws IOException {
@@ -66,7 +72,7 @@ public class HttpClientStub implements HttpClient{
                 String job = getJobFromRequest(get);
                 String filename = HeritrixClient.createCrawlConfiguration(job,
                         crawlUrls.get(job),
-                        "src/test/resources/" + job + "_configuration.cxml");
+                        baseDirectory + "/src/test/resources/" + job + "_configuration.cxml");
                 HttpResponse response = new BasicHttpResponse(new BasicStatusLine(new HttpVersion(1,1),200,"OK"));
                 response.setEntity(new FileEntity(new File(filename)));
                 return response;

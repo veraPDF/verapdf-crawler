@@ -44,6 +44,7 @@ import java.util.Scanner;
 
 public class HeritrixClient {
 
+    public static String baseDirectory;
     private String baseUrl;
     private HttpClient httpClient;
 
@@ -61,6 +62,7 @@ public class HeritrixClient {
                 .setSSLSocketFactory(new SSLConnectionSocketFactory(SSLContexts.custom()
                         .loadTrustMaterial(null, (x509Certificates, s) -> true)
                         .build(), (s, sslSession) -> true)).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).setDefaultCredentialsProvider(credsProvider).build();
+        baseDirectory = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile().getParent();
     }
 
     public void setHttpClient(HttpClient httpClient) {
@@ -117,7 +119,7 @@ public class HeritrixClient {
         httpClient.execute(post);
         post.releaseConnection();
 
-        String configurationFile = createCrawlConfiguration(job, crawlUrls, "src/main/resources/" + job + "_configuration.cxml");
+        String configurationFile = createCrawlConfiguration(job, crawlUrls, baseDirectory + "/src/main/resources/" + job + "_configuration.cxml");
         submitConfigFile(job, configurationFile);
         new File(configurationFile).delete();
 
@@ -177,8 +179,7 @@ public class HeritrixClient {
             sb.append(url + " ");
         }
 
-        File source = new File("src/main/resources/sample_configuration.cxml");
-        //File destination = new File("src/main/resources/" + job + "_configuration.cxml");
+        File source = new File(baseDirectory + "/src/main/resources/sample_configuration.cxml");
         File destination = new File(targetfileName);
         Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
