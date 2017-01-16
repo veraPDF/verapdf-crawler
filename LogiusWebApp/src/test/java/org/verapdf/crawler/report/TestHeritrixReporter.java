@@ -53,14 +53,14 @@ public class TestHeritrixReporter {
 
     @Test
     public void testHtmlReport() throws IOException, SAXException, NoSuchAlgorithmException, ParserConfigurationException, KeyManagementException {
-        String htmlReport = reporter.buildHtmlReport("report", report);
+        String htmlReport = reporter.buildHtmlReport(report);
         String correctValue = "<p>Valid PDF files 5</p><p>ODF files 2</p><p><font color=\"green\">Total 7</font></p><p>Invalid PDF files 3</p><p>Microsoft Office files 4</p><p><font color=\"red\">Total 7</font></p><p><a href=\"https://localhost:8443/engine/anypath/jobs/test/20161224163617/mirror/Invalid_PDF_Report.txt\">Invalid PDF URLs</a></p><p><a href=\"https://localhost:8443/engine/anypath/jobs/test/20161224163617/mirror/OfficeReport.txt\">Microsoft Office files URLs</a></p>";
         Assert.assertEquals(correctValue, htmlReport);
     }
 
     @Test
     public void testGetReport() throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
-        File ODSReport = reporter.buildODSReport("report",report);
+        File ODSReport = reporter.buildODSReport(report);
         Sheet sheet1 = SpreadSheet.createFromFile(ODSReport).getSheet(0);
         Assert.assertEquals("Valid PDF files", sheet1.getValueAt(0, 0));
         Assert.assertEquals("Invalid PDF files", sheet1.getValueAt(0, 3));

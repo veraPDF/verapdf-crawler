@@ -38,7 +38,26 @@ public class HeritrixReporter {
         return result;
     }
 
-    public File buildODSReport(String job, SingleURLJobReport reportData) throws IOException, KeyManagementException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
+    public SingleURLJobReport getReport(String job, String jobURL) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        String config = client.getLogFileByURL(jobURL + "sample_configuration.cxml");
+        if(config.equals("")) {
+            config = client.getLogFileByURL(jobURL + "crawler-beans.cxml");
+        }
+        SingleURLJobReport result = new SingleURLJobReport(job,
+                HeritrixClient.getListOfCrawlUrlsFromXml(config).get(0),
+                "Finished",
+                getNumberOfLines(client.getLogFileByURL(jobURL + "logs/crawl-log")));
+        result.setPdfStatistics(getValidationStatistics(job,
+                jobURL + "mirror/Invalid_PDF_Report.txt",
+                jobURL + "mirror/Valid_PDF_Report.txt"));
+        result.setNumberOfODFDocuments(getNumberOfLines(client.getLogFileByURL(jobURL + "mirror/ODFReport.txt")));
+        result.officeReport = client.getLogFileByURL(jobURL + "mirror/OfficeReport.txt");
+        result.setNumberOfOfficeDocuments(getNumberOfLines(result.officeReport));
+        result.setOfficeReportURL(jobURL + "mirror/OfficeReport.txt");
+        return result;
+    }
+
+    public File buildODSReport(SingleURLJobReport reportData) throws IOException, KeyManagementException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
         File file = new File("src/main/resources/sample_report.ods");
         final Sheet totalSheet = SpreadSheet.createFromFile(file).getSheet(0);
         totalSheet.ensureColumnCount(2);
@@ -57,15 +76,19 @@ public class HeritrixReporter {
 
         File ODSReport = new File("src/main/resources/report.ods");
         return ODSReport;
-
     }
 
     public File buildODSReport(String job) throws IOException, KeyManagementException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
         SingleURLJobReport reportData = getReport(job);
-        return buildODSReport(job, reportData);
+        return buildODSReport(reportData);
     }
 
-    public String buildHtmlReport(String job, SingleURLJobReport reportData) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
+    public File buildODSReport(String job, String jobURL) throws IOException, KeyManagementException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
+        SingleURLJobReport reportData = getReport(job, jobURL);
+        return buildODSReport(reportData);
+    }
+
+    public String buildHtmlReport(SingleURLJobReport reportData) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
         StringBuilder builder = new StringBuilder();
         builder.append("<p>Valid PDF files ");
         builder.append(reportData.getPdfStatistics().getNumberOfValidPDFs());
@@ -100,7 +123,12 @@ public class HeritrixReporter {
 
     public String buildHtmlReport(String job) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
         SingleURLJobReport reportData = getReport(job);
-        return buildHtmlReport(job, reportData);
+        return buildHtmlReport(reportData);
+    }
+
+    public String buildHtmlReport(String job, String jobURL) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
+        SingleURLJobReport reportData = getReport(job, jobURL);
+        return buildHtmlReport(reportData);
     }
 
     private String getInvalidPDFReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
@@ -112,16 +140,20 @@ public class HeritrixReporter {
     }
 
     private PDFValidationStatistics getValidationStatistics(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        return getValidationStatistics(job, getInvalidPDFReportUri(job), client.getValidPDFReportUri(job));
+    }
+
+    private PDFValidationStatistics getValidationStatistics(String job, String invalidReport, String validReport) throws NoSuchAlgorithmException, IOException, KeyManagementException {
         int numberOfInvalidPDFs = 0, numberOfValidPDFs = 0;
-        String invalidPDFReport = client.getLogFileByURL(getInvalidPDFReportUri(job));
+        String invalidPDFReport = client.getLogFileByURL(invalidReport);
         try {
-            numberOfValidPDFs = getNumberOfLines(client.getLogFileByURL(client.getValidPDFReportUri(job)));
+            numberOfValidPDFs = getNumberOfLines(client.getLogFileByURL(validReport));
             numberOfInvalidPDFs = getNumberOfLines(invalidPDFReport);
         }
         catch (IOException e) {
-            return new PDFValidationStatistics(0,0, getInvalidPDFReportUri(job));
+            return new PDFValidationStatistics(0,0, invalidReport);
         }
-        PDFValidationStatistics result = new PDFValidationStatistics(numberOfInvalidPDFs, numberOfValidPDFs, getInvalidPDFReportUri(job));
+        PDFValidationStatistics result = new PDFValidationStatistics(numberOfInvalidPDFs, numberOfValidPDFs, invalidReport);
         result.invalidPDFReport = invalidPDFReport;
         return result;
     }
