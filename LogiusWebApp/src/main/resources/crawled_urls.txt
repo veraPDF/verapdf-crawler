@@ -1,1 +1,0 @@
-http://localhost:8080 https://localhost:8443/engine/anypath//home/anton/Documents/heritrix-3.2.0/./jobs/e0f30038-cb30-4670-9c0e-45099e30413c/20170116142830/

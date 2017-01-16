@@ -1,6 +1,5 @@
 package org.verapdf.crawler.report;
 
-import org.jopendocument.dom.OOUtils;
 import org.jopendocument.dom.spreadsheet.Sheet;
 import org.jopendocument.dom.spreadsheet.SpreadSheet;
 import org.verapdf.crawler.api.PDFValidationStatistics;
@@ -75,6 +74,7 @@ public class HeritrixReporter {
         setLinesInSheet(spreadSheet.getSheet(2), reportData.getPdfStatistics().invalidPDFReport);
 
         File ODSReport = new File(client.baseDirectory + "/src/main/resources/report.ods");
+        totalSheet.getSpreadSheet().saveAs(ODSReport);
         return ODSReport;
     }
 

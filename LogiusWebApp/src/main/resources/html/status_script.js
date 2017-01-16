@@ -21,8 +21,13 @@ function checkStatus() {
             $("#total").text(total);
             if(status.substring(0, 8) != "Finished")
                 setTimeout(checkStatus, 1000);
+            else {
+                $("#ods_report").text("Report in ODT format");
+                $("#ods_report").attr("href", URL + "ods_report/" + jobId);
+                $("#html_report").text("Report in HTML format");
+                $("#html_report").attr("href", URL + "html_report/" + jobId);
+            }
 	    }
 	});
 }
 window.onload = checkStatus;
-//$(document).ready(checkStatus());
