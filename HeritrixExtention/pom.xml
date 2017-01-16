@@ -27,6 +27,7 @@
     <properties>
         <verapdf.pdfbox.validation.version>[0.28.0,0.29.0)</verapdf.pdfbox.validation.version>
         <verapdf.library.version>[0.28.0,0.29.0)</verapdf.library.version>
+        <verapdf.apps.version>[0.28.0,0.29.0)</verapdf.apps.version>
     </properties>
     <dependencies>
 
@@ -45,6 +46,11 @@
         <dependency>
             <groupId>org.verapdf</groupId>
             <artifactId>pdfbox-validation-model</artifactId>
+            <version>${verapdf.pdfbox.validation.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.verapdf</groupId>
+            <artifactId>verapdf-apps</artifactId>
             <version>${verapdf.pdfbox.validation.version}</version>
         </dependency>
     </dependencies>
