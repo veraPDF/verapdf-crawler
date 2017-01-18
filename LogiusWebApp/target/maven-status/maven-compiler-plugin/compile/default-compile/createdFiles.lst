@@ -4,8 +4,8 @@ org/verapdf/crawler/api/PDFValidationStatistics.class
 org/verapdf/crawler/api/EmailServer.class
 org/verapdf/crawler/resources/CrawlJobResource.class
 org/verapdf/crawler/engine/HeritrixClient.class
-org/verapdf/crawler/api/InactiveJob.class
 org/verapdf/crawler/report/HeritrixReporter.class
+org/verapdf/crawler/api/CurrentJob.class
 org/verapdf/crawler/resources/Main.class
 org/verapdf/crawler/helpers/emailUtils/GMailAuthenticator.class
 org/verapdf/crawler/helpers/emailUtils/SendEmail.class

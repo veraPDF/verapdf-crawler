@@ -48,11 +48,6 @@
             <artifactId>pdfbox-validation-model</artifactId>
             <version>${verapdf.pdfbox.validation.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.verapdf</groupId>
-            <artifactId>verapdf-apps</artifactId>
-            <version>${verapdf.pdfbox.validation.version}</version>
-        </dependency>
     </dependencies>
 
     <build>

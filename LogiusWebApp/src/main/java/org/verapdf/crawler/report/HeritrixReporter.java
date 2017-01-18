@@ -112,10 +112,10 @@ public class HeritrixReporter {
                 reportData.getPdfStatistics().getNumberOfInvalidPDFs());
         builder.append("</font></p>");
         builder.append("<p><a href=\"");
-        builder.append(reportData.getPdfStatistics().getInvalidPDFReportURL());
+        builder.append("INVALID_PDF_REPORT");
         builder.append("\">Invalid PDF URLs</a></p>");
         builder.append("<p><a href=\"");
-        builder.append(reportData.getOfficeReportURL());
+        builder.append("OFFICE_REPORT");
         builder.append("\">Microsoft Office files URLs</a></p>");
 
         return builder.toString();
@@ -135,8 +135,12 @@ public class HeritrixReporter {
         return client.getValidPDFReportUri(job).replace("Valid_PDF_Report.txt","Invalid_PDF_Report.txt");
     }
 
-    private String getInvalidPDFReport(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    public String getInvalidPDFReport(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
         return client.getLogFileByURL(getInvalidPDFReportUri(job));
+    }
+
+    public String getInvalidPDFReport(String job, String jobURL) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        return client.getLogFileByURL(jobURL + "mirror/Invalid_PDF_Report.txt");
     }
 
     private PDFValidationStatistics getValidationStatistics(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
@@ -166,8 +170,12 @@ public class HeritrixReporter {
         return getNumberOfLines(getODFReport(job));
     }
 
-    private String getOfficeReport(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    public String getOfficeReport(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
         return client.getLogFileByURL(getOfficeReportUri(job));
+    }
+
+    public String getOfficeReport(String job, String jobURL) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+        return client.getLogFileByURL(jobURL + "mirror/OfficeReport.txt");
     }
 
     private String getOfficeReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {

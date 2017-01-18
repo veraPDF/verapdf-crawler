@@ -18,7 +18,8 @@ function main() {
         async:false,
         headers: {"Content-type":"application/json"}, data:postData,
         success: function(result){
-            appendCrawlJob(result.id, result.url);
+            //appendCrawlJob(result.id, result.url);
+            loadAllJobs()
         }
     });
 }
@@ -38,6 +39,7 @@ function loadAllJobs() {
     $.ajax({url: URL + "list",
             type:"GET",
             success: function(result){
+                $("#crawl_url_list").empty();
                 for(var key in result) {
                     if(result.hasOwnProperty(key)) {
                         appendCrawlJob(key, result[key]);

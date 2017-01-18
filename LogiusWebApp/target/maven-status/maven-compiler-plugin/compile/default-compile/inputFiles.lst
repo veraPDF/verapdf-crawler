@@ -1,6 +1,6 @@
 /home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/api/Domain.java
 /home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/helpers/emailUtils/GMailAuthenticator.java
-/home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/api/InactiveJob.java
+/home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/api/CurrentJob.java
 /home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/api/PDFValidationStatistics.java
 /home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/engine/HeritrixClient.java
 /home/anton/Documents/Logius/LogiusWebApp/src/main/java/org/verapdf/crawler/api/EmailAddress.java

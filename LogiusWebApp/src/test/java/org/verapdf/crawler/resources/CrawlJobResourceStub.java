@@ -1,6 +1,7 @@
 package org.verapdf.crawler.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import org.verapdf.crawler.api.CurrentJob;
 import org.verapdf.crawler.api.Domain;
 import org.verapdf.crawler.api.EmailServer;
 import org.verapdf.crawler.api.SingleURLJobReport;
@@ -8,14 +9,16 @@ import org.verapdf.crawler.engine.HeritrixClient;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.UUID;
 
 public class CrawlJobResourceStub extends CrawlJobResource {
     private int numberOfCrawledUrls;
 
-    public CrawlJobResourceStub(HeritrixClient client, EmailServer emailServer) {
+    public CrawlJobResourceStub(HeritrixClient client, EmailServer emailServer) throws IOException {
         super(client, emailServer);
+        currentJobs.clear();
     }
 
     @POST
@@ -29,7 +32,7 @@ public class CrawlJobResourceStub extends CrawlJobResource {
 
         String job = UUID.randomUUID().toString();
         String jobStatus = "Active: PREPARING";
-        currentJobs.put(job, domain.getDomain());
+        currentJobs.add(new CurrentJob(job, "", domain.getDomain(), false));
 
         return new SingleURLJobReport(job, domain.getDomain(), jobStatus, 0);
     }
@@ -41,15 +44,23 @@ public class CrawlJobResourceStub extends CrawlJobResource {
         String jobStatus = "";
         String domain = "";
         String reportUrl = null;
-        if(currentJobs.containsKey(job) && numberOfCrawledUrls < 6)
+        if(!getCrawlUrlById(job).equals("") && numberOfCrawledUrls < 6)
         {
             jobStatus = "Active: RUNNING";
-            domain = currentJobs.get(job);
+            domain = getCrawlUrlById(job);
             numberOfCrawledUrls++;
         }
         else if(numberOfCrawledUrls == 6) {
             reportUrl = "";
         }
         return new SingleURLJobReport(job, domain, jobStatus, numberOfCrawledUrls);
+    }
+
+    private String getCrawlUrlById(String job) {
+        for(CurrentJob jobData : currentJobs) {
+            if(jobData.getId().equals(job))
+                return jobData.getCrawlURL();
+        }
+        return "";
     }
 }

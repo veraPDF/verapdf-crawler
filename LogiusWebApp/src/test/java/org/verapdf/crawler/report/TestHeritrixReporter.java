@@ -54,7 +54,7 @@ public class TestHeritrixReporter {
     @Test
     public void testHtmlReport() throws IOException, SAXException, NoSuchAlgorithmException, ParserConfigurationException, KeyManagementException {
         String htmlReport = reporter.buildHtmlReport(report);
-        String correctValue = "<p>Valid PDF files 5</p><p>ODF files 2</p><p><font color=\"green\">Total 7</font></p><p>Invalid PDF files 3</p><p>Microsoft Office files 4</p><p><font color=\"red\">Total 7</font></p><p><a href=\"https://localhost:8443/engine/anypath/jobs/test/20161224163617/mirror/Invalid_PDF_Report.txt\">Invalid PDF URLs</a></p><p><a href=\"https://localhost:8443/engine/anypath/jobs/test/20161224163617/mirror/OfficeReport.txt\">Microsoft Office files URLs</a></p>";
+        String correctValue = "<p>Valid PDF files 5</p><p>ODF files 2</p><p><font color=\"green\">Total 7</font></p><p>Invalid PDF files 3</p><p>Microsoft Office files 4</p><p><font color=\"red\">Total 7</font></p><p><a href=\"INVALID_PDF_REPORT\">Invalid PDF URLs</a></p><p><a href=\"OFFICE_REPORT\">Microsoft Office files URLs</a></p>";
         Assert.assertEquals(correctValue, htmlReport);
     }
 

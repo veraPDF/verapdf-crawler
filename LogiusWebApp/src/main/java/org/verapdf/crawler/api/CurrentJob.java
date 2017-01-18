@@ -1,14 +1,20 @@
 package org.verapdf.crawler.api;
 
-public class InactiveJob {
+public class CurrentJob {
     private String id;
     private String jobURL;
     private String crawlURL;
+    private boolean isActive;
 
-    public InactiveJob(String id, String jobURL, String crawlURL) {
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public CurrentJob(String id, String jobURL, String crawlURL, boolean isActive) {
         this.id = id;
         this.jobURL = jobURL;
         this.crawlURL = crawlURL;
+        this.isActive = isActive;
     }
 
     public String getId() {
