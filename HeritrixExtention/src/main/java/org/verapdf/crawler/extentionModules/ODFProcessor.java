@@ -42,13 +42,15 @@ public class ODFProcessor extends MirrorWriterProcessor {
             if(isODFFile) {
                 fw = new FileWriter(baseDir.getAbsolutePath() + "/ODFReport.txt", true);
                 fw.write(crawlURI.toString() + ", ");
+                fw.write(time);
+                fw.close();
             }
             else {
                 fw = new FileWriter(baseDir.getAbsolutePath() + "/OfficeReport.txt", true);
                 fw.write(crawlURI.toString() + ", ");
+                fw.write(time);
+                fw.close();
             }
-            fw.write(time);
-            fw.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
