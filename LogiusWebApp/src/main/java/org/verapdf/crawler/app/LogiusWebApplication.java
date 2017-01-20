@@ -32,7 +32,7 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
         final CrawlJobResource resource;
         try {
             resource = new CrawlJobResource(
-                    new HeritrixClient("https://localhost:8443/", 8443, "admin", "admin"),
+                    new HeritrixClient("https://localhost:8443/", 8443, "admin", "logius"),
                     configuration.getEmailServer()
             );
             environment.jersey().register(resource);

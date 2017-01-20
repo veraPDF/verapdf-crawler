@@ -19,7 +19,7 @@ public class LogiusWebApplicationStub extends LogiusWebApplication{
         final CrawlJobResourceStub resource;
         try {
             resource = new CrawlJobResourceStub(
-                    new HeritrixClient("https://localhost/", 8443, "admin", "admin"),
+                    new HeritrixClient("https://localhost/", 8443, "admin", "logius"),
                     configuration.getEmailServer()
             );
             environment.jersey().register(resource);

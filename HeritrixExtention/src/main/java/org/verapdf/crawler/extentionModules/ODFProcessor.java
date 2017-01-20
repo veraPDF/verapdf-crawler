@@ -29,6 +29,7 @@ public class ODFProcessor extends MirrorWriterProcessor {
 
     @Override
     protected void innerProcess(CrawlURI crawlURI) {
+        String time = crawlURI.getHttpMethod().getResponseHeader("Last-Modified").toString();
         boolean isODFFile = crawlURI.toString().endsWith(".odt") ||
                 crawlURI.toString().endsWith(".odc") ||
                 crawlURI.toString().endsWith(".odp");
@@ -40,12 +41,13 @@ public class ODFProcessor extends MirrorWriterProcessor {
             FileWriter fw;
             if(isODFFile) {
                 fw = new FileWriter(baseDir.getAbsolutePath() + "/ODFReport.txt", true);
-                fw.write(crawlURI.toString());
+                fw.write(crawlURI.toString() + ", ");
             }
             else {
                 fw = new FileWriter(baseDir.getAbsolutePath() + "/OfficeReport.txt", true);
-                fw.write(crawlURI.toString());
+                fw.write(crawlURI.toString() + ", ");
             }
+            fw.write(time);
             fw.write(System.lineSeparator());
             fw.close();
         } catch (IOException e) {

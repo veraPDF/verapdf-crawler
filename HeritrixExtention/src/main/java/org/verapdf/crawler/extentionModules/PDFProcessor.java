@@ -13,6 +13,8 @@ import org.verapdf.processor.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.EnumSet;
 
 public class PDFProcessor extends MirrorWriterProcessor {
@@ -29,6 +31,8 @@ public class PDFProcessor extends MirrorWriterProcessor {
         String baseDir = getPath().getFile().getAbsolutePath();
         String mps = (String)curi.getData().get(A_MIRROR_PATH);
         try {
+            String time = curi.getHttpMethod().getResponseHeader("Last-Modified").toString();
+
             ProcessorResult res = processor.process(new File(baseDir + File.separator + mps));
             FileWriter fw;
             Boolean isValid = res.getResultForTask(TaskType.VALIDATE).isExecuted() &&
@@ -37,14 +41,14 @@ public class PDFProcessor extends MirrorWriterProcessor {
             if(isValid) {
                 fw = new FileWriter(baseDir + File.separator + "Valid_PDF_Report.txt", true);
                 fw.write(curi.getURI() + ", ");
-                fw.write(res.getValidationResult().getPDFAFlavour().toString());
-                fw.write(System.lineSeparator());
+                fw.write(res.getValidationResult().getPDFAFlavour().toString() + ", ");
             }
             else {
                 fw = new FileWriter(baseDir + File.separator + "Invalid_PDF_Report.txt", true);
-                fw.write(curi.getURI());
-                fw.write(System.lineSeparator());
+                fw.write(curi.getURI() + ", ");
             }
+            fw.write(time);
+            fw.write(System.lineSeparator());
             fw.close();
         } catch (IOException e) {
             e.printStackTrace();

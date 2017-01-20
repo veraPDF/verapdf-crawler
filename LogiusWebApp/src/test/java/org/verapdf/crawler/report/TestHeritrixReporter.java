@@ -26,7 +26,7 @@ public class TestHeritrixReporter {
 
     @BeforeClass
     public static void initializeReport() throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, ParserConfigurationException, SAXException {
-        HeritrixClient client = new HeritrixClient("https://localhost:8443/",8443, "admin", "admin");
+        HeritrixClient client = new HeritrixClient("https://localhost:8443/",8443, "admin", "logius");
         client.setHttpClient(new HttpClientStub());
         ArrayList<String> list = new ArrayList<>();
         list.add("http://localhost:8080");

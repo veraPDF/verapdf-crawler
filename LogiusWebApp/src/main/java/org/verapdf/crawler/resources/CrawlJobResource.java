@@ -19,6 +19,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Produces(MediaType.APPLICATION_JSON)
@@ -48,29 +50,37 @@ public class CrawlJobResource {
     @POST
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
-    public SingleURLJobReport startJob(Domain domain) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
-
-        if(!isCurrentJob(domain.getDomain())) { // Brand new URL
+    public SingleURLJobReport startJob(StartJobData startJobData) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
+        if(!isCurrentJob(startJobData.getDomain())) { // Brand new URL
             ArrayList<String> list = new ArrayList<>();
-            list.add(domain.getDomain());
+            list.add(startJobData.getDomain());
 
             String job = UUID.randomUUID().toString();
             client.createJob(job, list);
             client.buildJob(job);
             client.launchJob(job);
             String jobStatus = client.getCurrentJobStatus(job);
-            currentJobs.add(new CurrentJob(job, "", domain.getDomain(), true));
+            if(startJobData.getDate() == null || startJobData.getDate().isEmpty()) {
+                currentJobs.add(new CurrentJob(job, "", startJobData.getDomain(), null));
+            }
+            else {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+                currentJobs.add(new CurrentJob(job, "", startJobData.getDomain(), LocalDateTime.parse(startJobData.getDate(), formatter)));
+            }
 
             String jobURL = client.getValidPDFReportUri(job).replace("mirror/Valid_PDF_Report.txt","");
             FileWriter writer = new FileWriter(client.baseDirectory + "/src/main/resources/crawled_urls.txt", true);
             CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT);
-            printer.printRecord(new String[] {job, domain.getDomain(), jobURL});
+            printer.printRecord(new String[] {job, startJobData.getDomain(), jobURL});
             writer.close();
 
-            return new SingleURLJobReport(job, domain.getDomain(), jobStatus, 0);
+            return new SingleURLJobReport(job, startJobData.getDomain(), jobStatus, 0);
         }
         else { // This URL has already been crawled
-            System.out.println("Was crawled");
+            if( startJobData.getDate() != null && !startJobData.getDate().isEmpty()) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+                getJobByCrawlUrl(startJobData.getDomain()).setCrawlSinceTime(LocalDateTime.parse(startJobData.getDate(), formatter));
+            }
             return new SingleURLJobReport("", "", "", 0);
         }
     }
@@ -107,10 +117,10 @@ public class CrawlJobResource {
     public SingleURLJobReport getJob(@PathParam("job") String job) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
         String jobURL = getExistingJobURLbyJobId(job);
         if(jobURL.equals("")){
-            return reporter.getReport(job);
+            return reporter.getReport(job, getTimeByJobId(job));
         }
         else {
-            return reporter.getReport(job, jobURL);
+            return reporter.getReport(job, jobURL, getTimeByJobId(job));
         }
     }
 
@@ -121,10 +131,10 @@ public class CrawlJobResource {
         String jobURL = getExistingJobURLbyJobId(job);
         File file;
         if(jobURL.equals("")){
-            file = reporter.buildODSReport(job);
+            file = reporter.buildODSReport(job, getTimeByJobId(job));
         }
         else {
-            file = reporter.buildODSReport(job, jobURL);
+            file = reporter.buildODSReport(job, jobURL, getTimeByJobId(job));
         }
         return Response.ok(file, MediaType.APPLICATION_OCTET_STREAM)
                 .header("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"" )
@@ -138,10 +148,10 @@ public class CrawlJobResource {
         String jobURL = getExistingJobURLbyJobId(job);
         String htmlReport;
         if(jobURL.equals("")){
-            htmlReport = reporter.buildHtmlReport(job);
+            htmlReport = reporter.buildHtmlReport(job, getTimeByJobId(job));
         }
         else {
-            htmlReport = reporter.buildHtmlReport(job, jobURL);
+            htmlReport = reporter.buildHtmlReport(job, jobURL, getTimeByJobId(job));
         }
         htmlReport = htmlReport.replace("INVALID_PDF_REPORT", uriInfo.getBaseUri().toString() + "invalid_pdf_list/" + job);
         htmlReport = htmlReport.replace("OFFICE_REPORT", uriInfo.getBaseUri().toString() + "office_list/" + job);
@@ -154,10 +164,10 @@ public class CrawlJobResource {
     public String getOfficeReport(@PathParam("job") String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
         String jobURL = getExistingJobURLbyJobId(job);
         if(jobURL.equals("")) {
-            return reporter.getOfficeReport(job);
+            return reporter.getOfficeReport(job, getTimeByJobId(job));
         }
         else{
-            return reporter.getOfficeReport(job, jobURL);
+            return reporter.getOfficeReport(job, jobURL, getTimeByJobId(job));
         }
     }
 
@@ -167,10 +177,10 @@ public class CrawlJobResource {
     public String getInvalidPdfReport(@PathParam("job") String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
         String jobURL = getExistingJobURLbyJobId(job);
         if(jobURL.equals("")) {
-            return reporter.getInvalidPDFReport(job);
+            return reporter.getInvalidPDFReport(job, getTimeByJobId(job));
         }
         else{
-            return reporter.getInvalidPDFReport(job, jobURL);
+            return reporter.getInvalidPDFReport(job, jobURL, getTimeByJobId(job));
         }
     }
 
@@ -198,7 +208,23 @@ public class CrawlJobResource {
             currentJobs.add(new CurrentJob(record.get("id"),
                     record.get("jobURL"),
                     record.get("crawlURL"),
-                    false));
+                    null));
         }
+    }
+
+    private CurrentJob getJobByCrawlUrl(String crawlUrl) {
+        for(CurrentJob jobData : currentJobs) {
+            if(jobData.getCrawlURL().equals(crawlUrl))
+                return jobData;
+        }
+        return null;
+    }
+
+    private LocalDateTime getTimeByJobId(String job) {
+        for(CurrentJob jobData : currentJobs) {
+            if(jobData.getId().equals(job))
+                return jobData.getCrawlSinceTime();
+        }
+        return null;
     }
 }

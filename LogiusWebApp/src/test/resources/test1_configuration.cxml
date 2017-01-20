@@ -249,7 +249,7 @@
     <!-- <bean id="fetchWhois" class="org.archive.modules.fetcher.FetchWhois">
           <property name="specialQueryTemplates">
            <map>
-            <entry key="whois.verisign-grs.com" value="domain %s" />
+            <entry key="whois.verisign-grs.com" value="startJobData %s" />
             <entry key="whois.arin.net" value="z + %s" />
             <entry key="whois.denic.de" value="-T dn %s" />
            </map>
