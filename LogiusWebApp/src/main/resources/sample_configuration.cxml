@@ -2,7 +2,7 @@
 <!--
   HERITRIX 3 CRAWL JOB CONFIGURATION FILE
 
-   This is a relatively minimal configuration suitable for many crawls.
+   This is a relatively minimal org.verapdf.crawler.configuration suitable for many crawls.
 
    Commented-out beans and properties are provided as an example; values
    shown in comments reflect the actual defaults which are in effect
@@ -23,19 +23,19 @@
 
     <!--
       OVERRIDES
-       Values elsewhere in the configuration may be replaced ('overridden')
+       Values elsewhere in the org.verapdf.crawler.configuration may be replaced ('overridden')
        by a Properties map declared in a PropertiesOverrideConfigurer,
        using a dotted-bean-path to address individual bean properties.
        This allows us to collect a few of the most-often changed values
        in an easy-to-edit format here at the beginning of the model
-       configuration.
+       org.verapdf.crawler.configuration.
      -->
     <!-- overrides from a text property list -->
     <bean id="simpleOverrides" class="org.springframework.beans.factory.config.PropertyOverrideConfigurer">
         <property name="properties">
             <value>
                 # This Properties map is specified in the Java 'property list' text format
-                # http://java.sun.com/javase/6/docs/api/java/util/Properties.html#load%28java.io.Reader%29
+                # http://java.sun.com/javase/6/docs/org.verapdf.crawler.api/java/util/Properties.html#load%28java.io.Reader%29
 
                 metadata.operatorContactUrl=******
                 metadata.jobName=basic
@@ -66,7 +66,7 @@
         <property name="operatorContactUrl" value="[see override above]"/>
         <property name="jobName" value="[see override above]"/>
         <property name="description" value="[see override above]"/>
-        <!-- <property name="robotsPolicyName" value="obey"/> -->
+        <property name="robotsPolicyName" value="ignore"/>
         <!-- <property name="operator" value=""/> -->
         <!-- <property name="operatorFrom" value=""/> -->
         <!-- <property name="organization" value=""/> -->
@@ -249,7 +249,7 @@
     <!-- <bean id="fetchWhois" class="org.archive.modules.fetcher.FetchWhois">
           <property name="specialQueryTemplates">
            <map>
-            <entry key="whois.verisign-grs.com" value="domain %s" />
+            <entry key="whois.verisign-grs.com" value="startJobData %s" />
             <entry key="whois.arin.net" value="z + %s" />
             <entry key="whois.denic.de" value="-T dn %s" />
            </map>
@@ -258,7 +258,7 @@
     <bean id="fetchHttp" class="org.archive.modules.fetcher.FetchHTTP">
         <!-- <property name="useHTTP11" value="false" /> -->
         <!-- <property name="maxLengthBytes" value="0" /> -->
-        <!-- <property name="timeoutSeconds" value="1200" /> -->
+        <property name="timeoutSeconds" value="60" />
         <!-- <property name="maxFetchKBSec" value="0" /> -->
         <!-- <property name="defaultEncoding" value="ISO-8859-1" /> -->
         <!-- <property name="shouldFetchBodyRule">
@@ -334,7 +334,7 @@
 
     <!-- DISPOSITION CHAIN -->
     <!-- first, processors are declared as top-level named beans  -->
-    <bean id="warcWriter" class="org.archive.modules.writer.MyProcessor">
+    <bean id="warcWriter" class="org.verapdf.crawler.extentionModules.PDFProcessor">
         <property name="shouldProcessRule">
             <bean class="org.archive.modules.deciderules.DecideRuleSequence">
                 <property name="rules">
@@ -345,6 +345,10 @@
                             <property name="decision" value="ACCEPT" />
                             <property name="regex" value="^application/pdf.*"/>
                         </bean>
+			<bean class="org.archive.modules.deciderules.MatchesRegexDecideRule">
+			    <property name="decision" value="ACCEPT"/>
+			    <property name="regex" value=".*\.pdf"/>
+			</bean>
                     </list>
                 </property>
             </bean>
@@ -370,6 +374,26 @@
         <!-- <property name="writeRevisitForNotModified" value="true" /> -->
         <!-- <property name="startNewFilesOnCheckpoint" value="true" /> -->
     </bean>
+    <bean id="odfProcessor" class="org.verapdf.crawler.extentionModules.ODFProcessor">
+        <property name="shouldProcessRule">
+            <bean class="org.archive.modules.deciderules.DecideRuleSequence">
+                <property name="rules">
+                    <list>
+                        <bean class="org.archive.modules.deciderules.AcceptDecideRule">
+                        </bean>
+                        <bean class="org.archive.modules.deciderules.ContentTypeMatchesRegexDecideRule">
+                            <property name="decision" value="REJECT" />
+                            <property name="regex" value="^application/pdf.*"/>
+                        </bean>
+                        <bean class="org.archive.modules.deciderules.MatchesRegexDecideRule">
+                            <property name="decision" value="REJECT"/>
+                            <property name="regex" value=".*\.pdf"/>
+                        </bean>
+                    </list>
+                </property>
+            </bean>
+        </property>
+    </bean>
     <bean id="candidates" class="org.archive.crawler.postprocessor.CandidatesProcessor">
         <!-- <property name="seedsRedirectNewSeeds" value="true" /> -->
         <!-- <property name="processErrorOutlinks" value="false" /> -->
@@ -377,7 +401,7 @@
     <bean id="disposition" class="org.archive.crawler.postprocessor.DispositionProcessor">
         <!-- <property name="delayFactor" value="5.0" /> -->
         <!-- <property name="minDelayMs" value="3000" /> -->
-        <!-- <property name="respectCrawlDelayUpToSeconds" value="300" /> -->
+        <property name="respectCrawlDelayUpToSeconds" value="60" />
         <!-- <property name="maxDelayMs" value="30000" /> -->
         <!-- <property name="maxPerHostBandwidthUsageKbSec" value="0" /> -->
     </bean>
@@ -390,6 +414,7 @@
             <list>
                 <!-- write to aggregate archival files... -->
                 <ref bean="warcWriter"/>
+                <ref bean="odfProcessor"/>
                 <!-- ...send each outlink candidate URI to CandidateChain,
                      and enqueue those ACCEPTed to the frontier... -->
                 <ref bean="candidates"/>
@@ -421,8 +446,8 @@
         <!-- <property name="queuePrecedencePolicy">
               <bean class="org.archive.crawler.frontier.precedence.BaseQueuePrecedencePolicy" />
              </property> -->
-        <!-- <property name="snoozeLongMs" value="300000" /> -->
-        <!-- <property name="retryDelaySeconds" value="900" /> -->
+        <property name="snoozeLongMs" value="60000" />
+        <property name="retryDelaySeconds" value="60" />
         <!-- <property name="maxRetries" value="30" /> -->
         <!-- <property name="recoveryLogEnabled" value="true" /> -->
         <!-- <property name="maxOutlinks" value="6000" /> -->
@@ -488,8 +513,8 @@
             <map>
                 <entry key='disposition.delayFactor' value='10'/>
                 <entry key='disposition.minDelayMs' value='10000'/>
-                <entry key='disposition.maxDelayMs' value='1000000'/>
-                <entry key='disposition.respectCrawlDelayUpToSeconds' value='3600'/>
+                <entry key='disposition.maxDelayMs' value='60000'/>
+                <entry key='disposition.respectCrawlDelayUpToSeconds' value='60'/>
             </map>
         </property>
     </bean>
@@ -665,7 +690,7 @@
         <!-- <property name="path" value="${launchId}/logs" /> -->
         <!-- <property name="crawlLogPath" value="crawl.log" /> -->
         <!-- <property name="alertsLogPath" value="alerts.log" /> -->
-        <!-- <property name="progressLogPath" value="progress-statistics.log" /> -->
+        <!-- <property name="progressLogPath" value="progress-pdfStatistics.log" /> -->
         <!-- <property name="uriErrorsLogPath" value="uri-errors.log" /> -->
         <!-- <property name="runtimeErrorsLogPath" value="runtime-errors.log" /> -->
         <!-- <property name="nonfatalErrorsLogPath" value="nonfatal-errors.log" /> -->
@@ -701,7 +726,7 @@
              </property> -->
     </bean>
 
-    <!-- SERVERCACHE: shared cache of server/host info -->
+    <!-- SERVERCACHE: shared cache of host/host info -->
     <bean id="serverCache"
           class="org.archive.modules.net.BdbServerCache">
         <!-- <property name="bdb">
