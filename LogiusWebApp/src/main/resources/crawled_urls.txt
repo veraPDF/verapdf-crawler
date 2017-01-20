@@ -1,2 +1,1 @@
 id,crawlURL,jobURL
-b83bca31-ed7a-4852-9f45-db07ac420c00,http://localhost:8080,https://localhost:8443/engine/anypath//home/anton/Documents/heritrix-3.2.0/./jobs/b83bca31-ed7a-4852-9f45-db07ac420c00/20170118145144/

@@ -48,7 +48,6 @@ public class PDFProcessor extends MirrorWriterProcessor {
                 fw.write(curi.getURI() + ", ");
             }
             fw.write(time);
-            fw.write(System.lineSeparator());
             fw.close();
         } catch (IOException e) {
             e.printStackTrace();

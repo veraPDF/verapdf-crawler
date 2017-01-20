@@ -48,7 +48,6 @@ public class ODFProcessor extends MirrorWriterProcessor {
                 fw.write(crawlURI.toString() + ", ");
             }
             fw.write(time);
-            fw.write(System.lineSeparator());
             fw.close();
         } catch (IOException e) {
             e.printStackTrace();

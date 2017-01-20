@@ -164,7 +164,7 @@ public class HeritrixReporter {
             return new PDFValidationStatistics(0,0, invalidReport);
         }
         PDFValidationStatistics result = new PDFValidationStatistics(numberOfInvalidPDFs, numberOfValidPDFs, invalidReport);
-        result.invalidPDFReport = invalidPDFReport;
+        result.invalidPDFReport = removeEarlyLines(invalidPDFReport, time);
         return result;
     }
 
@@ -225,7 +225,7 @@ public class HeritrixReporter {
         scanner.close();
     }
 
-    private String removeEarlyLines(String report, LocalDateTime time) {
+    public static String removeEarlyLines(String report, LocalDateTime time) {
         Scanner sc = new Scanner(report);
         StringBuilder builder = new StringBuilder();
         while(sc.hasNext()) {
