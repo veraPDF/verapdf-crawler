@@ -19,7 +19,9 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -65,11 +67,12 @@ public class CrawlJobResource {
             }
             else {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-                currentJobs.add(new CurrentJob(job, "", startJobData.getDomain(), LocalDateTime.parse(startJobData.getDate(), formatter)));
+                currentJobs.add(new CurrentJob(job, "", startJobData.getDomain(),
+                        LocalDateTime.of(LocalDate.parse(startJobData.getDate(), formatter), LocalTime.MIN)));
             }
 
             String jobURL = client.getValidPDFReportUri(job).replace("mirror/Valid_PDF_Report.txt","");
-            FileWriter writer = new FileWriter(client.baseDirectory + "/src/main/resources/crawled_urls.txt", true);
+            FileWriter writer = new FileWriter(client.baseDirectory + "crawled_urls.txt", true);
             CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT);
             printer.printRecord(new String[] {job, startJobData.getDomain(), jobURL});
             writer.close();
@@ -79,7 +82,8 @@ public class CrawlJobResource {
         else { // This URL has already been crawled
             if( startJobData.getDate() != null && !startJobData.getDate().isEmpty()) {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-                getJobByCrawlUrl(startJobData.getDomain()).setCrawlSinceTime(LocalDateTime.parse(startJobData.getDate(), formatter));
+                getJobByCrawlUrl(startJobData.getDomain()).setCrawlSinceTime(
+                        LocalDateTime.of(LocalDate.parse(startJobData.getDate(), formatter), LocalTime.MIN));
             }
             return new SingleURLJobReport("", "", "", 0);
         }
@@ -201,7 +205,7 @@ public class CrawlJobResource {
     }
 
     private void loadJobs() throws IOException {
-        FileReader reader = new FileReader(client.baseDirectory + "/src/main/resources/crawled_urls.txt");
+        FileReader reader = new FileReader(client.baseDirectory + "crawled_urls.txt");
         CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT.withHeader());
         List<CSVRecord> records = parser.getRecords();
         for(CSVRecord record : records) {

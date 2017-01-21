@@ -31,10 +31,12 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
         environment.jersey().setUrlPattern("/crawl-job/*");
         final CrawlJobResource resource;
         try {
-            resource = new CrawlJobResource(
-                    new HeritrixClient("https://localhost:8443/", 8443, "admin", "logius"),
-                    configuration.getEmailServer()
-            );
+            HeritrixClient client = new HeritrixClient("https://localhost:8443/",
+                    8443,
+                    configuration.getHeritrixLogin(),
+                    configuration.getHeritrixPassword());
+            client.setBaseDirectory(configuration.getResourcePath());
+            resource = new CrawlJobResource( client, configuration.getEmailServer());
             environment.jersey().register(resource);
         } catch (Exception e) {
             e.printStackTrace();

@@ -18,7 +18,7 @@ public class TestCeawlJobResource {
         String[] args = new String[]{"server", ((LogiusWebApplicationStub)application).getBaseDirectory() +
                 "/src/test/resources/config.yml"};
         application.run(args);
-    }
+        }
 
     @Test
     public void testStaticPages() throws IOException {

@@ -1,6 +1,21 @@
 var URL = "/crawl-job/";
 
 $(document).ready(function() {
+    var today = new Date();
+    var dd = today.getDate();
+    var mm = today.getMonth()+1;
+    var yyyy = today.getFullYear();
+
+    if(dd<10) {
+        dd='0'+dd
+    }
+
+    if(mm<10) {
+        mm='0'+mm
+    }
+
+    today = dd+'-'+mm+'-'+yyyy;
+    $("#date_input").val(today);
     $("input:button").click(main);
 });
 
@@ -12,14 +27,22 @@ function main() {
     $("#crawl_url").text("");
     var crawlUrlList = new Array(document.getElementById("urlinput").value);
     var status;
-    var postData = "{\"domain\":\"" + document.getElementById("urlinput").value + "\"}";
+    var postData = "{\"domain\":\"" + document.getElementById("urlinput").value +
+    "\", \"date\":\"" + document.getElementById("date_input").value + "\"}";
     $.ajax({url: URL,
         type:"POST",
         async:false,
         headers: {"Content-type":"application/json"}, data:postData,
         success: function(result){
-            //appendCrawlJob(result.id, result.url);
-            loadAllJobs()
+           loadAllJobs()
+        },
+        error: function(result) {
+            var ul = document.getElementById("crawl_url_list");
+            var li = document.createElement("li");
+            var link = document.createElement("p");
+            link.innerHTML = "<font color=\"red\">Error on job creation.</font>"
+            li.appendChild(link);
+            ul.appendChild(li);
         }
     });
 }
@@ -45,6 +68,14 @@ function loadAllJobs() {
                         appendCrawlJob(key, result[key]);
                     }
                 }
+            },
+            error: function(result) {
+                var ul = document.getElementById("crawl_url_list");
+                var li = document.createElement("li");
+                var link = document.createElement("p");
+                link.innerHTML = "<font color=\"red\">Error on job loading.</font>"
+                li.appendChild(link);
+                ul.appendChild(li);
             }
     });
 

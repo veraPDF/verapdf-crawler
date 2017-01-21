@@ -19,6 +19,8 @@ function checkStatus() {
             result.pdfStatistics.numberOfValidPDFs;
             $("#valid").text(valid);
             $("#total").text(total);
+            $("#odftotal").text(result.numberOfODFDocuments);
+            $("#office_total").text(result.numberOfOfficeDocuments);
             if(status.substring(0, 8) != "Finished")
                 setTimeout(checkStatus, 1000);
             else {
@@ -27,6 +29,11 @@ function checkStatus() {
                 $("#html_report").text("Report in HTML format");
                 $("#html_report").attr("href", URL + "html_report/" + jobId);
             }
+	    },
+	    error: function(result) {
+            $("#stats").html("<font color=\"red\">Error on getting job info.</font>")
+            $("#odfs").html("");
+            $("#office").html("");
 	    }
 	});
 }
