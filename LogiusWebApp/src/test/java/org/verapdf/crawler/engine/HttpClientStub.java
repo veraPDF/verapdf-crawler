@@ -31,7 +31,7 @@ public class HttpClientStub implements HttpClient{
 
     private HashMap<String, List<String>> crawlUrls = new HashMap<>();
     private HashMap<String,Integer> jobProgress = new HashMap<>();
-    private String baseDirectory;
+    public String baseDirectory;
 
     public HttpClientStub() {
         super();
