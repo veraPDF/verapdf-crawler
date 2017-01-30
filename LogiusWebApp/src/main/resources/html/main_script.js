@@ -25,6 +25,24 @@ function main() {
     $("#report_link").text("");
     $("#number_of_crawled_urls").text("");
     $("#crawl_url").text("");
+    var regexp = new RegExp("\\d\\d-\\d\\d-\\d\\d\\d\\d");
+    if(!regexp.test(document.getElementById("date_input").value)) {
+        reportError("Invalid date format");
+        return;
+    }
+    regexp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
+    if(!regexp.test(document.getElementById("urlinput").value)) {
+        reportError("Invalid url format");
+        return;
+    }
+    if(document.getElementById("email_input").value) {
+        regexp = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        if(!regexp.test(document.getElementById("email_input").value)) {
+            reportError("Invalid email format");
+            return;
+        }
+    }
+
     var crawlUrlList = new Array(document.getElementById("urlinput").value);
     var status;
     var postData = "{\"domain\":\"" + document.getElementById("urlinput").value +
@@ -39,12 +57,7 @@ function main() {
            loadAllJobs()
         },
         error: function(result) {
-            var ul = document.getElementById("crawl_url_list");
-            var li = document.createElement("li");
-            var link = document.createElement("p");
-            link.innerHTML = "<font color=\"red\">Error on job creation.</font>"
-            li.appendChild(link);
-            ul.appendChild(li);
+                reportError("Error on job creation");
         }
     });
 }
@@ -72,12 +85,7 @@ function loadAllJobs() {
                 }
             },
             error: function(result) {
-                var ul = document.getElementById("crawl_url_list");
-                var li = document.createElement("li");
-                var link = document.createElement("p");
-                link.innerHTML = "<font color=\"red\">Error on job loading.</font>"
-                li.appendChild(link);
-                ul.appendChild(li);
+                reportError("Error on job loading");
             }
     });
 
@@ -86,6 +94,15 @@ function loadAllJobs() {
         document.getElementById("urlinput").value = crawlUrl;
         main();
     }
+}
+
+function reportError(text) {
+    var ul = document.getElementById("crawl_url_list");
+    var li = document.createElement("li");
+    var link = document.createElement("p");
+    link.innerHTML = "<font color=\"red\">" + text + ".</font>"
+    li.appendChild(link);
+    ul.appendChild(li);
 }
 
 function keyListener(e) {
