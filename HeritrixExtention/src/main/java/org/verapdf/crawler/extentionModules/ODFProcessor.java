@@ -1,5 +1,6 @@
 package org.verapdf.crawler.extentionModules;
 
+import org.apache.commons.httpclient.Header;
 import org.archive.modules.CrawlURI;
 import org.archive.modules.writer.MirrorWriterProcessor;
 
@@ -29,7 +30,12 @@ public class ODFProcessor extends MirrorWriterProcessor {
 
     @Override
     protected void innerProcess(CrawlURI crawlURI) {
-        String time = crawlURI.getHttpMethod().getResponseHeader("Last-Modified").toString();
+        String time = "Last-Modified: Thu, 01 Jan 1970 00:00:00 GMT";
+        Header header = crawlURI.getHttpMethod().getResponseHeader("Last-Modified");
+        if(header != null) {
+            time = header.toString();
+        }
+
         boolean isODFFile = crawlURI.toString().endsWith(".odt") ||
                 crawlURI.toString().endsWith(".odc") ||
                 crawlURI.toString().endsWith(".odp");

@@ -28,7 +28,8 @@ function main() {
     var crawlUrlList = new Array(document.getElementById("urlinput").value);
     var status;
     var postData = "{\"domain\":\"" + document.getElementById("urlinput").value +
-    "\", \"date\":\"" + document.getElementById("date_input").value + "\"}";
+    "\", \"date\":\"" + document.getElementById("date_input").value + "\"" +
+    ", \"reportEmail\":\"" + document.getElementById("email_input").value + "\"}";
     $.ajax({url: URL,
         type:"POST",
         async:false,

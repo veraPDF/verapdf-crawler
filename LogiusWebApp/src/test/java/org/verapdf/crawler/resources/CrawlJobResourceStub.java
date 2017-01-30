@@ -37,9 +37,9 @@ public class CrawlJobResourceStub extends CrawlJobResource {
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
         if(startJobData.getDate() != null)
-            currentJobs.add(new CurrentJob(job, "", startJobData.getDomain(), LocalDateTime.parse(startJobData.getDate(), formatter)));
+            currentJobs.add(new CurrentJob(job, "", startJobData.getDomain(), LocalDateTime.parse(startJobData.getDate(), formatter), startJobData.getReportEmail()));
         else
-            currentJobs.add(new CurrentJob(job, "", startJobData.getDomain(), null));
+            currentJobs.add(new CurrentJob(job, "", startJobData.getDomain(), null, startJobData.getReportEmail()));
 
         return new SingleURLJobReport(job, startJobData.getDomain(), jobStatus, 0);
     }

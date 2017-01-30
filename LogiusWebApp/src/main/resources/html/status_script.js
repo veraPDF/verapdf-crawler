@@ -2,6 +2,7 @@ var URL = "../crawl-job/";
 
 function checkStatus() {
     var jobId = location.search.split("id=")[1];
+    $("#email_link").attr("href","email?jobId=" + jobId)
     $.ajax({url: URL + jobId,
             type:"GET",
             async:false,

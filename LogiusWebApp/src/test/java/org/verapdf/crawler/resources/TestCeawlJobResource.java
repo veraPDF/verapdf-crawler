@@ -65,7 +65,7 @@ public class TestCeawlJobResource {
         Assert.assertTrue(response.contains(id));
     }
 
-    @Test
+    /*@Test
     public void testEmailSetting() throws IOException {
         URL url = new URL("http://localhost:9002/crawl-job/target_email");
         HttpURLConnection conn;
@@ -90,7 +90,7 @@ public class TestCeawlJobResource {
         BufferedReader reader = new BufferedReader(new InputStreamReader((conn.getInputStream())));
         String response = reader.readLine();
         Assert.assertTrue(response.contains("test@example.com"));
-    }
+    }*/
 
     private void checkURL(String address) throws IOException {
         URL url = new URL(address);

@@ -7,6 +7,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.verapdf.crawler.api.*;
 import com.codahale.metrics.annotation.Timed;
 import org.verapdf.crawler.engine.HeritrixClient;
+import org.verapdf.crawler.helpers.emailUtils.SendEmail;
 import org.verapdf.crawler.report.HeritrixReporter;
 import org.xml.sax.SAXException;
 
@@ -33,7 +34,6 @@ public class CrawlJobResource {
 
     private HeritrixClient client;
     protected ArrayList<CurrentJob> currentJobs;
-    private String reportToEmail;
     private EmailServer emailServer;
     private HeritrixReporter reporter;
 
@@ -43,10 +43,6 @@ public class CrawlJobResource {
         currentJobs = new ArrayList<>();
         reporter = new HeritrixReporter(client);
         loadJobs();
-    }
-
-    public String getReportToEmail() {
-        return reportToEmail;
     }
 
     @POST
@@ -63,12 +59,14 @@ public class CrawlJobResource {
             client.launchJob(job);
             String jobStatus = client.getCurrentJobStatus(job);
             if(startJobData.getDate() == null || startJobData.getDate().isEmpty()) {
-                currentJobs.add(new CurrentJob(job, "", startJobData.getDomain(), null));
+                currentJobs.add(new CurrentJob(job, "", startJobData.getDomain(),
+                        null, startJobData.getReportEmail()));
             }
             else {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
                 currentJobs.add(new CurrentJob(job, "", startJobData.getDomain(),
-                        LocalDateTime.of(LocalDate.parse(startJobData.getDate(), formatter), LocalTime.MIN)));
+                        LocalDateTime.of(LocalDate.parse(startJobData.getDate(), formatter), LocalTime.MIN),
+                        startJobData.getReportEmail()));
             }
 
             String jobURL = client.getValidPDFReportUri(job).replace("mirror/Valid_PDF_Report.txt","");
@@ -91,17 +89,17 @@ public class CrawlJobResource {
 
     @POST
     @Timed
-    @Path("/target_email")
+    @Path("/email")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void setReportEmail(EmailAddress email) {
-        reportToEmail = email.getEmailAddress();
+    public void setReportEmail(EmailAddress address) {
+        getJobById(address.getJob()).setReportEmail(address.getEmailAddress());
     }
 
     @GET
     @Timed
-    @Path("/get_target_email")
-    public EmailAddress setReportEmail() {
-        return new EmailAddress(reportToEmail);
+    @Path("/{job}/email_address")
+    public String getReportEmail(@PathParam("job") String job) {
+        return getJobById(job).getReportEmail();
     }
 
     @GET
@@ -120,12 +118,24 @@ public class CrawlJobResource {
     @Path("/{job}")
     public SingleURLJobReport getJob(@PathParam("job") String job) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
         String jobURL = getExistingJobURLbyJobId(job);
+        SingleURLJobReport result;
         if(jobURL.equals("")){
-            return reporter.getReport(job, getTimeByJobId(job));
+            result = reporter.getReport(job, getTimeByJobId(job));
         }
         else {
-            return reporter.getReport(job, jobURL, getTimeByJobId(job));
+            result = reporter.getReport(job, jobURL, getTimeByJobId(job));
         }
+        if(result.getStatus().startsWith("Finished")) {
+            CurrentJob jobData = getJobById(job);
+            if(!jobData.getReportEmail().equals("") && jobData.isEmailSent() != true) {
+                String subject = "Crawl job";
+                String text = "Crawl job on " + jobData.getCrawlURL() + " was finished with status " + result.getStatus();
+                SendEmail.send(jobData.getReportEmail(), subject, text, emailServer);
+                jobData.setEmailSent(true);
+            }
+        }
+
+        return result;
     }
 
     @GET
@@ -212,13 +222,21 @@ public class CrawlJobResource {
             currentJobs.add(new CurrentJob(record.get("id"),
                     record.get("jobURL"),
                     record.get("crawlURL"),
-                    null));
+                    null, ""));
         }
     }
 
     private CurrentJob getJobByCrawlUrl(String crawlUrl) {
         for(CurrentJob jobData : currentJobs) {
             if(jobData.getCrawlURL().equals(crawlUrl))
+                return jobData;
+        }
+        return null;
+    }
+
+    private CurrentJob getJobById(String job) {
+        for(CurrentJob jobData : currentJobs) {
+            if(jobData.getId().equals(job))
                 return jobData;
         }
         return null;
