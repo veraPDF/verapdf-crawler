@@ -63,7 +63,7 @@ public class HeritrixReporter {
     }
 
     public File buildODSReport(SingleURLJobReport reportData) throws IOException, KeyManagementException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
-        File file = new File(client.baseDirectory + "sample_report.ods");
+        File file = new File(HeritrixClient.baseDirectory + "sample_report.ods");
         final Sheet totalSheet = SpreadSheet.createFromFile(file).getSheet(0);
         totalSheet.ensureColumnCount(2);
         totalSheet.setValueAt(reportData.getPdfStatistics().getNumberOfValidPDFs(),1, 0);
@@ -79,7 +79,7 @@ public class HeritrixReporter {
         setLinesInSheet(spreadSheet.getSheet(1), reportData.officeReport);
         setLinesInSheet(spreadSheet.getSheet(2), reportData.getPdfStatistics().invalidPDFReport);
 
-        File ODSReport = new File(client.baseDirectory + "report.ods");
+        File ODSReport = new File(HeritrixClient.baseDirectory + "report.ods");
         totalSheet.getSpreadSheet().saveAs(ODSReport);
         return ODSReport;
     }

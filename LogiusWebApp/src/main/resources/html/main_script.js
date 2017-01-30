@@ -29,7 +29,8 @@ function main() {
     var status;
     var postData = "{\"domain\":\"" + document.getElementById("urlinput").value +
     "\", \"date\":\"" + document.getElementById("date_input").value + "\"" +
-    ", \"reportEmail\":\"" + document.getElementById("email_input").value + "\"}";
+    ", \"reportEmail\":\"" + document.getElementById("email_input").value + "\"" +
+    ", \"forceStart\":\"" + $("#force_start").is(":checked") + "\"}";
     $.ajax({url: URL,
         type:"POST",
         async:false,

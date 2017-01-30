@@ -49,7 +49,20 @@ public class CrawlJobResource {
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
     public SingleURLJobReport startJob(StartJobData startJobData) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
-        if(!isCurrentJob(startJobData.getDomain())) { // Brand new URL
+        if(isCurrentJob(startJobData.getDomain()) && !startJobData.isForceStart()) { // This URL has already been crawled and job is not forced to overwrite
+            if( startJobData.getDate() != null && !startJobData.getDate().isEmpty()) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+                getJobByCrawlUrl(startJobData.getDomain()).setCrawlSinceTime(
+                        LocalDateTime.of(LocalDate.parse(startJobData.getDate(), formatter), LocalTime.MIN));
+            }
+            return new SingleURLJobReport("", "", "", 0);
+        }
+        else {
+            if(startJobData.isForceStart() && isCurrentJob(startJobData.getDomain())) { // This URL has already been crawled but the old job needs to be overwritten
+                currentJobs.remove(getJobByCrawlUrl(startJobData.getDomain()));
+                removeJobFromFile(startJobData.getDomain());
+            }
+            // Brand new URL
             ArrayList<String> list = new ArrayList<>();
             list.add(startJobData.getDomain());
 
@@ -76,14 +89,6 @@ public class CrawlJobResource {
             writer.close();
 
             return new SingleURLJobReport(job, startJobData.getDomain(), jobStatus, 0);
-        }
-        else { // This URL has already been crawled
-            if( startJobData.getDate() != null && !startJobData.getDate().isEmpty()) {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-                getJobByCrawlUrl(startJobData.getDomain()).setCrawlSinceTime(
-                        LocalDateTime.of(LocalDate.parse(startJobData.getDate(), formatter), LocalTime.MIN));
-            }
-            return new SingleURLJobReport("", "", "", 0);
         }
     }
 
@@ -248,5 +253,24 @@ public class CrawlJobResource {
                 return jobData.getCrawlSinceTime();
         }
         return null;
+    }
+
+    private void removeJobFromFile(String crawlUrl) throws IOException {
+        StringBuilder builder = new StringBuilder();
+        FileReader reader = new FileReader(client.baseDirectory + "crawled_urls.txt");
+        CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT.withHeader());
+        List<CSVRecord> records = parser.getRecords();
+        builder.append("id,crawlURL,jobURL" + System.lineSeparator());
+        for(CSVRecord record : records) {
+            if(!record.get("crawlURL").equals(crawlUrl)) {
+                builder.append(record.get("id") + ",");
+                builder.append(record.get("crawlURL") + ",");
+                builder.append(record.get("jobURL") + System.lineSeparator());
+            }
+        }
+        reader.close();
+        FileWriter writer = new FileWriter(client.baseDirectory + "crawled_urls.txt");
+        writer.write(builder.toString());
+        writer.close();
     }
 }

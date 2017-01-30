@@ -1,3 +1,3 @@
 id,crawlURL,jobURL
 7ec7bc20-10a4-4853-abf4-73294fb52f52,http://example.com/,https://localhost:8443/engine/anypath//home/anton/Documents/heritrix-3.2.0/./jobs/7ec7bc20-10a4-4853-abf4-73294fb52f52/20170121124009/
-6103556a-1ee4-4050-bbb6-c9f64d761c1c,http://localhost:8080,https://localhost:8443/engine/anypath//home/anton/Documents/heritrix-3.2.0/./jobs/6103556a-1ee4-4050-bbb6-c9f64d761c1c/20170121134032/
+38d284ad-64a0-4d93-b451-8c2504d7252f,http://localhost:8080,https://localhost:8443/engine/anypath//home/anton/Documents/heritrix-3.2.0/./jobs/38d284ad-64a0-4d93-b451-8c2504d7252f/20170130124158/

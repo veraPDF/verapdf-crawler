@@ -6,6 +6,7 @@ public class StartJobData {
     private String domain;
     private String date;
     private String reportEmail;
+    private boolean forceStart;
 
     public StartJobData() {
         // Jackson deserialization
@@ -37,4 +38,11 @@ public class StartJobData {
 
     @JsonProperty
     public void setReportEmail(String reportEmail) { this.reportEmail = reportEmail; }
+
+    @JsonProperty
+    public boolean isForceStart() { return forceStart; }
+
+    @JsonProperty
+    public void setForceStart(boolean forceStart) { this.forceStart = forceStart; }
+
 }
