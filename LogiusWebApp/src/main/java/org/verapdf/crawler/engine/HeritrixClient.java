@@ -176,7 +176,8 @@ public class HeritrixClient {
 
         StringBuilder sb = new StringBuilder();
         for(String url: crawlUrls) {
-            sb.append(url + " ");
+            sb.append(url);
+            sb.append(" " + System.lineSeparator());
         }
 
         File source = new File(baseDirectory + "sample_configuration.cxml");

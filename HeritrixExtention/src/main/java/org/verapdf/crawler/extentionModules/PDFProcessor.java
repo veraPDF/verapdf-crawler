@@ -32,7 +32,7 @@ public class PDFProcessor extends MirrorWriterProcessor {
         String baseDir = getPath().getFile().getAbsolutePath();
         String mps = (String)curi.getData().get(A_MIRROR_PATH);
         try {
-            String time = "Last-Modified: Thu, 01 Jan 1970 00:00:00 GMT";
+            String time = "Last-Modified: Thu, 01 Jan 1970 00:00:01 GMT";
             Header header = curi.getHttpMethod().getResponseHeader("Last-Modified");
             if(header != null) {
                 time = header.toString();

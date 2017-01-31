@@ -1,21 +1,6 @@
 var URL = "/crawl-job/";
 
 $(document).ready(function() {
-    var today = new Date();
-    var dd = today.getDate();
-    var mm = today.getMonth()+1;
-    var yyyy = today.getFullYear();
-
-    if(dd<10) {
-        dd='0'+dd
-    }
-
-    if(mm<10) {
-        mm='0'+mm
-    }
-
-    today = dd+'-'+mm+'-'+yyyy;
-    $("#date_input").val(today);
     $("input:button").click(main);
 });
 
@@ -25,18 +10,15 @@ function main() {
     $("#report_link").text("");
     $("#number_of_crawled_urls").text("");
     $("#crawl_url").text("");
-    var regexp = new RegExp("\\d\\d-\\d\\d-\\d\\d\\d\\d");
-    if(!regexp.test(document.getElementById("date_input").value)) {
-        reportError("Invalid date format");
-        return;
-    }
-    regexp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
-    if(!regexp.test(document.getElementById("urlinput").value)) {
-        reportError("Invalid url format");
-        return;
+    if(document.getElementById("date_input").value) {
+        var regexp = new RegExp("\\d\\d-\\d\\d-\\d\\d\\d\\d");
+        if(!regexp.test(document.getElementById("date_input").value)) {
+            reportError("Invalid date format");
+            return;
+        }
     }
     if(document.getElementById("email_input").value) {
-        regexp = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        var regexp = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
         if(!regexp.test(document.getElementById("email_input").value)) {
             reportError("Invalid email format");
             return;

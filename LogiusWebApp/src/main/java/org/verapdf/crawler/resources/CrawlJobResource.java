@@ -49,7 +49,8 @@ public class CrawlJobResource {
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
     public SingleURLJobReport startJob(StartJobData startJobData) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
-        if(isCurrentJob(startJobData.getDomain()) && !startJobData.isForceStart()) { // This URL has already been crawled and job is not forced to overwrite
+
+        if(isCurrentJob(trimUrl(startJobData.getDomain())) && !startJobData.isForceStart()) { // This URL has already been crawled and job is not forced to overwrite
             if( startJobData.getDate() != null && !startJobData.getDate().isEmpty()) {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
                 getJobByCrawlUrl(startJobData.getDomain()).setCrawlSinceTime(
@@ -58,13 +59,19 @@ public class CrawlJobResource {
             return new SingleURLJobReport("", "", "", 0);
         }
         else {
-            if(startJobData.isForceStart() && isCurrentJob(startJobData.getDomain())) { // This URL has already been crawled but the old job needs to be overwritten
-                currentJobs.remove(getJobByCrawlUrl(startJobData.getDomain()));
-                removeJobFromFile(startJobData.getDomain());
+            if(startJobData.isForceStart() && isCurrentJob(trimUrl(startJobData.getDomain()))) { // This URL has already been crawled but the old job needs to be overwritten
+                currentJobs.remove(getJobByCrawlUrl(trimUrl(startJobData.getDomain())));
+                removeJobFromFile(trimUrl(startJobData.getDomain()));
             }
             // Brand new URL
             ArrayList<String> list = new ArrayList<>();
-            list.add(startJobData.getDomain());
+            if(startJobData.getDomain().startsWith("http://") || startJobData.getDomain().startsWith("https://")) {
+                list.add(trimUrl(startJobData.getDomain()));
+            }
+            else {
+                list.add(trimUrl(startJobData.getDomain()));
+                list.add(list.get(0).replace("https://", "http://"));
+            }
 
             String job = UUID.randomUUID().toString();
             client.createJob(job, list);
@@ -72,12 +79,12 @@ public class CrawlJobResource {
             client.launchJob(job);
             String jobStatus = client.getCurrentJobStatus(job);
             if(startJobData.getDate() == null || startJobData.getDate().isEmpty()) {
-                currentJobs.add(new CurrentJob(job, "", startJobData.getDomain(),
+                currentJobs.add(new CurrentJob(job, "", trimUrl(startJobData.getDomain()),
                         null, startJobData.getReportEmail()));
             }
             else {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-                currentJobs.add(new CurrentJob(job, "", startJobData.getDomain(),
+                currentJobs.add(new CurrentJob(job, "", trimUrl(startJobData.getDomain()),
                         LocalDateTime.of(LocalDate.parse(startJobData.getDate(), formatter), LocalTime.MIN),
                         startJobData.getReportEmail()));
             }
@@ -85,10 +92,10 @@ public class CrawlJobResource {
             String jobURL = client.getValidPDFReportUri(job).replace("mirror/Valid_PDF_Report.txt","");
             FileWriter writer = new FileWriter(client.baseDirectory + "crawled_urls.txt", true);
             CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT);
-            printer.printRecord(new String[] {job, startJobData.getDomain(), jobURL});
+            printer.printRecord(new String[] {job, trimUrl(startJobData.getDomain()), jobURL});
             writer.close();
 
-            return new SingleURLJobReport(job, startJobData.getDomain(), jobStatus, 0);
+            return new SingleURLJobReport(job, trimUrl(startJobData.getDomain()), jobStatus, 0);
         }
     }
 
@@ -272,5 +279,18 @@ public class CrawlJobResource {
         FileWriter writer = new FileWriter(client.baseDirectory + "crawled_urls.txt");
         writer.write(builder.toString());
         writer.close();
+    }
+
+    private String trimUrl(String url) {
+        if(!url.startsWith("http://") && !url.startsWith("https://")) {
+            url = "https://" + url;
+        }
+        if(url.contains("?")) {
+            url = url.substring(0, url.indexOf("?"));
+        }
+        if(url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
+        return url;
     }
 }

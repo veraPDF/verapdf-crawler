@@ -30,7 +30,7 @@ public class ODFProcessor extends MirrorWriterProcessor {
 
     @Override
     protected void innerProcess(CrawlURI crawlURI) {
-        String time = "Last-Modified: Thu, 01 Jan 1970 00:00:00 GMT";
+        String time = "Last-Modified: Thu, 01 Jan 1970 00:00:01 GMT";
         Header header = crawlURI.getHttpMethod().getResponseHeader("Last-Modified");
         if(header != null) {
             time = header.toString();

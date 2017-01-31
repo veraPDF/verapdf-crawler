@@ -25,6 +25,7 @@ function checkStatus() {
             if(status.substring(0, 8) != "Finished")
                 setTimeout(checkStatus, 1000);
             else {
+                $("#email_link").text("");
                 $("#ods_report").text("Report in ODT format");
                 $("#ods_report").attr("href", URL + "ods_report/" + jobId);
                 $("#html_report").text("Report in HTML format");
