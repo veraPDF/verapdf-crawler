@@ -2,6 +2,7 @@ package org.verapdf.crawler.engine;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
+import org.apache.http.NoHttpResponseException;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.AuthenticationException;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -16,6 +17,7 @@ import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 import org.apache.http.ssl.SSLContexts;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -60,7 +62,8 @@ public class HeritrixClient {
         httpClient = HttpClients.custom()
                 .setSSLSocketFactory(new SSLConnectionSocketFactory(SSLContexts.custom()
                         .loadTrustMaterial(null, (x509Certificates, s) -> true)
-                        .build(), (s, sslSession) -> true)).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).setDefaultCredentialsProvider(credsProvider).build();
+                        .build(), (s, sslSession) -> true)).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).setDefaultCredentialsProvider(credsProvider)
+                        .setRetryHandler(new StandardHttpRequestRetryHandler(3, true)).build();
     }
 
     public void setBaseDirectory(String baseDirectory) { HeritrixClient.baseDirectory = baseDirectory; }
