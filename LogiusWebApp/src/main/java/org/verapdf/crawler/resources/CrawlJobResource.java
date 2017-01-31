@@ -53,7 +53,7 @@ public class CrawlJobResource {
         if(isCurrentJob(trimUrl(startJobData.getDomain())) && !startJobData.isForceStart()) { // This URL has already been crawled and job is not forced to overwrite
             if( startJobData.getDate() != null && !startJobData.getDate().isEmpty()) {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-                getJobByCrawlUrl(startJobData.getDomain()).setCrawlSinceTime(
+                getJobByCrawlUrl(trimUrl(startJobData.getDomain())).setCrawlSinceTime(
                         LocalDateTime.of(LocalDate.parse(startJobData.getDate(), formatter), LocalTime.MIN));
             }
             return new SingleURLJobReport("", "", "", 0);
