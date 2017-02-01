@@ -2,7 +2,6 @@ package org.verapdf.crawler.engine;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
-import org.apache.http.NoHttpResponseException;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.AuthenticationException;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -49,7 +48,7 @@ public class HeritrixClient {
     private String baseUrl;
     private HttpClient httpClient;
 
-    public HeritrixClient(String url, int port, String username, String password) throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException, MalformedURLException {
+    public HeritrixClient(String url, String username, String password) throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException, MalformedURLException {
         baseUrl = url;
         // Configure credential provider
         URL domain = new URL(baseUrl);
@@ -213,7 +212,7 @@ public class HeritrixClient {
         Scanner sc = new Scanner(response);
         StringBuilder result = new StringBuilder();
         while(sc.hasNext()) {
-            result.append(sc.nextLine() + "\n");
+            result.append(sc.nextLine() + System.lineSeparator());
         }
         get.releaseConnection();
         if(result.toString().contains("The page you are looking for does not exist"))

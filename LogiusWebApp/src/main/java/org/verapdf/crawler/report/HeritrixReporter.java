@@ -39,7 +39,7 @@ public class HeritrixReporter {
     }
 
     public SingleURLJobReport getReport(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
-        return getReport(job, (LocalDateTime) null);
+        return getReport(job, null);
     }
 
     public SingleURLJobReport getReport(String job, String jobURL, LocalDateTime time) throws NoSuchAlgorithmException, IOException, KeyManagementException {
@@ -154,7 +154,7 @@ public class HeritrixReporter {
     }
 
     private PDFValidationStatistics getValidationStatistics(String job, String invalidReport, String validReport, LocalDateTime time) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        int numberOfInvalidPDFs = 0, numberOfValidPDFs = 0;
+        int numberOfInvalidPDFs, numberOfValidPDFs;
         String invalidPDFReport = client.getLogFileByURL(invalidReport);
         try {
             numberOfValidPDFs = getNumberOfLines(client.getLogFileByURL(validReport), time);
@@ -225,7 +225,7 @@ public class HeritrixReporter {
         scanner.close();
     }
 
-    public static String removeEarlyLines(String report, LocalDateTime time) {
+    private static String removeEarlyLines(String report, LocalDateTime time) {
         Scanner sc = new Scanner(report);
         StringBuilder builder = new StringBuilder();
         while(sc.hasNext()) {

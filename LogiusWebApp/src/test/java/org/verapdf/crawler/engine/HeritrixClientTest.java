@@ -23,7 +23,7 @@ public class HeritrixClientTest {
 
     @BeforeClass
     public static void initializeTests() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, MalformedURLException {
-        client = new HeritrixClient("https://localhost:8443/",8443, "admin", "logius");
+        client = new HeritrixClient("https://localhost:8443/", "admin", "logius");
         HttpClientStub httpClient = new HttpClientStub();
         client.setHttpClient(httpClient);
         client.setBaseDirectory(httpClient.baseDirectory + "/src/test/resources/");

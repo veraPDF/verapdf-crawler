@@ -29,6 +29,7 @@ import java.util.*;
 @Produces(MediaType.APPLICATION_JSON)
 @Path("/")
 public class CrawlJobResource {
+
     @Context
     private UriInfo uriInfo;
 
@@ -36,6 +37,7 @@ public class CrawlJobResource {
     protected ArrayList<CurrentJob> currentJobs;
     private EmailServer emailServer;
     private HeritrixReporter reporter;
+    private String resourceUri;
 
     public CrawlJobResource(HeritrixClient client, EmailServer emailServer) throws IOException {
         this.client = client;
@@ -43,13 +45,20 @@ public class CrawlJobResource {
         currentJobs = new ArrayList<>();
         reporter = new HeritrixReporter(client);
         loadJobs();
+        new Thread(new StatusMonitor(this)).start();
+    }
+
+    public ArrayList<CurrentJob> getCurrentJobs() {
+        return currentJobs;
     }
 
     @POST
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
     public SingleURLJobReport startJob(StartJobData startJobData) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
-
+        if(resourceUri == null) {
+            resourceUri = uriInfo.getBaseUri().toString();
+        }
         if(isCurrentJob(trimUrl(startJobData.getDomain())) && !startJobData.isForceStart()) { // This URL has already been crawled and job is not forced to overwrite
             if( startJobData.getDate() != null && !startJobData.getDate().isEmpty()) {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
@@ -90,7 +99,7 @@ public class CrawlJobResource {
             }
 
             String jobURL = client.getValidPDFReportUri(job).replace("mirror/Valid_PDF_Report.txt","");
-            FileWriter writer = new FileWriter(client.baseDirectory + "crawled_urls.txt", true);
+            FileWriter writer = new FileWriter(HeritrixClient.baseDirectory + "crawled_urls.txt", true);
             CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT);
             printer.printRecord(new String[] {job, trimUrl(startJobData.getDomain()), jobURL});
             writer.close();
@@ -139,9 +148,10 @@ public class CrawlJobResource {
         }
         if(result.getStatus().startsWith("Finished")) {
             CurrentJob jobData = getJobById(job);
-            if(!jobData.getReportEmail().equals("") && jobData.isEmailSent() != true) {
+            if(!jobData.getReportEmail().equals("") && !jobData.isEmailSent()) {
                 String subject = "Crawl job";
-                String text = "Crawl job on " + jobData.getCrawlURL() + " was finished with status " + result.getStatus();
+                String text = "Crawl job on " + jobData.getCrawlURL() + " was finished with status " + result.getStatus() +
+                        "\nResults are available at " + resourceUri.replace("crawl-job/","jobinfo?id=") + job;
                 SendEmail.send(jobData.getReportEmail(), subject, text, emailServer);
                 jobData.setEmailSent(true);
             }
@@ -179,8 +189,8 @@ public class CrawlJobResource {
         else {
             htmlReport = reporter.buildHtmlReport(job, jobURL, getTimeByJobId(job));
         }
-        htmlReport = htmlReport.replace("INVALID_PDF_REPORT", uriInfo.getBaseUri().toString() + "invalid_pdf_list/" + job);
-        htmlReport = htmlReport.replace("OFFICE_REPORT", uriInfo.getBaseUri().toString() + "office_list/" + job);
+        htmlReport = htmlReport.replace("INVALID_PDF_REPORT", resourceUri + "invalid_pdf_list/" + job);
+        htmlReport = htmlReport.replace("OFFICE_REPORT", resourceUri + "office_list/" + job);
         return htmlReport;
     }
 
@@ -227,7 +237,7 @@ public class CrawlJobResource {
     }
 
     private void loadJobs() throws IOException {
-        FileReader reader = new FileReader(client.baseDirectory + "crawled_urls.txt");
+        FileReader reader = new FileReader(HeritrixClient.baseDirectory + "crawled_urls.txt");
         CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT.withHeader());
         List<CSVRecord> records = parser.getRecords();
         for(CSVRecord record : records) {
@@ -264,7 +274,7 @@ public class CrawlJobResource {
 
     private void removeJobFromFile(String crawlUrl) throws IOException {
         StringBuilder builder = new StringBuilder();
-        FileReader reader = new FileReader(client.baseDirectory + "crawled_urls.txt");
+        FileReader reader = new FileReader(HeritrixClient.baseDirectory + "crawled_urls.txt");
         CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT.withHeader());
         List<CSVRecord> records = parser.getRecords();
         builder.append("id,crawlURL,jobURL" + System.lineSeparator());
@@ -276,7 +286,7 @@ public class CrawlJobResource {
             }
         }
         reader.close();
-        FileWriter writer = new FileWriter(client.baseDirectory + "crawled_urls.txt");
+        FileWriter writer = new FileWriter(HeritrixClient.baseDirectory + "crawled_urls.txt");
         writer.write(builder.toString());
         writer.close();
     }

@@ -32,7 +32,6 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
         final CrawlJobResource resource;
         try {
             HeritrixClient client = new HeritrixClient("https://localhost:8443/",
-                    8443,
                     configuration.getHeritrixLogin(),
                     configuration.getHeritrixPassword());
             client.setBaseDirectory(configuration.getResourcePath());

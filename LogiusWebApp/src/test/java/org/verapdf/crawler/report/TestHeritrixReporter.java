@@ -26,7 +26,7 @@ public class TestHeritrixReporter {
 
     @BeforeClass
     public static void initializeReport() throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, ParserConfigurationException, SAXException {
-        HeritrixClient client = new HeritrixClient("https://localhost:8443/",8443, "admin", "logius");
+        HeritrixClient client = new HeritrixClient("https://localhost:8443/", "admin", "logius");
         HttpClientStub httpClient = new HttpClientStub();
         client.setHttpClient(httpClient);
         client.setBaseDirectory(httpClient.baseDirectory + "/src/test/resources/");

@@ -9,7 +9,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class TestCeawlJobResource {
+public class TestCrawlJobResource {
     private static LogiusWebApplication application;
 
     @BeforeClass

@@ -18,7 +18,7 @@ public class LogiusWebApplicationStub extends LogiusWebApplication{
         environment.jersey().setUrlPattern("/crawl-job/*");
         final CrawlJobResourceStub resource;
         try {
-            HeritrixClient client = new HeritrixClient("https://localhost/", 8443, "admin", "logius");
+            HeritrixClient client = new HeritrixClient("https://localhost/", "admin", "logius");
             client.setBaseDirectory(new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile().getParent() + "/src/test/resources/");
             resource = new CrawlJobResourceStub(
                     client,
