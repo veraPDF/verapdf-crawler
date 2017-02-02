@@ -1,7 +1,8 @@
 package org.verapdf.crawler.resources;
 
+import org.verapdf.crawler.api.BatchJob;
 import org.verapdf.crawler.api.CurrentJob;
-import java.util.ArrayList;
+import org.verapdf.crawler.helpers.emailUtils.SendEmail;
 
 public class StatusMonitor implements Runnable {
     private CrawlJobResource resource;
@@ -13,19 +14,34 @@ public class StatusMonitor implements Runnable {
     @Override
     public void run() {
         while(true) {
-            ArrayList<CurrentJob> jobs = resource.getCurrentJobs();
-            for(CurrentJob job : jobs) {
-                if(!job.getReportEmail().equals("") && !job.isEmailSent()) {
-                    try {
-                        resource.getJob(job.getId());
-                    } catch (Exception e) {
-                        e.printStackTrace();
+            try {
+                for (BatchJob batch : resource.getBatchJobs()) { // Check if any batch jobs were finished
+                    if(!batch.isFinished()) {
+                        boolean isFinished = true;
+                        for(String domain: batch.getDomains()) { // Look through every single-url job
+                            if(!resource.getJob(resource.getJobByCrawlUrl(domain).getId()).getStatus().startsWith("Finished")) {
+                                isFinished = false;
+                                break;
+                            }
+                        }
+                        if(isFinished) {
+                            batch.setFinished(true);
+                            String subject = "Batch job";
+                            String text = "Batch job is finished. You can see the details on " +
+                                    resource.getResourceUri() + "batch/" + batch.getId();
+                            SendEmail.send(batch.getEmailAddress(), subject, text, resource.getEmailServer());
+                        }
                     }
                 }
+                for (CurrentJob job : resource.getCurrentJobs()) { // Check if any single-url jobs were finished
+                    if (job.getReportEmail() != null && !job.getReportEmail().equals("") && !job.isEmailSent()) {
+                        resource.getJob(job.getId());
+                    }
+                }
+
+                Thread.sleep(300000);
             }
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
+            catch (Exception e) {
                 e.printStackTrace();
             }
         }

@@ -34,15 +34,17 @@ public class CrawlJobResource {
     private UriInfo uriInfo;
 
     private HeritrixClient client;
-    protected ArrayList<CurrentJob> currentJobs;
     private EmailServer emailServer;
     private HeritrixReporter reporter;
+    protected ArrayList<CurrentJob> currentJobs;
+    private ArrayList<BatchJob> batchJobs;
     private String resourceUri;
 
     public CrawlJobResource(HeritrixClient client, EmailServer emailServer) throws IOException {
         this.client = client;
         this.emailServer = emailServer;
         currentJobs = new ArrayList<>();
+        batchJobs = new ArrayList<>();
         reporter = new HeritrixReporter(client);
         loadJobs();
         new Thread(new StatusMonitor(this)).start();
@@ -52,20 +54,23 @@ public class CrawlJobResource {
         return currentJobs;
     }
 
+    public ArrayList<BatchJob> getBatchJobs() {
+        return batchJobs;
+    }
+
+    public EmailServer getEmailServer() { return emailServer; }
+
+    public String getResourceUri() { return resourceUri; }
+
     @POST
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
     public SingleURLJobReport startJob(StartJobData startJobData) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
-        if(resourceUri == null) {
+        if(resourceUri == null && uriInfo != null) {
             resourceUri = uriInfo.getBaseUri().toString();
         }
         if(isCurrentJob(trimUrl(startJobData.getDomain())) && !startJobData.isForceStart()) { // This URL has already been crawled and job is not forced to overwrite
-            if( startJobData.getDate() != null && !startJobData.getDate().isEmpty()) {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-                getJobByCrawlUrl(trimUrl(startJobData.getDomain())).setCrawlSinceTime(
-                        LocalDateTime.of(LocalDate.parse(startJobData.getDate(), formatter), LocalTime.MIN));
-            }
-            return new SingleURLJobReport("", "", "", 0);
+            return new SingleURLJobReport(getJobByCrawlUrl(trimUrl(startJobData.getDomain())).getId(), "", "", 0);
         }
         else {
             if(startJobData.isForceStart() && isCurrentJob(trimUrl(startJobData.getDomain()))) { // This URL has already been crawled but the old job needs to be overwritten
@@ -106,6 +111,67 @@ public class CrawlJobResource {
 
             return new SingleURLJobReport(job, trimUrl(startJobData.getDomain()), jobStatus, 0);
         }
+    }
+
+    @POST
+    @Timed
+    @Path("/batch")
+    @Produces("text/plain")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public String startBatchJob(StartBatchJobData jobData) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
+        String id = UUID.randomUUID().toString();
+        BatchJob batch = new BatchJob(id, jobData.getReportEmail());
+        for(String domain : jobData.getDomains()) {
+            StartJobData data = new StartJobData(domain, jobData.getDate());
+            data.setReportEmail(jobData.getReportEmail());
+            data.setForceStart(false);
+            startJob(data);
+            batch.getDomains().add(trimUrl(domain));
+        }
+
+        batchJobs.add(batch);
+        String reportUrl = uriInfo.getBaseUri().toString() + "batch/" + id;
+        String response = "Batch job successfully submitted. You can track it on " + reportUrl +
+                ". Notification will be sent on the email address you provided when the job is finished.";
+        return response;
+    }
+
+    @GET
+    @Timed
+    @Produces(MediaType.TEXT_HTML)
+    @Path("/batch/{job}")
+    public String getBatchJob(@PathParam("job") String job) throws IOException, SAXException, NoSuchAlgorithmException, ParserConfigurationException, KeyManagementException {
+        StringBuilder responseHtml = new StringBuilder();
+        StringBuilder jobList = new StringBuilder();
+        BatchJob batchJob = getBatchJobById(job);
+        boolean isBatchFinished = true;
+        for(String domain : batchJob.getDomains()) {
+            jobList.append("<li>");
+            jobList.append("Job on " + domain + ", ");
+            SingleURLJobReport report = getJob(getJobByCrawlUrl(domain).getId());
+            jobList.append(report.getStatus());
+            isBatchFinished = isBatchFinished && report.getStatus().startsWith("Finished");
+            jobList.append(", <a href=\"");
+            jobList.append(resourceUri.replace("crawl-job/","jobinfo?id=") + getJobByCrawlUrl(domain).getId());
+            jobList.append("\">details</a>.");
+            jobList.append("</li>");
+        }
+        if(isBatchFinished) {
+            batchJob.setFinished(true);
+        }
+        responseHtml.append("<html>");
+        responseHtml.append("<p>Batch job is ");
+        if(batchJob.isFinished()) {
+            responseHtml.append("finished.</p>");
+        }
+        else {
+            responseHtml.append(" running.</p>");
+        }
+        responseHtml.append("<ul>");
+        responseHtml.append(jobList.toString());
+        responseHtml.append("</ul>");
+        responseHtml.append("</html>");
+        return responseHtml.toString();
     }
 
     @POST
@@ -228,6 +294,15 @@ public class CrawlJobResource {
         return "";
     }
 
+    private BatchJob getBatchJobById(String id) {
+        for(BatchJob job : batchJobs) {
+            if(job.getId().equals(id)) {
+                return job;
+            }
+        }
+        return null;
+    }
+
     private boolean isCurrentJob(String crawlUrl) {
         for(CurrentJob jobData : currentJobs) {
             if(jobData.getCrawlURL().equals(crawlUrl))
@@ -248,7 +323,7 @@ public class CrawlJobResource {
         }
     }
 
-    private CurrentJob getJobByCrawlUrl(String crawlUrl) {
+    public CurrentJob getJobByCrawlUrl(String crawlUrl) {
         for(CurrentJob jobData : currentJobs) {
             if(jobData.getCrawlURL().equals(crawlUrl))
                 return jobData;
