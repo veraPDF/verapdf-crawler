@@ -146,15 +146,20 @@ public class CrawlJobResource {
         BatchJob batchJob = getBatchJobById(job);
         boolean isBatchFinished = true;
         for(String domain : batchJob.getDomains()) {
-            jobList.append("<li>");
-            jobList.append("Job on " + domain + ", ");
-            SingleURLJobReport report = getJob(getJobByCrawlUrl(domain).getId());
-            jobList.append(report.getStatus());
-            isBatchFinished = isBatchFinished && report.getStatus().startsWith("Finished");
-            jobList.append(", <a href=\"");
-            jobList.append(resourceUri.replace("crawl-job/","jobinfo?id=") + getJobByCrawlUrl(domain).getId());
-            jobList.append("\">details</a>.");
-            jobList.append("</li>");
+            try {
+                jobList.append("<li>");
+                jobList.append("Job on " + domain + ", ");
+                SingleURLJobReport report = getJob(getJobByCrawlUrl(domain).getId());
+                jobList.append(report.getStatus());
+                isBatchFinished = isBatchFinished && report.getStatus().startsWith("Finished");
+                jobList.append(", <a href=\"");
+                jobList.append(resourceUri.replace("crawl-job/", "jobinfo?id=") + getJobByCrawlUrl(domain).getId());
+                jobList.append("\">details</a>.");
+                jobList.append("</li>");
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         if(isBatchFinished) {
             batchJob.setFinished(true);

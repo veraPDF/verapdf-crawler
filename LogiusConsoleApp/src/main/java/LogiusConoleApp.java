@@ -32,15 +32,17 @@ public class LogiusConoleApp {
 
             reportEmail = cmd.getOptionValue("a");
             endpointUrl = cmd.getOptionValue("u");
+            if(!endpointUrl.endsWith("/")) {
+                endpointUrl = endpointUrl + "/";
+            }
             domains = cmd.getOptionValues("c");
             if(cmd.hasOption("d")) {
                 date = cmd.getOptionValue("d");
-            }
-
-            Pattern pattern = Pattern.compile("\\d\\d-\\d\\d-\\d\\d\\d\\d");
-            if (!pattern.matcher(date).matches()) {
-                System.out.println("Invalid date format, enter date in dd-MM-yyyy format.");
-                return;
+                Pattern pattern = Pattern.compile("\\d\\d-\\d\\d-\\d\\d\\d\\d");
+                if (!pattern.matcher(date).matches()) {
+                    System.out.println("Invalid date format, enter date in dd-MM-yyyy format.");
+                    return;
+                }
             }
 
             URL url = new URL(endpointUrl + "crawl-job/batch");
