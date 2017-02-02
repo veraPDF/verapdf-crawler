@@ -1,3 +1,5 @@
+import org.apache.commons.cli.*;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -11,10 +13,29 @@ public class LogiusConoleApp {
 
     public static void main(String[] args) {
         try {
-            String[] domains = {"http://localhost:8080/", "logius.nl"};
-            String endpointUrl = "http://localhost:9000/";
-            String date = "01-01-2017";
-            String reportEmail = "shem_anton@tut.by";
+            String[] domains;
+            String endpointUrl;
+            String date = "";
+            String reportEmail;
+
+            Options options = new Options();
+            options.addOption(new Option("a","address",true,"Report email address"));
+            options.addOption(new Option("u","url",true,"Web application url"));
+            Option dateOption = new Option("d","date",true,"Crawl since date");
+            dateOption.setOptionalArg(true);
+            options.addOption(dateOption);
+            Option domainOption = new Option("c","crawl_urls", true, "List of crawl urls");
+            domainOption.setArgs(Option.UNLIMITED_VALUES);
+            options.addOption(domainOption);
+            CommandLineParser parser = new BasicParser();
+            CommandLine cmd = parser.parse(options, args);
+
+            reportEmail = cmd.getOptionValue("a");
+            endpointUrl = cmd.getOptionValue("u");
+            domains = cmd.getOptionValues("c");
+            if(cmd.hasOption("d")) {
+                date = cmd.getOptionValue("d");
+            }
 
             Pattern pattern = Pattern.compile("\\d\\d-\\d\\d-\\d\\d\\d\\d");
             if (!pattern.matcher(date).matches()) {
@@ -63,6 +84,8 @@ public class LogiusConoleApp {
             System.out.println("Invalid URL was provided");
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (ParseException e) {
+            System.out.println("Incorrect input, check your command line arguments");
         }
     }
 }
