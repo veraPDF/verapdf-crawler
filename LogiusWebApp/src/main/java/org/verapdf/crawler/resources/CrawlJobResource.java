@@ -102,8 +102,11 @@ public class CrawlJobResource {
                         LocalDateTime.of(LocalDate.parse(startJobData.getDate(), formatter), LocalTime.MIN),
                         startJobData.getReportEmail()));
             }
-
-            String jobURL = client.getValidPDFReportUri(job).replace("mirror/Valid_PDF_Report.txt","");
+            String jobURL ="";
+            String reportUri = client.getValidPDFReportUri(job);
+            if(reportUri.contains("mirror/Valid_PDF_Report.txt")) {
+                jobURL = reportUri.replace("mirror/Valid_PDF_Report.txt", "");
+            }
             FileWriter writer = new FileWriter(HeritrixClient.baseDirectory + "crawled_urls.txt", true);
             CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT);
             printer.printRecord(new String[] {job, trimUrl(startJobData.getDomain()), jobURL});
