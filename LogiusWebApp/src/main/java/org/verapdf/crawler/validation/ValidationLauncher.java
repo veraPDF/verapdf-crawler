@@ -70,7 +70,7 @@ public class ValidationLauncher implements Runnable {
                     else {
                         Scanner errorScanner = new Scanner(new File("error"));
                         FileWriter fw = new FileWriter(data.getJobDirectory() + File.separator + "Error_Report.txt", true);
-                        fw.write("The following errors occured on url " + data.getUri());
+                        fw.write("The following errors occured on url " + data.getUri() + ":");
                         while(errorScanner.hasNextLine()) {
                             String line = scanner.nextLine();
                             fw.write(line);
@@ -82,7 +82,6 @@ public class ValidationLauncher implements Runnable {
                 }
                 else {
                     Thread.sleep(5000);
-                    System.out.println("Monitoring...");
                 }
             } catch (IOException e) {
                 System.out.println(e.getMessage());

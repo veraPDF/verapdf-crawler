@@ -2,6 +2,17 @@ var URL = "/crawl-job/";
 
 $(document).ready(function() {
     $("input:button").click(main);
+
+    var picker = new Pikaday(
+    {
+        field: document.getElementById('date_input'),
+        firstDay: 1,
+        minDate: new Date(2000, 12, 31),
+        maxDate: new Date(2020, 12, 31),
+        yearRange: [2000,2020],
+        showTime: false,
+        format: 'DD-MM-YYYY'
+    });
 });
 
 window.onload = loadAllJobs;

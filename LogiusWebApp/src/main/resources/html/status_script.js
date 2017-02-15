@@ -26,16 +26,29 @@ function checkStatus() {
                 setTimeout(checkStatus, 1000);
             else {
                 $("#email_link").hide();
-                $("#ods_report").text("Report in ODT format");
+                $("#ods_report").text("Download report in ODS format");
                 $("#ods_report").attr("href", URL + "ods_report/" + jobId);
                 $("#ods_report").show();
-                $("#html_report").text("Report in HTML format");
-                $("#html_report").attr("href", URL + "html_report/" + jobId);
-                $("#html_report").show();
+                $.ajax({ url: URL + "html_report/" + jobId,
+                        type:"GET",
+                        async:false,
+                        success:function(result) {
+                            $("#ods_report").addClass('hidden-element');
+                            $('#stats').addClass('hidden-element');
+                            $('#office').addClass('hidden-element');
+                            $('#odfs').addClass('hidden-element');
+                            $('#number_of_crawled_urls').addClass('hidden-element');
+
+                            $('#html-report').removeClass('hidden-element')
+                            $("#html-report").html(result);
+                        },
+                        error: function(result) {
+                            $("#stats").html("<font color=\"red\">Failed to get HTML job report.</font>");
+                        }});
             }
 	    },
 	    error: function(result) {
-            $("#stats").html("<font color=\"red\">Error on getting job info.</font>")
+            $("#stats").html("<font color=\"red\">Error on getting job info.</font>");
             $("#odfs").html("");
             $("#office").html("");
 	    }

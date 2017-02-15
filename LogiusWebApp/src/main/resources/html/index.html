@@ -5,6 +5,10 @@
     <title>Crawl jobs</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script src="main_script.js"></script>
+    <script src="moment.min.js"></script>
+    <script src="pikaday.min.js"></script>
+
+    <link rel="stylesheet" media="screen" type="text/css" href="pikaday.css" />
 
     <!-- TODO: Set correct path -->
     <link rel="stylesheet" type="text/css" href="main.css">
@@ -27,7 +31,7 @@
         <form class="form">
             <p>
                 <label class="form-label" for="urlinput">Crawl url</label>
-                <input class="form-input" type="text" name="text"  placeholder="http://example.com/" id="urlinput" onkeypress="keyListener">
+                <input class="form-input" type="text" name="text" placeholder="http://example.com/" id="urlinput" onkeypress="keyListener">
             </p>
             <p>
                 <label class="form-label" for="date_input">Crawl files since</label>

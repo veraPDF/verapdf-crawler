@@ -5,7 +5,6 @@
     <title>Job status</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script src="status_script.js"></script>
-
     <!-- TODO: Set correct path -->
     <link rel="stylesheet" type="text/css" href="main.css">
 </head>
@@ -24,17 +23,20 @@
 </header>
 <main class="main">
     <div class="main-form">
-		<a class="a-btn input-button" id="email_link" href = "email">Update report email address</a>
-		<p id="crawl_url"></p>
-		<p id="status"></p>
-		<p id="number_of_crawled_urls"></p>		
-		<p id="odfs"><b id="odftotal"></b><b> ODF files were found.</b></p>
-		<p id="office"><b id="office_total"></b><b> Microsoft Office files were found.</b></p>		
-		<a class="a-btn input-button" hidden id="ods_report"></a>
-		<a class="a-btn input-button" hidden id="html_report"></a>
+        <a class="a-btn input-button" id="email_link" href = "email">Update report email address</a>
+        <p id="crawl_url"></p>
+        <p id="status"></p>
+        <p id="number_of_crawled_urls"></p>
+        <p id="odfs"><b id="odftotal"></b><b> ODF files were found.</b></p>
+        <p id="office"><b id="office_total"></b><b> Microsoft Office files were found.</b></p>
+        <a class="a-btn input-button" hidden id="ods_report"></a>
+        <!--<a class="a-btn input-button" hidden id="html_report"></a>-->
     </div>
     <div class="main-secondary-data">
-    	<p id = "stats"><b id="valid"></b><b>/</b><b id="total"></b><b> pdf files are valid.</b></p>
+        <p id = "stats"><b id="valid"></b><b>/</b><b id="total"></b><b> pdf files are valid.</b></p>
+        <!--<p id = "html-report"><p>-->
+        <table class="result-table hidden-element" id="html-report">
+        </table>
         <a class="a-btn back-btn input-button" href="..">To all current jobs</a>
     </div>
 </main>

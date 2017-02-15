@@ -56,7 +56,7 @@ public class HeritrixReporter {
                 jobURL + "mirror/Valid_PDF_Report.txt",
                 time));
         result.setNumberOfODFDocuments(getNumberOfLines(client.getLogFileByURL(jobURL + "mirror/ODFReport.txt"), time));
-        result.officeReport = client.getLogFileByURL(jobURL + "mirror/OfficeReport.txt");
+        result.officeReport = removeEarlyLines(client.getLogFileByURL(jobURL + "mirror/OfficeReport.txt"),time);
         result.setNumberOfOfficeDocuments(getNumberOfLines(result.officeReport, time));
         result.setOfficeReportURL(jobURL + "mirror/OfficeReport.txt");
         return result;
@@ -96,33 +96,26 @@ public class HeritrixReporter {
 
     public String buildHtmlReport(SingleURLJobReport reportData) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
         StringBuilder builder = new StringBuilder();
-        builder.append("<p>Valid PDF files ");
+        builder.append("<tr><td>Compliant to PDF/A files</td><td>");
         builder.append(reportData.getPdfStatistics().getNumberOfValidPDFs());
-        builder.append("</p>");
-        builder.append("<p>ODF files ");
+        builder.append("</td></tr>");
+        builder.append("<tr><td>ODF files</td><td>");
         builder.append(reportData.getNumberOfODFDocuments());
-        builder.append("</p>");
-        builder.append("<p><font color=\"green\">Total ");
+        builder.append("</td></tr>");
+        builder.append("<tr><td><font color=\"green\">Total</font></td><td><font color=\"green\">");
         builder.append(reportData.getNumberOfODFDocuments() +
                 reportData.getPdfStatistics().getNumberOfValidPDFs());
-        builder.append("</font></p>");
-
-        builder.append("<p>Invalid PDF files ");
+        builder.append("</font></td></tr>");
+        builder.append("<tr><td><a href=\"INVALID_PDF_REPORT\">Not compliant to PDF/A files </a></td><td> ");
         builder.append(reportData.getPdfStatistics().getNumberOfInvalidPDFs());
-        builder.append("</p>");
-        builder.append("<p>Microsoft Office files ");
+        builder.append("</td></tr>");
+        builder.append("<tr><td><a href=\"OFFICE_REPORT\">Microsoft Office files</a></td><td> ");
         builder.append(reportData.getNumberOfOfficeDocuments());
-        builder.append("</p>");
-        builder.append("<p><font color=\"red\">Total ");
+        builder.append("</td></tr>");
+        builder.append("<tr><td><font color=\"red\">Total</font></td><td><font color=\"red\">");
         builder.append(reportData.getNumberOfOfficeDocuments() +
                 reportData.getPdfStatistics().getNumberOfInvalidPDFs());
-        builder.append("</font></p>");
-        builder.append("<p><a href=\"");
-        builder.append("INVALID_PDF_REPORT");
-        builder.append("\">Invalid PDF URLs</a></p>");
-        builder.append("<p><a href=\"");
-        builder.append("OFFICE_REPORT");
-        builder.append("\">Microsoft Office files URLs</a></p>");
+        builder.append("</font></td></tr>");
 
         return builder.toString();
     }

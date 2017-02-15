@@ -216,6 +216,9 @@ public class CrawlJobResource {
     @Timed
     @Path("/{job}")
     public SingleURLJobReport getJob(@PathParam("job") String job) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
+        if(resourceUri == null && uriInfo != null) {
+            resourceUri = uriInfo.getBaseUri().toString();
+        }
         String jobURL = getExistingJobURLbyJobId(job);
         SingleURLJobReport result;
         if(jobURL.equals("")){
@@ -274,29 +277,33 @@ public class CrawlJobResource {
     }
 
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_HTML)
     @Path("office_list/{job}")
     public String getOfficeReport(@PathParam("job") String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
         String jobURL = getExistingJobURLbyJobId(job);
+        String result;
         if(jobURL.equals("")) {
-            return reporter.getOfficeReport(job, getTimeByJobId(job));
+            result = reporter.getOfficeReport(job, getTimeByJobId(job));
         }
         else{
-            return reporter.getOfficeReport(job, jobURL, getTimeByJobId(job));
+            result = reporter.getOfficeReport(job, jobURL, getTimeByJobId(job));
         }
+        return addLinksToUrlList(result).toString();
     }
 
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_HTML)
     @Path("invalid_pdf_list/{job}")
     public String getInvalidPdfReport(@PathParam("job") String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
         String jobURL = getExistingJobURLbyJobId(job);
+        String result;
         if(jobURL.equals("")) {
-            return reporter.getInvalidPDFReport(job, getTimeByJobId(job));
+            result = reporter.getInvalidPDFReport(job, getTimeByJobId(job));
         }
         else{
-            return reporter.getInvalidPDFReport(job, jobURL, getTimeByJobId(job));
+            result = reporter.getInvalidPDFReport(job, jobURL, getTimeByJobId(job));
         }
+        return addLinksToUrlList(result).toString();
     }
 
     private String getExistingJobURLbyJobId(String job) {
@@ -390,5 +397,19 @@ public class CrawlJobResource {
             url = url.substring(0, url.length() - 1);
         }
         return url;
+    }
+
+    private StringBuilder addLinksToUrlList(String list) {
+        StringBuilder result = new StringBuilder();
+        Scanner scanner = new Scanner(list);
+        while (scanner.hasNextLine()) {
+            String url = scanner.nextLine();
+            result.append("<p><a href=\"");
+            result.append(url);
+            result.append("\">");
+            result.append(url);
+            result.append("</a></p>");
+        }
+        return result;
     }
 }
