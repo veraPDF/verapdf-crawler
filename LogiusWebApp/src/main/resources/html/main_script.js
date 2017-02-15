@@ -82,8 +82,9 @@ function reportError(text) {
     var ul = document.getElementById("crawl_url_list");
     var li = document.createElement("li");
     var link = document.createElement("p");
-    link.innerHTML = "<font color=\"red\">" + text + ".</font>"
+    link.innerHTML = "<font color=\"red\">* " + text + ".</font>"
     li.appendChild(link);
+    ul.innerHTML = '';
     ul.appendChild(li);
 }
 

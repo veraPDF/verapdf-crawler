@@ -35,7 +35,11 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
                     configuration.getHeritrixLogin(),
                     configuration.getHeritrixPassword());
             client.setBaseDirectory(configuration.getResourcePath());
-            resource = new CrawlJobResource( client, configuration.getEmailServer());
+
+            resource = new CrawlJobResource( client,
+                    configuration.getEmailServer(),
+                    configuration.getVerapdfPath(),
+                    configuration.getHeritrixPath());
             environment.jersey().register(resource);
         } catch (Exception e) {
             e.printStackTrace();

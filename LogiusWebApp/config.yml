@@ -14,3 +14,5 @@ emailServer:
 resourcePath: /home/anton/Documents/Logius/LogiusWebApp/src/main/resources/
 heritrixLogin: admin
 heritrixPassword: logius
+verapdfPath: /home/anton/verapdf/verapdf
+heritrixPath: /home/anton/Documents/heritrix-3.2.0/

@@ -275,7 +275,7 @@ public class HeritrixClient {
         String[] parts = url.split("(?<=://)|\\.");
         parts[parts.length - 1] = parts[parts.length - 1].split("/",2)[0];
         StringBuilder builder = new StringBuilder("+");
-        builder.append(parts[0]);
+        builder.append("http://");
         builder.append("(");
         for(int i = parts.length - 1; i > 0; i--) {
             builder.append(parts[i]);

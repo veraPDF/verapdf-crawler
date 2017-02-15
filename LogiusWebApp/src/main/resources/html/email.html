@@ -5,13 +5,35 @@
     <title>Update your email</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script src="email_script.js"></script>
+
+    <!-- TODO: Set correct path -->
+    <link rel="stylesheet" type="text/css" href="main.css">
 </head>
 <body>
-<form>
-    <input type="button" name="button" value="Submit email">
-    <input type="text" name="text" value="Enter your email" id="input">
-</form>
-<p><font id="error" color="red" ></font></p>
-<a id="job_link" href="..">Return to job info</a>
+<header class="header">
+    <h1 class="app-title">documentsonyoursite.nl</h1>
+    <nav id="menu_container">
+        <ul id="menu">
+            <li><a href="#">Home</a></li>
+            <li><a href="#">About</a></li>
+            <li><a href="#">What we test</a></li>
+            <li><a href="#">News</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+    <div class="main-form">
+        <form class="form">	        
+	    	<input class="form-input" type="text" name="text" placeholder="Enter your email" id="input">            
+	    	<input type="button" name="button" value="Submit email" class="input-button">
+        </form>
+    </div>
+    <div class="main-secondary-data">
+        <p><font id="error" color="red" ></font></p>
+		<a id="job_link" class="a-btn back-btn input-button" href="..">Return to job info</a>
+    </div>
+</main>
+<footer class="footer"></footer>
 </body>
 </html>

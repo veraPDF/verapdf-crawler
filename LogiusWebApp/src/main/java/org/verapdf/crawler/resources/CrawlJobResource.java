@@ -9,6 +9,7 @@ import com.codahale.metrics.annotation.Timed;
 import org.verapdf.crawler.engine.HeritrixClient;
 import org.verapdf.crawler.helpers.emailUtils.SendEmail;
 import org.verapdf.crawler.report.HeritrixReporter;
+import org.verapdf.crawler.validation.ValidationLauncher;
 import org.xml.sax.SAXException;
 
 import javax.ws.rs.*;
@@ -39,15 +40,18 @@ public class CrawlJobResource {
     protected ArrayList<CurrentJob> currentJobs;
     private ArrayList<BatchJob> batchJobs;
     private String resourceUri;
+    private ValidationLauncher launcher;
 
-    public CrawlJobResource(HeritrixClient client, EmailServer emailServer) throws IOException {
+    public CrawlJobResource(HeritrixClient client, EmailServer emailServer, String verapdfPath, String heritrixPath) throws IOException {
         this.client = client;
         this.emailServer = emailServer;
         currentJobs = new ArrayList<>();
         batchJobs = new ArrayList<>();
         reporter = new HeritrixReporter(client);
         loadJobs();
+        launcher = new ValidationLauncher(heritrixPath + "validation/validation-jobs.txt", verapdfPath);
         new Thread(new StatusMonitor(this)).start();
+        new Thread(launcher).start();
     }
 
     public ArrayList<CurrentJob> getCurrentJobs() {
@@ -228,6 +232,7 @@ public class CrawlJobResource {
                         "\nResults are available at " + resourceUri.replace("crawl-job/","jobinfo?id=") + job;
                 SendEmail.send(jobData.getReportEmail(), subject, text, emailServer);
                 jobData.setEmailSent(true);
+                client.teardownJob(jobData.getId());
             }
         }
 

@@ -12,19 +12,39 @@ import org.verapdf.pdfa.validation.validators.ValidatorFactory;
 import org.verapdf.processor.*;
 import org.verapdf.processor.plugins.PluginsCollectionConfig;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.EnumSet;
 
 public class PDFProcessor extends MirrorWriterProcessor {
     @Override
     protected void innerProcess(CrawlURI curi) {
         super.innerProcess(curi);
-        VeraGreenfieldFoundryProvider.initialise();
         String baseDir = getPath().getFile().getAbsolutePath();
         String mps = (String)curi.getData().get(A_MIRROR_PATH);
+        String time = "Last-Modified: Thu, 01 Jan 1970 00:00:01 GMT";
+        Header header = curi.getHttpMethod().getResponseHeader("Last-Modified");
+        if(header != null) {
+            time = header.toString().substring(0, header.toString().length() - 2);
+        }
 
+        try {
+            VeraGreenfieldFoundryProvider.initialise();
+            File validationFile = new File(baseDir + "/../../../../validation/validation-jobs.txt");
+            FileWriter writer = new FileWriter(validationFile, true);
+            String data = "{\"filepath\":\"" + baseDir + File.separator + mps +
+                    "\", \"jobDirectory\":\"" + baseDir + "\", \"" +
+                    "time\":\"" + time + "\", \"uri\":\"" + curi.getURI() + "\"}";
+            writer.write(data);
+            writer.write(System.lineSeparator());
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+/*
+        VeraGreenfieldFoundryProvider.initialise();
         try(ItemProcessor processor = ProcessorFactory.createProcessor(
                 ProcessorFactory.fromValues(
                 ValidatorFactory.defaultConfig(),
@@ -32,11 +52,7 @@ public class PDFProcessor extends MirrorWriterProcessor {
                 PluginsCollectionConfig.defaultConfig(),
                 FixerFactory.defaultConfig(),
                 EnumSet.of(TaskType.VALIDATE))) ) {
-            String time = "Last-Modified: Thu, 01 Jan 1970 00:00:01 GMT";
-            Header header = curi.getHttpMethod().getResponseHeader("Last-Modified");
-            if(header != null) {
-                time = header.toString();
-            }
+
 
             ProcessorResult res = processor.process(new File(baseDir + File.separator + mps));
             Boolean isValid = res.getResultForTask(TaskType.VALIDATE).isExecuted() &&
@@ -61,5 +77,6 @@ public class PDFProcessor extends MirrorWriterProcessor {
             System.out.println(e.getMessage());
             e.printStackTrace();
         }
+*/
     }
 }

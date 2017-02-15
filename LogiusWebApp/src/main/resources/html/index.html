@@ -5,23 +5,50 @@
     <title>Crawl jobs</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script src="main_script.js"></script>
+
+    <!-- TODO: Set correct path -->
+    <link rel="stylesheet" type="text/css" href="main.css">
 </head>
 <body>
-
-<form class="form">
-    <input type="button" name="button" value="Start job"><br>
-    <label for="urlinput">Crawl url</label>
-    <input type="text" name="text" value="http://example.com/" id=urlinput onkeypress="keyListener"><br>
-    <label for="date_input">Crawl files since (enter date in format dd-MM-yyyy)</label>
-    <input type="text" id=date_input><br>
-    <label for="email_input">Enter report email</label>
-    <input type="text" id=email_input><br>
-    <label for="force_start">Overwrite existing job on this URL</label>
-    <input type="checkbox" id="force_start">
-</form>
-<p>Current jobs:</p>
-<ul id="crawl_url_list">
-</ul>
-
+<header class="header">
+    <h1 class="app-title">documentsonyoursite.nl</h1>
+    <nav id="menu_container">
+        <ul id="menu">
+            <li><a href="#">Home</a></li>
+            <li><a href="#">About</a></li>
+            <li><a href="#">What we test</a></li>
+            <li><a href="#">News</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+    <div class="main-form">
+        <form class="form">
+            <p>
+                <label class="form-label" for="urlinput">Crawl url</label>
+                <input class="form-input" type="text" name="text"  placeholder="http://example.com/" id="urlinput" onkeypress="keyListener">
+            </p>
+            <p>
+                <label class="form-label" for="date_input">Crawl files since</label>
+                <input class="form-input" type="text" id="date_input" placeholder="dd-MM-yyyy">
+            </p>
+            <p>
+                <label class="form-label" for="email_input">Enter report email</label>
+                <input class="form-input" type="text" id="email_input">
+            </p>
+            <p>
+                <input class="form-input checkbox-input" type="checkbox" id="force_start">
+                <label class="form-label check-label" for="force_start">Overwrite existing job on this URL</label>                
+            </p>
+            <input class="submit-btn input-button" type="button" name="button" value="Start job">
+        </form>
+    </div>
+    <div class="main-secondary-data">
+        <p>Current jobs:</p>
+        <ul id="crawl_url_list" />
+    </div>
+</main>
+<footer class="footer"></footer>
 </body>
 </html>

@@ -25,11 +25,13 @@ function checkStatus() {
             if(status.substring(0, 8) != "Finished")
                 setTimeout(checkStatus, 1000);
             else {
-                $("#email_link").text("");
+                $("#email_link").hide();
                 $("#ods_report").text("Report in ODT format");
                 $("#ods_report").attr("href", URL + "ods_report/" + jobId);
+                $("#ods_report").show();
                 $("#html_report").text("Report in HTML format");
                 $("#html_report").attr("href", URL + "html_report/" + jobId);
+                $("#html_report").show();
             }
 	    },
 	    error: function(result) {
