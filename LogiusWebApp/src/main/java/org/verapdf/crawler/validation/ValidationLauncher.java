@@ -65,6 +65,7 @@ public class ValidationLauncher implements Runnable {
                         }
                         fw.write(data.getUri() + ", ");
                         fw.write(data.getTime());
+                        fw.write(System.lineSeparator());
                         fw.close();
                     }
                     else {

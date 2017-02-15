@@ -49,8 +49,7 @@ public class HeritrixReporter {
         }
         SingleURLJobReport result = new SingleURLJobReport(job,
                 HeritrixClient.getListOfCrawlUrlsFromXml(config).get(0),
-                "Finished",
-                getNumberOfLines(client.getLogFileByURL(jobURL + "logs/crawl-log"), time));
+                "Finished",0);
         result.setPdfStatistics(getValidationStatistics(job,
                 jobURL + "mirror/Invalid_PDF_Report.txt",
                 jobURL + "mirror/Valid_PDF_Report.txt",
