@@ -79,6 +79,7 @@ public class ValidationLauncher implements Runnable {
                         }
                         fw.close();
                     }
+                    new File(data.getFilepath()).delete();
                 }
                 else {
                     Thread.sleep(5000);
