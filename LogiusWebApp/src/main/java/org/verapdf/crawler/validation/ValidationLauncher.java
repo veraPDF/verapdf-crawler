@@ -55,8 +55,8 @@ public class ValidationLauncher implements Runnable {
                     pb.redirectOutput(output);
                     pb.redirectError(error);
                     pb.command(cmd);
-                    if(pb.start().waitFor(20, TimeUnit.MINUTES)) { // Validation finished successfully in time
-                        Scanner resultScanner = new Scanner(new File("output"));
+                    Scanner resultScanner = new Scanner(new File("output"));
+                    if(pb.start().waitFor(20, TimeUnit.MINUTES) && resultScanner.hasNext()) { // Validation finished successfully in time
                         FileWriter fw;
                         if(resultScanner.next().equals("PASS")) {
                             fw = new FileWriter(data.getJobDirectory() + File.separator + "Valid_PDF_Report.txt", true);
@@ -70,6 +70,9 @@ public class ValidationLauncher implements Runnable {
                         fw.close();
                     }
                     else {
+                        if(!resultScanner.hasNext()) {
+                            System.out.println("Error: verapdf output is empty.");
+                        }
                         Scanner errorScanner = new Scanner(new File("error"));
                         FileWriter fw = new FileWriter(data.getJobDirectory() + File.separator + "Error_Report.txt", true);
                         fw.write("The following errors occured on url " + data.getUri() + ":");
@@ -87,10 +90,8 @@ public class ValidationLauncher implements Runnable {
                     Thread.sleep(60000);
                     System.out.println("No jobs, snoozing for a minute...");
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 System.out.println(e.getMessage());
-                e.printStackTrace();
-            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
