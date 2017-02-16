@@ -5,6 +5,7 @@ import org.verapdf.crawler.api.ValidationJobData;
 
 import java.io.*;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 public class ValidationLauncher implements Runnable {
     private String jobFile;
@@ -43,6 +44,7 @@ public class ValidationLauncher implements Runnable {
                     writer.close();
                     ObjectMapper mapper = new ObjectMapper();
                     ValidationJobData data = mapper.readValue(validationJobJson, ValidationJobData.class);
+                    System.out.println("Validating " + data.getUri());
                     // Launch verapdf CLI with pdf file as argument
                     String[] cmd = {verapdfPath, "--format", "text", data.getFilepath()};
                     ProcessBuilder pb = new ProcessBuilder().inheritIO();
@@ -53,8 +55,7 @@ public class ValidationLauncher implements Runnable {
                     pb.redirectOutput(output);
                     pb.redirectError(error);
                     pb.command(cmd);
-                    int status = pb.start().waitFor();
-                    if(pb.start().waitFor() == 0) { // Validation finished successfully
+                    if(pb.start().waitFor(20, TimeUnit.MINUTES)) { // Validation finished successfully in time
                         Scanner resultScanner = new Scanner(new File("output"));
                         FileWriter fw;
                         if(resultScanner.next().equals("PASS")) {
@@ -83,7 +84,8 @@ public class ValidationLauncher implements Runnable {
                     new File(data.getFilepath()).delete();
                 }
                 else {
-                    Thread.sleep(5000);
+                    Thread.sleep(60000);
+                    System.out.println("No jobs, snoozing for a minute...");
                 }
             } catch (IOException e) {
                 System.out.println(e.getMessage());
