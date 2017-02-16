@@ -15,6 +15,12 @@ public class SingleURLJobReport {
     private int numberOfOfficeDocuments;
     private String officeReportURL;
 
+    @JsonProperty
+    public String startTime;
+
+    @JsonProperty
+    public String finishTime;
+
     @JsonIgnore
     public String officeReport;
 

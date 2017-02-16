@@ -10,6 +10,7 @@ function checkStatus() {
             status = result.status;
             number = result.numberOfCrawledUrls;
             crawlUrl = result.url;
+            $("#start_time").text("Job started on " + result.startTime);
             $("#status").text("Job is " + status);
             $("#crawl_url").text("Crawling url " + crawlUrl);
             if(undefined != number)
@@ -25,6 +26,7 @@ function checkStatus() {
             if(status.substring(0, 8) != "Finished")
                 setTimeout(checkStatus, 1000);
             else {
+                $("#finish_time").text("Job finished on " + result.finishTime);
                 $("#email_link").hide();
                 $("#ods_report").text("Download report in ODS format");
                 $("#ods_report").attr("href", URL + "ods_report/" + jobId);

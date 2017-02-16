@@ -67,6 +67,8 @@ public class HeritrixClient {
 
     public void setBaseDirectory(String baseDirectory) { HeritrixClient.baseDirectory = baseDirectory; }
 
+    public String getBaseDirectory() { return baseDirectory; }
+
     public void setHttpClient(HttpClient httpClient) {
         this.httpClient = httpClient;
     }
@@ -281,7 +283,6 @@ public class HeritrixClient {
             builder.append(parts[i]);
             builder.append(",");
         }
-        System.out.println(builder.toString());
         return builder.toString();
     }
     //</editor-fold>

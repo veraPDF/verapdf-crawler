@@ -3,7 +3,7 @@ package org.verapdf.crawler.extentionModules;
 import org.apache.commons.httpclient.Header;
 import org.archive.modules.CrawlURI;
 import org.archive.modules.writer.MirrorWriterProcessor;
-import org.verapdf.pdfa.VeraGreenfieldFoundryProvider;
+import org.verapdf.crawler.helpers.synchronization.FileAccessManager;
 
 import java.io.*;
 
@@ -20,15 +20,11 @@ public class PDFProcessor extends MirrorWriterProcessor {
         }
 
         try {
-            VeraGreenfieldFoundryProvider.initialise();
-            File validationFile = new File(baseDir + "/../../../../validation/validation-jobs.txt");
-            FileWriter writer = new FileWriter(validationFile, true);
             String data = "{\"filepath\":\"" + baseDir + File.separator + mps +
                     "\", \"jobDirectory\":\"" + baseDir + "\", \"" +
                     "time\":\"" + time + "\", \"uri\":\"" + curi.getURI() + "\"}";
-            writer.write(data);
-            writer.write(System.lineSeparator());
-            writer.close();
+
+            FileAccessManager.getInstance().makeRecord(baseDir + "/../../../../validation/validation-jobs.txt", data);
         } catch (IOException e) {
             e.printStackTrace();
         }

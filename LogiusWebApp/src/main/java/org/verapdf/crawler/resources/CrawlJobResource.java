@@ -49,7 +49,7 @@ public class CrawlJobResource {
         batchJobs = new ArrayList<>();
         reporter = new HeritrixReporter(client);
         loadJobs();
-        launcher = new ValidationLauncher(heritrixPath + "validation/validation-jobs.txt", verapdfPath);
+        launcher = new ValidationLauncher(heritrixPath + "validation/validation-jobs.txt", verapdfPath, client.getBaseDirectory());
         new Thread(new StatusMonitor(this)).start();
         new Thread(launcher).start();
     }
@@ -96,15 +96,16 @@ public class CrawlJobResource {
             client.buildJob(job);
             client.launchJob(job);
             String jobStatus = client.getCurrentJobStatus(job);
+            LocalDateTime now = LocalDateTime.now();
             if(startJobData.getDate() == null || startJobData.getDate().isEmpty()) {
                 currentJobs.add(new CurrentJob(job, "", trimUrl(startJobData.getDomain()),
-                        null, startJobData.getReportEmail()));
+                        null, startJobData.getReportEmail(), now));
             }
             else {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
                 currentJobs.add(new CurrentJob(job, "", trimUrl(startJobData.getDomain()),
                         LocalDateTime.of(LocalDate.parse(startJobData.getDate(), formatter), LocalTime.MIN),
-                        startJobData.getReportEmail()));
+                        startJobData.getReportEmail(), now));
             }
             String jobURL ="";
             String reportUri = client.getValidPDFReportUri(job);
@@ -113,7 +114,8 @@ public class CrawlJobResource {
             }
             FileWriter writer = new FileWriter(HeritrixClient.baseDirectory + "crawled_urls.txt", true);
             CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT);
-            printer.printRecord(new String[] {job, trimUrl(startJobData.getDomain()), jobURL});
+            printer.printRecord(new String[] {job, trimUrl(startJobData.getDomain()), jobURL,
+                    now.format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss")), ""});
             writer.close();
 
             return new SingleURLJobReport(job, trimUrl(startJobData.getDomain()), jobStatus, 0);
@@ -138,9 +140,8 @@ public class CrawlJobResource {
 
         batchJobs.add(batch);
         String reportUrl = uriInfo.getBaseUri().toString() + "batch/" + id;
-        String response = "Batch job successfully submitted. You can track it on " + reportUrl +
+        return "Batch job successfully submitted. You can track it on " + reportUrl +
                 ". Notification will be sent on the email address you provided when the job is finished.";
-        return response;
     }
 
     @GET
@@ -204,12 +205,22 @@ public class CrawlJobResource {
     @GET
     @Timed
     @Path("/list")
-    public HashMap<String, String> getJobs() {
-        HashMap<String, String> result = new HashMap<>();
-        for(CurrentJob job : currentJobs) {
-            result.put(job.getId(), job.getCrawlURL());
-        }
-        return result;
+    public ArrayList<CurrentJob> getJobs() throws IOException, SAXException, NoSuchAlgorithmException, ParserConfigurationException, KeyManagementException {
+        refreshCurrentJobs();
+        return currentJobs;
+    }
+
+    @GET
+    @Timed
+    @Path("/queue")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getQueueSize() throws IOException {
+        Integer size;
+        LineNumberReader  lnr = new LineNumberReader(new FileReader(launcher.getJobFile()));
+        lnr.skip(Long.MAX_VALUE);
+        size = lnr.getLineNumber();
+        lnr.close();
+        return size.toString();
     }
 
     @GET
@@ -219,6 +230,7 @@ public class CrawlJobResource {
         if(resourceUri == null && uriInfo != null) {
             resourceUri = uriInfo.getBaseUri().toString();
         }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
         String jobURL = getExistingJobURLbyJobId(job);
         SingleURLJobReport result;
         if(jobURL.equals("")){
@@ -227,8 +239,23 @@ public class CrawlJobResource {
         else {
             result = reporter.getReport(job, jobURL, getTimeByJobId(job));
         }
+        CurrentJob jobData = getJobById(job);
         if(result.getStatus().startsWith("Finished")) {
-            CurrentJob jobData = getJobById(job);
+            Scanner sc = new Scanner(new File(HeritrixClient.baseDirectory + "crawled_urls.txt"));
+            StringBuilder builder = new StringBuilder();
+            while(sc.hasNextLine()) {
+                String line = sc.nextLine();
+                if(line.startsWith(job)) {
+                    line += LocalDateTime.now().format(formatter);
+                }
+                builder.append(line);
+                builder.append(System.lineSeparator());
+            }
+            sc.close();
+            FileWriter fw = new FileWriter(HeritrixClient.baseDirectory + "crawled_urls.txt");
+            fw.write(builder.toString());
+            fw.close();
+            jobData.setFinishTime(LocalDateTime.now());
             if(!jobData.getReportEmail().equals("") && !jobData.isEmailSent()) {
                 String subject = "Crawl job";
                 String text = "Crawl job on " + jobData.getCrawlURL() + " was finished with status " + result.getStatus() +
@@ -238,7 +265,13 @@ public class CrawlJobResource {
                 client.teardownJob(jobData.getId());
             }
         }
-
+        result.startTime = jobData.getStartTime().format(formatter);
+        if(jobData.getFinishTime() != null) {
+            result.finishTime = jobData.getFinishTime().format(formatter);
+        }
+        else {
+            result.finishTime = "";
+        }
         return result;
     }
 
@@ -336,10 +369,18 @@ public class CrawlJobResource {
         CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT.withHeader());
         List<CSVRecord> records = parser.getRecords();
         for(CSVRecord record : records) {
-            currentJobs.add(new CurrentJob(record.get("id"),
+            String startTimeString = record.get("startTime");
+            String finishTimeString = record.get("finishTime");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
+            LocalDateTime startTime = LocalDateTime.parse(startTimeString, formatter);
+            CurrentJob newJob = new CurrentJob(record.get("id"),
                     record.get("jobURL"),
                     record.get("crawlURL"),
-                    null, ""));
+                    null, "",startTime);
+            if(!finishTimeString.equals("")) {
+                newJob.setFinishTime(LocalDateTime.parse(finishTimeString, formatter));
+            }
+            currentJobs.add(newJob);
         }
     }
 
@@ -372,7 +413,7 @@ public class CrawlJobResource {
         FileReader reader = new FileReader(HeritrixClient.baseDirectory + "crawled_urls.txt");
         CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT.withHeader());
         List<CSVRecord> records = parser.getRecords();
-        builder.append("id,crawlURL,jobURL" + System.lineSeparator());
+        builder.append("id,crawlURL,jobURL,startTime,finishTime" + System.lineSeparator());
         for(CSVRecord record : records) {
             if(!record.get("crawlURL").equals(crawlUrl)) {
                 builder.append(record.get("id") + ",");
@@ -412,4 +453,16 @@ public class CrawlJobResource {
         }
         return result;
     }
+
+    private void refreshCurrentJobs() throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
+        for(CurrentJob job : currentJobs) {
+            if(job.isActiveJob()) {
+                job.setStatus(client.getCurrentJobStatus(job.getId()));
+            }
+            else {
+                job.setStatus("Finished");
+            }
+        }
+    }
+
 }

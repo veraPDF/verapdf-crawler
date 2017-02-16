@@ -71,11 +71,10 @@ function loadAllJobs() {
             type:"GET",
             success: function(result){
                 $("#crawl_url_list").empty();
-                for(var key in result) {
-                    if(result.hasOwnProperty(key)) {
-                        appendCrawlJob(key, result[key]);
-                    }
-                }
+                result.forEach(function(item, i, arr){
+                    appendCrawlJob(item.id, item.crawlURL + " - " + item.status)
+                });
+                setTimeout(loadAllJobs, 3000);
             },
             error: function(result) {
                 reportError("Error on job loading");

@@ -2,6 +2,7 @@ package org.verapdf.crawler.validation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.verapdf.crawler.api.ValidationJobData;
+import org.verapdf.crawler.helpers.synchronization.FileAccessManager;
 
 import java.io.*;
 import java.util.Scanner;
@@ -10,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 public class ValidationLauncher implements Runnable {
     private String jobFile;
     private String verapdfPath;
+    private String errorReportPath;
 
     public boolean isRunning() {
         return isRunning;
@@ -19,32 +21,28 @@ public class ValidationLauncher implements Runnable {
         isRunning = running;
     }
 
+    public String getJobFile() { return jobFile; }
+
     private boolean isRunning;
 
-    public ValidationLauncher(String jobFile, String verapdfPath) {
+    public ValidationLauncher(String jobFile, String verapdfPath, String errorReportPath) {
         this.jobFile = jobFile;
         this.verapdfPath = verapdfPath;
+        this.errorReportPath = errorReportPath;
         isRunning = true;
     }
 
     @Override
     public void run() {
         while (isRunning) {
+            String currentUrl = "";
             try {
-                Scanner scanner = new Scanner(new File(jobFile));
-                if(scanner.hasNext()) {
-                    // Read data from the first line and remove it from file
-                    String validationJobJson = scanner.nextLine();
-                    FileWriter writer = new FileWriter(jobFile);
-                    while(scanner.hasNextLine()) {
-                        writer.write(scanner.nextLine());
-                        writer.write(System.lineSeparator());
-                    }
-                    scanner.close();
-                    writer.close();
+                String validationJobJson = FileAccessManager.getInstance().makeRecord(jobFile, "");
+                if(!validationJobJson.equals("")) {
                     ObjectMapper mapper = new ObjectMapper();
                     ValidationJobData data = mapper.readValue(validationJobJson, ValidationJobData.class);
                     System.out.println("Validating " + data.getUri());
+                    currentUrl = data.getUri();
                     // Launch verapdf CLI with pdf file as argument
                     String[] cmd = {verapdfPath, "--format", "text", data.getFilepath()};
                     ProcessBuilder pb = new ProcessBuilder().inheritIO();
@@ -77,9 +75,8 @@ public class ValidationLauncher implements Runnable {
                         FileWriter fw = new FileWriter(data.getJobDirectory() + File.separator + "Error_Report.txt", true);
                         fw.write("The following errors occured on url " + data.getUri() + ":");
                         while(errorScanner.hasNextLine()) {
-                            String line = scanner.nextLine();
+                            String line = errorScanner.nextLine();
                             fw.write(line);
-                            System.out.println(line);
                             fw.write(System.lineSeparator());
                         }
                         fw.close();
@@ -91,6 +88,21 @@ public class ValidationLauncher implements Runnable {
                     System.out.println("No jobs, snoozing for a minute...");
                 }
             } catch (Exception e) {
+                try {
+                    FileWriter fw = new FileWriter(errorReportPath + "Validation_errors.txt", true);
+                    fw.write("Error processing url " + currentUrl);
+                    fw.write(System.lineSeparator());
+                    fw.write(e.getMessage());
+                    StringWriter sw = new StringWriter();
+                    PrintWriter pw = new PrintWriter(sw);
+                    e.printStackTrace(pw);
+                    fw.write(sw.toString());
+                    fw.write(System.lineSeparator());
+                    fw.close();
+                }
+                catch (IOException e1) {
+                    e1.printStackTrace();
+                }
                 System.out.println(e.getMessage());
                 e.printStackTrace();
             }
