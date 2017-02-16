@@ -245,7 +245,7 @@ public class CrawlJobResource {
             StringBuilder builder = new StringBuilder();
             while(sc.hasNextLine()) {
                 String line = sc.nextLine();
-                if(line.startsWith(job)) {
+                if(line.startsWith(job) && line.endsWith(",")) {
                     line += LocalDateTime.now().format(formatter);
                 }
                 builder.append(line);
