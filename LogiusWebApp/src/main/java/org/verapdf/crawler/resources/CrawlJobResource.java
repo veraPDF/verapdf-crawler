@@ -236,20 +236,6 @@ public class CrawlJobResource {
         }
         CurrentJob jobData = getJobById(job);
         if(result.getStatus().startsWith("Finished")) {
-            Scanner sc = new Scanner(new File(HeritrixClient.baseDirectory + "crawled_urls.txt"));
-            StringBuilder builder = new StringBuilder();
-            while(sc.hasNextLine()) {
-                String line = sc.nextLine();
-                if(line.startsWith(job) && line.endsWith(",")) {
-                    line += LocalDateTime.now().format(formatter);
-                }
-                builder.append(line);
-                builder.append(System.lineSeparator());
-            }
-            sc.close();
-            FileWriter fw = new FileWriter(HeritrixClient.baseDirectory + "crawled_urls.txt");
-            fw.write(builder.toString());
-            fw.close();
             if(!jobData.getReportEmail().equals("") && !jobData.isEmailSent()) {
                 String subject = "Crawl job";
                 String text = "Crawl job on " + jobData.getCrawlURL() + " was finished with status " + result.getStatus() +
@@ -260,6 +246,7 @@ public class CrawlJobResource {
             if(jobData.getJobURL().equals("")) {
                 jobData.setJobURL(client.getValidPDFReportUri(job).replace("mirror/Valid_PDF_Report.txt", ""));
                 jobData.setFinishTime(LocalDateTime.now());
+                writeFinishDate(job);
             }
             client.teardownJob(jobData.getId());
         }
@@ -472,4 +459,20 @@ public class CrawlJobResource {
         }
     }
 
+    private void writeFinishDate(String job) throws IOException {
+        Scanner sc = new Scanner(new File(HeritrixClient.baseDirectory + "crawled_urls.txt"));
+        StringBuilder builder = new StringBuilder();
+        while(sc.hasNextLine()) {
+            String line = sc.nextLine();
+            if(line.startsWith(job) && line.endsWith(",")) {
+                line += LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss"));
+            }
+            builder.append(line);
+            builder.append(System.lineSeparator());
+        }
+        sc.close();
+        FileWriter fw = new FileWriter(HeritrixClient.baseDirectory + "crawled_urls.txt");
+        fw.write(builder.toString());
+        fw.close();
+    }
 }
