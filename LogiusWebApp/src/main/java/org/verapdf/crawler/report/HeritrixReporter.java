@@ -70,7 +70,7 @@ public class HeritrixReporter {
         final Sheet totalSheet = SpreadSheet.createFromFile(file).getSheet(0);
         totalSheet.ensureColumnCount(2);
         if(time != null) {
-            totalSheet.setValueAt(time.format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss")), 1, 0);
+            totalSheet.setValueAt(time.format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss")) + " GMT", 1, 0);
         }
         else {
             totalSheet.setValueAt("", 0, 0);
@@ -108,7 +108,7 @@ public class HeritrixReporter {
         if(time != null) {
             builder.append("<tr><td>Crawl files since date</td><td>");
             builder.append(time.format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss")));
-            builder.append("</td></tr>");
+            builder.append(" GMT</td></tr>");
         }
         builder.append("<tr><td>Compliant PDF/A files</td><td>");
         builder.append(reportData.getPdfStatistics().getNumberOfValidPDFs());

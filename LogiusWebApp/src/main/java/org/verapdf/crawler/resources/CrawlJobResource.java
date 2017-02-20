@@ -250,9 +250,9 @@ public class CrawlJobResource {
             }
             client.teardownJob(jobData.getId());
         }
-        result.startTime = jobData.getStartTime().format(formatter);
+        result.startTime = jobData.getStartTime().format(formatter) + " GMT";
         if(jobData.getFinishTime() != null) {
-            result.finishTime = jobData.getFinishTime().format(formatter);
+            result.finishTime = jobData.getFinishTime().format(formatter) + " GMT";
         }
         else {
             result.finishTime = "";
