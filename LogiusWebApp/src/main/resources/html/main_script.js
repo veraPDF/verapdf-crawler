@@ -81,6 +81,8 @@ function loadAllJobs() {
             }
     });
 
+    document.getElementById("date_input").value = "01-01-2015";
+
     var crawlUrl = location.search.split("text=")[1];
     if(crawlUrl && 0 === crawlUrl.length) {
         document.getElementById("urlinput").value = crawlUrl;

@@ -353,6 +353,7 @@
                 </property>
             </bean>
         </property>
+        <property name="logiusUrl" value="http://localhost:9000/"/>
         <!-- <property name="compress" value="true" /> -->
         <!-- <property name="prefix" value="IAH" /> -->
         <!-- <property name="suffix" value="${HOSTNAME}" /> -->

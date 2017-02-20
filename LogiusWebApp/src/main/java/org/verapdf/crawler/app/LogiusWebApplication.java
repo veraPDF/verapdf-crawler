@@ -38,8 +38,7 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
 
             resource = new CrawlJobResource( client,
                     configuration.getEmailServer(),
-                    configuration.getVerapdfPath(),
-                    configuration.getHeritrixPath());
+                    configuration.getVerapdfPath());
             environment.jersey().register(resource);
         } catch (Exception e) {
             e.printStackTrace();

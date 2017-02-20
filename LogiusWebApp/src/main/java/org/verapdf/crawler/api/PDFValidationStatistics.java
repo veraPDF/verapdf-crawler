@@ -3,12 +3,14 @@ package org.verapdf.crawler.api;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
+
 public class PDFValidationStatistics {
     private int numberOfInvalidPDFs;
     private int numberOfValidPDFs;
     private String invalidPDFReportURL;
     @JsonIgnore
-    public String invalidPDFReport;
+    public ArrayList<InvalidReportData> invalidPDFReport;
 
     public PDFValidationStatistics() {}
 

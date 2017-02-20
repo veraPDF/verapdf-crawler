@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 
 public class CurrentJob {
     private String id;
+
     private String jobURL;
     private String crawlURL;
     private String reportEmail;
@@ -39,6 +40,10 @@ public class CurrentJob {
 
     public String getJobURL() {
         return jobURL;
+    }
+
+    public void setJobURL(String jobURL) {
+        this.jobURL = jobURL;
     }
 
     @JsonProperty

@@ -42,14 +42,14 @@ public class CrawlJobResource {
     private String resourceUri;
     private ValidationLauncher launcher;
 
-    public CrawlJobResource(HeritrixClient client, EmailServer emailServer, String verapdfPath, String heritrixPath) throws IOException {
+    public CrawlJobResource(HeritrixClient client, EmailServer emailServer, String verapdfPath) throws IOException {
         this.client = client;
         this.emailServer = emailServer;
         currentJobs = new ArrayList<>();
         batchJobs = new ArrayList<>();
         reporter = new HeritrixReporter(client);
         loadJobs();
-        launcher = new ValidationLauncher(heritrixPath + "validation/validation-jobs.txt", verapdfPath, client.getBaseDirectory());
+        launcher = new ValidationLauncher(verapdfPath, client.getBaseDirectory());
         new Thread(new StatusMonitor(this)).start();
         new Thread(launcher).start();
     }
@@ -215,12 +215,7 @@ public class CrawlJobResource {
     @Path("/queue")
     @Produces(MediaType.TEXT_PLAIN)
     public String getQueueSize() throws IOException {
-        Integer size;
-        LineNumberReader  lnr = new LineNumberReader(new FileReader(launcher.getJobFile()));
-        lnr.skip(Long.MAX_VALUE);
-        size = lnr.getLineNumber();
-        lnr.close();
-        return size.toString();
+        return launcher.getQueueSize().toString();
     }
 
     @GET
@@ -255,15 +250,18 @@ public class CrawlJobResource {
             FileWriter fw = new FileWriter(HeritrixClient.baseDirectory + "crawled_urls.txt");
             fw.write(builder.toString());
             fw.close();
-            jobData.setFinishTime(LocalDateTime.now());
             if(!jobData.getReportEmail().equals("") && !jobData.isEmailSent()) {
                 String subject = "Crawl job";
                 String text = "Crawl job on " + jobData.getCrawlURL() + " was finished with status " + result.getStatus() +
                         "\nResults are available at " + resourceUri.replace("crawl-job/","jobinfo?id=") + job;
                 SendEmail.send(jobData.getReportEmail(), subject, text, emailServer);
                 jobData.setEmailSent(true);
-                client.teardownJob(jobData.getId());
             }
+            if(jobData.getJobURL().equals("")) {
+                jobData.setJobURL(client.getValidPDFReportUri(job).replace("mirror/Valid_PDF_Report.txt", ""));
+                jobData.setFinishTime(LocalDateTime.now());
+            }
+            client.teardownJob(jobData.getId());
         }
         result.startTime = jobData.getStartTime().format(formatter);
         if(jobData.getFinishTime() != null) {
@@ -279,7 +277,8 @@ public class CrawlJobResource {
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @Path("/ods_report/{job}")
     public Response getODSReport(@PathParam("job") String job) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
-        String jobURL = getExistingJobURLbyJobId(job);
+        CurrentJob currentJob = getJobById(job);
+        String jobURL = currentJob.getJobURL();
         File file;
         if(jobURL.equals("")){
             file = reporter.buildODSReport(job, getTimeByJobId(job));
@@ -336,7 +335,15 @@ public class CrawlJobResource {
         else{
             result = reporter.getInvalidPDFReport(job, jobURL, getTimeByJobId(job));
         }
-        return addLinksToUrlList(result).toString();
+        return result;
+    }
+
+    @POST
+    @Timed
+    @Path("/validation")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void addValidationJob(ValidationJobData data) {
+        launcher.addJob(data);
     }
 
     private String getExistingJobURLbyJobId(String job) {

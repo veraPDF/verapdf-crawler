@@ -1,17 +1,22 @@
 package org.verapdf.crawler.validation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.verapdf.crawler.api.InvalidReportData;
 import org.verapdf.crawler.api.ValidationJobData;
-import org.verapdf.crawler.helpers.synchronization.FileAccessManager;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
+import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class ValidationLauncher implements Runnable {
-    private String jobFile;
     private String verapdfPath;
     private String errorReportPath;
+    private LinkedList<ValidationJobData> queue;
 
     public boolean isRunning() {
         return isRunning;
@@ -21,15 +26,21 @@ public class ValidationLauncher implements Runnable {
         isRunning = running;
     }
 
-    public String getJobFile() { return jobFile; }
-
     private boolean isRunning;
 
-    public ValidationLauncher(String jobFile, String verapdfPath, String errorReportPath) {
-        this.jobFile = jobFile;
+    public ValidationLauncher(String verapdfPath, String errorReportPath) {
+        this.queue = new LinkedList<>();
         this.verapdfPath = verapdfPath;
         this.errorReportPath = errorReportPath;
         isRunning = true;
+    }
+
+    public void addJob(ValidationJobData data) {
+        queue.add(data);
+    }
+
+    public Integer getQueueSize() {
+        return queue.size();
     }
 
     @Override
@@ -37,14 +48,12 @@ public class ValidationLauncher implements Runnable {
         while (isRunning) {
             String currentUrl = "";
             try {
-                String validationJobJson = FileAccessManager.getInstance().makeRecord(jobFile, "");
-                if(!validationJobJson.equals("")) {
-                    ObjectMapper mapper = new ObjectMapper();
-                    ValidationJobData data = mapper.readValue(validationJobJson, ValidationJobData.class);
+                if(!queue.isEmpty()) {
+                    ValidationJobData data = queue.remove();
                     System.out.println("Validating " + data.getUri());
                     currentUrl = data.getUri();
                     // Launch verapdf CLI with pdf file as argument
-                    String[] cmd = {verapdfPath, "--format", "text", data.getFilepath()};
+                    String[] cmd = {verapdfPath, "--format", "mrr", data.getFilepath()};
                     ProcessBuilder pb = new ProcessBuilder().inheritIO();
                     File output = new File("output");
                     File error = new File("error");
@@ -55,15 +64,32 @@ public class ValidationLauncher implements Runnable {
                     pb.command(cmd);
                     Scanner resultScanner = new Scanner(new File("output"));
                     if(pb.start().waitFor(20, TimeUnit.MINUTES) && resultScanner.hasNext()) { // Validation finished successfully in time
+
+                        File fXmlFile = new File("output");
+                        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+                        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+                        Document doc = dBuilder.parse(fXmlFile);
+                        Element validationReportNode = (Element) ((Element)((Element)doc.getElementsByTagName("jobs") .item(0)).
+                                getElementsByTagName("job").item(0)).
+                                getElementsByTagName("validationReport").item(0);
+
                         FileWriter fw;
-                        if(resultScanner.next().equals("PASS")) {
+                        if(validationReportNode.getAttribute("isCompliant").equals("true")) {
                             fw = new FileWriter(data.getJobDirectory() + File.separator + "Valid_PDF_Report.txt", true);
+                            fw.write(data.getUri() + ", ");
+                            fw.write(data.getTime());
                         }
                         else {
                             fw = new FileWriter(data.getJobDirectory() + File.separator + "Invalid_PDF_Report.txt", true);
+                            InvalidReportData reportData = new InvalidReportData();
+                            reportData.setUrl(data.getUri());
+                            reportData.setLastModified(data.getTime());
+                            Element details = (Element) validationReportNode.getElementsByTagName("details").item(0);
+                            reportData.setFailedRules(Integer.parseInt(details.getAttribute("failedRules")));
+                            reportData.setPassedRules(Integer.parseInt(details.getAttribute("passedRules")));
+                            ObjectMapper mapper = new ObjectMapper();
+                            fw.write(mapper.writeValueAsString(reportData));
                         }
-                        fw.write(data.getUri() + ", ");
-                        fw.write(data.getTime());
                         fw.write(System.lineSeparator());
                         fw.close();
                     }
@@ -82,10 +108,11 @@ public class ValidationLauncher implements Runnable {
                         fw.close();
                     }
                     new File(data.getFilepath()).delete();
+                    resultScanner.close();
                 }
                 else {
-                    Thread.sleep(60000);
                     System.out.println("No jobs, snoozing for a minute...");
+                    Thread.sleep(60000);
                 }
             } catch (Exception e) {
                 try {

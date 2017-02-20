@@ -3,14 +3,26 @@ package org.verapdf.crawler.extentionModules;
 import org.apache.commons.httpclient.Header;
 import org.archive.modules.CrawlURI;
 import org.archive.modules.writer.MirrorWriterProcessor;
-import org.verapdf.crawler.helpers.synchronization.FileAccessManager;
 
 import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class PDFProcessor extends MirrorWriterProcessor {
+    public String getLogiusUrl() {
+        return logiusUrl;
+    }
+
+    public void setLogiusUrl(String logiusUrl) {
+        this.logiusUrl = logiusUrl;
+    }
+
+    private String logiusUrl;
+
     @Override
     protected void innerProcess(CrawlURI curi) {
         super.innerProcess(curi);
+        System.out.println(logiusUrl);
         String baseDir = getPath().getFile().getAbsolutePath();
         String mps = (String)curi.getData().get(A_MIRROR_PATH);
         String time = "Last-Modified: Thu, 01 Jan 1970 00:00:01 GMT";
@@ -23,8 +35,16 @@ public class PDFProcessor extends MirrorWriterProcessor {
             String data = "{\"filepath\":\"" + baseDir + File.separator + mps +
                     "\", \"jobDirectory\":\"" + baseDir + "\", \"" +
                     "time\":\"" + time + "\", \"uri\":\"" + curi.getURI() + "\"}";
-
-            FileAccessManager.getInstance().makeRecord(baseDir + "/../../../../validation/validation-jobs.txt", data);
+            URL url = new URL(logiusUrl + "crawl-job/validation");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type","application/json");
+            connection.setDoOutput(true);
+            DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
+            wr.writeBytes(data);
+            wr.flush();
+            wr.close();
+            connection.getResponseCode();
         } catch (IOException e) {
             e.printStackTrace();
         }

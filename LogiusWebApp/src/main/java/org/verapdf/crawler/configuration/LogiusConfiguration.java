@@ -10,7 +10,6 @@ public class LogiusConfiguration extends Configuration {
     String heritrixPassword;
     String resourcePath;
     String verapdfPath;
-    String heritrixPath;
 
     @JsonProperty
     public String getVerapdfPath() {
@@ -20,16 +19,6 @@ public class LogiusConfiguration extends Configuration {
     @JsonProperty
     public void setVerapdfPath(String verapdfPath) {
         this.verapdfPath = verapdfPath;
-    }
-
-    @JsonProperty
-    public String getHeritrixPath() {
-        return heritrixPath;
-    }
-
-    @JsonProperty
-    public void setHeritrixPath(String heritrixPath) {
-        this.heritrixPath = heritrixPath;
     }
 
     @JsonProperty

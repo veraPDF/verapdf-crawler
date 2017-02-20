@@ -154,7 +154,7 @@ public class HeritrixClient {
         is.setCharacterStream(new StringReader(status));
         Document doc = db.parse(is);
         NodeList nodes = doc.getElementsByTagName("statusDescription");
-        return nodes.item(0).getTextContent();
+        return nodes.item(0).getTextContent().split(":")[0];
     }
 
     public boolean isJobFinished(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
@@ -283,6 +283,7 @@ public class HeritrixClient {
             builder.append(parts[i]);
             builder.append(",");
         }
+        builder.append(System.lineSeparator());
         return builder.toString();
     }
     //</editor-fold>
