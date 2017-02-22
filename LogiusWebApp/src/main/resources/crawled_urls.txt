@@ -1,4 +1,1 @@
-id,crawlURL,jobURL
-1340ef16-02cb-43e9-8040-d985e83fcdde,http://localhost:8080,https://localhost:8443/engine/anypath//home/anton/Documents/heritrix-3.2.0/./jobs/1340ef16-02cb-43e9-8040-d985e83fcdde/20170202085304/
-09e8f758-588a-4930-b74b-861864955203,https://duo.nl,https://localhost:8443/engine/anypath//home/anton/Documents/heritrix-3.2.0/./jobs/09e8f758-588a-4930-b74b-861864955203/20170202085307/
-8c9551fa-871a-49f4-905c-2372be873399,https://logius.nl,https://localhost:8443/engine/anypath//home/anton/Documents/heritrix-3.2.0/./jobs/8c9551fa-871a-49f4-905c-2372be873399/20170202101738/
+id,crawlURL,jobURL,startTime,finishTime

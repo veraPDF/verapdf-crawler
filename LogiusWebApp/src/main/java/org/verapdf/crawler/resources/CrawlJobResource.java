@@ -316,10 +316,9 @@ public class CrawlJobResource {
     public String getInvalidPdfReport(@PathParam("job") String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
         CurrentJob jobData = getJobById(job);
         String jobURL = jobData.getJobURL();
-        StringBuilder result = new StringBuilder("<table>");
-        sortFailedRules(jobData);
+        StringBuilder result = new StringBuilder("<h2>Most common issues<h2><table>");
         int i = 0;
-        for(Map.Entry<String, Integer> record: jobData.getErrorOccurances().entrySet()) {
+        for(Map.Entry<String, Integer> record: sortFailedRules(jobData)) {
             i++;
             result.append("<tr style=\"BACKGROUND: #dcdaf6\"><td>");
             result.append(record.getKey());
@@ -330,7 +329,7 @@ public class CrawlJobResource {
                 break;
             }
         }
-        result.append("</table>");
+        result.append("</table><h2>File details<h2>");
         if(jobURL.equals("")) {
             result.append(reporter.getInvalidPDFReport(job, jobData.getCrawlSinceTime()));
         }
@@ -493,21 +492,16 @@ public class CrawlJobResource {
         fw.close();
     }
 
-    private void sortFailedRules(CurrentJob job) {
+    private List<Map.Entry<String, Integer>> sortFailedRules(CurrentJob job) {
         HashMap<String, Integer> sortedMap = new HashMap<>();
         List<Map.Entry<String, Integer>> list = new LinkedList<Map.Entry<String, Integer>>( job.getErrorOccurances().entrySet() );
         Collections.sort( list, new Comparator<Map.Entry<String, Integer>>()
         {
             public int compare( Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2 )
             {
-                return (o1.getValue()).compareTo( o2.getValue() );
+                return (o2.getValue()).compareTo( o1.getValue() );
             }
         } );
-
-        for (Map.Entry<String, Integer> entry : list)
-        {
-            sortedMap.put( entry.getKey(), entry.getValue() );
-        }
-        job.setErrorOccurances(sortedMap);
+        return list;
     }
 }

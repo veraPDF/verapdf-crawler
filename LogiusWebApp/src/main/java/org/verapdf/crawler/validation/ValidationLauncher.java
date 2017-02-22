@@ -141,7 +141,7 @@ public class ValidationLauncher implements Runnable {
                     fw.write(System.lineSeparator());
                     fw.close();
                 }
-                catch (IOException e1) {
+                catch (Exception e1) {
                     e1.printStackTrace();
                 }
                 System.out.println(e.getMessage());
