@@ -8,6 +8,7 @@ import org.verapdf.crawler.engine.HeritrixClient;
 import java.io.File;
 
 public class LogiusWebApplicationStub extends LogiusWebApplication{
+    /*
     public String getBaseDirectory() {
         return  new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getParentFile().getParent();
     }
@@ -29,4 +30,5 @@ public class LogiusWebApplicationStub extends LogiusWebApplication{
             e.printStackTrace();
         }
     }
+    */
 }

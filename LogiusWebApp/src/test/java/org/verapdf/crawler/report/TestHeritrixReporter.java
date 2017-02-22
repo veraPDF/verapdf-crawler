@@ -23,7 +23,7 @@ import java.util.ArrayList;
 public class TestHeritrixReporter {
     private static SingleURLJobReport report;
     private static HeritrixReporter reporter;
-
+/*
     @BeforeClass
     public static void initializeReport() throws IOException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException, ParserConfigurationException, SAXException {
         HeritrixClient client = new HeritrixClient("https://localhost:8443/", "admin", "logius");
@@ -75,4 +75,5 @@ public class TestHeritrixReporter {
         Sheet sheet3 = SpreadSheet.createFromFile(ODSReport).getSheet(2);
         Assert.assertEquals("invalidfile3.pdf", sheet3.getValueAt(0, 2));
     }
+    */
 }

@@ -17,3 +17,4 @@ org/verapdf/crawler/api/StartJobData.class
 org/verapdf/crawler/app/LogiusWebApplication.class
 org/verapdf/crawler/configuration/LogiusConfiguration.class
 org/verapdf/crawler/api/EmailAddress.class
+org/verapdf/crawler/resources/CrawlJobResource$1.class

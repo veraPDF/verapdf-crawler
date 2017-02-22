@@ -40,7 +40,7 @@ public class HeritrixClientTest {
         assertEquals(urls,client.getListOfCrawlUrls("test2"));
         assertEquals("Unbuilt", client.getCurrentJobStatus("test1"));
         assertFalse(client.isJobFinished("test2"));
-    }*/
+    }
 
     @Test
     public void testJobControlCommands() throws KeyManagementException, NoSuchAlgorithmException, AuthenticationException, IOException, ParserConfigurationException, SAXException {
@@ -75,7 +75,7 @@ public class HeritrixClientTest {
         assertEquals("Finished: FINISHED", client.getCurrentJobStatus("test"));
         //assertTrue(client.getPDFReportUri("test").endsWith("PDFReport.txt"));
         assertEquals(client.getDownloadedCount("test"), 6);
-    }
+    }*/
 
     private void createTestJob() {
         ArrayList<String> urls = new ArrayList<>();

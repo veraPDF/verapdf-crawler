@@ -14,21 +14,6 @@
 
     <packaging>jar</packaging>
 
-    <repositories>
-        <repository>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <id>vera-dev</id>
-            <name>Vera development</name>
-            <url>http://artifactory.openpreservation.org/artifactory/vera-dev</url>
-        </repository>
-    </repositories>
-    <properties>
-        <verapdf.pdfbox.validation.version>[1.1.0,1.2.0)</verapdf.pdfbox.validation.version>
-        <verapdf.library.version>[1.1.0,1.2.0)</verapdf.library.version>
-        <verapdf.apps.version>[1.1.0,1.2.0)</verapdf.apps.version>
-    </properties>
     <dependencies>
 
         <dependency>
@@ -37,21 +22,6 @@
             <version>3.3.0</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/heritrix.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>org.verapdf</groupId>
-            <artifactId>core</artifactId>
-            <version>${verapdf.library.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.verapdf</groupId>
-            <artifactId>pdfbox-validation-model</artifactId>
-            <version>${verapdf.pdfbox.validation.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.verapdf</groupId>
-            <artifactId>validation-model</artifactId>
-            <version>${verapdf.pdfbox.validation.version}</version>
         </dependency>
         <dependency>
             <groupId>com.verapdf.crawler</groupId>

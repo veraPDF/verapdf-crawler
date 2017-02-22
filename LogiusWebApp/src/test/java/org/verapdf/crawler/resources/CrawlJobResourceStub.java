@@ -15,9 +15,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class CrawlJobResourceStub extends CrawlJobResource {
+public class CrawlJobResourceStub {//} extends CrawlJobResource {
     private int numberOfCrawledUrls;
-
+/*
     public CrawlJobResourceStub(HeritrixClient client, EmailServer emailServer) throws IOException {
         super(client, emailServer);
         currentJobs.clear();
@@ -70,4 +70,5 @@ public class CrawlJobResourceStub extends CrawlJobResource {
         }
         return "";
     }
+*/
 }

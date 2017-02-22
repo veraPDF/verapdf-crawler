@@ -11,7 +11,7 @@ import java.net.URL;
 
 public class TestCrawlJobResource {
     private static LogiusWebApplication application;
-
+/*
     @BeforeClass
     public static void initialize() throws Exception {
         application = new LogiusWebApplicationStub();

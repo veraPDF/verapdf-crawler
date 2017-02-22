@@ -37,7 +37,7 @@ public class CrawlJobResource {
     private HeritrixClient client;
     private EmailServer emailServer;
     private HeritrixReporter reporter;
-    protected ArrayList<CurrentJob> currentJobs;
+    private ArrayList<CurrentJob> currentJobs;
     private ArrayList<BatchJob> batchJobs;
     private String resourceUri;
     private ValidationLauncher launcher;
@@ -49,7 +49,7 @@ public class CrawlJobResource {
         batchJobs = new ArrayList<>();
         reporter = new HeritrixReporter(client);
         loadJobs();
-        launcher = new ValidationLauncher(verapdfPath, client.getBaseDirectory());
+        launcher = new ValidationLauncher(verapdfPath, client.getBaseDirectory(), this);
         new Thread(new StatusMonitor(this)).start();
         new Thread(launcher).start();
     }
@@ -314,23 +314,48 @@ public class CrawlJobResource {
     @Produces(MediaType.TEXT_HTML)
     @Path("invalid_pdf_list/{job}")
     public String getInvalidPdfReport(@PathParam("job") String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        String jobURL = getExistingJobURLbyJobId(job);
-        String result;
+        CurrentJob jobData = getJobById(job);
+        String jobURL = jobData.getJobURL();
+        StringBuilder result = new StringBuilder("<table>");
+        sortFailedRules(jobData);
+        int i = 0;
+        for(Map.Entry<String, Integer> record: jobData.getErrorOccurances().entrySet()) {
+            i++;
+            result.append("<tr style=\"BACKGROUND: #dcdaf6\"><td>");
+            result.append(record.getKey());
+            result.append("</td></tr><tr style=\"BACKGROUND: #dcdaf6\"><td>");
+            result.append(record.getValue());
+            result.append(" occurrences.</td></tr> <tr></tr>");
+            if(i == 10) {
+                break;
+            }
+        }
+        result.append("</table>");
         if(jobURL.equals("")) {
-            result = reporter.getInvalidPDFReport(job, getTimeByJobId(job));
+            result.append(reporter.getInvalidPDFReport(job, jobData.getCrawlSinceTime()));
         }
         else{
-            result = reporter.getInvalidPDFReport(job, jobURL, getTimeByJobId(job));
+            result.append(reporter.getInvalidPDFReport(job, jobURL, jobData.getCrawlSinceTime()));
         }
-        return result;
+        return result.toString();
     }
 
     @POST
     @Timed
     @Path("/validation")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void addValidationJob(ValidationJobData data) {
+    public void addValidationJob(ValidationJobData data) throws IOException {
+        String[] parts = data.getJobDirectory().split("/");
+        data.errorOccurances = getJobById(parts[parts.length - 3]).getErrorOccurances();
         launcher.addJob(data);
+    }
+
+    public CurrentJob getJobByCrawlUrl(String crawlUrl) {
+        for(CurrentJob jobData : currentJobs) {
+            if(jobData.getCrawlURL().equals(crawlUrl))
+                return jobData;
+        }
+        return null;
     }
 
     private String getExistingJobURLbyJobId(String job) {
@@ -378,15 +403,7 @@ public class CrawlJobResource {
         }
     }
 
-    public CurrentJob getJobByCrawlUrl(String crawlUrl) {
-        for(CurrentJob jobData : currentJobs) {
-            if(jobData.getCrawlURL().equals(crawlUrl))
-                return jobData;
-        }
-        return null;
-    }
-
-    private CurrentJob getJobById(String job) {
+    public CurrentJob getJobById(String job) {
         for(CurrentJob jobData : currentJobs) {
             if(jobData.getId().equals(job))
                 return jobData;
@@ -474,5 +491,23 @@ public class CrawlJobResource {
         FileWriter fw = new FileWriter(HeritrixClient.baseDirectory + "crawled_urls.txt");
         fw.write(builder.toString());
         fw.close();
+    }
+
+    private void sortFailedRules(CurrentJob job) {
+        HashMap<String, Integer> sortedMap = new HashMap<>();
+        List<Map.Entry<String, Integer>> list = new LinkedList<Map.Entry<String, Integer>>( job.getErrorOccurances().entrySet() );
+        Collections.sort( list, new Comparator<Map.Entry<String, Integer>>()
+        {
+            public int compare( Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2 )
+            {
+                return (o1.getValue()).compareTo( o2.getValue() );
+            }
+        } );
+
+        for (Map.Entry<String, Integer> entry : list)
+        {
+            sortedMap.put( entry.getKey(), entry.getValue() );
+        }
+        job.setErrorOccurances(sortedMap);
     }
 }

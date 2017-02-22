@@ -1,8 +1,10 @@
 package org.verapdf.crawler.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 
 public class CurrentJob {
     private String id;
@@ -13,6 +15,7 @@ public class CurrentJob {
     private LocalDateTime startTime;
     private LocalDateTime finishTime;
     private String status;
+    private HashMap<String, Integer> errorOccurances;
 
     private boolean isEmailSent;
 
@@ -27,6 +30,17 @@ public class CurrentJob {
         this.reportEmail = reportEmail;
         this.isEmailSent = false;
         this.startTime = startTime;
+        errorOccurances = new HashMap<>();
+    }
+
+    @JsonIgnore
+    public HashMap<String, Integer> getErrorOccurances() {
+        return errorOccurances;
+    }
+
+    @JsonIgnore
+    public void setErrorOccurances(HashMap<String, Integer> errorOccurances) {
+        this.errorOccurances = errorOccurances;
     }
 
     public boolean isActiveJob() {

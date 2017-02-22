@@ -2,11 +2,14 @@ package org.verapdf.crawler.api;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.HashMap;
+
 public class ValidationJobData {
     private String filepath;
     private String jobDirectory;
     private String uri;
     private String time;
+    public HashMap<String, Integer> errorOccurances;
 
     public ValidationJobData() {}
 
