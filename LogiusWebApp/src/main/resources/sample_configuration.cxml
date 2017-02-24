@@ -449,7 +449,7 @@
              </property> -->
         <property name="snoozeLongMs" value="60000" />
         <property name="retryDelaySeconds" value="60" />
-        <!-- <property name="maxRetries" value="30" /> -->
+        <property name="maxRetries" value="3" />
         <!-- <property name="recoveryLogEnabled" value="true" /> -->
         <!-- <property name="maxOutlinks" value="6000" /> -->
         <!-- <property name="extractIndependently" value="false" /> -->

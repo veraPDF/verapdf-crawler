@@ -1,6 +1,7 @@
 var URL = "/crawl-job/";
 
 $(document).ready(function() {
+    document.getElementById("date_input").value = "01-01-2015";
     $("input:button").click(main);
 
     var picker = new Pikaday(
@@ -80,8 +81,6 @@ function loadAllJobs() {
                 reportError("Error on job loading");
             }
     });
-
-    document.getElementById("date_input").value = "01-01-2015";
 
     var crawlUrl = location.search.split("text=")[1];
     if(crawlUrl && 0 === crawlUrl.length) {

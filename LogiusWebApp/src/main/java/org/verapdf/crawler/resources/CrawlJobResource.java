@@ -78,6 +78,7 @@ public class CrawlJobResource {
         }
         else {
             if(startJobData.isForceStart() && isCurrentJob(trimUrl(startJobData.getDomain()))) { // This URL has already been crawled but the old job needs to be overwritten
+                client.teardownJob(getJobByCrawlUrl(trimUrl(startJobData.getDomain())).getId());
                 currentJobs.remove(getJobByCrawlUrl(trimUrl(startJobData.getDomain())));
                 removeJobFromFile(trimUrl(startJobData.getDomain()));
             }
