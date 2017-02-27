@@ -392,12 +392,12 @@ public class CrawlJobResource {
             String finishTimeString = record.get("finishTime");
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
             LocalDateTime startTime = LocalDateTime.parse(startTimeString, formatter);
-            formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
             CurrentJob newJob = new CurrentJob(record.get("id"),
                     record.get("jobURL"),
                     record.get("crawlURL"),
-                    LocalDateTime.of(LocalDate.parse(record.get("crawlSince"), formatter), LocalTime.MIN),
+                    LocalDateTime.of(LocalDate.parse(record.get("crawlSince"), dateFormatter), LocalTime.MIN),
                     "",startTime);
             if(!finishTimeString.equals("")) {
                 newJob.setFinishTime(LocalDateTime.parse(finishTimeString, formatter));
