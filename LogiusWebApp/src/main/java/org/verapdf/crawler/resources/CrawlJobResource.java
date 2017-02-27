@@ -115,7 +115,7 @@ public class CrawlJobResource {
             }
             FileWriter writer = new FileWriter(HeritrixClient.baseDirectory + "crawled_urls.txt", true);
             CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT);
-            printer.printRecord(new String[] {job, trimUrl(startJobData.getDomain()), jobURL,
+            printer.printRecord(new String[] {job, trimUrl(startJobData.getDomain()), jobURL, startJobData.getDate(),
                     now.format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss")), ""});
             writer.close();
 
@@ -392,10 +392,13 @@ public class CrawlJobResource {
             String finishTimeString = record.get("finishTime");
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
             LocalDateTime startTime = LocalDateTime.parse(startTimeString, formatter);
+            formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
             CurrentJob newJob = new CurrentJob(record.get("id"),
                     record.get("jobURL"),
                     record.get("crawlURL"),
-                    null, "",startTime);
+                    LocalDateTime.of(LocalDate.parse(record.get("crawlSince"), formatter), LocalTime.MIN),
+                    "",startTime);
             if(!finishTimeString.equals("")) {
                 newJob.setFinishTime(LocalDateTime.parse(finishTimeString, formatter));
             }
@@ -424,12 +427,13 @@ public class CrawlJobResource {
         FileReader reader = new FileReader(HeritrixClient.baseDirectory + "crawled_urls.txt");
         CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT.withHeader());
         List<CSVRecord> records = parser.getRecords();
-        builder.append("id,crawlURL,jobURL,startTime,finishTime" + System.lineSeparator());
+        builder.append("id,crawlURL,jobURL,crawlSince,startTime,finishTime" + System.lineSeparator());
         for(CSVRecord record : records) {
             if(!record.get("crawlURL").equals(crawlUrl)) {
                 builder.append(record.get("id") + ",");
                 builder.append(record.get("crawlURL") + ",");
                 builder.append(record.get("jobURL") + ",");
+                builder.append(record.get("crawlSince") + ",");
                 builder.append(record.get("startTime") + ",");
                 builder.append(record.get("finishTime") + System.lineSeparator());
             }
