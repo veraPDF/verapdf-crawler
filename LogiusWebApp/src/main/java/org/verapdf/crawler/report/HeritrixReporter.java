@@ -121,10 +121,10 @@ public class HeritrixReporter {
                 reportData.getPdfStatistics().getNumberOfValidPDFs());
         builder.append("</font></td></tr>");
         if(reportData.getPdfStatistics().getNumberOfInvalidPDFs() != 0) {
-            builder.append("<tr><td><a href=\"INVALID_PDF_REPORT\">Non-complint PDF/A files </a></td><td> ");
+            builder.append("<tr><td><a href=\"INVALID_PDF_REPORT\">PDF documents that are not PDF/A</a></td><td> ");
         }
         else {
-            builder.append("<tr><td>Non-complint PDF/A files</td><td> ");
+            builder.append("<tr><td>PDF documents that are not PDF/A</td><td> ");
         }
         builder.append(reportData.getPdfStatistics().getNumberOfInvalidPDFs());
         builder.append("</td></tr>");

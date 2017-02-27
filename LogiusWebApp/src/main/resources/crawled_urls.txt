@@ -1,1 +1,1 @@
-id,crawlURL,jobURL,startTime,finishTime
+id,crawlURL,jobURL,crawlSince,startTime,finishTime
