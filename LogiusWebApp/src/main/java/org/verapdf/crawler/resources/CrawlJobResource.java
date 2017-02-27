@@ -429,7 +429,9 @@ public class CrawlJobResource {
             if(!record.get("crawlURL").equals(crawlUrl)) {
                 builder.append(record.get("id") + ",");
                 builder.append(record.get("crawlURL") + ",");
-                builder.append(record.get("jobURL") + System.lineSeparator());
+                builder.append(record.get("jobURL") + ",");
+                builder.append(record.get("startTime") + ",");
+                builder.append(record.get("finishTime") + System.lineSeparator());
             }
         }
         reader.close();
