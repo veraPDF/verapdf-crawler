@@ -22,7 +22,6 @@ public class PDFProcessor extends MirrorWriterProcessor {
     @Override
     protected void innerProcess(CrawlURI curi) {
         super.innerProcess(curi);
-        System.out.println(logiusUrl);
         String baseDir = getPath().getFile().getAbsolutePath();
         String mps = (String)curi.getData().get(A_MIRROR_PATH);
         String time = "Last-Modified: Thu, 01 Jan 1970 00:00:01 GMT";
@@ -44,7 +43,7 @@ public class PDFProcessor extends MirrorWriterProcessor {
             wr.writeBytes(data);
             wr.flush();
             wr.close();
-            connection.getResponseCode();
+            System.out.println(connection.getResponseCode());
         } catch (IOException e) {
             e.printStackTrace();
         }
