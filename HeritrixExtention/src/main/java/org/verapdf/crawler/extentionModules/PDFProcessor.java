@@ -3,12 +3,15 @@ package org.verapdf.crawler.extentionModules;
 import org.apache.commons.httpclient.Header;
 import org.archive.modules.CrawlURI;
 import org.archive.modules.writer.MirrorWriterProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class PDFProcessor extends MirrorWriterProcessor {
+    private static Logger logger = LoggerFactory.getLogger(PDFProcessor.class);
     public String getLogiusUrl() {
         return logiusUrl;
     }
@@ -43,9 +46,12 @@ public class PDFProcessor extends MirrorWriterProcessor {
             wr.writeBytes(data);
             wr.flush();
             wr.close();
-            System.out.println(connection.getResponseCode());
+            int code = connection.getResponseCode();
+            if(code != 200) {
+                logger.info("Response code from logius: " + code);
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("PDFprocessor error",e);
         }
     }
 }

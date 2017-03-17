@@ -1,5 +1,7 @@
 package org.verapdf.crawler.app;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.configuration.LogiusConfiguration;
 import org.verapdf.crawler.engine.HeritrixClient;
 import io.dropwizard.Application;
@@ -9,6 +11,7 @@ import io.dropwizard.setup.Environment;
 import org.verapdf.crawler.resources.CrawlJobResource;
 
 public class LogiusWebApplication extends Application<LogiusConfiguration> {
+    private static Logger logger = LoggerFactory.getLogger(LogiusWebApplication.class);
     public static void main(String[] args) throws Exception {
         new LogiusWebApplication().run(args);
     }
@@ -41,7 +44,7 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
                     configuration.getVerapdfPath());
             environment.jersey().register(resource);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error on logius web application startup", e);
         }
     }
 }

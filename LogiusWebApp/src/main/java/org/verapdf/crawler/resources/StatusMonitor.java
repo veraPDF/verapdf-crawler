@@ -1,11 +1,14 @@
 package org.verapdf.crawler.resources;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.api.BatchJob;
 import org.verapdf.crawler.api.CurrentJob;
 import org.verapdf.crawler.helpers.emailUtils.SendEmail;
 
 public class StatusMonitor implements Runnable {
     private CrawlJobResource resource;
+    private static Logger logger = LoggerFactory.getLogger(StatusMonitor.class);
 
     public StatusMonitor(CrawlJobResource resource){
         this.resource = resource;
@@ -42,7 +45,7 @@ public class StatusMonitor implements Runnable {
                 Thread.sleep(300000);
             }
             catch (Exception e) {
-                e.printStackTrace();
+                logger.error("Status monitor error", e);
             }
         }
     }

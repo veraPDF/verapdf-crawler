@@ -3,6 +3,8 @@ package org.verapdf.crawler.extentionModules;
 import org.apache.commons.httpclient.Header;
 import org.archive.modules.CrawlURI;
 import org.archive.modules.writer.MirrorWriterProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -19,6 +21,7 @@ public class ODFProcessor extends MirrorWriterProcessor {
                                                         ".xls",
                                                         "xlsx"};
 
+    private static Logger logger = LoggerFactory.getLogger(ODFProcessor.class);
     @Override
     protected boolean shouldProcess(CrawlURI crawlURI) {
         boolean check = false;
@@ -58,7 +61,7 @@ public class ODFProcessor extends MirrorWriterProcessor {
                 fw.close();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("ODF processor error", e);
         }
     }
 

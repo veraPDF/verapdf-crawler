@@ -1,5 +1,7 @@
 package org.verapdf.crawler.helpers.emailUtils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.api.EmailServer;
 
 import java.util.*;
@@ -7,7 +9,7 @@ import javax.mail.*;
 import javax.mail.internet.*;
 
 public class SendEmail {
-
+    private static Logger logger = LoggerFactory.getLogger(SendEmail.class);
     public static void send(String targetEmail, String subject, String text, EmailServer emailServer) {
 
         Properties properties = new Properties();
@@ -31,7 +33,7 @@ public class SendEmail {
             transport.close();
 
         }catch (MessagingException mex) {
-            mex.printStackTrace();
+            logger.error("Email sending error", mex);
         }
     }
 }

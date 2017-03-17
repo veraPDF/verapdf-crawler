@@ -1,6 +1,8 @@
 package org.verapdf.crawler.validation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.api.InvalidReportData;
 import org.verapdf.crawler.api.ValidationJobData;
 import org.verapdf.crawler.resources.CrawlJobResource;
@@ -17,6 +19,7 @@ import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class ValidationLauncher implements Runnable {
+    private static Logger logger = LoggerFactory.getLogger(ValidationLauncher.class);
     private String verapdfPath;
     private String errorReportPath;
     private LinkedList<ValidationJobData> queue;
@@ -40,14 +43,14 @@ public class ValidationLauncher implements Runnable {
         try {
             manageQueue(false);
         } catch (IOException e) {
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            logger.error("Error managing validation queue",e);
         }
     }
 
     public void addJob(ValidationJobData data) throws IOException {
         queue.add(data);
         manageQueue(true);
+        logger.info("Added validation job " + data.getUri());
     }
 
     public Integer getQueueSize() {
@@ -62,7 +65,7 @@ public class ValidationLauncher implements Runnable {
                 if(!queue.isEmpty()) {
                     ValidationJobData data = queue.remove();
                     manageQueue(true);
-                    System.out.println("Validating " + data.getUri());
+                    logger.info("Validating " + data.getUri());
                     currentUrl = data.getUri();
                     // Launch verapdf CLI with pdf file as argument
                     String[] cmd = {verapdfPath, "--format", "mrr", data.getFilepath()};
@@ -109,7 +112,7 @@ public class ValidationLauncher implements Runnable {
                     }
                     else {
                         if(!resultScanner.hasNext()) {
-                            System.out.println("Error: verapdf output is empty.");
+                            logger.error("Verapdf output is empty.");
                         }
                         Scanner errorScanner = new Scanner(new File("error"));
                         FileWriter fw = new FileWriter(data.getJobDirectory() + File.separator + "Error_Report.txt", true);
@@ -125,7 +128,7 @@ public class ValidationLauncher implements Runnable {
                     resultScanner.close();
                 }
                 else {
-                    System.out.println("No jobs, snoozing for a minute...");
+                    logger.debug("No jobs, snoozing for a minute...");
                     Thread.sleep(60000);
                 }
             } catch (Exception e) {
@@ -142,10 +145,9 @@ public class ValidationLauncher implements Runnable {
                     fw.close();
                 }
                 catch (Exception e1) {
-                    e1.printStackTrace();
+                    logger.error("Error logging exception", e1);
                 }
-                System.out.println(e.getMessage());
-                e.printStackTrace();
+                logger.error("Error in validation runner",e);
             }
         }
     }
