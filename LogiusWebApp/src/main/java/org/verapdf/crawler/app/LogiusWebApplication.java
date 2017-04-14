@@ -8,7 +8,7 @@ import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import org.verapdf.crawler.resources.CrawlJobResource;
+import org.verapdf.crawler.resources.ResourceManager;
 
 public class LogiusWebApplication extends Application<LogiusConfiguration> {
     private static Logger logger = LoggerFactory.getLogger(LogiusWebApplication.class);
@@ -31,18 +31,21 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
     @Override
     public void run(LogiusConfiguration configuration,
                     Environment environment) {
-        environment.jersey().setUrlPattern("/crawl-job/*");
-        final CrawlJobResource resource;
+        environment.jersey().setUrlPattern("/api/*");
+        final ResourceManager resourceManager;
         try {
             HeritrixClient client = new HeritrixClient("https://localhost:8443/",
                     configuration.getHeritrixLogin(),
                     configuration.getHeritrixPassword());
             client.setBaseDirectory(configuration.getResourcePath());
 
-            resource = new CrawlJobResource( client,
+            resourceManager = new ResourceManager( client,
                     configuration.getEmailServer(),
                     configuration.getVerapdfPath());
-            environment.jersey().register(resource);
+
+            environment.jersey().register(resourceManager.getInfoResourse());
+            environment.jersey().register(resourceManager.getReportResource());
+            environment.jersey().register(resourceManager.getControlResource());
         } catch (Exception e) {
             logger.error("Error on logius web application startup", e);
         }

@@ -3,9 +3,9 @@ package org.verapdf.crawler.report;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jopendocument.dom.spreadsheet.Sheet;
 import org.jopendocument.dom.spreadsheet.SpreadSheet;
-import org.verapdf.crawler.api.InvalidReportData;
-import org.verapdf.crawler.api.PDFValidationStatistics;
-import org.verapdf.crawler.api.SingleURLJobReport;
+import org.verapdf.crawler.domain.validation.ValidationReportData;
+import org.verapdf.crawler.domain.report.PDFValidationStatistics;
+import org.verapdf.crawler.domain.report.SingleURLJobReport;
 import org.verapdf.crawler.engine.HeritrixClient;
 import org.xml.sax.SAXException;
 
@@ -175,13 +175,13 @@ public class HeritrixReporter {
     private PDFValidationStatistics getValidationStatistics(String job, String invalidReport, String validReport, LocalDateTime time) throws NoSuchAlgorithmException, IOException, KeyManagementException {
         int numberOfInvalidPDFs, numberOfValidPDFs;
         String invalidPDFReport = client.getLogFileByURL(invalidReport);
-        ArrayList<InvalidReportData> list = new ArrayList<>();
+        ArrayList<ValidationReportData> list = new ArrayList<>();
         try {
             Scanner scanner = new Scanner(invalidPDFReport);
             ObjectMapper mapper = new ObjectMapper();
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
-                list.add(mapper.readValue(line, InvalidReportData.class));
+                list.add(mapper.readValue(line, ValidationReportData.class));
             }
             numberOfValidPDFs = getNumberOfLines(client.getLogFileByURL(validReport), time);
             numberOfInvalidPDFs = getNumberOfLines(list, time);
@@ -239,10 +239,10 @@ public class HeritrixReporter {
         return result;
     }
 
-    private Integer getNumberOfLines(ArrayList<InvalidReportData> list, LocalDateTime time) {
+    private Integer getNumberOfLines(ArrayList<ValidationReportData> list, LocalDateTime time) {
         Integer result = 0;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
-        for(InvalidReportData data: list) {
+        for(ValidationReportData data: list) {
             if(time == null) {
                 result++;
             }
@@ -269,10 +269,10 @@ public class HeritrixReporter {
         scanner.close();
     }
 
-    private void setLinesInSheet(Sheet sheet, ArrayList<InvalidReportData> list) {
+    private void setLinesInSheet(Sheet sheet, ArrayList<ValidationReportData> list) {
         int i = 1;
         sheet.ensureColumnCount(3);
-        for(InvalidReportData data: list) {
+        for(ValidationReportData data: list) {
             sheet.ensureRowCount(i + 1);
             sheet.setValueAt(data.getPassedRules(), 0, i);
             sheet.setValueAt(data.getFailedRules(), 1, i);
@@ -313,7 +313,7 @@ public class HeritrixReporter {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
-            InvalidReportData data = mapper.readValue(line, InvalidReportData.class);
+            ValidationReportData data = mapper.readValue(line, ValidationReportData.class);
             if(time == null) {
                 appendInvalidPDFLine(builder, data);
             }
@@ -329,7 +329,7 @@ public class HeritrixReporter {
         return builder.toString();
     }
 
-    private void appendInvalidPDFLine(StringBuilder builder, InvalidReportData data) {
+    private void appendInvalidPDFLine(StringBuilder builder, ValidationReportData data) {
         builder.append("<tr><td>");
         builder.append(data.getPassedRules());
         builder.append("</td><td>");

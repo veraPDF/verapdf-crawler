@@ -1,4 +1,4 @@
-var URL = "../crawl-job/";
+var URL = "../api/";
 
 function checkStatus() {
     var jobId = location.search.split("id=")[1];
@@ -29,9 +29,9 @@ function checkStatus() {
                 $("#finish_time").text("Job finished on " + result.finishTime);
                 $("#email_link").hide();
                 $("#ods_report").text("Download report in ODS format");
-                $("#ods_report").attr("href", URL + "ods_report/" + jobId);
+                $("#ods_report").attr("href", URL + "report/ods_report/" + jobId);
                 $("#ods_report").show();
-                $.ajax({ url: URL + "html_report/" + jobId,
+                $.ajax({ url: URL + "report/html_report/" + jobId,
                         type:"GET",
                         async:false,
                         success:function(result) {

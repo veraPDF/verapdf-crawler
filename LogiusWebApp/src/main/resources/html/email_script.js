@@ -15,7 +15,7 @@ function main() {
     }
     var postData = "{\"job\":\"" + jobId + "\"" +
     ", \"emailAddress\":\"" + document.getElementById("input").value + "\"}";
-    $.ajax({url: "../crawl-job/email",
+    $.ajax({url: "../api/email",
         type:"POST",
         data: postData,
         async:false,

@@ -2,15 +2,15 @@ package org.verapdf.crawler.resources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.api.BatchJob;
-import org.verapdf.crawler.api.CurrentJob;
-import org.verapdf.crawler.helpers.emailUtils.SendEmail;
+import org.verapdf.crawler.domain.crawling.BatchJob;
+import org.verapdf.crawler.domain.crawling.CurrentJob;
+import org.verapdf.crawler.emailUtils.SendEmail;
 
 public class StatusMonitor implements Runnable {
-    private CrawlJobResource resource;
+    private ResourceManager resource;
     private static Logger logger = LoggerFactory.getLogger(StatusMonitor.class);
 
-    public StatusMonitor(CrawlJobResource resource){
+    public StatusMonitor(ResourceManager resource){
         this.resource = resource;
     }
 

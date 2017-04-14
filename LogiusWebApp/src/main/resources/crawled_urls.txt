@@ -1,1 +1,2 @@
 id,crawlURL,jobURL,crawlSince,startTime,finishTime
+0ea94df1-470e-4834-8805-29cbfd43ddfa,http://localhost:8080,https://localhost:8443/engine/anypath//home/anton/Documents/heritrix-3.2.0/./jobs/0ea94df1-470e-4834-8805-29cbfd43ddfa/20170414115843/,01-01-2015,14 Apr 2017 14:58:43,14 Apr 2017 15:02:19

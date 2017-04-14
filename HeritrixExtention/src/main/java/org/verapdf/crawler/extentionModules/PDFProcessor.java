@@ -11,7 +11,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class PDFProcessor extends MirrorWriterProcessor {
-    private static Logger logger = LoggerFactory.getLogger(PDFProcessor.class);
     public String getLogiusUrl() {
         return logiusUrl;
     }
@@ -37,7 +36,7 @@ public class PDFProcessor extends MirrorWriterProcessor {
             String data = "{\"filepath\":\"" + baseDir + File.separator + mps +
                     "\", \"jobDirectory\":\"" + baseDir + "\", \"" +
                     "time\":\"" + time + "\", \"uri\":\"" + curi.getURI() + "\"}";
-            URL url = new URL(logiusUrl + "crawl-job/validation");
+            URL url = new URL(logiusUrl + "api/validation");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type","application/json");
@@ -48,10 +47,11 @@ public class PDFProcessor extends MirrorWriterProcessor {
             wr.close();
             int code = connection.getResponseCode();
             if(code != 200) {
-                logger.info("Response code from logius: " + code);
+                System.out.println("Response code from logius: " + code);
             }
         } catch (IOException e) {
-            logger.error("PDFprocessor error",e);
+            System.out.println("PDFprocessor error");
+            e.printStackTrace();
         }
     }
 }

@@ -1,6 +1,6 @@
 package org.verapdf.crawler.configuration;
 
-import org.verapdf.crawler.api.EmailServer;
+import org.verapdf.crawler.domain.email.EmailServer;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 

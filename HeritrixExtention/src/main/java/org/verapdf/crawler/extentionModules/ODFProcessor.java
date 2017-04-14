@@ -21,7 +21,6 @@ public class ODFProcessor extends MirrorWriterProcessor {
                                                         ".xls",
                                                         "xlsx"};
 
-    private static Logger logger = LoggerFactory.getLogger(ODFProcessor.class);
     @Override
     protected boolean shouldProcess(CrawlURI crawlURI) {
         boolean check = false;
@@ -61,7 +60,8 @@ public class ODFProcessor extends MirrorWriterProcessor {
                 fw.close();
             }
         } catch (IOException e) {
-            logger.error("ODF processor error", e);
+            System.out.println("ODF processor error");
+            e.printStackTrace();
         }
     }
 

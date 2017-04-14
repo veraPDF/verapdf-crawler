@@ -1,4 +1,4 @@
-var URL = "/crawl-job/";
+var URL = "/api/";
 
 $(document).ready(function() {
     document.getElementById("date_input").value = "01-01-2015";
@@ -68,7 +68,7 @@ function appendCrawlJob(id, url) {
 }
 
 function loadAllJobs() {
-    $.ajax({url: URL + "list",
+    $.ajax({url: URL + "info/list",
             type:"GET",
             success: function(result){
                 $("#crawl_url_list").empty();
