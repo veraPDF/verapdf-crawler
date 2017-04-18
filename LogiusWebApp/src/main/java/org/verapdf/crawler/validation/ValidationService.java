@@ -12,7 +12,7 @@ import java.util.LinkedList;
 import java.util.Scanner;
 
 public class ValidationService implements Runnable {
-    private static Logger logger = LoggerFactory.getLogger(ValidationService.class);
+    private static Logger logger = LoggerFactory.getLogger("CustomLogger");
     private String errorReportPath;
     private LinkedList<ValidationJobData> queue;
     private ResourceManager resource;
@@ -79,7 +79,6 @@ public class ValidationService implements Runnable {
                     fw.close();
                 }
                 else {
-                    logger.debug("No jobs, snoozing for a minute...");
                     Thread.sleep(60000);
                 }
             } catch (Exception e) {
@@ -116,10 +115,15 @@ public class ValidationService implements Runnable {
         ObjectMapper mapper = new ObjectMapper();
         Scanner scanner = new Scanner(new File(errorReportPath + "validation-jobs.txt"));
         while(scanner.hasNextLine()) {
-            ValidationJobData data = mapper.readValue(scanner.nextLine(), ValidationJobData.class);
-            String[] parts = data.getJobDirectory().split("/");
-            data.errorOccurances = resource.getJobById(parts[parts.length - 3]).getErrorOccurances();
-            queue.add(data);
+            try {
+                ValidationJobData data = mapper.readValue(scanner.nextLine(), ValidationJobData.class);
+                String[] parts = data.getJobDirectory().split("/");
+                data.errorOccurances = resource.getJobById(parts[parts.length - 3]).getErrorOccurances();
+                queue.add(data);
+            }
+            catch (Exception e) {
+                logger.error("Error at validation job queue loading", e);
+            }
         }
         scanner.close();
     }

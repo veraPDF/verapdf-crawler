@@ -1,6 +1,8 @@
 package org.verapdf.crawler.resources;
 
 import com.codahale.metrics.annotation.Timed;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.crawling.CurrentJob;
 import org.verapdf.crawler.engine.HeritrixClient;
 import org.verapdf.crawler.validation.ValidationService;
@@ -21,6 +23,7 @@ import java.util.ArrayList;
 @Path("/info")
 public class InfoResourse {
 
+    private static Logger logger = LoggerFactory.getLogger("CustomLogger");
     private ValidationService validationService;
     private HeritrixClient client;
     private ArrayList<CurrentJob> currentJobs;
@@ -43,8 +46,13 @@ public class InfoResourse {
     @GET
     @Timed
     @Path("/list")
-    public ArrayList<CurrentJob> getJobs() throws IOException, SAXException, NoSuchAlgorithmException, ParserConfigurationException, KeyManagementException {
-        refreshCurrentJobs();
+    public ArrayList<CurrentJob> getJobs() {
+        try {
+            refreshCurrentJobs();
+        }
+        catch (Exception e) {
+            logger.error("Error on refreshing job status", e);
+        }
         return currentJobs;
     }
 
@@ -52,7 +60,7 @@ public class InfoResourse {
     @Timed
     @Path("/queue")
     @Produces(MediaType.TEXT_PLAIN)
-    public String getQueueSize() throws IOException {
+    public String getQueueSize() {
         return validationService.getQueueSize().toString();
     }
 

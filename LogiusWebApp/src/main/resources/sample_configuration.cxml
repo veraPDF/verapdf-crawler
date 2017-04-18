@@ -206,9 +206,9 @@
         <!-- <property name="canonicalizationPolicy">
               <ref bean="canonicalizationPolicy" />
              </property> -->
-        <!-- <property name="queueAssignmentPolicy">
+        <property name="queueAssignmentPolicy">
               <ref bean="queueAssignmentPolicy" />
-             </property> -->
+             </property>
         <!-- <property name="uriPrecedencePolicy">
               <ref bean="uriPrecedencePolicy" />
              </property> -->
@@ -400,10 +400,10 @@
         <!-- <property name="processErrorOutlinks" value="false" /> -->
     </bean>
     <bean id="disposition" class="org.archive.crawler.postprocessor.DispositionProcessor">
-        <!-- <property name="delayFactor" value="5.0" /> -->
-        <!-- <property name="minDelayMs" value="3000" /> -->
+        <property name="delayFactor" value="5.0" />
+        <property name="minDelayMs" value="3000" />
         <property name="respectCrawlDelayUpToSeconds" value="60" />
-        <!-- <property name="maxDelayMs" value="30000" /> -->
+        <property name="maxDelayMs" value="30000" />
         <!-- <property name="maxPerHostBandwidthUsageKbSec" value="0" /> -->
     </bean>
     <!-- <bean id="rescheduler" class="org.archive.crawler.postprocessor.ReschedulingProcessor">
@@ -612,14 +612,14 @@
 
 
     <!-- QUEUE ASSIGNMENT POLICY -->
-    <!--
+   
     <bean id="queueAssignmentPolicy"
       class="org.archive.crawler.frontier.SurtAuthorityQueueAssignmentPolicy">
      <property name="forceQueueAssignment" value="" />
      <property name="deferToPrevious" value="true" />
-     <property name="parallelQueues" value="1" />
+     <property name="parallelQueues" value="3" />
     </bean>
-    -->
+    
 
     <!-- URI PRECEDENCE POLICY -->
     <!--

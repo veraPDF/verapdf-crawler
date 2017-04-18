@@ -17,7 +17,7 @@ import org.verapdf.processor.reports.RuleSummary;
 import org.verapdf.processor.reports.ValidationReport;
 
 public class VerapdfValidator implements PDFValidator {
-    private static Logger logger = LoggerFactory.getLogger(VerapdfValidator.class);
+    private static Logger logger = LoggerFactory.getLogger("CustomLogger");
     private static final String VALIDATION_REPORT_HEAD = "validationReport";
     private static final String SUMMARY_HEAD = "summary";
 

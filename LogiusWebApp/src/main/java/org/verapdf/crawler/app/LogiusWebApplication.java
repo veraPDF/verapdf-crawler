@@ -11,7 +11,7 @@ import io.dropwizard.setup.Environment;
 import org.verapdf.crawler.resources.ResourceManager;
 
 public class LogiusWebApplication extends Application<LogiusConfiguration> {
-    private static Logger logger = LoggerFactory.getLogger(LogiusWebApplication.class);
+    private static Logger logger = LoggerFactory.getLogger("CustomLogger");
     public static void main(String[] args) throws Exception {
         new LogiusWebApplication().run(args);
     }

@@ -5,6 +5,8 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.crawling.BatchJob;
 import org.verapdf.crawler.domain.crawling.CurrentJob;
 import org.verapdf.crawler.domain.crawling.StartBatchJobData;
@@ -45,6 +47,7 @@ public class ControlResource {
 
     @Context
     private UriInfo uriInfo;
+    private static Logger logger = LoggerFactory.getLogger("CustomLogger");
 
     private ArrayList<CurrentJob> currentJobs;
     private HeritrixClient client;
@@ -69,109 +72,118 @@ public class ControlResource {
     @POST
     @Timed
     @Consumes(MediaType.APPLICATION_JSON)
-    public SingleURLJobReport startJob(StartJobData startJobData) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
-        if(resourceManager.getResourceUri()  == null && uriInfo != null) {
-            resourceManager.setResourceUri(uriInfo.getBaseUri().toString());
-        }
-        if(isCurrentJob(trimUrl(startJobData.getDomain())) && !startJobData.isForceStart()) { // This URL has already been crawled and job is not forced to overwrite
-            return new SingleURLJobReport(getJobByCrawlUrl(trimUrl(startJobData.getDomain())).getId(), "", "", 0);
-        }
-        else {
-            if(startJobData.isForceStart() && isCurrentJob(trimUrl(startJobData.getDomain()))) { // This URL has already been crawled but the old job needs to be overwritten
-                client.teardownJob(getJobByCrawlUrl(trimUrl(startJobData.getDomain())).getId());
-                currentJobs.remove(getJobByCrawlUrl(trimUrl(startJobData.getDomain())));
-                removeJobFromFile(trimUrl(startJobData.getDomain()));
+    public SingleURLJobReport startJob(StartJobData startJobData){
+        try {
+            if (resourceManager.getResourceUri() == null && uriInfo != null) {
+                resourceManager.setResourceUri(uriInfo.getBaseUri().toString());
             }
-            // Brand new URL
-            ArrayList<String> list = new ArrayList<>();
-            if(startJobData.getDomain().startsWith("http://") || startJobData.getDomain().startsWith("https://")) {
-                list.add(trimUrl(startJobData.getDomain()));
-            }
-            else {
-                list.add(trimUrl(startJobData.getDomain()));
-                list.add(list.get(0).replace("https://", "http://"));
-            }
+            if (isCurrentJob(trimUrl(startJobData.getDomain())) && !startJobData.isForceStart()) { // This URL has already been crawled and job is not forced to overwrite
+                return new SingleURLJobReport(getJobByCrawlUrl(trimUrl(startJobData.getDomain())).getId(), "", "", 0);
+            } else {
+                if (startJobData.isForceStart() && isCurrentJob(trimUrl(startJobData.getDomain()))) { // This URL has already been crawled but the old job needs to be overwritten
+                    client.teardownJob(getJobByCrawlUrl(trimUrl(startJobData.getDomain())).getId());
+                    currentJobs.remove(getJobByCrawlUrl(trimUrl(startJobData.getDomain())));
+                    removeJobFromFile(trimUrl(startJobData.getDomain()));
+                }
+                // Brand new URL
+                ArrayList<String> list = new ArrayList<>();
+                if (startJobData.getDomain().startsWith("http://") || startJobData.getDomain().startsWith("https://")) {
+                    list.add(trimUrl(startJobData.getDomain()));
+                } else {
+                    list.add(trimUrl(startJobData.getDomain()));
+                    list.add(list.get(0).replace("https://", "http://"));
+                }
 
-            String job = UUID.randomUUID().toString();
-            client.createJob(job, list);
-            client.buildJob(job);
-            client.launchJob(job);
-            String jobStatus = client.getCurrentJobStatus(job);
-            LocalDateTime now = LocalDateTime.now();
-            if(startJobData.getDate() == null || startJobData.getDate().isEmpty()) {
-                currentJobs.add(new CurrentJob(job, "", trimUrl(startJobData.getDomain()),
-                        null, startJobData.getReportEmail(), now));
+                String job = UUID.randomUUID().toString();
+                client.createJob(job, list);
+                client.buildJob(job);
+                client.launchJob(job);
+                String jobStatus = client.getCurrentJobStatus(job);
+                LocalDateTime now = LocalDateTime.now();
+                if (startJobData.getDate() == null || startJobData.getDate().isEmpty()) {
+                    currentJobs.add(new CurrentJob(job, "", trimUrl(startJobData.getDomain()),
+                            null, startJobData.getReportEmail(), now));
+                } else {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+                    currentJobs.add(new CurrentJob(job, "", trimUrl(startJobData.getDomain()),
+                            LocalDateTime.of(LocalDate.parse(startJobData.getDate(), formatter), LocalTime.MIN),
+                            startJobData.getReportEmail(), now));
+                }
+                String jobURL = "";
+                String reportUri = client.getValidPDFReportUri(job);
+                if (reportUri.contains("mirror/Valid_PDF_Report.txt")) {
+                    jobURL = reportUri.replace("mirror/Valid_PDF_Report.txt", "");
+                }
+                FileWriter writer = new FileWriter(HeritrixClient.baseDirectory + "crawled_urls.txt", true);
+                CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT);
+                printer.printRecord(new String[]{job, trimUrl(startJobData.getDomain()), jobURL, startJobData.getDate(),
+                        now.format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss")), ""});
+                writer.close();
+                logger.info("Job creation on " + startJobData.getDomain());
+                return new SingleURLJobReport(job, trimUrl(startJobData.getDomain()), jobStatus, 0);
             }
-            else {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-                currentJobs.add(new CurrentJob(job, "", trimUrl(startJobData.getDomain()),
-                        LocalDateTime.of(LocalDate.parse(startJobData.getDate(), formatter), LocalTime.MIN),
-                        startJobData.getReportEmail(), now));
-            }
-            String jobURL ="";
-            String reportUri = client.getValidPDFReportUri(job);
-            if(reportUri.contains("mirror/Valid_PDF_Report.txt")) {
-                jobURL = reportUri.replace("mirror/Valid_PDF_Report.txt", "");
-            }
-            FileWriter writer = new FileWriter(HeritrixClient.baseDirectory + "crawled_urls.txt", true);
-            CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT);
-            printer.printRecord(new String[] {job, trimUrl(startJobData.getDomain()), jobURL, startJobData.getDate(),
-                    now.format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss")), ""});
-            writer.close();
-
-            return new SingleURLJobReport(job, trimUrl(startJobData.getDomain()), jobStatus, 0);
         }
+        catch (Exception e) {
+            logger.error("Error on job creation", e);
+        }
+        return new SingleURLJobReport("", trimUrl(startJobData.getDomain()), "Unbuilt", 0);
     }
 
     @GET
     @Timed
     @Path("/{job}")
-    public SingleURLJobReport getJob(@PathParam("job") String job) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
-        if(resourceManager.getResourceUri()  == null && uriInfo != null) {
-            resourceManager.setResourceUri(uriInfo.getBaseUri().toString());
-        }
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
-        String jobURL = getExistingJobURLbyJobId(job);
-        SingleURLJobReport result;
-        if(jobURL.equals("")){
-            result = reporter.getReport(job, getTimeByJobId(job));
-        }
-        else {
-            result = reporter.getReport(job, jobURL, getTimeByJobId(job));
-        }
-        CurrentJob jobData = getJobById(job);
-        if(result.getStatus().startsWith("Finished")) {
-            if(!jobData.getReportEmail().equals("") && !jobData.isEmailSent()) {
-                String subject = "Crawl job";
-                String text = "Crawl job on " + jobData.getCrawlURL() + " was finished with status " + result.getStatus() +
-                        "\nResults are available at " + resourceManager.getResourceUri().replace("api/","jobinfo?id=") + job;
-                SendEmail.send(jobData.getReportEmail(), subject, text, emailServer);
-                jobData.setEmailSent(true);
+    public SingleURLJobReport getJob(@PathParam("job") String job) {
+        try {
+            if (resourceManager.getResourceUri() == null && uriInfo != null) {
+                resourceManager.setResourceUri(uriInfo.getBaseUri().toString());
             }
-            if(jobData.getJobURL().equals("")) {
-                jobData.setJobURL(client.getValidPDFReportUri(job).replace("mirror/Valid_PDF_Report.txt", ""));
-                jobData.setFinishTime(LocalDateTime.now());
-                writeFinishDate(job);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
+            String jobURL = getExistingJobURLbyJobId(job);
+            SingleURLJobReport result;
+            if (jobURL.equals("")) {
+                result = reporter.getReport(job, getTimeByJobId(job));
+            } else {
+                result = reporter.getReport(job, jobURL, getTimeByJobId(job));
             }
-            client.teardownJob(jobData.getId());
+            CurrentJob jobData = getJobById(job);
+            if (result.getStatus().startsWith("Finished")) {
+                if (!jobData.getReportEmail().equals("") && !jobData.isEmailSent()) {
+                    String subject = "Crawl job";
+                    String text = "Crawl job on " + jobData.getCrawlURL() + " was finished with status " + result.getStatus() +
+                            "\nResults are available at " + resourceManager.getResourceUri().replace("api/", "jobinfo?id=") + job;
+                    SendEmail.send(jobData.getReportEmail(), subject, text, emailServer);
+                    jobData.setEmailSent(true);
+                }
+                if (jobData.getJobURL().equals("")) {
+                    jobData.setJobURL(client.getValidPDFReportUri(job).replace("mirror/Valid_PDF_Report.txt", ""));
+                    jobData.setFinishTime(LocalDateTime.now());
+                    writeFinishDate(job);
+                }
+                client.teardownJob(jobData.getId());
+            }
+            result.startTime = jobData.getStartTime().format(formatter) + " GMT";
+            if (jobData.getFinishTime() != null) {
+                result.finishTime = jobData.getFinishTime().format(formatter) + " GMT";
+            } else {
+                result.finishTime = "";
+            }
+            return result;
         }
-        result.startTime = jobData.getStartTime().format(formatter) + " GMT";
-        if(jobData.getFinishTime() != null) {
-            result.finishTime = jobData.getFinishTime().format(formatter) + " GMT";
+        catch (Exception e) {
+            logger.error("Error on job data request", e);
         }
-        else {
-            result.finishTime = "";
-        }
-        return result;
+        return null;
     }
+
     @POST
     @Timed
     @Path("/batch")
     @Produces("text/plain")
     @Consumes(MediaType.APPLICATION_JSON)
-    public String startBatchJob(StartBatchJobData jobData) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
+    public String startBatchJob(StartBatchJobData jobData) {
         String id = UUID.randomUUID().toString();
         BatchJob batch = new BatchJob(id, jobData.getReportEmail());
+        logger.info("Batch job creation.");
         for(String domain : jobData.getDomains()) {
             StartJobData data = new StartJobData(domain, jobData.getDate());
             data.setReportEmail(jobData.getReportEmail());
@@ -190,7 +202,7 @@ public class ControlResource {
     @Timed
     @Produces(MediaType.TEXT_HTML)
     @Path("/batch/{job}")
-    public String getBatchJob(@PathParam("job") String job) throws IOException, SAXException, NoSuchAlgorithmException, ParserConfigurationException, KeyManagementException {
+    public String getBatchJob(@PathParam("job") String job) {
         StringBuilder responseHtml = new StringBuilder();
         StringBuilder jobList = new StringBuilder();
         BatchJob batchJob = getBatchJobById(job);
@@ -234,6 +246,7 @@ public class ControlResource {
     @Path("/email")
     @Consumes(MediaType.APPLICATION_JSON)
     public void setReportEmail(EmailAddress address) {
+        logger.info("Email address updated for job " + address.getJob());
         getJobById(address.getJob()).setReportEmail(address.getEmailAddress());
     }
 
@@ -241,10 +254,15 @@ public class ControlResource {
     @Timed
     @Path("/validation")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void addValidationJob(ValidationJobData data) throws IOException {
+    public void addValidationJob(ValidationJobData data) {
         String[] parts = data.getJobDirectory().split("/");
         data.errorOccurances = getJobById(parts[parts.length - 3]).getErrorOccurances();
-        service.addJob(data);
+        try {
+            service.addJob(data);
+        }
+        catch (IOException e) {
+            logger.error("Error on adding file for validation", e);
+        }
     }
 
     private boolean isCurrentJob(String crawlUrl) {

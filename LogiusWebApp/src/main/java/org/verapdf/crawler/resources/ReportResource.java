@@ -1,5 +1,7 @@
 package org.verapdf.crawler.resources;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.crawling.CurrentJob;
 import org.verapdf.crawler.domain.report.ValidationError;
 import org.verapdf.crawler.report.HeritrixReporter;
@@ -23,6 +25,8 @@ import java.util.*;
 @Path("/report")
 public class ReportResource {
 
+    private static Logger logger = LoggerFactory.getLogger("CustomLogger");
+
     private HeritrixReporter reporter;
     private ArrayList<CurrentJob> currentJobs;
     private ResourceManager resourceManager;
@@ -36,80 +40,104 @@ public class ReportResource {
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @Path("/ods_report/{job}")
-    public Response getODSReport(@PathParam("job") String job) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
-        CurrentJob currentJob = getJobById(job);
-        String jobURL = currentJob.getJobURL();
-        File file;
-        if(jobURL.equals("")){
-            file = reporter.buildODSReport(job, getTimeByJobId(job));
+    public Response getODSReport(@PathParam("job") String job) {
+        try {
+            CurrentJob currentJob = getJobById(job);
+            String jobURL = currentJob.getJobURL();
+            File file;
+            if (jobURL.equals("")) {
+                file = reporter.buildODSReport(job, getTimeByJobId(job));
+            } else {
+                file = reporter.buildODSReport(job, jobURL, getTimeByJobId(job));
+            }
+            logger.info("ODS report requested");
+            return Response.ok(file, MediaType.APPLICATION_OCTET_STREAM)
+                    .header("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"")
+                    .build();
         }
-        else {
-            file = reporter.buildODSReport(job, jobURL, getTimeByJobId(job));
+        catch (Exception e) {
+            logger.error("Error on ODS report request", e);
         }
-        return Response.ok(file, MediaType.APPLICATION_OCTET_STREAM)
-                .header("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"" )
-                .build();
+        return null;
     }
 
     @GET
     @Produces(MediaType.TEXT_HTML)
     @Path("/html_report/{job}")
-    public String getHtmlReport(@PathParam("job") String job) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
-        String jobURL = getExistingJobURLbyJobId(job);
-        String htmlReport;
-        if(jobURL.equals("")){
-            htmlReport = reporter.buildHtmlReport(job, getTimeByJobId(job));
+    public String getHtmlReport(@PathParam("job") String job) {
+        try {
+            String jobURL = getExistingJobURLbyJobId(job);
+            String htmlReport;
+            if (jobURL.equals("")) {
+                htmlReport = reporter.buildHtmlReport(job, getTimeByJobId(job));
+            } else {
+                htmlReport = reporter.buildHtmlReport(job, jobURL, getTimeByJobId(job));
+            }
+            htmlReport = htmlReport.replace("INVALID_PDF_REPORT", resourceManager.getResourceUri() + "report/invalid_pdf_list/" + job);
+            htmlReport = htmlReport.replace("OFFICE_REPORT", resourceManager.getResourceUri() + "report/office_list/" + job);
+            logger.info("HTML report requested");
+            return htmlReport;
         }
-        else {
-            htmlReport = reporter.buildHtmlReport(job, jobURL, getTimeByJobId(job));
+        catch (Exception e) {
+            logger.error("Exception on HTML report request", e);
         }
-        htmlReport = htmlReport.replace("INVALID_PDF_REPORT", resourceManager.getResourceUri() + "report/invalid_pdf_list/" + job);
-        htmlReport = htmlReport.replace("OFFICE_REPORT", resourceManager.getResourceUri()  + "report/office_list/" + job);
-        return htmlReport;
+        return "";
     }
 
     @GET
     @Produces(MediaType.TEXT_HTML)
     @Path("office_list/{job}")
-    public String getOfficeReport(@PathParam("job") String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        String jobURL = getExistingJobURLbyJobId(job);
-        String result;
-        if(jobURL.equals("")) {
-            result = reporter.getOfficeReport(job, getTimeByJobId(job));
+    public String getOfficeReport(@PathParam("job") String job) {
+        try {
+            String jobURL = getExistingJobURLbyJobId(job);
+            String result;
+            if (jobURL.equals("")) {
+                result = reporter.getOfficeReport(job, getTimeByJobId(job));
+            } else {
+                result = reporter.getOfficeReport(job, jobURL, getTimeByJobId(job));
+            }
+            logger.info("List of Microsoft Office files requested");
+            return addLinksToUrlList(result).toString();
         }
-        else{
-            result = reporter.getOfficeReport(job, jobURL, getTimeByJobId(job));
+        catch (Exception e) {
+            logger.error("Error on list of Microsoft Office files request", e);
         }
-        return addLinksToUrlList(result).toString();
+        return "";
     }
 
     @GET
     @Produces(MediaType.TEXT_HTML)
     @Path("invalid_pdf_list/{job}")
-    public String getInvalidPdfReport(@PathParam("job") String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
-        CurrentJob jobData = getJobById(job);
-        String jobURL = jobData.getJobURL();
-        StringBuilder result = new StringBuilder("<h2>Most common issues<h2><table>");
-        int i = 0;
-        for(Map.Entry<ValidationError, Integer> record: sortFailedRules(jobData)) {
-            i++;
-            result.append("<tr style=\"BACKGROUND: #dcdaf6\"><td>");
-            result.append(record.getKey().toString());
-            result.append("</td></tr><tr style=\"BACKGROUND: #dcdaf6\"><td>");
-            result.append(record.getValue());
-            result.append(" occurrences.</td></tr> <tr></tr>");
-            if(i == 10) {
-                break;
+    public String getInvalidPdfReport(@PathParam("job") String job) {
+        try {
+            CurrentJob jobData = getJobById(job);
+            String jobURL = jobData.getJobURL();
+            StringBuilder result = new StringBuilder("<h2>Most common issues<h2><table>");
+            int i = 0;
+            for (Map.Entry<ValidationError, Integer> record : sortFailedRules(jobData)) {
+                i++;
+                result.append("<tr style=\"BACKGROUND: #dcdaf6\"><td>");
+                result.append(record.getKey().toString());
+                result.append("</td></tr><tr style=\"BACKGROUND: #dcdaf6\"><td>");
+                result.append(record.getValue());
+                result.append(" occurrences.</td></tr> <tr></tr>");
+                if (i == 10) {
+                    break;
+                }
             }
+            result.append("</table><h2>File details<h2>");
+            if (jobURL.equals("")) {
+                result.append(reporter.getInvalidPDFReport(job, jobData.getCrawlSinceTime()));
+            } else {
+                result.append(reporter.getInvalidPDFReport(job, jobURL, jobData.getCrawlSinceTime()));
+            }
+            logger.info("List of invalid PDF documents requested");
+            return result.toString();
         }
-        result.append("</table><h2>File details<h2>");
-        if(jobURL.equals("")) {
-            result.append(reporter.getInvalidPDFReport(job, jobData.getCrawlSinceTime()));
+        catch (Exception e) {
+            logger.error("Error on list of invalid PDF documents request", e);
         }
-        else{
-            result.append(reporter.getInvalidPDFReport(job, jobURL, jobData.getCrawlSinceTime()));
-        }
-        return result.toString();
+        return "";
     }
 
     public CurrentJob getJobById(String job) {
@@ -122,14 +150,8 @@ public class ReportResource {
 
     private List<Map.Entry<ValidationError, Integer>> sortFailedRules(CurrentJob job) {
         Map<ValidationError, Integer> sortedMap = new HashMap<>();
-        List<Map.Entry<ValidationError, Integer>> list = new LinkedList<Map.Entry<ValidationError, Integer>>( job.getErrorOccurances().entrySet() );
-        Collections.sort( list, new Comparator<Map.Entry<ValidationError, Integer>>()
-        {
-            public int compare( Map.Entry<ValidationError, Integer> o1, Map.Entry<ValidationError, Integer> o2 )
-            {
-                return (o2.getValue()).compareTo( o1.getValue() );
-            }
-        } );
+        List<Map.Entry<ValidationError, Integer>> list = new LinkedList<>( job.getErrorOccurances().entrySet() );
+        Collections.sort( list, (o1, o2) -> (o2.getValue()).compareTo( o1.getValue() ));
         return list;
     }
 

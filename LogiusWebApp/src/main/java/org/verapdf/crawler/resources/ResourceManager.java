@@ -3,6 +3,8 @@ package org.verapdf.crawler.resources;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.crawling.BatchJob;
 import org.verapdf.crawler.domain.crawling.CurrentJob;
 import org.verapdf.crawler.domain.email.EmailServer;
@@ -25,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ResourceManager {
+    private static Logger logger = LoggerFactory.getLogger("CustomLogger");
     private InfoResourse infoResourse;
     private ReportResource reportResource;
     private ControlResource controlResource;
@@ -35,7 +38,8 @@ public class ResourceManager {
     private ValidationService validationService;
     private EmailServer emailServer;
 
-    public ResourceManager(HeritrixClient client, EmailServer emailServer, String verapdfPath) throws IOException {
+    public ResourceManager(HeritrixClient client, EmailServer emailServer, String verapdfPath) {
+
         currentJobs = new ArrayList<>();
         batchJobs = new ArrayList<>();
         HeritrixReporter reporter = new HeritrixReporter(client);
@@ -45,12 +49,16 @@ public class ResourceManager {
         infoResourse = new InfoResourse(validationService, client, currentJobs, this);
         reportResource = new ReportResource(reporter, currentJobs, this);
         controlResource = new ControlResource(currentJobs, client, reporter, emailServer, batchJobs, validationService, this);
-
-        loadJobs();
+        try {
+            loadJobs();
+        }
+        catch (IOException e) {
+            logger.error("Error on loading jobs", e);
+        }
         new Thread(new StatusMonitor(this)).start();
         validationService.setRunning(true);
         new Thread(validationService).start();
-        System.out.println("Validation service started.");
+        logger.info("Validation service started.");
     }
 
     public InfoResourse getInfoResourse() {

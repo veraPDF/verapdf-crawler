@@ -9,7 +9,7 @@ import javax.mail.*;
 import javax.mail.internet.*;
 
 public class SendEmail {
-    private static Logger logger = LoggerFactory.getLogger(SendEmail.class);
+    private static Logger logger = LoggerFactory.getLogger("CustomLogger");
     public static void send(String targetEmail, String subject, String text, EmailServer emailServer) {
 
         Properties properties = new Properties();
@@ -31,7 +31,7 @@ public class SendEmail {
             transport.connect();
             Transport.send(message);
             transport.close();
-
+            logger.info("Notification email was sent at" + targetEmail);
         }catch (MessagingException mex) {
             logger.error("Email sending error", mex);
         }

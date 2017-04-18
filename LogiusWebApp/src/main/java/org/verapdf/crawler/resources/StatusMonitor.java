@@ -8,7 +8,7 @@ import org.verapdf.crawler.emailUtils.SendEmail;
 
 public class StatusMonitor implements Runnable {
     private ResourceManager resource;
-    private static Logger logger = LoggerFactory.getLogger(StatusMonitor.class);
+    private static Logger logger = LoggerFactory.getLogger("CustomLogger");
 
     public StatusMonitor(ResourceManager resource){
         this.resource = resource;
