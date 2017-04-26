@@ -1,4 +1,5 @@
 # verapdf-crawler
+## TODO: update when switch to database
 ### Pre-requisites
 In order to install Logius crawler you'll need 
  * Java 7 and Java 8, which can be downloaded [from Oracle](http://www.oracle.com/technetwork/java/javase/downloads/index.html), or for 
