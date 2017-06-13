@@ -3,8 +3,6 @@ package org.verapdf.crawler.extentionModules;
 import org.apache.commons.httpclient.Header;
 import org.archive.modules.CrawlURI;
 import org.archive.modules.writer.MirrorWriterProcessor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileWriter;

@@ -11,6 +11,10 @@ emailServer:
   user: logiuscrawlernotifier@gmail.com	
   password: Logius2017
   port: 587
+mySqlcredentials:
+  connectionString: jdbc:mysql://localhost:3306/logius?useSSL=false
+  user: root
+  password: anton
 resourcePath: /home/anton/Documents/Logius/LogiusWebApp/src/main/resources/
 heritrixLogin: admin
 heritrixPassword: logius

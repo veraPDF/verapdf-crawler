@@ -9,10 +9,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CurrentJob {
-    private String id;
+    private final String id;
 
     private String jobURL;
-    private String crawlURL;
+    private final String crawlURL;
     private String reportEmail;
     private LocalDateTime startTime;
     private LocalDateTime finishTime;
@@ -90,6 +90,10 @@ public class CurrentJob {
     @JsonProperty
     public LocalDateTime getStartTime() {
         return startTime;
+    }
+
+    public void setStartTime() {
+        this.startTime = LocalDateTime.now();
     }
 
     @JsonProperty

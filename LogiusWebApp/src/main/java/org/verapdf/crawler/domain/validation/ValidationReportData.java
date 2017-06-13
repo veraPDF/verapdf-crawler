@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.verapdf.processor.reports.ValidationReport;
 
-import java.util.Map;
-
 public class ValidationReportData {
     private String url;
     private String lastModified;

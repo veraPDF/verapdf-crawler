@@ -2,6 +2,7 @@ package org.verapdf.crawler.validation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.domain.database.MySqlCredentials;
 import org.verapdf.crawler.domain.report.ValidationError;
 import org.verapdf.crawler.domain.validation.ValidationReportData;
 
@@ -17,14 +18,16 @@ import org.verapdf.processor.reports.RuleSummary;
 import org.verapdf.processor.reports.ValidationReport;
 
 public class VerapdfValidator implements PDFValidator {
-    private static Logger logger = LoggerFactory.getLogger("CustomLogger");
+    private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
     private static final String VALIDATION_REPORT_HEAD = "validationReport";
     private static final String SUMMARY_HEAD = "summary";
 
-    private String verapdfPath;
+    private final String verapdfPath;
+    private final MySqlCredentials credentials;
 
-    public VerapdfValidator(String verapdfPath) {
+    public VerapdfValidator(String verapdfPath, MySqlCredentials credentials) {
         this.verapdfPath = verapdfPath;
+        this.credentials = credentials;
     }
 
     @Override
@@ -61,37 +64,45 @@ public class VerapdfValidator implements PDFValidator {
         String[] cmd = {verapdfPath, "--format", "mrr", filename};
         ProcessBuilder pb = new ProcessBuilder().inheritIO();
         File output = new File("output");
-        File error = new File("error");
         output.createNewFile();
-        error.createNewFile();
         pb.redirectOutput(output);
-        pb.redirectError(error);
         pb.command(cmd);
-        String mrrReport = new String(Files.readAllBytes(Paths.get("output")));
-        if(pb.start().waitFor(20, TimeUnit.MINUTES) && !mrrReport.equals("")) { // Validation finished successfully in time
+        if(pb.start().waitFor(20, TimeUnit.MINUTES)) { // Validation finished successfully in time
+            String mrrReport = new String(Files.readAllBytes(Paths.get("output")));
+            if(mrrReport.isEmpty()) {
+                logger.info("Output is empty, waiting" + 0);
+                for(int i = 0; i < 10; i++) {
+                    Thread.sleep(100);
+                    if(mrrReport.isEmpty()) {
+                        logger.info("Output is empty, waiting " + (i + 1));
+                        Thread.sleep(100);
+                    }
+                    else break;
+                }
+            }
+
             String validationReportXml = getXMLObject(mrrReport, VALIDATION_REPORT_HEAD);
             String summaryXml = getXMLObject(mrrReport, SUMMARY_HEAD);
             validationReport = Reports.validationReportFromXml(validationReportXml);
         }
         else {
-            if(mrrReport.equals("")) {
-                logger.error("Verapdf output is empty.");
-            }
-            Scanner errorScanner = new Scanner(new File("error"));
+            Scanner errorScanner = new Scanner(new File("output"));
             StringBuilder builder = new StringBuilder();
             while(errorScanner.hasNextLine()) {
                 String line = errorScanner.nextLine();
                 builder.append(line);
                 builder.append(System.lineSeparator());
             }
+            new File("output").delete();
             throw new Exception(builder.toString());
         }
+        new File("output").delete();
         return validationReport;
     }
 
     private String getXMLObject(String xml, String name) {
         return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 xml.substring(xml.indexOf("<" + name),
-                xml.indexOf("</" + name + ">") + ("</" + name + ">").length());
+                        xml.indexOf("</" + name + ">") + ("</" + name + ">").length());
     }
 }

@@ -3,36 +3,37 @@ package org.verapdf.crawler.validation;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.domain.database.MySqlCredentials;
 import org.verapdf.crawler.domain.validation.ValidationReportData;
 import org.verapdf.crawler.domain.validation.ValidationJobData;
-import org.verapdf.crawler.resources.ResourceManager;
+import org.verapdf.crawler.app.resources.ResourceManager;
 
 import java.io.*;
 import java.util.LinkedList;
 import java.util.Scanner;
 
 public class ValidationService implements Runnable {
-    private static Logger logger = LoggerFactory.getLogger("CustomLogger");
-    private String errorReportPath;
-    private LinkedList<ValidationJobData> queue;
-    private ResourceManager resource;
-    private PDFValidator validator;
+    private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
+    private final String errorReportPath;
+    private final LinkedList<ValidationJobData> queue;
+    private final ResourceManager resource;
+    private final PDFValidator validator;
 
     public boolean isRunning() {
         return isRunning;
     }
 
-    public void setRunning(boolean running) {
-        isRunning = running;
+    public void start() {
+        isRunning = true;
     }
 
     private boolean isRunning;
-    public ValidationService(String verapdfPath, String errorReportPath, ResourceManager resource) {
+    public ValidationService(String verapdfPath, String errorReportPath, ResourceManager resource, MySqlCredentials credentials) {
         this.queue = new LinkedList<>();
         this.errorReportPath = errorReportPath;
         this.resource = resource;
         isRunning = true;
-        validator = new VerapdfValidator(verapdfPath);
+        validator = new VerapdfValidator(verapdfPath, credentials);
         try {
             manageQueue(false);
         } catch (IOException e) {
@@ -59,9 +60,16 @@ public class ValidationService implements Runnable {
                     data = queue.remove();
                     manageQueue(true);
                     logger.info("Validating " + data.getUri());
-
-                    ValidationReportData result = validator.validateAndWirteErrors(data.getFilepath(), data.errorOccurances);
-
+                    ValidationReportData result;
+                    try {
+                        result = validator.validateAndWirteErrors(data.getFilepath(), data.errorOccurances);
+                    }
+                    catch (Exception e) {
+                        result = new ValidationReportData();
+                        result.setValid(false);
+                        result.setFailedRules(0);
+                        result.setPassedRules(0);
+                    }
                     FileWriter fw;
                     if(result.isValid()) {
                         fw = new FileWriter(data.getJobDirectory() + File.separator + "Valid_PDF_Report.txt", true);

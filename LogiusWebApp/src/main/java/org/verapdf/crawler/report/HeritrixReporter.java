@@ -6,14 +6,12 @@ import org.jopendocument.dom.spreadsheet.SpreadSheet;
 import org.verapdf.crawler.domain.validation.ValidationReportData;
 import org.verapdf.crawler.domain.report.PDFValidationStatistics;
 import org.verapdf.crawler.domain.report.SingleURLJobReport;
-import org.verapdf.crawler.engine.HeritrixClient;
+import org.verapdf.crawler.app.engine.HeritrixClient;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -22,14 +20,14 @@ import java.util.Scanner;
 
 public class HeritrixReporter {
 
-    private HeritrixClient client;
+    private final HeritrixClient client;
 
     public HeritrixReporter(HeritrixClient client) {
         this.client = client;
     }
 
     // If time is null settings were not provided
-    public SingleURLJobReport getReport(String job, LocalDateTime time) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
+    public SingleURLJobReport getReport(String job, LocalDateTime time) throws IOException, ParserConfigurationException, SAXException {
         SingleURLJobReport result = new SingleURLJobReport(job,
                 client.getListOfCrawlUrls(job).get(0),
                 client.getCurrentJobStatus(job),
@@ -42,18 +40,18 @@ public class HeritrixReporter {
         return result;
     }
 
-    public SingleURLJobReport getReport(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException, ParserConfigurationException, SAXException {
+    public SingleURLJobReport getReport(String job) throws IOException, ParserConfigurationException, SAXException {
         return getReport(job, null);
     }
 
-    public SingleURLJobReport getReport(String job, String jobURL, LocalDateTime time) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    public SingleURLJobReport getReport(String job, String jobURL, LocalDateTime time) throws IOException {
         String config = client.getLogFileByURL(jobURL + "sample_configuration.cxml");
         if(config.equals("")) {
             config = client.getLogFileByURL(jobURL + "crawler-beans.cxml");
         }
         SingleURLJobReport result = new SingleURLJobReport(job,
                 HeritrixClient.getListOfCrawlUrlsFromXml(config).get(0),
-                "Finished",0);
+                "finished",0);
         result.setPdfStatistics(getValidationStatistics(job,
                 jobURL + "mirror/Invalid_PDF_Report.txt",
                 jobURL + "mirror/Valid_PDF_Report.txt",
@@ -65,7 +63,7 @@ public class HeritrixReporter {
         return result;
     }
 
-    public File buildODSReport(SingleURLJobReport reportData, LocalDateTime time) throws IOException, KeyManagementException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
+    private File buildODSReport(SingleURLJobReport reportData, LocalDateTime time) throws IOException {
         File file = new File(HeritrixClient.baseDirectory + "sample_report.ods");
         final Sheet totalSheet = SpreadSheet.createFromFile(file).getSheet(0);
         totalSheet.ensureColumnCount(2);
@@ -93,17 +91,17 @@ public class HeritrixReporter {
         return ODSReport;
     }
 
-    public File buildODSReport(String job, LocalDateTime time) throws IOException, KeyManagementException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
+    public File buildODSReport(String job, LocalDateTime time) throws IOException, ParserConfigurationException, SAXException {
         SingleURLJobReport reportData = getReport(job, time);
         return buildODSReport(reportData, time);
     }
 
-    public File buildODSReport(String job, String jobURL, LocalDateTime time) throws IOException, KeyManagementException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
+    public File buildODSReport(String job, String jobURL, LocalDateTime time) throws IOException {
         SingleURLJobReport reportData = getReport(job, jobURL, time);
         return buildODSReport(reportData,time);
     }
 
-    public String buildHtmlReport(SingleURLJobReport reportData, LocalDateTime time) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
+    private String buildHtmlReport(SingleURLJobReport reportData, LocalDateTime time) {
         StringBuilder builder = new StringBuilder();
         if(time != null) {
             builder.append("<tr><td>Crawl files since date</td><td>");
@@ -144,35 +142,35 @@ public class HeritrixReporter {
         return builder.toString();
     }
 
-    public String buildHtmlReport(String job, LocalDateTime time) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
+    public String buildHtmlReport(String job, LocalDateTime time) throws SAXException, ParserConfigurationException, IOException {
         SingleURLJobReport reportData = getReport(job, time);
         return buildHtmlReport(reportData, time);
     }
 
-    public String buildHtmlReport(String job, String jobURL, LocalDateTime time) throws KeyManagementException, NoSuchAlgorithmException, SAXException, ParserConfigurationException, IOException {
+    public String buildHtmlReport(String job, String jobURL, LocalDateTime time) throws IOException {
         SingleURLJobReport reportData = getReport(job, jobURL, time);
         return buildHtmlReport(reportData, time);
     }
 
-    private String getInvalidPDFReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    private String getInvalidPDFReportUri(String job) throws IOException {
         return client.getValidPDFReportUri(job).replace("Valid_PDF_Report.txt","Invalid_PDF_Report.txt");
     }
 
-    public String getInvalidPDFReport(String job, LocalDateTime time) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    public String getInvalidPDFReport(String job, LocalDateTime time) throws IOException {
         String fileText = client.getLogFileByURL(getInvalidPDFReportUri(job));
         return getInvalidPdfListFromReportText(fileText, time);
     }
 
-    public String getInvalidPDFReport(String job, String jobURL, LocalDateTime time) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    public String getInvalidPDFReport(String job, String jobURL, LocalDateTime time) throws IOException {
         String fileText = client.getLogFileByURL(jobURL + "mirror/Invalid_PDF_Report.txt");
         return getInvalidPdfListFromReportText(fileText, time);
     }
 
-    private PDFValidationStatistics getValidationStatistics(String job, LocalDateTime time) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    private PDFValidationStatistics getValidationStatistics(String job, LocalDateTime time) throws IOException {
         return getValidationStatistics(job, getInvalidPDFReportUri(job), client.getValidPDFReportUri(job), time);
     }
 
-    private PDFValidationStatistics getValidationStatistics(String job, String invalidReport, String validReport, LocalDateTime time) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    private PDFValidationStatistics getValidationStatistics(String job, String invalidReport, String validReport, LocalDateTime time) throws IOException {
         int numberOfInvalidPDFs, numberOfValidPDFs;
         String invalidPDFReport = client.getLogFileByURL(invalidReport);
         ArrayList<ValidationReportData> list = new ArrayList<>();
@@ -194,27 +192,27 @@ public class HeritrixReporter {
         return result;
     }
 
-    private String getODFReport(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    private String getODFReport(String job) throws IOException {
         return client.getLogFileByURL(getODFReportUri(job));
     }
 
-    private Integer getODFFileCount(String job, LocalDateTime time) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    private Integer getODFFileCount(String job, LocalDateTime time) throws IOException {
         return getNumberOfLines(getODFReport(job), time);
     }
 
-    public String getOfficeReport(String job, LocalDateTime time) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    public String getOfficeReport(String job, LocalDateTime time) throws IOException {
         return removeEarlyLines(client.getLogFileByURL(getOfficeReportUri(job)), time);
     }
 
-    public String getOfficeReport(String job, String jobURL, LocalDateTime time) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    public String getOfficeReport(String job, String jobURL, LocalDateTime time) throws IOException {
         return removeEarlyLines(client.getLogFileByURL(jobURL + "mirror/OfficeReport.txt"), time);
     }
 
-    private String getOfficeReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    private String getOfficeReportUri(String job) throws IOException {
         return client.getValidPDFReportUri(job).replace("Valid_PDF_Report.txt", "OfficeReport.txt");
     }
 
-    private String getODFReportUri(String job) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+    private String getODFReportUri(String job) throws IOException {
         return client.getValidPDFReportUri(job).replace("Valid_PDF_Report.txt", "ODFReport.txt");
     }
 

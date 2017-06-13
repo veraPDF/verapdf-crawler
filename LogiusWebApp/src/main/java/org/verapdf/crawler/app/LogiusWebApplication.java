@@ -2,16 +2,16 @@ package org.verapdf.crawler.app;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.configuration.LogiusConfiguration;
-import org.verapdf.crawler.engine.HeritrixClient;
+import org.verapdf.crawler.app.configuration.LogiusConfiguration;
+import org.verapdf.crawler.app.engine.HeritrixClient;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import org.verapdf.crawler.resources.ResourceManager;
+import org.verapdf.crawler.app.resources.ResourceManager;
 
 public class LogiusWebApplication extends Application<LogiusConfiguration> {
-    private static Logger logger = LoggerFactory.getLogger("CustomLogger");
+    private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
     public static void main(String[] args) throws Exception {
         new LogiusWebApplication().run(args);
     }
@@ -41,7 +41,8 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
 
             resourceManager = new ResourceManager( client,
                     configuration.getEmailServer(),
-                    configuration.getVerapdfPath());
+                    configuration.getVerapdfPath(),
+                    configuration.getCredentials());
 
             environment.jersey().register(resourceManager.getInfoResourse());
             environment.jersey().register(resourceManager.getReportResource());

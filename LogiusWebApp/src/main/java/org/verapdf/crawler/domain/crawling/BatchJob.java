@@ -3,10 +3,10 @@ package org.verapdf.crawler.domain.crawling;
 import java.util.ArrayList;
 
 public class BatchJob {
-    private ArrayList<String> domains;
-    private String id;
+    private final ArrayList<String> domains;
+    private final String id;
     private boolean isFinished;
-    private String emailAddress;
+    private final String emailAddress;
 
     public BatchJob(String id, String emailAddress) {
         domains = new ArrayList<>();
@@ -23,8 +23,8 @@ public class BatchJob {
         return isFinished;
     }
 
-    public void setFinished(boolean finished) {
-        isFinished = finished;
+    public void setFinished() {
+        isFinished = true;
     }
 
     public String getEmailAddress() { return emailAddress; }

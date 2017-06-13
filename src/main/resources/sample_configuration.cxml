@@ -2,7 +2,7 @@
 <!--
   HERITRIX 3 CRAWL JOB CONFIGURATION FILE
 
-   This is a relatively minimal org.verapdf.crawler.configuration suitable for many crawls.
+   This is a relatively minimal org.verapdf.crawler.app.configuration suitable for many crawls.
 
    Commented-out beans and properties are provided as an example; values
    shown in comments reflect the actual defaults which are in effect
@@ -23,12 +23,12 @@
 
     <!--
       OVERRIDES
-       Values elsewhere in the org.verapdf.crawler.configuration may be replaced ('overridden')
+       Values elsewhere in the org.verapdf.crawler.app.configuration may be replaced ('overridden')
        by a Properties map declared in a PropertiesOverrideConfigurer,
        using a dotted-bean-path to address individual bean properties.
        This allows us to collect a few of the most-often changed values
        in an easy-to-edit format here at the beginning of the model
-       org.verapdf.crawler.configuration.
+       org.verapdf.crawler.app.configuration.
      -->
     <!-- overrides from a text property list -->
     <bean id="simpleOverrides" class="org.springframework.beans.factory.config.PropertyOverrideConfigurer">

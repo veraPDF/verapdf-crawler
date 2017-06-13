@@ -23,7 +23,7 @@ function checkStatus() {
             $("#total").text(total);
             $("#odftotal").text(result.numberOfODFDocuments);
             $("#office_total").text(result.numberOfOfficeDocuments);
-            if(status.substring(0, 8) != "Finished")
+            if(status.substring(0, 8) != "finished" || status.substring(0, 8) != "aborted")
                 setTimeout(checkStatus, 1000);
             else {
                 $("#finish_time").text("Job finished on " + result.finishTime);
