@@ -17,17 +17,17 @@ import org.verapdf.processor.reports.Reports;
 import org.verapdf.processor.reports.RuleSummary;
 import org.verapdf.processor.reports.ValidationReport;
 
+import javax.sql.DataSource;
+
 public class VerapdfValidator implements PDFValidator {
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
     private static final String VALIDATION_REPORT_HEAD = "validationReport";
     private static final String SUMMARY_HEAD = "summary";
 
     private final String verapdfPath;
-    private final MySqlCredentials credentials;
 
-    public VerapdfValidator(String verapdfPath, MySqlCredentials credentials) {
+    VerapdfValidator(String verapdfPath) {
         this.verapdfPath = verapdfPath;
-        this.credentials = credentials;
     }
 
     @Override

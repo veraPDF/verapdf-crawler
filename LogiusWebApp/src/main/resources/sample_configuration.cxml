@@ -258,7 +258,7 @@
     <bean id="fetchHttp" class="org.archive.modules.fetcher.FetchHTTP">
         <!-- <property name="useHTTP11" value="false" /> -->
         <!-- <property name="maxLengthBytes" value="0" /> -->
-        <property name="timeoutSeconds" value="60" />
+        <property name="timeoutSeconds" value="0" />
         <!-- <property name="maxFetchKBSec" value="0" /> -->
         <!-- <property name="defaultEncoding" value="ISO-8859-1" /> -->
         <!-- <property name="shouldFetchBodyRule">
@@ -394,16 +394,17 @@
                 </property>
             </bean>
         </property>
+	<property name="logiusUrl" value="http://localhost:9000/"/>
     </bean>
     <bean id="candidates" class="org.archive.crawler.postprocessor.CandidatesProcessor">
         <!-- <property name="seedsRedirectNewSeeds" value="true" /> -->
         <!-- <property name="processErrorOutlinks" value="false" /> -->
     </bean>
     <bean id="disposition" class="org.archive.crawler.postprocessor.DispositionProcessor">
-        <property name="delayFactor" value="5.0" />
-        <property name="minDelayMs" value="3000" />
-        <property name="respectCrawlDelayUpToSeconds" value="60" />
-        <property name="maxDelayMs" value="30000" />
+        <property name="delayFactor" value="1.0" />
+        <property name="minDelayMs" value="1" />
+        <property name="respectCrawlDelayUpToSeconds" value="1" />
+        <property name="maxDelayMs" value="2" />
         <!-- <property name="maxPerHostBandwidthUsageKbSec" value="0" /> -->
     </bean>
     <!-- <bean id="rescheduler" class="org.archive.crawler.postprocessor.ReschedulingProcessor">
@@ -447,9 +448,9 @@
         <!-- <property name="queuePrecedencePolicy">
               <bean class="org.archive.crawler.frontier.precedence.BaseQueuePrecedencePolicy" />
              </property> -->
-        <property name="snoozeLongMs" value="60000" />
-        <property name="retryDelaySeconds" value="60" />
-        <property name="maxRetries" value="3" />
+        <property name="snoozeLongMs" value="10000" />
+        <property name="retryDelaySeconds" value="3" />
+        <property name="maxRetries" value="4" />
         <!-- <property name="recoveryLogEnabled" value="true" /> -->
         <!-- <property name="maxOutlinks" value="6000" /> -->
         <!-- <property name="extractIndependently" value="false" /> -->
@@ -617,7 +618,7 @@
       class="org.archive.crawler.frontier.SurtAuthorityQueueAssignmentPolicy">
      <property name="forceQueueAssignment" value="" />
      <property name="deferToPrevious" value="true" />
-     <property name="parallelQueues" value="3" />
+     <property name="parallelQueues" value="25" />
     </bean>
     
 

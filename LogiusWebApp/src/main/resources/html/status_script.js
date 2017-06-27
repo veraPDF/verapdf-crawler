@@ -23,9 +23,7 @@ function checkStatus() {
             $("#total").text(total);
             $("#odftotal").text(result.numberOfODFDocuments);
             $("#office_total").text(result.numberOfOfficeDocuments);
-            if(status.substring(0, 8) != "finished" || status.substring(0, 8) != "aborted")
-                setTimeout(checkStatus, 1000);
-            else {
+            if(status.includes("finished") || status.includes("aborted")) {
                 $("#finish_time").text("Job finished on " + result.finishTime);
                 $("#email_link").hide();
                 $("#ods_report").text("Download report in ODS format");
@@ -47,6 +45,9 @@ function checkStatus() {
                         error: function(result) {
                             $("#stats").html("<font color=\"red\">Failed to get HTML job report.</font>");
                         }});
+            }
+            else {
+                setTimeout(checkStatus, 1000);
             }
 	    },
 	    error: function(result) {

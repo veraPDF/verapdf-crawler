@@ -11,7 +11,7 @@ emailServer:
   user: logiuscrawlernotifier@gmail.com	
   password: Logius2017
   port: 587
-mySqlcredentials:
+credentials:
   connectionString: jdbc:mysql://localhost:3306/logius?useSSL=false
   user: root
   password: anton

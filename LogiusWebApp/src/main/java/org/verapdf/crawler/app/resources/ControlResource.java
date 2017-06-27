@@ -1,10 +1,6 @@
 package org.verapdf.crawler.app.resources;
 
 import com.codahale.metrics.annotation.Timed;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.csv.CSVRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.crawling.BatchJob;
@@ -13,20 +9,21 @@ import org.verapdf.crawler.domain.crawling.StartBatchJobData;
 import org.verapdf.crawler.domain.crawling.StartJobData;
 import org.verapdf.crawler.domain.email.EmailAddress;
 import org.verapdf.crawler.domain.email.EmailServer;
+import org.verapdf.crawler.domain.office.OfficeFileData;
 import org.verapdf.crawler.domain.report.SingleURLJobReport;
 import org.verapdf.crawler.domain.validation.ValidationJobData;
 import org.verapdf.crawler.app.email_utils.SendEmail;
 import org.verapdf.crawler.app.engine.HeritrixClient;
 import org.verapdf.crawler.report.HeritrixReporter;
+import org.verapdf.crawler.repository.file.InsertFileDao;
+import org.verapdf.crawler.repository.jobs.CrawlJobDao;
 import org.verapdf.crawler.validation.ValidationService;
 
+import javax.sql.DataSource;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -49,10 +46,12 @@ public class ControlResource {
     private final ArrayList<BatchJob> batchJobs;
     private final ValidationService service;
     private final ResourceManager resourceManager;
+    private final CrawlJobDao crawlJobDao;
+    private final InsertFileDao insertFileDao;
 
-    public ControlResource(ArrayList<CurrentJob> currentJobs, HeritrixClient client,
-                           HeritrixReporter reporter, EmailServer emailServer, ArrayList<BatchJob> batchJobs,
-                           ValidationService service, ResourceManager resourceManager) {
+    ControlResource(ArrayList<CurrentJob> currentJobs, HeritrixClient client, HeritrixReporter reporter,
+                           EmailServer emailServer, ArrayList<BatchJob> batchJobs, ValidationService service,
+                           ResourceManager resourceManager, CrawlJobDao crawlJobDao, DataSource dataSource) {
         this.currentJobs = currentJobs;
         this.client = client;
         this.reporter = reporter;
@@ -60,6 +59,8 @@ public class ControlResource {
         this.batchJobs = batchJobs;
         this.service = service;
         this.resourceManager = resourceManager;
+        this.crawlJobDao = crawlJobDao;
+        this.insertFileDao = new InsertFileDao(dataSource);
     }
 
     @POST
@@ -75,8 +76,8 @@ public class ControlResource {
             } else {
                 if (startJobData.isForceStart() && isCurrentJob(trimUrl(startJobData.getDomain()))) { // This URL has already been crawled but the old job needs to be overwritten
                     client.teardownJob(getJobByCrawlUrl(trimUrl(startJobData.getDomain())).getId());
+                    crawlJobDao.removeJob(getJobByCrawlUrl(startJobData.getDomain()));
                     currentJobs.remove(getJobByCrawlUrl(trimUrl(startJobData.getDomain())));
-                    removeJobFromFile(trimUrl(startJobData.getDomain()));
                 }
                 // Brand new URL
                 ArrayList<String> list = new ArrayList<>();
@@ -93,25 +94,18 @@ public class ControlResource {
                 client.launchJob(job);
                 String jobStatus = client.getCurrentJobStatus(job);
                 LocalDateTime now = LocalDateTime.now();
+                CurrentJob newJob;
                 if (startJobData.getDate() == null || startJobData.getDate().isEmpty()) {
-                    currentJobs.add(new CurrentJob(job, "", trimUrl(startJobData.getDomain()),
-                            null, startJobData.getReportEmail(), now));
+                    newJob = new CurrentJob(job, "", trimUrl(startJobData.getDomain()),
+                            null, startJobData.getReportEmail(), now);
                 } else {
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-                    currentJobs.add(new CurrentJob(job, "", trimUrl(startJobData.getDomain()),
+                    newJob = new CurrentJob(job, "", trimUrl(startJobData.getDomain()),
                             LocalDateTime.of(LocalDate.parse(startJobData.getDate(), formatter), LocalTime.MIN),
-                            startJobData.getReportEmail(), now));
+                            startJobData.getReportEmail(), now);
                 }
-                String jobURL = "";
-                String reportUri = client.getValidPDFReportUri(job);
-                if (reportUri.contains("mirror/Valid_PDF_Report.txt")) {
-                    jobURL = reportUri.replace("mirror/Valid_PDF_Report.txt", "");
-                }
-                FileWriter writer = new FileWriter(HeritrixClient.baseDirectory + "crawled_urls.txt", true);
-                CSVPrinter printer = new CSVPrinter(writer, CSVFormat.DEFAULT);
-                printer.printRecord(new String[]{job, trimUrl(startJobData.getDomain()), jobURL, startJobData.getDate(),
-                        now.format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss")), ""});
-                writer.close();
+                currentJobs.add(newJob);
+                crawlJobDao.addJob(newJob);
                 logger.info("Job creation on " + startJobData.getDomain());
                 return new SingleURLJobReport(job, trimUrl(startJobData.getDomain()), jobStatus, 0);
             }
@@ -222,6 +216,7 @@ public class ControlResource {
                 result = reporter.getReport(job, jobURL, getTimeByJobId(job));
             }
             CurrentJob jobData = getJobById(job);
+
             if (result.getStatus().startsWith("finished") || result.getStatus().startsWith("aborted")) {
                 if (!jobData.getReportEmail().equals("") && !jobData.isEmailSent()) {
                     String subject = "Crawl job";
@@ -233,10 +228,11 @@ public class ControlResource {
                 if (jobData.getJobURL().equals("")) {
                     jobData.setJobURL(client.getValidPDFReportUri(job).replace("mirror/Valid_PDF_Report.txt", ""));
                     jobData.setFinishTime(LocalDateTime.now());
-                    writeFinishDate(job);
+                    crawlJobDao.writeFinishTime(getJobById(job));
                 }
                 client.teardownJob(jobData.getId());
             }
+
             result.startTime = jobData.getStartTime().format(formatter) + " GMT";
             if (jobData.getFinishTime() != null) {
                 result.finishTime = jobData.getFinishTime().format(formatter) + " GMT";
@@ -247,6 +243,7 @@ public class ControlResource {
         }
         catch (Exception e) {
             logger.error("Error on job data request", e);
+            e.printStackTrace();
         }
         return null;
     }
@@ -331,6 +328,7 @@ public class ControlResource {
     @Path("/validation")
     @Consumes(MediaType.APPLICATION_JSON)
     public void addValidationJob(ValidationJobData data) {
+        logger.info("Received information about PDF file");
         String[] parts = data.getJobDirectory().split("/");
         data.errorOccurances = getJobById(parts[parts.length - 3]).getErrorOccurances();
         try {
@@ -341,34 +339,30 @@ public class ControlResource {
         }
     }
 
+    @POST
+    @Timed
+    @Path("/microsoft_office")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void addMicrosoftOfficeFile(OfficeFileData data) {
+        logger.info("Received information about Microsoft office file");
+        insertFileDao.addMicrosoftOfficeFile(data.getFileUrl(), data.getJobId(), data.getLastModified());
+    }
+
+    @POST
+    @Timed
+    @Path("/odf")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void addOdfFile(OfficeFileData data) {
+        logger.info("Received information about ODF file");
+        insertFileDao.addOdfFile(data.getFileUrl(), data.getJobId(), data.getLastModified());
+    }
+
     private boolean isCurrentJob(String crawlUrl) {
         for(CurrentJob jobData : currentJobs) {
             if(jobData.getCrawlURL().equals(crawlUrl))
                 return true;
         }
         return false;
-    }
-
-    private void removeJobFromFile(String crawlUrl) throws IOException {
-        StringBuilder builder = new StringBuilder();
-        FileReader reader = new FileReader(HeritrixClient.baseDirectory + "crawled_urls.txt");
-        CSVParser parser = new CSVParser(reader, CSVFormat.DEFAULT.withHeader());
-        List<CSVRecord> records = parser.getRecords();
-        builder.append("id,crawlURL,jobURL,crawlSince,startTime,finishTime" + System.lineSeparator());
-        for(CSVRecord record : records) {
-            if(!record.get("crawlURL").equals(crawlUrl)) {
-                builder.append(record.get("id") + ",");
-                builder.append(record.get("crawlURL") + ",");
-                builder.append(record.get("jobURL") + ",");
-                builder.append(record.get("crawlSince") + ",");
-                builder.append(record.get("startTime") + ",");
-                builder.append(record.get("finishTime") + System.lineSeparator());
-            }
-        }
-        reader.close();
-        FileWriter writer = new FileWriter(HeritrixClient.baseDirectory + "crawled_urls.txt");
-        writer.write(builder.toString());
-        writer.close();
     }
 
     private String trimUrl(String url) {
@@ -396,23 +390,6 @@ public class ControlResource {
                 return jobData;
         }
         return null;
-    }
-
-    private void writeFinishDate(String job) throws IOException {
-        Scanner sc = new Scanner(new File(HeritrixClient.baseDirectory + "crawled_urls.txt"));
-        StringBuilder builder = new StringBuilder();
-        while(sc.hasNextLine()) {
-            String line = sc.nextLine();
-            if(line.startsWith(job) && line.endsWith(",")) {
-                line += LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss"));
-            }
-            builder.append(line);
-            builder.append(System.lineSeparator());
-        }
-        sc.close();
-        FileWriter fw = new FileWriter(HeritrixClient.baseDirectory + "crawled_urls.txt");
-        fw.write(builder.toString());
-        fw.close();
     }
 
     private BatchJob getBatchJobById(String id) {

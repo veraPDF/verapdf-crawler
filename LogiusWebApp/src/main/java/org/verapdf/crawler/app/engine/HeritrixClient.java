@@ -210,7 +210,15 @@ public class HeritrixClient {
         return result;
     }
 
-    public String getLogFileByURL(String url) throws IOException {
+    public String getConfig(String jobUrl) throws IOException {
+        String config = getLogFileByURL(jobUrl + "sample_configuration.cxml");
+        if(config.equals("")) {
+            config = getLogFileByURL(jobUrl + "crawler-beans.cxml");
+        }
+        return config;
+    }
+
+    private String getLogFileByURL(String url) throws IOException {
         HttpGet get = new HttpGet(url);
         InputStream response = httpClient.execute(get).getEntity().getContent();
         Scanner sc = new Scanner(response);

@@ -4,9 +4,10 @@ import org.apache.commons.httpclient.Header;
 import org.archive.modules.CrawlURI;
 import org.archive.modules.writer.MirrorWriterProcessor;
 
-import java.io.File;
-import java.io.FileWriter;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class ODFProcessor extends MirrorWriterProcessor {
     private static final String[] supportedExtentions = {".odt",
@@ -19,6 +20,16 @@ public class ODFProcessor extends MirrorWriterProcessor {
                                                         ".xls",
                                                         "xlsx"};
 
+    public String getLogiusUrl() {
+        return logiusUrl;
+    }
+
+    public void setLogiusUrl(String logiusUrl) {
+        this.logiusUrl = logiusUrl;
+    }
+
+    private String logiusUrl;
+
     @Override
     protected boolean shouldProcess(CrawlURI crawlURI) {
         boolean check = false;
@@ -30,32 +41,43 @@ public class ODFProcessor extends MirrorWriterProcessor {
 
     @Override
     protected void innerProcess(CrawlURI crawlURI) {
+
+        String baseDir = getPath().getFile().getAbsolutePath();
         String time = "Last-Modified: Thu, 01 Jan 1970 00:00:01 GMT";
         Header header = crawlURI.getHttpMethod().getResponseHeader("Last-Modified");
         if(header != null) {
-            time = header.toString();
+            time = header.toString().substring(0, header.toString().length() - 2);
         }
 
         boolean isODFFile = crawlURI.toString().endsWith(".odt") ||
                 crawlURI.toString().endsWith(".odc") ||
                 crawlURI.toString().endsWith(".odp");
+        String[] parts = baseDir.split("/");
+        String jobId = parts[parts.length - 3];
+
         try {
-            File baseDir = getPath().getFile();
-            if(!baseDir.exists()) {
-                baseDir.mkdir();
-            }
-            FileWriter fw;
+            URL url;
             if(isODFFile) {
-                fw = new FileWriter(baseDir.getAbsolutePath() + "/ODFReport.txt", true);
-                fw.write(crawlURI.toString() + ", ");
-                fw.write(time);
-                fw.close();
+                url = new URL(logiusUrl + "api/odf");
             }
             else {
-                fw = new FileWriter(baseDir.getAbsolutePath() + "/OfficeReport.txt", true);
-                fw.write(crawlURI.toString() + ", ");
-                fw.write(time);
-                fw.close();
+                url = new URL(logiusUrl + "api/microsoft_office");
+            }
+            String data = "{\"jobId\":\"" + jobId + "\", \"fileUrl\":\"" +
+                    crawlURI.toString() + "\", \"" + "lastModified\":\"" + time + "\"}";
+            System.out.println("Making request to " + url.toString());
+            System.out.println("Payload is " + data);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type","application/json");
+            connection.setDoOutput(true);
+            DataOutputStream wr = new DataOutputStream(connection.getOutputStream());
+            wr.writeBytes(data);
+            wr.flush();
+            wr.close();
+            int code = connection.getResponseCode();
+            if(code != 204) {
+                System.out.println("Response code from logius: " + code);
             }
         } catch (IOException e) {
             System.out.println("ODF processor error");

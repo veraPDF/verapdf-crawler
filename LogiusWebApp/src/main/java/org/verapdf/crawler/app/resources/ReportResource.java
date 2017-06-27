@@ -25,12 +25,10 @@ public class ReportResource {
 
     private final HeritrixReporter reporter;
     private final ResourceManager resourceManager;
-    private final MySqlCredentials credentials;
 
-    public ReportResource(HeritrixReporter reporter, ResourceManager resourceManager, MySqlCredentials credentials) {
+    ReportResource(HeritrixReporter reporter, ResourceManager resourceManager, MySqlCredentials credentials) {
         this.reporter = reporter;
         this.resourceManager = resourceManager;
-        this.credentials = credentials;
     }
 
     @GET
@@ -85,13 +83,7 @@ public class ReportResource {
     @Path("office_list/{job}")
     public String getOfficeReport(@PathParam("job") String job) {
         try {
-            String jobURL = getExistingJobURLbyJobId(job);
-            String result;
-            if (jobURL.equals("")) {
-                result = reporter.getOfficeReport(job, getTimeByJobId(job));
-            } else {
-                result = reporter.getOfficeReport(job, jobURL, getTimeByJobId(job));
-            }
+            String result = String.join("\n", reporter.getOfficeReport(job, getTimeByJobId(job)));
             logger.info("List of Microsoft Office files requested");
             return addLinksToUrlList(result).toString();
         }
@@ -107,7 +99,6 @@ public class ReportResource {
     public String getInvalidPdfReport(@PathParam("job") String job) {
         try {
             CurrentJob jobData = getJobById(job);
-            String jobURL = jobData.getJobURL();
             StringBuilder result = new StringBuilder("<h2>Most common issues<h2><table>");
             int i = 0;
             for (Map.Entry<ValidationError, Integer> record : sortFailedRules(jobData)) {
@@ -122,11 +113,7 @@ public class ReportResource {
                 }
             }
             result.append("</table><h2>File details<h2>");
-            if (jobURL.equals("")) {
-                result.append(reporter.getInvalidPDFReport(job, jobData.getCrawlSinceTime()));
-            } else {
-                result.append(reporter.getInvalidPDFReport(job, jobURL, jobData.getCrawlSinceTime()));
-            }
+            result.append(reporter.getInvalidPdfHtmlReport(job, jobData.getCrawlSinceTime()));
             logger.info("List of invalid PDF documents requested");
             return result.toString();
         }

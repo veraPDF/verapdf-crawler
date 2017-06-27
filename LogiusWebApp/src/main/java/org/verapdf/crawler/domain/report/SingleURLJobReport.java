@@ -1,6 +1,5 @@
 package org.verapdf.crawler.domain.report;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -13,16 +12,12 @@ public class SingleURLJobReport {
 
     private int numberOfODFDocuments;
     private int numberOfOfficeDocuments;
-    private String officeReportURL;
 
     @JsonProperty
     public String startTime;
 
     @JsonProperty
     public String finishTime;
-
-    @JsonIgnore
-    public String officeReport;
 
     public SingleURLJobReport() {
         // Jackson deserialization
@@ -75,14 +70,4 @@ public class SingleURLJobReport {
 
     @JsonProperty
     public void setNumberOfOfficeDocuments(int numberOfOfficeDocuments) { this.numberOfOfficeDocuments = numberOfOfficeDocuments; }
-
-    @JsonProperty
-    public String getOfficeReportURL() {
-        return officeReportURL;
-    }
-
-    @JsonProperty
-    public void setOfficeReportURL(String officeReportURL) {
-        this.officeReportURL = officeReportURL;
-    }
 }

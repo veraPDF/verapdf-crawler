@@ -1,29 +1,29 @@
 package org.verapdf.crawler.report;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jopendocument.dom.spreadsheet.Sheet;
 import org.jopendocument.dom.spreadsheet.SpreadSheet;
 import org.verapdf.crawler.domain.validation.ValidationReportData;
-import org.verapdf.crawler.domain.report.PDFValidationStatistics;
 import org.verapdf.crawler.domain.report.SingleURLJobReport;
 import org.verapdf.crawler.app.engine.HeritrixClient;
+import org.verapdf.crawler.repository.file.ReportFileDao;
 import org.xml.sax.SAXException;
 
+import javax.sql.DataSource;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.List;
 
 public class HeritrixReporter {
 
     private final HeritrixClient client;
+    private final ReportFileDao reportFileDao;
 
-    public HeritrixReporter(HeritrixClient client) {
+    public HeritrixReporter(HeritrixClient client, DataSource dataSource) {
         this.client = client;
+        reportFileDao = new ReportFileDao(dataSource);
     }
 
     // If time is null settings were not provided
@@ -32,34 +32,20 @@ public class HeritrixReporter {
                 client.getListOfCrawlUrls(job).get(0),
                 client.getCurrentJobStatus(job),
                 client.getDownloadedCount(job));
-        result.setPdfStatistics(getValidationStatistics(job, time));
-        result.setNumberOfODFDocuments(getODFFileCount(job, time));
-        result.officeReport = getOfficeReport(job, time);
-        result.setNumberOfOfficeDocuments(getNumberOfLines(result.officeReport, null));
-        result.setOfficeReportURL(getOfficeReportUri(job));
+        result.setPdfStatistics(reportFileDao.getValidationStatistics(job, time));
+        result.setNumberOfODFDocuments(reportFileDao.getNumberOfOdfFilesForJob(job, time));
+        result.setNumberOfOfficeDocuments(reportFileDao.getNumberOfMicrosoftFilesForJob(job, time));
         return result;
     }
 
-    public SingleURLJobReport getReport(String job) throws IOException, ParserConfigurationException, SAXException {
-        return getReport(job, null);
-    }
-
     public SingleURLJobReport getReport(String job, String jobURL, LocalDateTime time) throws IOException {
-        String config = client.getLogFileByURL(jobURL + "sample_configuration.cxml");
-        if(config.equals("")) {
-            config = client.getLogFileByURL(jobURL + "crawler-beans.cxml");
-        }
+        String config = client.getConfig(jobURL);
         SingleURLJobReport result = new SingleURLJobReport(job,
                 HeritrixClient.getListOfCrawlUrlsFromXml(config).get(0),
                 "finished",0);
-        result.setPdfStatistics(getValidationStatistics(job,
-                jobURL + "mirror/Invalid_PDF_Report.txt",
-                jobURL + "mirror/Valid_PDF_Report.txt",
-                time));
-        result.setNumberOfODFDocuments(getNumberOfLines(client.getLogFileByURL(jobURL + "mirror/ODFReport.txt"), time));
-        result.officeReport = removeEarlyLines(client.getLogFileByURL(jobURL + "mirror/OfficeReport.txt"),time);
-        result.setNumberOfOfficeDocuments(getNumberOfLines(result.officeReport, null));
-        result.setOfficeReportURL(jobURL + "mirror/OfficeReport.txt");
+        result.setPdfStatistics(reportFileDao.getValidationStatistics(job,time));
+        result.setNumberOfODFDocuments(reportFileDao.getNumberOfOdfFilesForJob(job, time));
+        result.setNumberOfOfficeDocuments(reportFileDao.getNumberOfMicrosoftFilesForJob(job, time));
         return result;
     }
 
@@ -83,8 +69,8 @@ public class HeritrixReporter {
                 reportData.getPdfStatistics().getNumberOfInvalidPDFs(), 1, 6);
 
         SpreadSheet spreadSheet = totalSheet.getSpreadSheet();
-        setLinesInSheet(spreadSheet.getSheet(1), reportData.officeReport);
-        setLinesInSheet(spreadSheet.getSheet(2), reportData.getPdfStatistics().invalidPDFReport);
+        setStringsInSheet(spreadSheet.getSheet(1), reportFileDao.getMicrosoftOfficeFiles(reportData.getId(), time));
+        setValidationReportsInSheet(spreadSheet.getSheet(2), reportFileDao.getInvalidPdfFiles(reportData.getId(), time));
 
         File ODSReport = new File(HeritrixClient.baseDirectory + "report.ods");
         totalSheet.getSpreadSheet().saveAs(ODSReport);
@@ -152,7 +138,11 @@ public class HeritrixReporter {
         return buildHtmlReport(reportData, time);
     }
 
-    private String getInvalidPDFReportUri(String job) throws IOException {
+    public List<String> getOfficeReport(String job, LocalDateTime time) {
+        return reportFileDao.getListOfOfficeFiles(job, time);
+    }
+
+    /*private String getInvalidPDFReportUri(String job) throws IOException {
         return client.getValidPDFReportUri(job).replace("Valid_PDF_Report.txt","Invalid_PDF_Report.txt");
     }
 
@@ -170,7 +160,7 @@ public class HeritrixReporter {
         return getValidationStatistics(job, getInvalidPDFReportUri(job), client.getValidPDFReportUri(job), time);
     }
 
-    private PDFValidationStatistics getValidationStatistics(String job, String invalidReport, String validReport, LocalDateTime time) throws IOException {
+    /*private PDFValidationStatistics getValidationStatistics(String job, String invalidReport, String validReport, LocalDateTime time) throws IOException {
         int numberOfInvalidPDFs, numberOfValidPDFs;
         String invalidPDFReport = client.getLogFileByURL(invalidReport);
         ArrayList<ValidationReportData> list = new ArrayList<>();
@@ -181,8 +171,10 @@ public class HeritrixReporter {
                 String line = scanner.nextLine();
                 list.add(mapper.readValue(line, ValidationReportData.class));
             }
-            numberOfValidPDFs = getNumberOfLines(client.getLogFileByURL(validReport), time);
-            numberOfInvalidPDFs = getNumberOfLines(list, time);
+            //numberOfValidPDFs = getNumberOfLines(client.getLogFileByURL(validReport), time);
+            //numberOfInvalidPDFs = getNumberOfLines(list, time);
+            numberOfValidPDFs = reportFileDao.getNumberOfValidFilesForJob(job);
+            numberOfInvalidPDFs = reportFileDao.getNumberOfInvalidFilesForJob(job);
         }
         catch (IOException e) {
             return new PDFValidationStatistics(0,0, invalidReport);
@@ -190,33 +182,9 @@ public class HeritrixReporter {
         PDFValidationStatistics result = new PDFValidationStatistics(numberOfInvalidPDFs, numberOfValidPDFs, invalidReport);
         result.invalidPDFReport = list;
         return result;
-    }
+    }*/
 
-    private String getODFReport(String job) throws IOException {
-        return client.getLogFileByURL(getODFReportUri(job));
-    }
-
-    private Integer getODFFileCount(String job, LocalDateTime time) throws IOException {
-        return getNumberOfLines(getODFReport(job), time);
-    }
-
-    public String getOfficeReport(String job, LocalDateTime time) throws IOException {
-        return removeEarlyLines(client.getLogFileByURL(getOfficeReportUri(job)), time);
-    }
-
-    public String getOfficeReport(String job, String jobURL, LocalDateTime time) throws IOException {
-        return removeEarlyLines(client.getLogFileByURL(jobURL + "mirror/OfficeReport.txt"), time);
-    }
-
-    private String getOfficeReportUri(String job) throws IOException {
-        return client.getValidPDFReportUri(job).replace("Valid_PDF_Report.txt", "OfficeReport.txt");
-    }
-
-    private String getODFReportUri(String job) throws IOException {
-        return client.getValidPDFReportUri(job).replace("Valid_PDF_Report.txt", "ODFReport.txt");
-    }
-
-    private Integer getNumberOfLines(String report, LocalDateTime time) {
+    /*private Integer getNumberOfLines(String report, LocalDateTime time) {
         Scanner sc = new Scanner(report);
         Integer result = 0;
         while(sc.hasNext()) {
@@ -235,9 +203,9 @@ public class HeritrixReporter {
             }
         }
         return result;
-    }
+    }*/
 
-    private Integer getNumberOfLines(ArrayList<ValidationReportData> list, LocalDateTime time) {
+    /*private Integer getNumberOfLines(ArrayList<ValidationReportData> list, LocalDateTime time) {
         Integer result = 0;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
         for(ValidationReportData data: list) {
@@ -253,21 +221,9 @@ public class HeritrixReporter {
             }
         }
         return result;
-    }
+    }*/
 
-    private void setLinesInSheet(Sheet sheet, String lines) {
-        Scanner scanner = new Scanner(lines);
-        int i = 0;
-        sheet.ensureColumnCount(1);
-        while(scanner.hasNext()) {
-            sheet.ensureRowCount(i + 1);
-            sheet.setValueAt(scanner.nextLine(), 0, i);
-            i++;
-        }
-        scanner.close();
-    }
-
-    private void setLinesInSheet(Sheet sheet, ArrayList<ValidationReportData> list) {
+    private void setValidationReportsInSheet(Sheet sheet, List<ValidationReportData> list) {
         int i = 1;
         sheet.ensureColumnCount(3);
         for(ValidationReportData data: list) {
@@ -279,63 +235,33 @@ public class HeritrixReporter {
         }
     }
 
-    private static String removeEarlyLines(String report, LocalDateTime time) {
-        Scanner sc = new Scanner(report);
-        StringBuilder builder = new StringBuilder();
-        while(sc.hasNext()) {
-            String line = sc.nextLine();
-            String[] parts = line.split(", Last-Modified:.*, ");
-            if(time == null) {
-                builder.append(parts[0]);
-                builder.append(System.lineSeparator());
-            }
-            else {
-                String fileTimeString = parts[1].substring(0, parts[1].length() - 4);
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
-                LocalDateTime fileTime = LocalDateTime.parse(fileTimeString, formatter);
-                if (time.isBefore(fileTime)) {
-                    builder.append(parts[0]);
-                    builder.append(System.lineSeparator());
-                }
-            }
+    private void setStringsInSheet(Sheet sheet, List<String> list) {
+        int i = 1;
+        sheet.ensureColumnCount(1);
+        for(String line: list) {
+            sheet.ensureRowCount(i + 1);
+            sheet.setValueAt(line, 0, i);
+            i++;
         }
-        return builder.toString();
     }
 
-    private String getInvalidPdfListFromReportText(String text, LocalDateTime time) throws IOException {
+    public String getInvalidPdfHtmlReport(String job, LocalDateTime time) throws IOException {
+        List<ValidationReportData> invalidPdfFiles = reportFileDao.getInvalidPdfFiles(job, time);
         StringBuilder builder = new StringBuilder();
         builder.append("<table>");
         builder.append("<tr><td>Passed rules</td><td>Failed rules</td><td>File location</td></tr>");
-        Scanner scanner = new Scanner(text);
-        ObjectMapper mapper = new ObjectMapper();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
-        while (scanner.hasNextLine()) {
-            String line = scanner.nextLine();
-            ValidationReportData data = mapper.readValue(line, ValidationReportData.class);
-            if(time == null) {
-                appendInvalidPDFLine(builder, data);
-            }
-            else {
-                String timestamp = data.getLastModified().split("Last-Modified:.*, ")[1];
-                timestamp = timestamp.substring(0, timestamp.length()-4);
-                if (LocalDate.parse(timestamp, formatter).isAfter(time.toLocalDate())) {
-                    appendInvalidPDFLine(builder, data);
-                }
-            }
+        for (ValidationReportData data : invalidPdfFiles) {
+            builder.append("<tr><td>");
+            builder.append(data.getPassedRules());
+            builder.append("</td><td>");
+            builder.append(data.getFailedRules());
+            builder.append("</td><td><a href = \"");
+            builder.append(data.getUrl());
+            builder.append("\">");
+            builder.append(data.getUrl());
+            builder.append("</a></td></tr>");
         }
         builder.append("</table>");
         return builder.toString();
-    }
-
-    private void appendInvalidPDFLine(StringBuilder builder, ValidationReportData data) {
-        builder.append("<tr><td>");
-        builder.append(data.getPassedRules());
-        builder.append("</td><td>");
-        builder.append(data.getFailedRules());
-        builder.append("</td><td><a href = \"");
-        builder.append(data.getUrl());
-        builder.append("\">");
-        builder.append(data.getUrl());
-        builder.append("</a></td></tr>");
     }
 }

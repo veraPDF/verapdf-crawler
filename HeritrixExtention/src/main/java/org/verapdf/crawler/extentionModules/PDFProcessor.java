@@ -44,11 +44,11 @@ public class PDFProcessor extends MirrorWriterProcessor {
             wr.flush();
             wr.close();
             int code = connection.getResponseCode();
-            if(code != 200) {
+            if(code != 204) {
                 System.out.println("Response code from logius: " + code);
             }
         } catch (IOException e) {
-            System.out.println("PDFprocessor error");
+            System.out.println("PDF processor error");
             e.printStackTrace();
         }
     }
