@@ -21,11 +21,11 @@ public class ResourceManager {
     private final static String JDBC_DRIVER = "com.mysql.jdbc.Driver";
 
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
+    private final ArrayList<CurrentJob> currentJobs;
+    private final ArrayList<BatchJob> batchJobs;
     private final InfoResourse infoResourse;
     private final ReportResource reportResource;
     private final ControlResource controlResource;
-    private final ArrayList<CurrentJob> currentJobs;
-    private final ArrayList<BatchJob> batchJobs;
     private final CrawlJobDao crawlJobDao;
 
     private String resourceUri;
@@ -43,7 +43,7 @@ public class ResourceManager {
 
         validationService = new ValidationService(verapdfPath, dataSource);
         infoResourse = new InfoResourse(validationService, client, currentJobs, this);
-        reportResource = new ReportResource(reporter, this, credentials);
+        reportResource = new ReportResource(reporter, this);
         controlResource = new ControlResource(currentJobs, client, reporter, emailServer, batchJobs, validationService, this, crawlJobDao, dataSource);
 
         for(CurrentJob job: crawlJobDao.getAllJobs()) {

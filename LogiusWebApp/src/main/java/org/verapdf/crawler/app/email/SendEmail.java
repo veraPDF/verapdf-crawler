@@ -1,4 +1,4 @@
-package org.verapdf.crawler.app.email_utils;
+package org.verapdf.crawler.app.email;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

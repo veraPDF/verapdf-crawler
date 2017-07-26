@@ -38,4 +38,8 @@ public class CrawlJobDao {
         Date now = new Date();
         template.update(sql, sdfDate.format(now), job.getId());
     }
+
+    public CurrentJob getCrawlJob(String jobId) {
+        return null;
+    }
 }

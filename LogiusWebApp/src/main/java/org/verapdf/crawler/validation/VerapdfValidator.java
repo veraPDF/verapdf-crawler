@@ -2,7 +2,6 @@ package org.verapdf.crawler.validation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.domain.database.MySqlCredentials;
 import org.verapdf.crawler.domain.report.ValidationError;
 import org.verapdf.crawler.domain.validation.ValidationReportData;
 
@@ -16,8 +15,6 @@ import java.util.concurrent.TimeUnit;
 import org.verapdf.processor.reports.Reports;
 import org.verapdf.processor.reports.RuleSummary;
 import org.verapdf.processor.reports.ValidationReport;
-
-import javax.sql.DataSource;
 
 public class VerapdfValidator implements PDFValidator {
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");

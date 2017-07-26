@@ -29,8 +29,7 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
     }
 
     @Override
-    public void run(LogiusConfiguration configuration,
-                    Environment environment) {
+    public void run(LogiusConfiguration configuration, Environment environment) {
         environment.jersey().setUrlPattern("/api/*");
         final ResourceManager resourceManager;
         try {
@@ -38,18 +37,13 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
                     configuration.getHeritrixLogin(),
                     configuration.getHeritrixPassword());
             client.setBaseDirectory(configuration.getResourcePath());
-            System.out.println("Heritrix client created");
             resourceManager = new ResourceManager( client,
                     configuration.getEmailServer(),
                     configuration.getVerapdfPath(),
                     configuration.getCredentials());
-            System.out.println("Resource manager client created");
             environment.jersey().register(resourceManager.getInfoResourse());
-            System.out.println("Info resource registered");
             environment.jersey().register(resourceManager.getReportResource());
-            System.out.println("Report resource registered");
             environment.jersey().register(resourceManager.getControlResource());
-            System.out.println("Control resource registered");
         } catch (Exception e) {
             logger.error("Error on logius web application startup", e);
             e.printStackTrace();

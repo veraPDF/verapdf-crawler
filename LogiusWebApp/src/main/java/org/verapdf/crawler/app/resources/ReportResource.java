@@ -26,7 +26,7 @@ public class ReportResource {
     private final HeritrixReporter reporter;
     private final ResourceManager resourceManager;
 
-    ReportResource(HeritrixReporter reporter, ResourceManager resourceManager, MySqlCredentials credentials) {
+    ReportResource(HeritrixReporter reporter, ResourceManager resourceManager) {
         this.reporter = reporter;
         this.resourceManager = resourceManager;
     }

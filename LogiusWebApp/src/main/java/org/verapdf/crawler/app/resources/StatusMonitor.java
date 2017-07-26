@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.crawling.BatchJob;
 import org.verapdf.crawler.domain.crawling.CurrentJob;
-import org.verapdf.crawler.app.email_utils.SendEmail;
+import org.verapdf.crawler.app.email.SendEmail;
 
 public class StatusMonitor implements Runnable {
     private final ResourceManager resource;

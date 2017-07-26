@@ -22,9 +22,10 @@ import java.util.ArrayList;
 public class InfoResourse {
 
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
+
+    private final ArrayList<CurrentJob> currentJobs;
     private final ValidationService validationService;
     private final HeritrixClient client;
-    private final ArrayList<CurrentJob> currentJobs;
     private final ResourceManager resourceManager;
 
     public InfoResourse(ValidationService validationService, HeritrixClient client, ArrayList<CurrentJob> currentJobs, ResourceManager resourceManager) {

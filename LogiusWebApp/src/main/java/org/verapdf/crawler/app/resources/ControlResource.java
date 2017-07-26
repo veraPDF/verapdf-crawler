@@ -12,7 +12,7 @@ import org.verapdf.crawler.domain.email.EmailServer;
 import org.verapdf.crawler.domain.office.OfficeFileData;
 import org.verapdf.crawler.domain.report.SingleURLJobReport;
 import org.verapdf.crawler.domain.validation.ValidationJobData;
-import org.verapdf.crawler.app.email_utils.SendEmail;
+import org.verapdf.crawler.app.email.SendEmail;
 import org.verapdf.crawler.app.engine.HeritrixClient;
 import org.verapdf.crawler.report.HeritrixReporter;
 import org.verapdf.crawler.repository.file.InsertFileDao;
@@ -40,10 +40,10 @@ public class ControlResource {
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
     private final ArrayList<CurrentJob> currentJobs;
+    private final ArrayList<BatchJob> batchJobs;
     private final HeritrixClient client;
     private final HeritrixReporter reporter;
     private final EmailServer emailServer;
-    private final ArrayList<BatchJob> batchJobs;
     private final ValidationService service;
     private final ResourceManager resourceManager;
     private final CrawlJobDao crawlJobDao;

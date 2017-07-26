@@ -1,4 +1,4 @@
-package org.verapdf.crawler.app.email_utils;
+package org.verapdf.crawler.app.email;
 
 import javax.mail.Authenticator;
 import javax.mail.PasswordAuthentication;
