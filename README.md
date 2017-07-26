@@ -75,7 +75,7 @@ Here your_login and your_password are the credentials you should pass to LogiusW
 	  `file_url` varchar(255) DEFAULT NULL,
 	  `time_last_modified` datetime DEFAULT NULL
 	);
-```sh
+```
   
 ### Running Logius application
 First you need to ensure that you are running Logius application with java 8 and then you can start the application using commands:
