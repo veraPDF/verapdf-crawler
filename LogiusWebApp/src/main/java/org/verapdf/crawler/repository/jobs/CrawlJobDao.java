@@ -1,5 +1,7 @@
 package org.verapdf.crawler.repository.jobs;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.verapdf.crawler.domain.crawling.CurrentJob;
 import org.verapdf.crawler.repository.mappers.CrawlJobMapper;
@@ -13,6 +15,7 @@ import java.util.List;
 
 public class CrawlJobDao {
 
+    private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
     private final JdbcTemplate template;
 
     public CrawlJobDao(DataSource dataSource) {
@@ -24,15 +27,18 @@ public class CrawlJobDao {
     }
 
     public void addJob(CurrentJob job) {
+        logger.info("Job inserted into database: " + job);
         template.update("insert into crawl_jobs (id, crawl_url, job_url, crawl_since, status, report_email) values (?,?,?,?,'active', ?)"
                 , job.getId(), job.getCrawlURL(), job.getJobURL(), job.getCrawlSinceTime(), job.getReportEmail());
     }
 
     public void removeJob(CurrentJob job) {
+        logger.info("Job removed from database: " + job);
         template.update("delete from crawl_jobs where id=?", job.getId());
     }
 
     public void writeFinishTime(CurrentJob job) {
+        logger.info("Job marked as finished in database: " + job);
         SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date now = new Date();
         template.update("update crawl_jobs set finish_time=?, is_finished=? where id=?",
@@ -70,6 +76,7 @@ public class CrawlJobDao {
     }
 
     public void setReportEmail(String jobId, String emailAddress) {
+        logger.info("Email address " + emailAddress + " was associated woth job " + jobId + " in database");
         template.update("update crawl_jobs set report_email=? where id=?", emailAddress, jobId);
     }
 

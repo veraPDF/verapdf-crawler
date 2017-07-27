@@ -174,7 +174,6 @@ public class ControlResource {
             CurrentJob currentJob = crawlJobDao.getCrawlJob(job);
             List<String> list = new ArrayList<>();
             list.add(currentJob.getCrawlURL());
-            currentJob.setErrorOccurances(new HashMap<>());
             crawlJobDao.setJobFinished(job, false);
             client.teardownJob(job);
             client.createJob(job, list);
@@ -319,7 +318,6 @@ public class ControlResource {
     public void addValidationJob(ValidationJobData data) {
         logger.info("Received information about PDF file");
         String[] parts = data.getJobDirectory().split("/");
-        data.errorOccurances = crawlJobDao.getCrawlJob(parts[parts.length - 3]).getErrorOccurances();
         try {
             service.addJob(data);
         }

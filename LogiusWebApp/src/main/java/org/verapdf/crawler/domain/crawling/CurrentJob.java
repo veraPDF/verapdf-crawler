@@ -17,7 +17,7 @@ public class CurrentJob {
     private LocalDateTime startTime;
     private LocalDateTime finishTime;
     private String status;
-    private Map<ValidationError, Integer> errorOccurances;
+    //private Map<ValidationError, Integer> errorOccurances;
 
     private boolean isFinished = false;
 
@@ -31,10 +31,10 @@ public class CurrentJob {
         this.crawlSinceTime = time;
         this.reportEmail = reportEmail;
         this.startTime = startTime;
-        errorOccurances = new HashMap<>();
+        //errorOccurances = new HashMap<>();
     }
 
-    @JsonIgnore
+    /*@JsonIgnore
     public Map<ValidationError, Integer> getErrorOccurances() {
         return errorOccurances;
     }
@@ -42,7 +42,7 @@ public class CurrentJob {
     @JsonIgnore
     public void setErrorOccurances(Map<ValidationError, Integer> errorOccurances) {
         this.errorOccurances = errorOccurances;
-    }
+    }*/
 
     @JsonProperty
     public String getId() {

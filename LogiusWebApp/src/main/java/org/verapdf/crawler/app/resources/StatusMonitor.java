@@ -46,7 +46,7 @@ public class StatusMonitor implements Runnable {
                     }
                 }
 
-                Thread.sleep(300000);
+                Thread.sleep(5 * 60 * 1000);
             }
             catch (Exception e) {
                 logger.error("Status monitor error", e);
