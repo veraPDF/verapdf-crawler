@@ -1,0 +1,10 @@
+---
+
+# Playbook to configure a logius-crawler instance
+# File: ansible/site.yml
+
+- hosts: all
+  become: true
+  roles:
+    - { role: tschifftner.hostname }
+    - { role: tersmitten.apt }
