@@ -15,7 +15,7 @@ import org.verapdf.crawler.domain.validation.ValidationJobData;
 import org.verapdf.crawler.app.email.SendEmail;
 import org.verapdf.crawler.app.engine.HeritrixClient;
 import org.verapdf.crawler.report.HeritrixReporter;
-import org.verapdf.crawler.repository.file.InsertFileDao;
+import org.verapdf.crawler.repository.document.InsertDocumentDao;
 import org.verapdf.crawler.repository.jobs.CrawlJobDao;
 import org.verapdf.crawler.validation.ValidationService;
 
@@ -39,7 +39,6 @@ public class ControlResource {
     private UriInfo uriInfo;
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
-    private final ArrayList<CurrentJob> currentJobs;
     private final ArrayList<BatchJob> batchJobs;
     private final HeritrixClient client;
     private final HeritrixReporter reporter;
@@ -47,12 +46,11 @@ public class ControlResource {
     private final ValidationService service;
     private final ResourceManager resourceManager;
     private final CrawlJobDao crawlJobDao;
-    private final InsertFileDao insertFileDao;
+    private final InsertDocumentDao insertDocumentDao;
 
-    ControlResource(ArrayList<CurrentJob> currentJobs, HeritrixClient client, HeritrixReporter reporter,
+    ControlResource(HeritrixClient client, HeritrixReporter reporter,
                            EmailServer emailServer, ArrayList<BatchJob> batchJobs, ValidationService service,
                            ResourceManager resourceManager, CrawlJobDao crawlJobDao, DataSource dataSource) {
-        this.currentJobs = currentJobs;
         this.client = client;
         this.reporter = reporter;
         this.emailServer = emailServer;
@@ -60,7 +58,7 @@ public class ControlResource {
         this.service = service;
         this.resourceManager = resourceManager;
         this.crawlJobDao = crawlJobDao;
-        this.insertFileDao = new InsertFileDao(dataSource);
+        this.insertDocumentDao = new InsertDocumentDao(dataSource);
     }
 
     @POST
@@ -71,13 +69,12 @@ public class ControlResource {
             if (resourceManager.getResourceUri() == null && uriInfo != null) {
                 resourceManager.setResourceUri(uriInfo.getBaseUri().toString());
             }
-            if (isCurrentJob(trimUrl(startJobData.getDomain())) && !startJobData.isForceStart()) { // This URL has already been crawled and job is not forced to overwrite
-                return new SingleURLJobReport(getJobByCrawlUrl(trimUrl(startJobData.getDomain())).getId(), "", "", 0);
+            if (crawlJobDao.doesJobExist(trimUrl(startJobData.getDomain())) && !startJobData.isForceStart()) { // This URL has already been crawled and job is not forced to overwrite
+                return new SingleURLJobReport(crawlJobDao.getCrawlJobByCrawlUrl(trimUrl(startJobData.getDomain())).getId(), "", "", 0);
             } else {
-                if (startJobData.isForceStart() && isCurrentJob(trimUrl(startJobData.getDomain()))) { // This URL has already been crawled but the old job needs to be overwritten
-                    client.teardownJob(getJobByCrawlUrl(trimUrl(startJobData.getDomain())).getId());
-                    crawlJobDao.removeJob(getJobByCrawlUrl(startJobData.getDomain()));
-                    currentJobs.remove(getJobByCrawlUrl(trimUrl(startJobData.getDomain())));
+                if (startJobData.isForceStart() && crawlJobDao.doesJobExist(trimUrl(startJobData.getDomain()))) { // This URL has already been crawled but the old job needs to be overwritten
+                    client.teardownJob(crawlJobDao.getCrawlJobByCrawlUrl(trimUrl(startJobData.getDomain())).getId());
+                    crawlJobDao.removeJob(crawlJobDao.getCrawlJobByCrawlUrl(trimUrl(startJobData.getDomain())));
                 }
                 // Brand new URL
                 ArrayList<String> list = new ArrayList<>();
@@ -104,7 +101,6 @@ public class ControlResource {
                             LocalDateTime.of(LocalDate.parse(startJobData.getDate(), formatter), LocalTime.MIN),
                             startJobData.getReportEmail(), now);
                 }
-                currentJobs.add(newJob);
                 crawlJobDao.addJob(newJob);
                 logger.info("Job creation on " + startJobData.getDomain());
                 return new SingleURLJobReport(job, trimUrl(startJobData.getDomain()), jobStatus, 0);
@@ -122,8 +118,8 @@ public class ControlResource {
     public void pauseJob(@PathParam("job") String job) {
         try {
             client.pauseJob(job);
-            getJobById(job).setStatus("paused");
-            logger.info("Job on "+ getJobById(job).getCrawlURL() + " paused");
+            crawlJobDao.setStatus(job, "paused");
+            logger.info("Job on "+ crawlJobDao.getCrawlUrl(job) + " paused");
         }
         catch (Exception e) {
             logger.error("Error pausing job", e);
@@ -136,8 +132,8 @@ public class ControlResource {
     public void unpauseJob(@PathParam("job") String job) {
         try {
             client.unpauseJob(job);
-            getJobById(job).setStatus("running");
-            logger.info("Job on "+ getJobById(job).getCrawlURL() + " unpaused");
+            crawlJobDao.setStatus(job, "running");
+            logger.info("Job on "+ crawlJobDao.getCrawlUrl(job) + " unpaused");
         }
         catch (Exception e) {
             logger.error("Error unpausing job", e);
@@ -150,7 +146,7 @@ public class ControlResource {
     public void terminateJob(@PathParam("job") String job) {
         try {
             client.terminateJob(job);
-            logger.info("Job on "+ getJobById(job).getCrawlURL() + " terminated");
+            logger.info("Job on "+ crawlJobDao.getCrawlUrl(job) + " terminated");
         }
         catch (Exception e) {
             logger.error("Error terminating job", e);
@@ -162,14 +158,8 @@ public class ControlResource {
     @Path("/delete/{job}")
     public void deleteJob(@PathParam("job") String job) {
         try {
-            for(int i = 0; i < currentJobs.size(); i++) {
-                if(currentJobs.get(i).getId().equals(job)) {
-                    client.terminateJob(job);
-                    currentJobs.remove(i);
-                    logger.info("Job on "+ getJobById(job).getCrawlURL() + " deleted");
-                    break;
-                }
-            }
+            client.terminateJob(job);
+            logger.info("Job on "+ crawlJobDao.getCrawlUrl(job) + " deleted");
         }
         catch (Exception e) {
             logger.error("Error deleting job", e);
@@ -181,17 +171,16 @@ public class ControlResource {
     @Path("/restart/{job}")
     public void restartJob(@PathParam("job") String job) {
         try {
-            CurrentJob currentJob = getJobById(job);
+            CurrentJob currentJob = crawlJobDao.getCrawlJob(job);
             List<String> list = new ArrayList<>();
             list.add(currentJob.getCrawlURL());
-            currentJob.setStartTime();
             currentJob.setErrorOccurances(new HashMap<>());
-            currentJob.setEmailSent(false);
+            crawlJobDao.setJobFinished(job, false);
             client.teardownJob(job);
             client.createJob(job, list);
             client.buildJob(job);
             client.launchJob(job);
-            logger.info("Job on "+ getJobById(job).getCrawlURL() + " restarted");
+            logger.info("Job on "+ currentJob.getCrawlURL() + " restarted");
         }
         catch (Exception e) {
             logger.error("Error restarting job", e);
@@ -208,27 +197,27 @@ public class ControlResource {
                 resourceManager.setResourceUri(uriInfo.getBaseUri().toString());
             }
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
-            String jobURL = getExistingJobURLbyJobId(job);
+            String jobURL = crawlJobDao.getCrawlJob(job).getJobURL();
             SingleURLJobReport result;
             if (jobURL.equals("")) {
-                result = reporter.getReport(job, getTimeByJobId(job));
+                result = reporter.getReport(job, crawlJobDao.getCrawlSince(job));
             } else {
-                result = reporter.getReport(job, jobURL, getTimeByJobId(job));
+                result = reporter.getReport(job, jobURL, crawlJobDao.getCrawlSince(job));
             }
-            CurrentJob jobData = getJobById(job);
+            CurrentJob jobData = crawlJobDao.getCrawlJob(job);
 
             if (result.getStatus().startsWith("finished") || result.getStatus().startsWith("aborted")) {
-                if (!jobData.getReportEmail().equals("") && !jobData.isEmailSent()) {
+                if (!jobData.getReportEmail().equals("") && !jobData.isFinished()) {
                     String subject = "Crawl job";
                     String text = "Crawl job on " + jobData.getCrawlURL() + " was finished with status " + result.getStatus() +
                             "\nResults are available at " + resourceManager.getResourceUri().replace("api/", "jobinfo?id=") + job;
                     SendEmail.send(jobData.getReportEmail(), subject, text, emailServer);
-                    jobData.setEmailSent(true);
+                    crawlJobDao.setJobFinished(job, true);
                 }
                 if (jobData.getJobURL().equals("")) {
-                    jobData.setJobURL(client.getValidPDFReportUri(job).replace("mirror/Valid_PDF_Report.txt", ""));
-                    jobData.setFinishTime(LocalDateTime.now());
-                    crawlJobDao.writeFinishTime(getJobById(job));
+                    crawlJobDao.setJobUrl(job, client.getValidPDFReportUri(job).replace("mirror/Valid_PDF_Report.txt", ""));
+                    //jobData.setFinishTime(LocalDateTime.now());
+                    crawlJobDao.writeFinishTime(crawlJobDao.getCrawlJob(job));
                 }
                 client.teardownJob(jobData.getId());
             }
@@ -284,11 +273,11 @@ public class ControlResource {
             try {
                 jobList.append("<li>");
                 jobList.append("Job on " + domain + ", ");
-                SingleURLJobReport report = getJob(getJobByCrawlUrl(domain).getId());
+                SingleURLJobReport report = getJob(crawlJobDao.getCrawlJobByCrawlUrl(domain).getId());
                 jobList.append(report.getStatus());
                 isBatchFinished = isBatchFinished && (report.getStatus().startsWith("finished") || report.getStatus().startsWith("aborted"));
                 jobList.append(", <a href=\"");
-                jobList.append(resourceManager.getResourceUri().replace("api/", "jobinfo?id=") + getJobByCrawlUrl(domain).getId());
+                jobList.append(resourceManager.getResourceUri().replace("api/", "jobinfo?id=") + crawlJobDao.getCrawlJobByCrawlUrl(domain).getId());
                 jobList.append("\">details</a>.");
                 jobList.append("</li>");
             }
@@ -320,7 +309,7 @@ public class ControlResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public void setReportEmail(EmailAddress address) {
         logger.info("Email address updated for job " + address.getJob());
-        getJobById(address.getJob()).setReportEmail(address.getEmailAddress());
+        crawlJobDao.setReportEmail(address.getJob(), address.getEmailAddress());
     }
 
     @POST
@@ -330,7 +319,7 @@ public class ControlResource {
     public void addValidationJob(ValidationJobData data) {
         logger.info("Received information about PDF file");
         String[] parts = data.getJobDirectory().split("/");
-        data.errorOccurances = getJobById(parts[parts.length - 3]).getErrorOccurances();
+        data.errorOccurances = crawlJobDao.getCrawlJob(parts[parts.length - 3]).getErrorOccurances();
         try {
             service.addJob(data);
         }
@@ -345,7 +334,7 @@ public class ControlResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public void addMicrosoftOfficeFile(OfficeFileData data) {
         logger.info("Received information about Microsoft office file");
-        insertFileDao.addMicrosoftOfficeFile(data.getFileUrl(), data.getJobId(), data.getLastModified());
+        insertDocumentDao.addMicrosoftOfficeFile(data.getFileUrl(), data.getJobId(), data.getLastModified());
     }
 
     @POST
@@ -354,15 +343,7 @@ public class ControlResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public void addOdfFile(OfficeFileData data) {
         logger.info("Received information about ODF file");
-        insertFileDao.addOdfFile(data.getFileUrl(), data.getJobId(), data.getLastModified());
-    }
-
-    private boolean isCurrentJob(String crawlUrl) {
-        for(CurrentJob jobData : currentJobs) {
-            if(jobData.getCrawlURL().equals(crawlUrl))
-                return true;
-        }
-        return false;
+        insertDocumentDao.addOdfFile(data.getFileUrl(), data.getJobId(), data.getLastModified());
     }
 
     private String trimUrl(String url) {
@@ -376,20 +357,6 @@ public class ControlResource {
             url = url.substring(0, url.length() - 1);
         }
         return url;
-    }
-
-    private CurrentJob getJobByCrawlUrl(String crawlUrl) { return resourceManager.getJobByCrawlUrl(crawlUrl); }
-
-    private String getExistingJobURLbyJobId(String job) { return resourceManager.getExistingJobURLbyJobId(job); }
-
-    private LocalDateTime getTimeByJobId(String job) { return resourceManager.getTimeByJobId(job); }
-
-    private CurrentJob getJobById(String job) {
-        for(CurrentJob jobData : currentJobs) {
-            if(jobData.getId().equals(job))
-                return jobData;
-        }
-        return null;
     }
 
     private BatchJob getBatchJobById(String id) {

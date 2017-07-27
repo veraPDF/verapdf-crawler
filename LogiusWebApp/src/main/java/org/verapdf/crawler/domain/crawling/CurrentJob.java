@@ -19,7 +19,7 @@ public class CurrentJob {
     private String status;
     private Map<ValidationError, Integer> errorOccurances;
 
-    private boolean isEmailSent;
+    private boolean isFinished = false;
 
     private LocalDateTime crawlSinceTime;
 
@@ -30,7 +30,6 @@ public class CurrentJob {
         this.crawlURL = crawlURL;
         this.crawlSinceTime = time;
         this.reportEmail = reportEmail;
-        this.isEmailSent = false;
         this.startTime = startTime;
         errorOccurances = new HashMap<>();
     }
@@ -45,10 +44,6 @@ public class CurrentJob {
         this.errorOccurances = errorOccurances;
     }
 
-    public boolean isActiveJob() {
-        return jobURL.equals("");
-    }
-
     @JsonProperty
     public String getId() {
         return id;
@@ -58,10 +53,6 @@ public class CurrentJob {
         return jobURL;
     }
 
-    public void setJobURL(String jobURL) {
-        this.jobURL = jobURL;
-    }
-
     @JsonProperty
     public String getCrawlURL() {
         return crawlURL;
@@ -69,22 +60,8 @@ public class CurrentJob {
 
     public LocalDateTime getCrawlSinceTime() { return crawlSinceTime; }
 
-    public void setCrawlSinceTime(LocalDateTime crawlSinceTime) { this.crawlSinceTime = crawlSinceTime; }
-
     public String getReportEmail() {
         return reportEmail;
-    }
-
-    public void setReportEmail(String reportEmail) {
-        this.reportEmail = reportEmail;
-    }
-
-    public boolean isEmailSent() {
-        return isEmailSent;
-    }
-
-    public void setEmailSent(boolean emailSent) {
-        isEmailSent = emailSent;
     }
 
     @JsonProperty
@@ -92,15 +69,12 @@ public class CurrentJob {
         return startTime;
     }
 
-    public void setStartTime() {
-        this.startTime = LocalDateTime.now();
-    }
-
     @JsonProperty
     public LocalDateTime getFinishTime() {
         return finishTime;
     }
 
+    @JsonProperty
     public void setFinishTime(LocalDateTime finishTime) {
         this.finishTime = finishTime;
     }
@@ -110,7 +84,16 @@ public class CurrentJob {
         return status;
     }
 
+    @JsonProperty
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public boolean isFinished() {
+        return isFinished;
+    }
+
+    public void setFinished(boolean isFinished) {
+        this.isFinished = isFinished;
     }
 }

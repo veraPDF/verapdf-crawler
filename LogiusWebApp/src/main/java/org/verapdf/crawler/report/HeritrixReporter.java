@@ -5,7 +5,7 @@ import org.jopendocument.dom.spreadsheet.SpreadSheet;
 import org.verapdf.crawler.domain.validation.ValidationReportData;
 import org.verapdf.crawler.domain.report.SingleURLJobReport;
 import org.verapdf.crawler.app.engine.HeritrixClient;
-import org.verapdf.crawler.repository.file.ReportFileDao;
+import org.verapdf.crawler.repository.document.ReportFileDao;
 import org.xml.sax.SAXException;
 
 import javax.sql.DataSource;
@@ -30,7 +30,7 @@ public class HeritrixReporter {
     public SingleURLJobReport getReport(String job, LocalDateTime time) throws IOException, ParserConfigurationException, SAXException {
         SingleURLJobReport result = new SingleURLJobReport(job,
                 client.getListOfCrawlUrls(job).get(0),
-                client.getCurrentJobStatus(job),
+                client.getCurrentJobStatus(job).replaceAll("\\s+",""),
                 client.getDownloadedCount(job));
         result.setPdfStatistics(reportFileDao.getValidationStatistics(job, time));
         result.setNumberOfODFDocuments(reportFileDao.getNumberOfOdfFilesForJob(job, time));

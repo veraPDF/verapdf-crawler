@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.validation.ValidationReportData;
 import org.verapdf.crawler.domain.validation.ValidationJobData;
-import org.verapdf.crawler.repository.file.InsertFileDao;
+import org.verapdf.crawler.repository.document.InsertDocumentDao;
 import org.verapdf.crawler.repository.jobs.ValidationJobDao;
 
 import javax.sql.DataSource;
@@ -16,7 +16,7 @@ public class ValidationService implements Runnable {
     private final LinkedList<ValidationJobData> queue;
     private final PDFValidator validator;
     private final ValidationJobDao validationJobDao;
-    private final InsertFileDao insertFileDao;
+    private final InsertDocumentDao insertDocumentDao;
 
     public boolean isRunning() {
         return isRunning;
@@ -30,7 +30,7 @@ public class ValidationService implements Runnable {
     public ValidationService(String verapdfPath, DataSource dataSource) {
         this.queue = new LinkedList<>();
         validationJobDao = new ValidationJobDao(dataSource);
-        insertFileDao = new InsertFileDao(dataSource);
+        insertDocumentDao = new InsertDocumentDao(dataSource);
         isRunning = true;
         validator = new VerapdfValidator(verapdfPath);
         queue.addAll(validationJobDao.getAllJobs());
@@ -68,12 +68,12 @@ public class ValidationService implements Runnable {
                     String[] parts = data.getJobDirectory().split("/");
                     String jobId = parts[parts.length - 3];
                     if(result.isValid()) {
-                        insertFileDao.addValidPdfFile(data, jobId);
+                        insertDocumentDao.addValidPdfFile(data, jobId);
                     }
                     else {
                         result.setUrl(data.getUri());
                         result.setLastModified(data.getTime());
-                        insertFileDao.addInvalidPdfFile(result, jobId);
+                        insertDocumentDao.addInvalidPdfFile(result, jobId);
                     }
                 }
                 else {

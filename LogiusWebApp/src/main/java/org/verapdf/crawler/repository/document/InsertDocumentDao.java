@@ -1,4 +1,4 @@
-package org.verapdf.crawler.repository.file;
+package org.verapdf.crawler.repository.document;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.verapdf.crawler.domain.validation.ValidationJobData;
@@ -7,10 +7,10 @@ import org.verapdf.crawler.repository.DaoUtils;
 
 import javax.sql.DataSource;
 
-public class InsertFileDao {
+public class InsertDocumentDao {
     private final JdbcTemplate template;
 
-    public InsertFileDao(DataSource dataSource) {
+    public InsertDocumentDao(DataSource dataSource) {
         this.template = new JdbcTemplate(dataSource);
     }
 

@@ -1,8 +1,7 @@
-package org.verapdf.crawler.repository.file;
+package org.verapdf.crawler.repository.document;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.verapdf.crawler.domain.report.PDFValidationStatistics;
-import org.verapdf.crawler.domain.validation.ValidationJobData;
 import org.verapdf.crawler.domain.validation.ValidationReportData;
 import org.verapdf.crawler.repository.mappers.FileUrlMapper;
 import org.verapdf.crawler.repository.mappers.ValidationReportDataMapper;

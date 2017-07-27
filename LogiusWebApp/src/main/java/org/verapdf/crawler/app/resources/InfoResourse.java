@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.crawling.CurrentJob;
 import org.verapdf.crawler.app.engine.HeritrixClient;
+import org.verapdf.crawler.repository.jobs.CrawlJobDao;
 import org.verapdf.crawler.validation.ValidationService;
 import org.xml.sax.SAXException;
 
@@ -15,7 +16,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 @Produces(MediaType.APPLICATION_JSON)
 @Path("/info")
@@ -23,16 +24,14 @@ public class InfoResourse {
 
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
-    private final ArrayList<CurrentJob> currentJobs;
     private final ValidationService validationService;
     private final HeritrixClient client;
-    private final ResourceManager resourceManager;
+    private final CrawlJobDao crawlJobDao;
 
-    public InfoResourse(ValidationService validationService, HeritrixClient client, ArrayList<CurrentJob> currentJobs, ResourceManager resourceManager) {
+    InfoResourse(ValidationService validationService, HeritrixClient client, CrawlJobDao crawlJobDao) {
         this.validationService = validationService;
         this.client = client;
-        this.currentJobs = currentJobs;
-        this.resourceManager = resourceManager;
+        this.crawlJobDao = crawlJobDao;
     }
 
     @GET
@@ -45,14 +44,14 @@ public class InfoResourse {
     @GET
     @Timed
     @Path("/list")
-    public ArrayList<CurrentJob> getJobs() {
+    public List<CurrentJob> getJobs() {
         try {
             refreshCurrentJobs();
         }
         catch (Exception e) {
             logger.error("Error on refreshing job status", e);
         }
-        return currentJobs;
+        return crawlJobDao.getAllJobs();
     }
 
     @GET
@@ -64,16 +63,16 @@ public class InfoResourse {
     }
 
     private CurrentJob getJobById(String job) {
-        return resourceManager.getJobById(job);
+        return crawlJobDao.getCrawlJob(job);
     }
 
     private void refreshCurrentJobs() throws SAXException, ParserConfigurationException, IOException {
-        for(CurrentJob job : currentJobs) {
-            if(job.isActiveJob()) {
-                job.setStatus(client.getCurrentJobStatus(job.getId()));
+        for(CurrentJob job : crawlJobDao.getAllJobs()) {
+            if(!job.isFinished()) {
+                crawlJobDao.setStatus(job.getId(), client.getCurrentJobStatus(job.getId()));
             }
             else {
-                job.setStatus("finished");
+                crawlJobDao.setStatus(job.getId(), "finished");
             }
         }
     }

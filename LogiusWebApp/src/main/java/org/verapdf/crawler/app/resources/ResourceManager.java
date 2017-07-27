@@ -21,7 +21,6 @@ public class ResourceManager {
     private final static String JDBC_DRIVER = "com.mysql.jdbc.Driver";
 
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
-    private final ArrayList<CurrentJob> currentJobs;
     private final ArrayList<BatchJob> batchJobs;
     private final InfoResourse infoResourse;
     private final ReportResource reportResource;
@@ -36,24 +35,22 @@ public class ResourceManager {
         DataSource dataSource = createMySqlDatasource(credentials);
         crawlJobDao = new CrawlJobDao(dataSource);
 
-        currentJobs = new ArrayList<>();
         batchJobs = new ArrayList<>();
         HeritrixReporter reporter = new HeritrixReporter(client, dataSource);
         this.emailServer = emailServer;
 
         validationService = new ValidationService(verapdfPath, dataSource);
-        infoResourse = new InfoResourse(validationService, client, currentJobs, this);
-        reportResource = new ReportResource(reporter, this);
-        controlResource = new ControlResource(currentJobs, client, reporter, emailServer, batchJobs, validationService, this, crawlJobDao, dataSource);
+        infoResourse = new InfoResourse(validationService, client, crawlJobDao);
+        reportResource = new ReportResource(reporter, this, crawlJobDao);
+        controlResource = new ControlResource(client, reporter, emailServer, batchJobs, validationService, this, crawlJobDao, dataSource);
 
         for(CurrentJob job: crawlJobDao.getAllJobs()) {
             if(job.getFinishTime() == null) {
                 crawlJobDao.writeFinishTime(job);
             }
         }
-        currentJobs.addAll(crawlJobDao.getAllJobs());
 
-        new Thread(new StatusMonitor(this)).start();
+        new Thread(new StatusMonitor(this, crawlJobDao)).start();
         validationService.start();
         new Thread(validationService).start();
         logger.info("Validation service started.");
@@ -71,23 +68,7 @@ public class ResourceManager {
         return controlResource;
     }
 
-    CurrentJob getJobById(String job) {
-        for(CurrentJob jobData : currentJobs) {
-            if(jobData.getId().equals(job))
-                return jobData;
-        }
-        return null;
-    }
-
     ArrayList<BatchJob> getBatchJobs() { return batchJobs; }
-
-    CurrentJob getJobByCrawlUrl(String crawlUrl) {
-        for(CurrentJob jobData : currentJobs) {
-            if(jobData.getCrawlURL().equals(crawlUrl))
-                return jobData;
-        }
-        return null;
-    }
 
     SingleURLJobReport getJob(String job) { return controlResource.getJob(job); }
 
@@ -96,24 +77,6 @@ public class ResourceManager {
     void setResourceUri(String resourceUri) { this.resourceUri = resourceUri; }
 
     EmailServer getEmailServer() { return emailServer; }
-
-    ArrayList<CurrentJob> getCurrentJobs() { return currentJobs; }
-
-    String getExistingJobURLbyJobId(String job) {
-        for(CurrentJob jobData : currentJobs) {
-            if(jobData.getId().equals(job))
-                return jobData.getJobURL();
-        }
-        return "";
-    }
-
-    LocalDateTime getTimeByJobId(String job) {
-        for(CurrentJob jobData : currentJobs) {
-            if(jobData.getId().equals(job))
-                return jobData.getCrawlSinceTime();
-        }
-        return null;
-    }
 
     private DataSource createMySqlDatasource(MySqlCredentials credentials) {
         DataSource dataSource = new DriverManagerDataSource();

@@ -6,6 +6,7 @@ import org.verapdf.crawler.domain.crawling.CurrentJob;
 import org.verapdf.crawler.domain.database.MySqlCredentials;
 import org.verapdf.crawler.domain.report.ValidationError;
 import org.verapdf.crawler.report.HeritrixReporter;
+import org.verapdf.crawler.repository.jobs.CrawlJobDao;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -25,10 +26,12 @@ public class ReportResource {
 
     private final HeritrixReporter reporter;
     private final ResourceManager resourceManager;
+    private final CrawlJobDao crawlJobDao;
 
-    ReportResource(HeritrixReporter reporter, ResourceManager resourceManager) {
+    ReportResource(HeritrixReporter reporter, ResourceManager resourceManager, CrawlJobDao crawlJobDao) {
         this.reporter = reporter;
         this.resourceManager = resourceManager;
+        this.crawlJobDao = crawlJobDao;
     }
 
     @GET
@@ -36,13 +39,13 @@ public class ReportResource {
     @Path("/ods_report/{job}")
     public Response getODSReport(@PathParam("job") String job) {
         try {
-            CurrentJob currentJob = getJobById(job);
+            CurrentJob currentJob = crawlJobDao.getCrawlJob(job);
             String jobURL = currentJob.getJobURL();
             File file;
             if (jobURL.equals("")) {
-                file = reporter.buildODSReport(job, getTimeByJobId(job));
+                file = reporter.buildODSReport(job, crawlJobDao.getCrawlSince(job));
             } else {
-                file = reporter.buildODSReport(job, jobURL, getTimeByJobId(job));
+                file = reporter.buildODSReport(job, jobURL, crawlJobDao.getCrawlSince(job));
             }
             logger.info("ODS report requested");
             return Response.ok(file, MediaType.APPLICATION_OCTET_STREAM)
@@ -60,12 +63,12 @@ public class ReportResource {
     @Path("/html_report/{job}")
     public String getHtmlReport(@PathParam("job") String job) {
         try {
-            String jobURL = getExistingJobURLbyJobId(job);
+            String jobURL = crawlJobDao.getCrawlJob(job).getJobURL();
             String htmlReport;
             if (jobURL.equals("")) {
-                htmlReport = reporter.buildHtmlReport(job, getTimeByJobId(job));
+                htmlReport = reporter.buildHtmlReport(job, crawlJobDao.getCrawlSince(job));
             } else {
-                htmlReport = reporter.buildHtmlReport(job, jobURL, getTimeByJobId(job));
+                htmlReport = reporter.buildHtmlReport(job, jobURL, crawlJobDao.getCrawlSince(job));
             }
             htmlReport = htmlReport.replace("INVALID_PDF_REPORT", resourceManager.getResourceUri() + "report/invalid_pdf_list/" + job);
             htmlReport = htmlReport.replace("OFFICE_REPORT", resourceManager.getResourceUri() + "report/office_list/" + job);
@@ -83,7 +86,7 @@ public class ReportResource {
     @Path("office_list/{job}")
     public String getOfficeReport(@PathParam("job") String job) {
         try {
-            String result = String.join("\n", reporter.getOfficeReport(job, getTimeByJobId(job)));
+            String result = String.join("\n", reporter.getOfficeReport(job, crawlJobDao.getCrawlSince(job)));
             logger.info("List of Microsoft Office files requested");
             return addLinksToUrlList(result).toString();
         }
@@ -98,7 +101,7 @@ public class ReportResource {
     @Path("invalid_pdf_list/{job}")
     public String getInvalidPdfReport(@PathParam("job") String job) {
         try {
-            CurrentJob jobData = getJobById(job);
+            CurrentJob jobData = crawlJobDao.getCrawlJob(job);
             StringBuilder result = new StringBuilder("<h2>Most common issues<h2><table>");
             int i = 0;
             for (Map.Entry<ValidationError, Integer> record : sortFailedRules(jobData)) {
@@ -122,14 +125,6 @@ public class ReportResource {
         }
         return "";
     }
-
-    private CurrentJob getJobById(String job) {
-        return resourceManager.getJobById(job);
-    }
-
-    private LocalDateTime getTimeByJobId(String job) { return resourceManager.getTimeByJobId(job); }
-
-    private String getExistingJobURLbyJobId(String job) { return resourceManager.getExistingJobURLbyJobId(job); }
 
     private List<Map.Entry<ValidationError, Integer>> sortFailedRules(CurrentJob job) {
         Map<ValidationError, Integer> sortedMap = new HashMap<>();
