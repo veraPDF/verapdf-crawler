@@ -44,7 +44,10 @@ Here your_login and your_password are the credentials you should pass to LogiusW
 	  `job_url` varchar(255) DEFAULT NULL,
 	  `crawl_since` datetime DEFAULT NULL,
 	  `start_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	  `finish_time` datetime DEFAULT NULL
+	  `finish_time` datetime DEFAULT NULL,
+	  `is_finished` tinyint(1) DEFAULT 0,
+	  `status` varchar(10) DEFAULT NULL,
+	  `report_email` varchar(255) DEFAULT NULL
 	);
 	CREATE TABLE `invalid_pdf_files` (
 	  `file_url` varchar(255) DEFAULT NULL,
