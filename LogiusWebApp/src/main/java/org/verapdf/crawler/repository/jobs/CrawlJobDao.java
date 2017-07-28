@@ -15,72 +15,96 @@ import java.util.List;
 
 public class CrawlJobDao {
 
+    public static final String CRAWL_JOB_TABLE_NAME = "crawl_jobs";
+    public static final String FIELD_ID = "id";
+    public static final String FIELD_CRAWL_URL = "crawl_url";
+    public static final String FIELD_JOB_URL = "job_url";
+    public static final String FIELD_CRAWL_SINCE = "crawl_since";
+    public static final String FIELD_STATUS = "status";
+    public static final String FIELD_REPORT_EMAIL = "report_email";
+    public static final String FIELD_START_TIME = "start_time";
+    public static final String FIELD_FINISH_TIME = "finish_time";
+    public static final String FIELD_IS_FINISHED = "is_finished";
+
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
     private final JdbcTemplate template;
 
     public CrawlJobDao(DataSource dataSource) {
         this.template = new JdbcTemplate(dataSource);
+        template.execute(String.format("CREATE TABLE IF NOT EXISTS `%s` (\n" +
+                "  `%s` varchar(36) DEFAULT NULL,\n" +
+                "  `%s` varchar(255) DEFAULT NULL,\n" +
+                "  `%s` varchar(255) DEFAULT NULL,\n" +
+                "  `%s` datetime DEFAULT NULL,\n" +
+                "  `%s` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n" +
+                "  `%s` datetime DEFAULT NULL,\n" +
+                "  `%s` tinyint(1) DEFAULT '0',\n" +
+                "  `%s` varchar(10) DEFAULT NULL,\n" +
+                "  `%s` varchar(255) DEFAULT NULL\n" +
+                ")", CRAWL_JOB_TABLE_NAME, FIELD_ID, FIELD_CRAWL_URL, FIELD_JOB_URL, FIELD_CRAWL_SINCE,
+                FIELD_START_TIME, FIELD_FINISH_TIME, FIELD_IS_FINISHED, FIELD_STATUS, FIELD_REPORT_EMAIL));
     }
 
     public List<CurrentJob> getAllJobs() {
-        return template.query("select * from crawl_jobs", new CrawlJobMapper());
+        return template.query("select * from " + CRAWL_JOB_TABLE_NAME, new CrawlJobMapper());
     }
 
     public void addJob(CurrentJob job) {
         logger.info("Job inserted into database: " + job);
-        template.update("insert into crawl_jobs (id, crawl_url, job_url, crawl_since, status, report_email) values (?,?,?,?,'active', ?)"
+        template.update(String.format("insert into %s (%s, %s, %s, %s, %s, %s) values (?,?,?,?,'active', ?)"
+                , CRAWL_JOB_TABLE_NAME, FIELD_ID, FIELD_CRAWL_URL, FIELD_JOB_URL, FIELD_CRAWL_SINCE, FIELD_STATUS, FIELD_REPORT_EMAIL)
                 , job.getId(), job.getCrawlURL(), job.getJobURL(), job.getCrawlSinceTime(), job.getReportEmail());
     }
 
     public void removeJob(CurrentJob job) {
         logger.info("Job removed from database: " + job);
-        template.update("delete from crawl_jobs where id=?", job.getId());
+        template.update(String.format("delete from %s where %s=?", CRAWL_JOB_TABLE_NAME, FIELD_ID), job.getId());
     }
 
     public void writeFinishTime(CurrentJob job) {
         logger.info("Job marked as finished in database: " + job);
         SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date now = new Date();
-        template.update("update crawl_jobs set finish_time=?, is_finished=? where id=?",
+        template.update(String.format("update %s set %s=?, %s=? where %s=?", CRAWL_JOB_TABLE_NAME, FIELD_FINISH_TIME, FIELD_IS_FINISHED, FIELD_ID),
                 sdfDate.format(now), true, job.getId());
     }
 
     public CurrentJob getCrawlJob(String jobId) {
-        return template.query("select * from crawl_jobs where id=?", new CrawlJobMapper(), jobId).get(0);
+        return template.query(String.format("select * from %s where %s=?", CRAWL_JOB_TABLE_NAME, FIELD_ID), new CrawlJobMapper(), jobId).get(0);
     }
 
     public CurrentJob getCrawlJobByCrawlUrl(String url) {
-        return template.query("select * from crawl_jobs where crawl_url=?", new CrawlJobMapper(), url).get(0);
+        return template.query(String.format("select * from %s where %s=?", CRAWL_JOB_TABLE_NAME, FIELD_CRAWL_URL), new CrawlJobMapper(), url).get(0);
     }
 
     public String getCrawlUrl(String jobId) {
-        return template.queryForObject("select crawl_url from crawl_jobs where id=?", new Object[] {jobId}, String.class);
+        return template.queryForObject(String.format("select %s from %s where %s=?", FIELD_CRAWL_URL, CRAWL_JOB_TABLE_NAME, FIELD_ID), new Object[] {jobId}, String.class);
     }
 
     public LocalDateTime getCrawlSince(String jobId) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        return LocalDateTime.parse(template.queryForObject("select crawl_since from crawl_jobs where id=?", new Object[] {jobId}, String.class), formatter);
+        return LocalDateTime.parse(template.queryForObject(String.format("select %s from %s where %s=?", FIELD_CRAWL_SINCE, CRAWL_JOB_TABLE_NAME, FIELD_ID), new Object[] {jobId}, String.class), formatter);
     }
 
     public boolean doesJobExist(String url) {
-        Integer count = template.queryForObject("select count(*) from crawl_jobs where crawl_url=?", Integer.class, url);
+        Integer count = template.queryForObject(String.format("select count(*) from %s where %s=?", CRAWL_JOB_TABLE_NAME, FIELD_CRAWL_URL), Integer.class, url);
         return count != null && count != 0;
     }
 
     public void setJobFinished(String jobId, boolean isFinished) {
-        template.update("update crawl_jobs set is_finished=? where id=?", isFinished, jobId);
+        template.update(String.format("update %s set %s=? where %s=?", CRAWL_JOB_TABLE_NAME, FIELD_IS_FINISHED, FIELD_ID), isFinished, jobId);
     }
 
     public void setStatus(String jobId, String status) {
-        template.update("update crawl_jobs set status=? where id=?", status, jobId);
+        template.update(String.format("update %s set %s=? where %s=?", CRAWL_JOB_TABLE_NAME, FIELD_STATUS, FIELD_ID), status, jobId);
     }
 
     public void setReportEmail(String jobId, String emailAddress) {
         logger.info("Email address " + emailAddress + " was associated woth job " + jobId + " in database");
-        template.update("update crawl_jobs set report_email=? where id=?", emailAddress, jobId);
+        template.update(String.format("update %s set %s=? where %s=?", CRAWL_JOB_TABLE_NAME, FIELD_REPORT_EMAIL, FIELD_ID), emailAddress, jobId);
     }
 
     public void setJobUrl(String jobId, String jobUrl) {
-        template.update("update crawl_jobs set job_url=? where id=?", jobUrl, jobId);
+        template.update(String.format("update %s set %s=? where %s=?", CRAWL_JOB_TABLE_NAME, FIELD_JOB_URL, FIELD_ID), jobUrl, jobId);
     }
 }

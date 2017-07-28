@@ -102,19 +102,6 @@ public class ReportResource {
     public String getInvalidPdfReport(@PathParam("job") String job) {
         try {
             CurrentJob jobData = crawlJobDao.getCrawlJob(job);
-            /*StringBuilder result = new StringBuilder("<h2>Most common issues<h2><table>");
-            int i = 0;
-            for (Map.Entry<ValidationError, Integer> record : sortFailedRules(jobData)) {
-                i++;
-                result.append("<tr style=\"BACKGROUND: #dcdaf6\"><td>");
-                result.append(record.getKey().toString());
-                result.append("</td></tr><tr style=\"BACKGROUND: #dcdaf6\"><td>");
-                result.append(record.getValue());
-                result.append(" occurrences.</td></tr> <tr></tr>");
-                if (i == 10) {
-                    break;
-                }
-            }*/
             StringBuilder result = new StringBuilder("</table><h2>File details<h2>");
             result.append(reporter.getInvalidPdfHtmlReport(job, jobData.getCrawlSinceTime()));
             logger.info("List of invalid PDF documents requested");
@@ -125,13 +112,6 @@ public class ReportResource {
         }
         return "";
     }
-
-    /*private List<Map.Entry<ValidationError, Integer>> sortFailedRules(CurrentJob job) {
-        Map<ValidationError, Integer> sortedMap = new HashMap<>();
-        List<Map.Entry<ValidationError, Integer>> list = new LinkedList<>( job.getErrorOccurances().entrySet() );
-        Collections.sort( list, (o1, o2) -> (o2.getValue()).compareTo( o1.getValue() ));
-        return list;
-    }*/
 
     private StringBuilder addLinksToUrlList(String list) {
         StringBuilder result = new StringBuilder();

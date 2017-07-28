@@ -3,10 +3,7 @@ package org.verapdf.crawler.app.resources;
 import com.codahale.metrics.annotation.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.domain.crawling.BatchJob;
-import org.verapdf.crawler.domain.crawling.CurrentJob;
-import org.verapdf.crawler.domain.crawling.StartBatchJobData;
-import org.verapdf.crawler.domain.crawling.StartJobData;
+import org.verapdf.crawler.domain.crawling.*;
 import org.verapdf.crawler.domain.email.EmailAddress;
 import org.verapdf.crawler.domain.email.EmailServer;
 import org.verapdf.crawler.domain.office.OfficeFileData;
@@ -16,6 +13,7 @@ import org.verapdf.crawler.app.email.SendEmail;
 import org.verapdf.crawler.app.engine.HeritrixClient;
 import org.verapdf.crawler.report.HeritrixReporter;
 import org.verapdf.crawler.repository.document.InsertDocumentDao;
+import org.verapdf.crawler.repository.jobs.BatchJobDao;
 import org.verapdf.crawler.repository.jobs.CrawlJobDao;
 import org.verapdf.crawler.validation.ValidationService;
 
@@ -39,7 +37,6 @@ public class ControlResource {
     private UriInfo uriInfo;
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
-    private final ArrayList<BatchJob> batchJobs;
     private final HeritrixClient client;
     private final HeritrixReporter reporter;
     private final EmailServer emailServer;
@@ -47,18 +44,20 @@ public class ControlResource {
     private final ResourceManager resourceManager;
     private final CrawlJobDao crawlJobDao;
     private final InsertDocumentDao insertDocumentDao;
+    private final BatchJobDao batchJobDao;
 
     ControlResource(HeritrixClient client, HeritrixReporter reporter,
-                           EmailServer emailServer, ArrayList<BatchJob> batchJobs, ValidationService service,
-                           ResourceManager resourceManager, CrawlJobDao crawlJobDao, DataSource dataSource) {
+                    EmailServer emailServer, ValidationService service,
+                    ResourceManager resourceManager, CrawlJobDao crawlJobDao,
+                    DataSource dataSource, BatchJobDao batchJobDao) {
         this.client = client;
         this.reporter = reporter;
         this.emailServer = emailServer;
-        this.batchJobs = batchJobs;
         this.service = service;
         this.resourceManager = resourceManager;
         this.crawlJobDao = crawlJobDao;
         this.insertDocumentDao = new InsertDocumentDao(dataSource);
+        this.batchJobDao = batchJobDao;
     }
 
     @POST
@@ -243,17 +242,15 @@ public class ControlResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public String startBatchJob(StartBatchJobData jobData) {
         String id = UUID.randomUUID().toString();
-        BatchJob batch = new BatchJob(id, jobData.getReportEmail());
+        BatchJob batch = new BatchJob(id, jobData.getReportEmail(), jobData.getDate());
         logger.info("Batch job creation.");
         for(String domain : jobData.getDomains()) {
             StartJobData data = new StartJobData(domain, jobData.getDate());
             data.setReportEmail(jobData.getReportEmail());
             data.setForceStart(false);
-            startJob(data);
-            batch.getDomains().add(trimUrl(domain));
+            batch.getCrawlJobs().add(startJob(data).getId());
         }
-
-        batchJobs.add(batch);
+        batchJobDao.addBatchJob(batch);
         String reportUrl = uriInfo.getBaseUri().toString() + "batch/" + id;
         return "Batch job successfully submitted. You can track it on " + reportUrl +
                 ". Notification will be sent on the email address you provided when the job is finished.";
@@ -261,45 +258,23 @@ public class ControlResource {
 
     @GET
     @Timed
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/batch/{job}")
-    public String getBatchJob(@PathParam("job") String job) {
-        StringBuilder responseHtml = new StringBuilder();
-        StringBuilder jobList = new StringBuilder();
-        BatchJob batchJob = getBatchJobById(job);
-        boolean isBatchFinished = true;
-        for(String domain : batchJob.getDomains()) {
-            try {
-                jobList.append("<li>");
-                jobList.append("Job on " + domain + ", ");
-                SingleURLJobReport report = getJob(crawlJobDao.getCrawlJobByCrawlUrl(domain).getId());
-                jobList.append(report.getStatus());
-                isBatchFinished = isBatchFinished && (report.getStatus().startsWith("finished") || report.getStatus().startsWith("aborted"));
-                jobList.append(", <a href=\"");
-                jobList.append(resourceManager.getResourceUri().replace("api/", "jobinfo?id=") + crawlJobDao.getCrawlJobByCrawlUrl(domain).getId());
-                jobList.append("\">details</a>.");
-                jobList.append("</li>");
-            }
-            catch (Exception e) {
-                e.printStackTrace();
+    public List<CrawlJobReference> getBatchJob(@PathParam("job") String jobId) {
+        boolean isBatchJobFinished = true;
+        List<CrawlJobReference> result = new ArrayList<>();
+        List<String> crawlJobs = batchJobDao.getCrawlJobsForBatch(jobId);
+        for(String crawlJobId: crawlJobs) {
+            SingleURLJobReport report = getJob(crawlJobId);
+            result.add(new CrawlJobReference(crawlJobId, report.getStatus(), resourceManager.getResourceUri().replace("api/", "jobinfo?id=") + crawlJobId));
+            if(!report.getStatus().startsWith("finished") && !report.getStatus().startsWith("aborted")) {
+                isBatchJobFinished = false;
             }
         }
-        if(isBatchFinished) {
-            batchJob.setFinished();
+        if(isBatchJobFinished) {
+            batchJobDao.setJobFinished(jobId);
         }
-        responseHtml.append("<html>");
-        responseHtml.append("<p>Batch job is ");
-        if(batchJob.isFinished()) {
-            responseHtml.append("finished.</p>");
-        }
-        else {
-            responseHtml.append(" running.</p>");
-        }
-        responseHtml.append("<ul>");
-        responseHtml.append(jobList.toString());
-        responseHtml.append("</ul>");
-        responseHtml.append("</html>");
-        return responseHtml.toString();
+        return result;
     }
 
     @POST
@@ -355,14 +330,5 @@ public class ControlResource {
             url = url.substring(0, url.length() - 1);
         }
         return url;
-    }
-
-    private BatchJob getBatchJobById(String id) {
-        for(BatchJob job : batchJobs) {
-            if(job.getId().equals(id)) {
-                return job;
-            }
-        }
-        return null;
     }
 }
