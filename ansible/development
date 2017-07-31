@@ -1,2 +1,2 @@
 [heretrix]
-logius.verapdf.dev ansible_ssh_host=192.168.10.100
+logius.verapdf.dev ansible_ssh_host=192.168.10.100 hostname=logius.verapdf.dev timezone_zone=Europe/London

@@ -3,8 +3,36 @@
 # Playbook to configure a logius-crawler instance
 # File: ansible/site.yml
 
+
 - hosts: all
   become: true
   roles:
     - { role: tschifftner.hostname }
+    - { role: tersmitten.timezone }
     - { role: tersmitten.apt }
+
+- hosts: all
+  become: true
+  tasks:
+    - name: installing Java 7
+      apt:
+        name: openjdk-7-jdk
+        state: present
+        update_cache: yes
+
+# These task adds the Debian Jessie Backports repo for apt to allow installation
+# of open JDK 8 if required
+# - hosts: all
+#   become: true
+#   tasks:
+#     - name: Backports repo for Java 8 in Debian
+#       apt_repository:
+#         repo: deb http://ftp.de.debian.org/debian jessie-backports main
+#         state: present
+#     - name: installing Java 8
+#       apt:
+#         name: openjdk-8-jdk
+#         state: present
+#         default_release: jessie-backports
+#         update_cache: yes
+#

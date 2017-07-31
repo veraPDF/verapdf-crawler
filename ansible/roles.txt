@@ -1,2 +1,3 @@
 tersmitten.apt,v1.4.7
+tersmitten.timezone,v1.0.11
 tschifftner.hostname
