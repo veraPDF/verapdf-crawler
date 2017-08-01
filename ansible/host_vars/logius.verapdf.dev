@@ -1,0 +1,49 @@
+---
+ansible_ssh_host: 192.168.10.100
+hostname: logius.verapdf.dev
+
+timezone_zone: Europe/London
+apt_install:
+  - maven
+
+logius_app:
+  db_admin_password: vagrant
+  db_schema_name: logius
+  db_user_name: logius
+  db_password: vagrant
+  port: 9000
+  admin_port: 9001
+
+mysql_root_password: "{{ logius_app.db_admin_password }}"
+
+mysql_databases:
+  - name: "{{ logius_app.db_schema_name }}"
+
+mysql_users:
+  - name: "{{ logius_app.db_user_name }}"
+    password: "{{ logius_app.db_password }}"
+    priv: "{{ logius_app.db_schema_name }}.*:ALL"
+
+nginx_vhosts:
+  - name:
+      -  "{{ hostname }}"
+      -  "{{ ansible_ssh_host }}"
+    listen:
+      - 80
+    template: '_proxy'
+    upstream_name: "localhost:{{ logius_app.port }}"
+    proxy_params:
+      - "proxy_redirect off;"
+      - "proxy_set_header Host $host;"
+      - "proxy_set_header X-Real-IP $remote_addr;"
+      - "proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;"
+      - "proxy_max_temp_file_size 0;"
+      - "client_max_body_size 100m;"
+      - "client_body_buffer_size 90000k;"
+      - "proxy_connect_timeout 9000;"
+      - "proxy_send_timeout 9000;"
+      - "proxy_read_timeout 9000;"
+      - "proxy_buffer_size 4000k;"
+      - "proxy_buffers 4 32000k;"
+      - "proxy_busy_buffers_size 64000k;"
+      - "proxy_temp_file_write_size 64000k;"
