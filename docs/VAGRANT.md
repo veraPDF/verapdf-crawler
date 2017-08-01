@@ -24,6 +24,20 @@ Vagrant is available for Windows, Mac OS and Linux, you can download the latest 
 ### Ansible
 Ansible, see https://www.ansible.com/get-started, is used to automate the application deployment, both to the development VM as well as any Debian server where you have SSH access. You need to install Ansible locally but it doesn't require anything installing on the target system.
 
+Quick Starts
+------------
+
+### Vagrant
+Once you have the pre-requisites installed, to start up a local Vagrant instance issue the following command from anywhere below the project root:
+
+```bash
+vagrant up
+```
+This will create and configure the VirtualBox and then used ansible to install the project software stack. Once that's completed you can SSH to the vagrant machine by:
+```bash
+vagrant ssh
+```
+
 Ansible
 -------
 
