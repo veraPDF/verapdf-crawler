@@ -78,6 +78,16 @@ Here your_login and your_password are the credentials you should pass to LogiusW
 	  `file_url` varchar(255) DEFAULT NULL,
 	  `time_last_modified` datetime DEFAULT NULL
 	);
+	CREATE TABLE `batch_crawl_jobs` (
+      `id` varchar(36) DEFAULT NULL,
+      `is_finished` tinyint(1) DEFAULT '0',
+      `report_email` varchar(255) DEFAULT NULL,
+      `crawl_since` datetime DEFAULT NULL
+    );
+    CREATE TABLE `crawl_jobs_in_batch` (
+      `batch_job_id` varchar(36) DEFAULT NULL,
+      `crawl_job_id` varchar(36) DEFAULT NULL
+    );
 ```
   
 ### Running Logius application
