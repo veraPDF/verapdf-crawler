@@ -3,27 +3,24 @@ package org.verapdf.crawler.domain.report;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class SingleURLJobReport {
+public class CrawlJobReport {
     private String id;
     private String url;
     private String status;
     private int numberOfCrawledUrls;
-    private PDFValidationStatistics pdfStatistics;
+    private String startTime;
+    private String finishTime;
 
+    private PDFValidationStatistics pdfStatistics;
     private int numberOfODFDocuments;
     private int numberOfOfficeDocuments;
+    private int numberOfOoxmlDocuments;
 
-    @JsonProperty
-    public String startTime;
 
-    @JsonProperty
-    public String finishTime;
-
-    public SingleURLJobReport() {
-        // Jackson deserialization
+    public CrawlJobReport() {
     }
 
-    public SingleURLJobReport(String id, String url, String status, int numberOfCrawledUrls) {
+    public CrawlJobReport(String id, String url, String status, int numberOfCrawledUrls) {
         this.id = id;
         this.url = url;
         this.status = status;
@@ -70,4 +67,20 @@ public class SingleURLJobReport {
 
     @JsonProperty
     public void setNumberOfOfficeDocuments(int numberOfOfficeDocuments) { this.numberOfOfficeDocuments = numberOfOfficeDocuments; }
+
+    @JsonProperty
+    public int getNumberOfOoxmlDocuments() { return numberOfOoxmlDocuments; }
+
+    @JsonProperty
+    public void setNumberOfOoxmlDocuments(int numberOfOoxmlDocuments) { this.numberOfOoxmlDocuments = numberOfOoxmlDocuments; }
+
+    @JsonProperty
+    public String getStartTime() { return startTime; }
+
+    @JsonProperty
+    public void setStartTime(String startTime) { this.startTime = startTime; }
+
+    public String getFinishTime() { return finishTime; }
+
+    public void setFinishTime(String finishTime) { this.finishTime = finishTime; }
 }

@@ -1,39 +1,25 @@
 package org.verapdf.crawler.domain.crawling;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.verapdf.crawler.domain.report.ValidationError;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 public class CurrentJob {
-    private final String id;
 
+    private final String id;
     private String jobURL;
     private final String crawlURL;
-    private String reportEmail;
     private LocalDateTime startTime;
     private LocalDateTime finishTime;
     private String status;
 
     private boolean isFinished = false;
 
-    private LocalDateTime crawlSinceTime;
-
-    public CurrentJob(String id, String jobURL, String crawlURL, LocalDateTime time,
-                      String reportEmail, LocalDateTime startTime) {
+    public CurrentJob(String id, String jobURL, String crawlURL, LocalDateTime startTime) {
         this.id = id;
         this.jobURL = jobURL;
         this.crawlURL = crawlURL;
-        this.crawlSinceTime = time;
-        this.reportEmail = reportEmail;
         this.startTime = startTime;
-    }
-
-    public void setReportEmail(String reportEmail) {
-        this.reportEmail = reportEmail;
     }
 
     @JsonProperty
@@ -48,12 +34,6 @@ public class CurrentJob {
     @JsonProperty
     public String getCrawlURL() {
         return crawlURL;
-    }
-
-    public LocalDateTime getCrawlSinceTime() { return crawlSinceTime; }
-
-    public String getReportEmail() {
-        return reportEmail;
     }
 
     @JsonProperty

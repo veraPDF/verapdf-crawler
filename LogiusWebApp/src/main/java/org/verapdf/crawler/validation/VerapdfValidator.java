@@ -2,16 +2,15 @@ package org.verapdf.crawler.validation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.domain.report.ValidationError;
-import org.verapdf.crawler.domain.validation.ValidationReportData;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
+import org.verapdf.crawler.domain.validation.ValidationError;
+import org.verapdf.crawler.repository.document.ValidatedPDFDao;
 import org.verapdf.processor.reports.Reports;
 import org.verapdf.processor.reports.RuleSummary;
 import org.verapdf.processor.reports.ValidationReport;
@@ -28,32 +27,13 @@ public class VerapdfValidator implements PDFValidator {
     }
 
     @Override
-    public ValidationReportData validate(String filename) throws Exception {
+    public boolean validateAndWirteResult(String filename, String fileUrl, ValidatedPDFDao validatedPDFDao) throws Exception {
         ValidationReport validationReport = getValidationReportForFile(filename);
-        return new ValidationReportData(validationReport);
-    }
-
-    @Override
-    public ValidationReportData validateAndWirteErrors(String filename, Map<ValidationError, Integer> errorOccurances) throws Exception {
-        ValidationReport validationReport = getValidationReportForFile(filename);
-        String partRule;
-        if(validationReport.getProfileName().contains("1")) {
-            partRule = ValidationError.PART_ONE_RULE;
-        }
-        else {
-            partRule = ValidationError.PART_TWO_THREE_RULE;
-        }
         for(RuleSummary rule: validationReport.getDetails().getRuleSummaries()) {
-            ValidationError error = new ValidationError(rule.getClause(), rule.getTestNumber(),
-                    rule.getSpecification(), partRule, rule.getDescription());
-            if(errorOccurances.containsKey(error)) {
-                errorOccurances.put(error, errorOccurances.get(error) + 1);
-            }
-            else {
-                errorOccurances.put(error, 1);
-            }
+            validatedPDFDao.addErrorToDocument(new ValidationError(rule.getSpecification(), rule.getClause(),
+                    Integer.toString(rule.getTestNumber()), rule.getDescription()), fileUrl);
         }
-        return new ValidationReportData(validationReport);
+        return validationReport.getDetails().getFailedRules() == 0;
     }
 
     private ValidationReport getValidationReportForFile(String filename) throws Exception {

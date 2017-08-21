@@ -1,6 +1,10 @@
 package org.verapdf.crawler.domain.crawling;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,38 +16,44 @@ public class BatchJob {
     private final String emailAddress;
     private final LocalDateTime crawlSinceTime;
 
-    public void setFinished(boolean finished) {
-        isFinished = finished;
-    }
-
-    public LocalDateTime getCrawlSinceTime() {
-        return crawlSinceTime;
-    }
-
-
-    public BatchJob(String id, String emailAddress, String crawlSinceTime) {
+    public BatchJob(String id, String emailAddress, LocalDateTime crawlSinceTime) {
         crawlJobs = new ArrayList<>();
         this.id = id;
         this.emailAddress = emailAddress;
         this.isFinished = false;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        this.crawlSinceTime = LocalDateTime.parse(crawlSinceTime, formatter);
+        this.crawlSinceTime = crawlSinceTime;
     }
 
+    @JsonProperty
+    public void setFinished(boolean finished) {
+        isFinished = finished;
+    }
+
+    @JsonProperty
+    public LocalDateTime getCrawlSinceTime() {
+        return crawlSinceTime;
+    }
+
+    @JsonProperty
     public String getId() { return  id; }
 
+    @JsonProperty
     public List<String> getCrawlJobs() { return crawlJobs; }
 
+    @JsonProperty
     public boolean isFinished() {
         return isFinished;
     }
 
+    @JsonProperty
     public void setFinished() {
         isFinished = true;
     }
 
+    @JsonProperty
     public String getEmailAddress() { return emailAddress; }
 
+    @JsonProperty
     public void setCrawlJobs(List<String> crawlJobs) {
         this.crawlJobs = crawlJobs;
     }

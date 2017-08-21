@@ -49,24 +49,13 @@ public class ODFProcessor extends MirrorWriterProcessor {
             time = header.toString().substring(0, header.toString().length() - 2);
         }
 
-        boolean isODFFile = crawlURI.toString().endsWith(".odt") ||
-                crawlURI.toString().endsWith(".odc") ||
-                crawlURI.toString().endsWith(".odp");
         String[] parts = baseDir.split("/");
         String jobId = parts[parts.length - 3];
 
         try {
-            URL url;
-            if(isODFFile) {
-                url = new URL(logiusUrl + "api/odf");
-            }
-            else {
-                url = new URL(logiusUrl + "api/microsoft_office");
-            }
+            URL url = new URL(logiusUrl + "api/office_document");
             String data = "{\"jobId\":\"" + jobId + "\", \"fileUrl\":\"" +
                     crawlURI.toString() + "\", \"" + "lastModified\":\"" + time + "\"}";
-            System.out.println("Making request to " + url.toString());
-            System.out.println("Payload is " + data);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type","application/json");

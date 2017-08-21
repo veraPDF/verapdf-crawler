@@ -7,6 +7,17 @@ public class StartBatchJobData {
     private String[] domains;
     private String date;
     private String reportEmail;
+    private boolean doOverwrite;
+
+    @JsonProperty
+    public boolean isDoOverwrite() {
+        return doOverwrite;
+    }
+
+    @JsonProperty
+    public void setDoOverwrite(boolean doOverwrite) {
+        this.doOverwrite = doOverwrite;
+    }
 
     @JsonProperty
     public String[] getDomains() {

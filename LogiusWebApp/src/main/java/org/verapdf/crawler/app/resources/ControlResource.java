@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.crawling.*;
 import org.verapdf.crawler.domain.email.EmailAddress;
 import org.verapdf.crawler.domain.email.EmailServer;
-import org.verapdf.crawler.domain.office.OfficeFileData;
-import org.verapdf.crawler.domain.report.SingleURLJobReport;
+import org.verapdf.crawler.domain.office.OfficeDocumentData;
+import org.verapdf.crawler.domain.report.CrawlJobReport;
 import org.verapdf.crawler.domain.validation.ValidationJobData;
 import org.verapdf.crawler.app.email.SendEmail;
 import org.verapdf.crawler.app.engine.HeritrixClient;
@@ -21,6 +21,7 @@ import javax.sql.DataSource;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -32,6 +33,10 @@ import java.util.*;
 @Produces(MediaType.APPLICATION_JSON)
 @Path("/")
 public class ControlResource {
+
+    private static final String[] ODF_SUFFIXES = {".odt", ".ods", ".odp"};
+    private static final String[] OFFICE_SUFFIXES = {".doc", ".xls", ".ppt"};
+    private static final String[] OOXML_SUFFIXES = {".docx", ".xlsx", ".pptx"};
 
     @Context
     private UriInfo uriInfo;
@@ -62,63 +67,12 @@ public class ControlResource {
 
     @POST
     @Timed
-    @Consumes(MediaType.APPLICATION_JSON)
-    public SingleURLJobReport startJob(StartJobData startJobData){
-        try {
-            if (resourceManager.getResourceUri() == null && uriInfo != null) {
-                resourceManager.setResourceUri(uriInfo.getBaseUri().toString());
-            }
-            if (crawlJobDao.doesJobExist(trimUrl(startJobData.getDomain())) && !startJobData.isForceStart()) { // This URL has already been crawled and job is not forced to overwrite
-                return new SingleURLJobReport(crawlJobDao.getCrawlJobByCrawlUrl(trimUrl(startJobData.getDomain())).getId(), "", "", 0);
-            } else {
-                if (startJobData.isForceStart() && crawlJobDao.doesJobExist(trimUrl(startJobData.getDomain()))) { // This URL has already been crawled but the old job needs to be overwritten
-                    client.teardownJob(crawlJobDao.getCrawlJobByCrawlUrl(trimUrl(startJobData.getDomain())).getId());
-                    crawlJobDao.removeJob(crawlJobDao.getCrawlJobByCrawlUrl(trimUrl(startJobData.getDomain())));
-                }
-                // Brand new URL
-                ArrayList<String> list = new ArrayList<>();
-                if (startJobData.getDomain().startsWith("http://") || startJobData.getDomain().startsWith("https://")) {
-                    list.add(trimUrl(startJobData.getDomain()));
-                } else {
-                    list.add(trimUrl(startJobData.getDomain()));
-                    list.add(list.get(0).replace("https://", "http://"));
-                }
-
-                String job = UUID.randomUUID().toString();
-                client.createJob(job, list);
-                client.buildJob(job);
-                client.launchJob(job);
-                String jobStatus = client.getCurrentJobStatus(job);
-                LocalDateTime now = LocalDateTime.now();
-                CurrentJob newJob;
-                if (startJobData.getDate() == null || startJobData.getDate().isEmpty()) {
-                    newJob = new CurrentJob(job, "", trimUrl(startJobData.getDomain()),
-                            null, startJobData.getReportEmail(), now);
-                } else {
-                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-                    newJob = new CurrentJob(job, "", trimUrl(startJobData.getDomain()),
-                            LocalDateTime.of(LocalDate.parse(startJobData.getDate(), formatter), LocalTime.MIN),
-                            startJobData.getReportEmail(), now);
-                }
-                crawlJobDao.addJob(newJob);
-                logger.info("Job creation on " + startJobData.getDomain());
-                return new SingleURLJobReport(job, trimUrl(startJobData.getDomain()), jobStatus, 0);
-            }
-        }
-        catch (Exception e) {
-            logger.error("Error on job creation", e);
-        }
-        return new SingleURLJobReport("", trimUrl(startJobData.getDomain()), "unbuilt", 0);
-    }
-
-    @POST
-    @Timed
     @Path("/pause/{job}")
     public void pauseJob(@PathParam("job") String job) {
         try {
             client.pauseJob(job);
             crawlJobDao.setStatus(job, "paused");
-            logger.info("Job on "+ crawlJobDao.getCrawlUrl(job) + " paused");
+            logger.info("Crawl job on "+ crawlJobDao.getCrawlUrl(job) + " paused");
         }
         catch (Exception e) {
             logger.error("Error pausing job", e);
@@ -132,7 +86,7 @@ public class ControlResource {
         try {
             client.unpauseJob(job);
             crawlJobDao.setStatus(job, "running");
-            logger.info("Job on "+ crawlJobDao.getCrawlUrl(job) + " unpaused");
+            logger.info("Crawl job on "+ crawlJobDao.getCrawlUrl(job) + " unpaused");
         }
         catch (Exception e) {
             logger.error("Error unpausing job", e);
@@ -145,7 +99,7 @@ public class ControlResource {
     public void terminateJob(@PathParam("job") String job) {
         try {
             client.terminateJob(job);
-            logger.info("Job on "+ crawlJobDao.getCrawlUrl(job) + " terminated");
+            logger.info("Crawl job on "+ crawlJobDao.getCrawlUrl(job) + " terminated");
         }
         catch (Exception e) {
             logger.error("Error terminating job", e);
@@ -158,7 +112,7 @@ public class ControlResource {
     public void deleteJob(@PathParam("job") String job) {
         try {
             client.terminateJob(job);
-            logger.info("Job on "+ crawlJobDao.getCrawlUrl(job) + " deleted");
+            logger.info("Crawl job on "+ crawlJobDao.getCrawlUrl(job) + " deleted");
         }
         catch (Exception e) {
             logger.error("Error deleting job", e);
@@ -178,101 +132,59 @@ public class ControlResource {
             client.createJob(job, list);
             client.buildJob(job);
             client.launchJob(job);
-            logger.info("Job on "+ currentJob.getCrawlURL() + " restarted");
+            logger.info("Crawl job on "+ currentJob.getCrawlURL() + " restarted");
         }
         catch (Exception e) {
             logger.error("Error restarting job", e);
         }
     }
 
-
-    @GET
-    @Timed
-    @Path("/{job}")
-    public SingleURLJobReport getJob(@PathParam("job") String job) {
-        try {
-            if (resourceManager.getResourceUri() == null && uriInfo != null) {
-                resourceManager.setResourceUri(uriInfo.getBaseUri().toString());
-            }
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
-            String jobURL = crawlJobDao.getCrawlJob(job).getJobURL();
-            SingleURLJobReport result;
-            if (jobURL.equals("")) {
-                result = reporter.getReport(job, crawlJobDao.getCrawlSince(job));
-            } else {
-                result = reporter.getReport(job, jobURL, crawlJobDao.getCrawlSince(job));
-            }
-            CurrentJob jobData = crawlJobDao.getCrawlJob(job);
-
-            if (result.getStatus().startsWith("finished") || result.getStatus().startsWith("aborted")) {
-                if (!jobData.getReportEmail().equals("") && !jobData.isFinished()) {
-                    String subject = "Crawl job";
-                    String text = "Crawl job on " + jobData.getCrawlURL() + " was finished with status " + result.getStatus() +
-                            "\nResults are available at " + resourceManager.getResourceUri().replace("api/", "jobinfo?id=") + job;
-                    SendEmail.send(jobData.getReportEmail(), subject, text, emailServer);
-                    crawlJobDao.setJobFinished(job, true);
-                }
-                if (jobData.getJobURL().equals("")) {
-                    crawlJobDao.setJobUrl(job, client.getValidPDFReportUri(job).replace("mirror/Valid_PDF_Report.txt", ""));
-                    //jobData.setFinishTime(LocalDateTime.now());
-                    crawlJobDao.writeFinishTime(crawlJobDao.getCrawlJob(job));
-                }
-                client.teardownJob(jobData.getId());
-            }
-
-            result.startTime = jobData.getStartTime().format(formatter) + " GMT";
-            if (jobData.getFinishTime() != null) {
-                result.finishTime = jobData.getFinishTime().format(formatter) + " GMT";
-            } else {
-                result.finishTime = "";
-            }
-            return result;
-        }
-        catch (Exception e) {
-            logger.error("Error on job data request", e);
-            e.printStackTrace();
-        }
-        return null;
-    }
-
     @POST
     @Timed
-    @Path("/batch")
     @Produces("text/plain")
     @Consumes(MediaType.APPLICATION_JSON)
     public String startBatchJob(StartBatchJobData jobData) {
         String id = UUID.randomUUID().toString();
-        BatchJob batch = new BatchJob(id, jobData.getReportEmail(), jobData.getDate());
-        logger.info("Batch job creation.");
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        BatchJob batch = new BatchJob(id, jobData.getReportEmail(),
+                LocalDateTime.of(LocalDate.parse(jobData.getDate(), dateFormatter), LocalTime.MIN));
+        logger.info("Batch job creation on domains: " + String.join(", ",jobData.getDomains()));
         for(String domain : jobData.getDomains()) {
-            StartJobData data = new StartJobData(domain, jobData.getDate());
-            data.setReportEmail(jobData.getReportEmail());
-            data.setForceStart(false);
-            batch.getCrawlJobs().add(startJob(data).getId());
+            batch.getCrawlJobs().add(startCrawlJob(domain, jobData.isDoOverwrite()));
         }
         batchJobDao.addBatchJob(batch);
-        String reportUrl = uriInfo.getBaseUri().toString() + "batch/" + id;
-        return "Batch job successfully submitted. You can track it on " + reportUrl +
-                ". Notification will be sent on the email address you provided when the job is finished.";
+        return id;
     }
 
     @GET
     @Timed
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/batch/{job}")
-    public List<CrawlJobReference> getBatchJob(@PathParam("job") String jobId) {
+    @Path("/{job}")
+    public List<CrawlJobReport> getBatchJob(@PathParam("job") String jobId) {
+        if (resourceManager.getResourceUri() == null && uriInfo != null) {
+            resourceManager.setResourceUri(uriInfo.getBaseUri().toString());
+        }
+        List<CrawlJobReport> result = new ArrayList<>();
         boolean isBatchJobFinished = true;
-        List<CrawlJobReference> result = new ArrayList<>();
-        List<String> crawlJobs = batchJobDao.getCrawlJobsForBatch(jobId);
-        for(String crawlJobId: crawlJobs) {
-            SingleURLJobReport report = getJob(crawlJobId);
-            result.add(new CrawlJobReference(crawlJobId, report.getStatus(), resourceManager.getResourceUri().replace("api/", "jobinfo?id=") + crawlJobId));
-            if(!report.getStatus().startsWith("finished") && !report.getStatus().startsWith("aborted")) {
+        BatchJob job = batchJobDao.getBatchJob(jobId);
+        for(String crawlJobId: job.getCrawlJobs()) {
+            CrawlJobReport report = getJob(crawlJobId, job.getCrawlSinceTime());
+            result.add(report);
+            if(report.getFinishTime() == null) {
                 isBatchJobFinished = false;
             }
         }
-        if(isBatchJobFinished) {
+        if(isBatchJobFinished && !job.isFinished()) {
             batchJobDao.setJobFinished(jobId);
+            List<String> domains = new ArrayList<>();
+            for(String crawlJobId: job.getCrawlJobs()) {
+                domains.add(crawlJobDao.getCrawlUrl(crawlJobId));
+            }
+            if(job.getEmailAddress() != null && !job.getEmailAddress().equals("")) {
+                String subject = "Crawl job";
+                String text = "Batch job was finished successfully. List of crawled domains:\n" + String.join("\n ", domains);
+                SendEmail.send(job.getEmailAddress(), subject, text, emailServer);
+            }
         }
         return result;
     }
@@ -282,8 +194,8 @@ public class ControlResource {
     @Path("/email")
     @Consumes(MediaType.APPLICATION_JSON)
     public void setReportEmail(EmailAddress address) {
-        logger.info("Email address updated for job " + address.getJob());
-        crawlJobDao.setReportEmail(address.getJob(), address.getEmailAddress());
+        logger.info("Email address updated for batch job " + address.getBatchJobId());
+        batchJobDao.setReportEmail(address.getBatchJobId(), address.getEmailAddress());
     }
 
     @POST
@@ -292,7 +204,6 @@ public class ControlResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public void addValidationJob(ValidationJobData data) {
         logger.info("Received information about PDF file");
-        String[] parts = data.getJobDirectory().split("/");
         try {
             service.addJob(data);
         }
@@ -303,20 +214,19 @@ public class ControlResource {
 
     @POST
     @Timed
-    @Path("/microsoft_office")
+    @Path("/office_document")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void addMicrosoftOfficeFile(OfficeFileData data) {
-        logger.info("Received information about Microsoft office file");
-        insertDocumentDao.addMicrosoftOfficeFile(data.getFileUrl(), data.getJobId(), data.getLastModified());
-    }
-
-    @POST
-    @Timed
-    @Path("/odf")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public void addOdfFile(OfficeFileData data) {
-        logger.info("Received information about ODF file");
-        insertDocumentDao.addOdfFile(data.getFileUrl(), data.getJobId(), data.getLastModified());
+    public void addMicrosoftOfficeFile(OfficeDocumentData data) {
+        logger.info("Received information about office document" + data.getFileUrl());
+        if(stringEndsWithItemFromList(data.getFileUrl(), ODF_SUFFIXES)) {
+            insertDocumentDao.addOdfFile(data.getFileUrl(), data.getJobId(), data.getLastModified());
+        }
+        if(stringEndsWithItemFromList(data.getFileUrl(), OFFICE_SUFFIXES)) {
+            insertDocumentDao.addMicrosoftOfficeFile(data.getFileUrl(), data.getJobId(), data.getLastModified());
+        }
+        if(stringEndsWithItemFromList(data.getFileUrl(), OOXML_SUFFIXES)) {
+            insertDocumentDao.addOpenOfficeXMLFile(data.getFileUrl(), data.getJobId(), data.getLastModified());
+        }
     }
 
     private String trimUrl(String url) {
@@ -330,5 +240,84 @@ public class ControlResource {
             url = url.substring(0, url.length() - 1);
         }
         return url;
+    }
+
+    private boolean stringEndsWithItemFromList(String string, String[] suffixes) {
+        return Arrays.stream(suffixes).parallel().anyMatch(string::endsWith);
+    }
+
+    private String startCrawlJob(String domain, boolean overwrite){
+        // TODO: rework overwirite
+        overwrite = false;
+        try {
+            if (resourceManager.getResourceUri() == null && uriInfo != null) {
+                resourceManager.setResourceUri(uriInfo.getBaseUri().toString());
+            }
+            if (crawlJobDao.doesJobExist(trimUrl(domain)) && !overwrite) { // This URL has already been crawled and job is not forced to overwrite
+                return crawlJobDao.getCrawlJobByCrawlUrl(trimUrl(domain)).getId();
+            } else {
+                if (overwrite && crawlJobDao.doesJobExist(trimUrl(domain))) { // This URL has already been crawled but the old job needs to be overwritten
+                    client.teardownJob(crawlJobDao.getCrawlJobByCrawlUrl(trimUrl(domain)).getId());
+                    crawlJobDao.removeJob(crawlJobDao.getCrawlJobByCrawlUrl(trimUrl(domain)));
+                }
+                // Brand new URL
+                ArrayList<String> list = new ArrayList<>();
+                if (domain.startsWith("http://") || domain.startsWith("https://")) {
+                    list.add(trimUrl(domain));
+                } else {
+                    list.add(trimUrl(domain));
+                    list.add(list.get(0).replace("https://", "http://"));
+                }
+
+                String id = UUID.randomUUID().toString();
+                client.createJob(id, list);
+                client.buildJob(id);
+                client.launchJob(id);
+                crawlJobDao.addJob(new CurrentJob(id, "", trimUrl(domain), LocalDateTime.now()));
+                logger.info("Job creation on " + domain);
+                return id;
+            }
+        }
+        catch (Exception e) {
+            logger.error("Error on job creation", e);
+            return "";
+        }
+    }
+
+    private CrawlJobReport getJob(String job, LocalDateTime crawlSince) {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
+            String jobURL = crawlJobDao.getCrawlJob(job).getJobURL();
+            CrawlJobReport result;
+            if (jobURL.equals("")) {
+                result = reporter.getReport(job, crawlSince);
+            } else {
+                result = reporter.getReport(job, jobURL, crawlSince);
+            }
+            CurrentJob jobData = crawlJobDao.getCrawlJob(job);
+
+            if (result.getStatus().startsWith("finished") || result.getStatus().startsWith("aborted")) {
+                if (!jobData.isFinished()) {
+                    crawlJobDao.setJobFinished(job, true);
+                }
+                if (jobData.getJobURL().equals("")) {
+                    crawlJobDao.setJobUrl(job, client.getValidPDFReportUri(job).replace("mirror/Valid_PDF_Report.txt", ""));
+                    logger.info("Writing finish time for job " + job);
+                    result.setFinishTime(crawlJobDao.writeFinishTime(job));
+                }
+                client.teardownJob(jobData.getId());
+            }
+
+            result.setStartTime(jobData.getStartTime().format(formatter) + " GMT");
+            if (jobData.getFinishTime() != null) {
+                result.setFinishTime(jobData.getFinishTime().format(formatter) + " GMT");
+            }
+            return result;
+        }
+        catch (Exception e) {
+            logger.error("Error on job data request", e);
+            e.printStackTrace();
+        }
+        return null;
     }
 }

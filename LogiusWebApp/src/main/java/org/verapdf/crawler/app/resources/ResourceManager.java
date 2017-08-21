@@ -7,16 +7,15 @@ import org.verapdf.crawler.domain.crawling.BatchJob;
 import org.verapdf.crawler.domain.crawling.CurrentJob;
 import org.verapdf.crawler.domain.database.MySqlCredentials;
 import org.verapdf.crawler.domain.email.EmailServer;
-import org.verapdf.crawler.domain.report.SingleURLJobReport;
+import org.verapdf.crawler.domain.report.CrawlJobReport;
 import org.verapdf.crawler.app.engine.HeritrixClient;
 import org.verapdf.crawler.report.HeritrixReporter;
+import org.verapdf.crawler.repository.document.ValidatedPDFDao;
 import org.verapdf.crawler.repository.jobs.BatchJobDao;
 import org.verapdf.crawler.repository.jobs.CrawlJobDao;
 import org.verapdf.crawler.validation.ValidationService;
 
 import javax.sql.DataSource;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 
 public class ResourceManager {
     private final static String JDBC_DRIVER = "com.mysql.jdbc.Driver";
@@ -31,27 +30,30 @@ public class ResourceManager {
     private final ValidationService validationService;
     private final EmailServer emailServer;
 
-    public ResourceManager(HeritrixClient client, EmailServer emailServer, String verapdfPath, MySqlCredentials credentials) {
+    public ResourceManager(HeritrixClient client, EmailServer emailServer, String verapdfUrl, MySqlCredentials credentials) {
         DataSource dataSource = createMySqlDatasource(credentials);
         crawlJobDao = new CrawlJobDao(dataSource);
         BatchJobDao batchJobDao = new BatchJobDao(dataSource);
 
-        HeritrixReporter reporter = new HeritrixReporter(client, dataSource);
+        HeritrixReporter reporter = new HeritrixReporter(client, dataSource, crawlJobDao);
         this.emailServer = emailServer;
 
-        validationService = new ValidationService(verapdfPath, dataSource);
-        infoResourse = new InfoResourse(validationService, client, crawlJobDao);
-        reportResource = new ReportResource(reporter, this, crawlJobDao);
+        validationService = new ValidationService(verapdfUrl, dataSource, new ValidatedPDFDao(dataSource));
+        infoResourse = new InfoResourse(validationService, batchJobDao);
+        reportResource = new ReportResource(reporter, crawlJobDao, batchJobDao);
         controlResource = new ControlResource(client, reporter, emailServer,validationService,
                 this, crawlJobDao, dataSource, batchJobDao);
 
-        for(CurrentJob job: crawlJobDao.getAllJobs()) {
-            if(job.getFinishTime() == null) {
-                crawlJobDao.writeFinishTime(job);
+        for(BatchJob batchJob: batchJobDao.getBatchJobs()) {
+            for (String jobId: batchJob.getCrawlJobs()) {
+                CurrentJob job = crawlJobDao.getCrawlJob(jobId);
+                if (job.getFinishTime() == null) {
+                    crawlJobDao.writeFinishTime(job.getId());
+                }
             }
         }
 
-        new Thread(new StatusMonitor(this, crawlJobDao, batchJobDao)).start();
+        new Thread(new StatusMonitor(batchJobDao, controlResource)).start();
         validationService.start();
         new Thread(validationService).start();
         logger.info("Validation service started.");
@@ -68,8 +70,6 @@ public class ResourceManager {
     public ControlResource getControlResource() {
         return controlResource;
     }
-
-    SingleURLJobReport getJob(String job) { return controlResource.getJob(job); }
 
     String getResourceUri() { return resourceUri; }
 

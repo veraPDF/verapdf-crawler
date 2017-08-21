@@ -16,7 +16,7 @@
         <module>LogiusWebApp</module>
         <module>SampleWebApp</module>
         <module>HeritrixExtention</module>
-        <module>LogiusConsoleApp</module>
+        <module>VeraPDFService</module>
     </modules>
 
 </project>

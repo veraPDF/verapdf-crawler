@@ -10,7 +10,7 @@ import java.util.List;
 
 public class ValidationJobDao {
     private final JdbcTemplate template;
-    public static final String VALIDATION_JOB_TABLE_NAME = "validation_jobs";
+    private static final String VALIDATION_JOB_TABLE_NAME = "validation_jobs";
     public static final String FIELD_FILEPATH = "filepath";
     public static final String FIELD_JOB_DIRECTORY = "job_directory";
     public static final String FIELD_FILE_URL = "file_url";
@@ -18,25 +18,27 @@ public class ValidationJobDao {
 
     public ValidationJobDao(DataSource dataSource) {
         this.template = new JdbcTemplate(dataSource);
-        template.execute(String.format("CREATE TABLEIF NOT EXISTS `%s` (\n" +
-                "  `%s` varchar(255) DEFAULT NULL,\n" +
-                "  `%s` varchar(255) DEFAULT NULL,\n" +
-                "  `%s` varchar(255) DEFAULT NULL,\n" +
-                "  `%s` datetime DEFAULT NULL\n" +
-                ")", VALIDATION_JOB_TABLE_NAME, FIELD_FILEPATH,
-                FIELD_JOB_DIRECTORY, FIELD_FILE_URL, FIELD_LAST_MODIFIED));
     }
 
-    public List<ValidationJobData> getAllJobs() {
-        return template.query("select * from " + VALIDATION_JOB_TABLE_NAME, new ValidationJobMapper());
+    public List<ValidationJobData> removeAll() {
+        List<ValidationJobData> result = template.query("select * from " + VALIDATION_JOB_TABLE_NAME, new ValidationJobMapper());
+        for(ValidationJobData data: result) {
+            deleteJob(data);
+        }
+        return result;
     }
 
-    public void deleteJob(ValidationJobData job) {
+    private void deleteJob(ValidationJobData job) {
         template.update(String.format("delete from %s where %s=?", VALIDATION_JOB_TABLE_NAME, FIELD_FILEPATH), job.getFilepath());
     }
 
     public void addJob(ValidationJobData job) {
-        String sql = String.format("insert into %s (%s, %s, %s, %s) values (?,?,?,?)", VALIDATION_JOB_TABLE_NAME, FIELD_FILEPATH, FIELD_JOB_DIRECTORY, FIELD_FILE_URL,FIELD_LAST_MODIFIED);
-        template.update(sql, job.getFilepath(), job.getJobDirectory(), job.getUri(), DaoUtils.getSqlTimeFromLastmodified(job.getTime()));
+        template.update(String.format("insert into %s (%s, %s, %s, %s) values (?,?,?,?)",
+                VALIDATION_JOB_TABLE_NAME, FIELD_FILEPATH, FIELD_JOB_DIRECTORY, FIELD_FILE_URL,FIELD_LAST_MODIFIED),
+                job.getFilepath(), job.getJobDirectory(), job.getUri(), DaoUtils.getSqlTimeFromLastmodified(job.getTime()));
+    }
+
+    public Integer getQueueSize() {
+        return template.queryForObject(String.format("select count(*) from %s", VALIDATION_JOB_TABLE_NAME), Integer.class);
     }
 }

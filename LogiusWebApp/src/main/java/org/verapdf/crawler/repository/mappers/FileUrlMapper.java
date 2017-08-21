@@ -8,6 +8,6 @@ import java.sql.SQLException;
 public class FileUrlMapper implements RowMapper<String> {
     @Override
     public String mapRow(ResultSet resultSet, int i) throws SQLException {
-        return resultSet.getString("file_url");
+        return resultSet.getString("document_url");
     }
 }

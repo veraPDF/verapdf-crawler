@@ -18,7 +18,7 @@ credentials:
 resourcePath: /home/anton/Documents/Logius/LogiusWebApp/src/main/resources/
 heritrixLogin: admin
 heritrixPassword: logius
-verapdfPath: /home/anton/verapdf/verapdf
+verapdfUrl: http://localhost:8100
 logging:
   level: WARN
   loggers:

@@ -33,7 +33,7 @@ public class SendEmail {
             transport.close();
             logger.info("Notification email was sent at" + targetEmail);
         }catch (MessagingException mex) {
-            logger.error("Email sending error", mex);
+            logger.error("Email sending error at address " + targetEmail, mex);
         }
     }
 }
