@@ -11,7 +11,7 @@ public class LogiusConfiguration extends Configuration {
     private String heritrixLogin;
     private String heritrixPassword;
     private String resourcePath;
-    private String verapdfPath;
+    private String verapdfUrl;
 
     @JsonProperty
     public MySqlCredentials getCredentials() {
@@ -24,13 +24,13 @@ public class LogiusConfiguration extends Configuration {
     }
 
     @JsonProperty
-    public String getVerapdfPath() {
-        return verapdfPath;
+    public String getVerapdfUrl() {
+        return verapdfUrl;
     }
 
     @JsonProperty
-    public void setVerapdfPath(String verapdfPath) {
-        this.verapdfPath = verapdfPath;
+    public void setVerapdfUrl(String verapdfUrl) {
+        this.verapdfUrl = verapdfUrl;
     }
 
     @JsonProperty

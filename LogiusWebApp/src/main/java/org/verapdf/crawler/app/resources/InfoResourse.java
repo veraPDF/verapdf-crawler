@@ -3,8 +3,10 @@ package org.verapdf.crawler.app.resources;
 import com.codahale.metrics.annotation.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.domain.crawling.BatchJob;
 import org.verapdf.crawler.domain.crawling.CurrentJob;
 import org.verapdf.crawler.app.engine.HeritrixClient;
+import org.verapdf.crawler.repository.jobs.BatchJobDao;
 import org.verapdf.crawler.repository.jobs.CrawlJobDao;
 import org.verapdf.crawler.validation.ValidationService;
 import org.xml.sax.SAXException;
@@ -25,33 +27,23 @@ public class InfoResourse {
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
     private final ValidationService validationService;
-    private final HeritrixClient client;
-    private final CrawlJobDao crawlJobDao;
+    private final BatchJobDao batchJobDao;
 
-    InfoResourse(ValidationService validationService, HeritrixClient client, CrawlJobDao crawlJobDao) {
+    InfoResourse(ValidationService validationService, BatchJobDao batchJobDao) {
         this.validationService = validationService;
-        this.client = client;
-        this.crawlJobDao = crawlJobDao;
+        this.batchJobDao = batchJobDao;
     }
 
     @GET
     @Timed
     @Path("/{job}/email_address")
-    public String getReportEmail(@PathParam("job") String job) {
-        return getJobById(job).getReportEmail();
-    }
+    public String getReportEmail(@PathParam("job") String job) { return batchJobDao.getReportEmail(job); }
 
     @GET
     @Timed
     @Path("/list")
-    public List<CurrentJob> getJobs() {
-        try {
-            refreshCurrentJobs();
-        }
-        catch (Exception e) {
-            logger.error("Error on refreshing job status", e);
-        }
-        return crawlJobDao.getAllJobs();
+    public List<BatchJob> getJobs() {
+        return batchJobDao.getBatchJobs();
     }
 
     @GET
@@ -60,20 +52,5 @@ public class InfoResourse {
     @Produces(MediaType.TEXT_PLAIN)
     public String getQueueSize() {
         return validationService.getQueueSize().toString();
-    }
-
-    private CurrentJob getJobById(String job) {
-        return crawlJobDao.getCrawlJob(job);
-    }
-
-    private void refreshCurrentJobs() throws SAXException, ParserConfigurationException, IOException {
-        for(CurrentJob job : crawlJobDao.getAllJobs()) {
-            if(!job.isFinished()) {
-                crawlJobDao.setStatus(job.getId(), client.getCurrentJobStatus(job.getId()));
-            }
-            else {
-                crawlJobDao.setStatus(job.getId(), "finished");
-            }
-        }
     }
 }

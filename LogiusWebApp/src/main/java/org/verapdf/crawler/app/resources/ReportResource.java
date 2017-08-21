@@ -2,10 +2,12 @@ package org.verapdf.crawler.app.resources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.domain.crawling.BatchJob;
 import org.verapdf.crawler.domain.crawling.CurrentJob;
-import org.verapdf.crawler.domain.database.MySqlCredentials;
-import org.verapdf.crawler.domain.report.ValidationError;
+import org.verapdf.crawler.domain.report.CrawlJobReport;
+import org.verapdf.crawler.domain.report.DocumentList;
 import org.verapdf.crawler.report.HeritrixReporter;
+import org.verapdf.crawler.repository.jobs.BatchJobDao;
 import org.verapdf.crawler.repository.jobs.CrawlJobDao;
 
 import javax.ws.rs.GET;
@@ -15,7 +17,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Produces(MediaType.APPLICATION_JSON)
@@ -25,105 +26,113 @@ public class ReportResource {
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
     private final HeritrixReporter reporter;
-    private final ResourceManager resourceManager;
+    private final BatchJobDao batchJobDao;
     private final CrawlJobDao crawlJobDao;
 
-    ReportResource(HeritrixReporter reporter, ResourceManager resourceManager, CrawlJobDao crawlJobDao) {
+    ReportResource(HeritrixReporter reporter, CrawlJobDao crawlJobDao, BatchJobDao batchJobDao) {
         this.reporter = reporter;
-        this.resourceManager = resourceManager;
         this.crawlJobDao = crawlJobDao;
+        this.batchJobDao = batchJobDao;
     }
 
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    @Path("/ods_report/{job}")
-    public Response getODSReport(@PathParam("job") String job) {
+    @Path("/ods_report/{batchJob}/{crawlJob}")
+    public Response getODSReport(@PathParam("batchJob") String batchJob, @PathParam("crawlJob") String crawlJob) {
         try {
-            CurrentJob currentJob = crawlJobDao.getCrawlJob(job);
+            CurrentJob currentJob = crawlJobDao.getCrawlJob(crawlJob);
             String jobURL = currentJob.getJobURL();
             File file;
             if (jobURL.equals("")) {
-                file = reporter.buildODSReport(job, crawlJobDao.getCrawlSince(job));
+                file = reporter.buildODSReport(crawlJob, batchJobDao.getCrawlSince(batchJob));
             } else {
-                file = reporter.buildODSReport(job, jobURL, crawlJobDao.getCrawlSince(job));
+                file = reporter.buildODSReport(crawlJob, jobURL, batchJobDao.getCrawlSince(batchJob));
             }
-            logger.info("ODS report requested");
+            logger.info("ODS report requested for job " + crawlJob);
             return Response.ok(file, MediaType.APPLICATION_OCTET_STREAM)
                     .header("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"")
                     .build();
         }
         catch (Exception e) {
-            logger.error("Error on ODS report request", e);
+            logger.error("Error on ODS report request for job " + crawlJob, e);
+        }
+        return Response.serverError().build();
+    }
+
+    @GET
+    @Path("/{job}")
+    public List<CrawlJobReport> getReport(@PathParam("job") String job) {
+        try {
+            BatchJob batchJob = batchJobDao.getBatchJob(job);
+            logger.info("Job report requested for batch job " + job);
+            List<CrawlJobReport> result = new ArrayList<>();
+            for(String crawlJobId: batchJob.getCrawlJobs()) {
+                String jobURL = crawlJobDao.getCrawlJob(crawlJobId).getJobURL();
+                if (jobURL.equals("")) {
+                    result.add(reporter.getReport(crawlJobId, batchJob.getCrawlSinceTime()));
+                } else {
+                    result.add(reporter.getReport(crawlJobId, jobURL, batchJob.getCrawlSinceTime()));
+                }
+            }
+            return result;
+        }
+        catch (Exception e) {
+            logger.error("Error on report request for batch job " + job, e);
         }
         return null;
     }
 
     @GET
-    @Produces(MediaType.TEXT_HTML)
-    @Path("/html_report/{job}")
-    public String getHtmlReport(@PathParam("job") String job) {
-        try {
-            String jobURL = crawlJobDao.getCrawlJob(job).getJobURL();
-            String htmlReport;
-            if (jobURL.equals("")) {
-                htmlReport = reporter.buildHtmlReport(job, crawlJobDao.getCrawlSince(job));
-            } else {
-                htmlReport = reporter.buildHtmlReport(job, jobURL, crawlJobDao.getCrawlSince(job));
-            }
-            htmlReport = htmlReport.replace("INVALID_PDF_REPORT", resourceManager.getResourceUri() + "report/invalid_pdf_list/" + job);
-            htmlReport = htmlReport.replace("OFFICE_REPORT", resourceManager.getResourceUri() + "report/office_list/" + job);
-            logger.info("HTML report requested");
-            return htmlReport;
-        }
-        catch (Exception e) {
-            logger.error("Exception on HTML report request", e);
-        }
-        return "";
-    }
-
-    @GET
-    @Produces(MediaType.TEXT_HTML)
     @Path("office_list/{job}")
-    public String getOfficeReport(@PathParam("job") String job) {
+    public List<DocumentList> getOfficeReport(@PathParam("job") String job) {
         try {
-            String result = String.join("\n", reporter.getOfficeReport(job, crawlJobDao.getCrawlSince(job)));
-            logger.info("List of Microsoft Office files requested");
-            return addLinksToUrlList(result).toString();
+            logger.info("List of Microsoft office files requested for batch job " + job);
+            List<DocumentList> result = new ArrayList<>();
+            BatchJob batchJob = batchJobDao.getBatchJob(job);
+            for(String crawlJobId: batchJob.getCrawlJobs()) {
+                result.add(new DocumentList(crawlJobDao.getCrawlUrl(crawlJobId), reporter.getOfficeReport(crawlJobId, batchJob.getCrawlSinceTime())));
+            }
+            return result;
         }
         catch (Exception e) {
-            logger.error("Error on list of Microsoft Office files request", e);
+            logger.error("Error on list of Microsoft Office files request for batch job "+ job, e);
         }
-        return "";
+        return null;
     }
 
     @GET
-    @Produces(MediaType.TEXT_HTML)
     @Path("invalid_pdf_list/{job}")
-    public String getInvalidPdfReport(@PathParam("job") String job) {
+    public List<DocumentList> getInvalidPdfReport(@PathParam("job") String job) {
         try {
-            CurrentJob jobData = crawlJobDao.getCrawlJob(job);
-            StringBuilder result = new StringBuilder("</table><h2>File details<h2>");
-            result.append(reporter.getInvalidPdfHtmlReport(job, jobData.getCrawlSinceTime()));
-            logger.info("List of invalid PDF documents requested");
-            return result.toString();
+            logger.info("List of invalid PDF documents requested for batch job " + job);
+            List<DocumentList> result = new ArrayList<>();
+            BatchJob batchJob = batchJobDao.getBatchJob(job);
+            for(String crawlJobId: batchJob.getCrawlJobs()) {
+                result.add(new DocumentList(crawlJobDao.getCrawlUrl(crawlJobId), reporter.getInvalidPdfReport(crawlJobId, batchJob.getCrawlSinceTime())));
+            }
+            return result;
         }
         catch (Exception e) {
-            logger.error("Error on list of invalid PDF documents request", e);
+            logger.error("Error on list of invalid PDF documents request for batch job "+ job, e);
         }
-        return "";
+        return null;
     }
 
-    private StringBuilder addLinksToUrlList(String list) {
-        StringBuilder result = new StringBuilder();
-        Scanner scanner = new Scanner(list);
-        while (scanner.hasNextLine()) {
-            String url = scanner.nextLine();
-            result.append("<p><a href=\"");
-            result.append(url);
-            result.append("\">");
-            result.append(url);
-            result.append("</a></p>");
+    @GET
+    @Path("ooxml_list/{job}")
+    public List<DocumentList> getOoxmlReport(@PathParam("job") String job) {
+        try {
+            logger.info("List of Open office XML files requested for batch job " + job);
+            List<DocumentList> result = new ArrayList<>();
+            BatchJob batchJob = batchJobDao.getBatchJob(job);
+            for(String crawlJobId: batchJob.getCrawlJobs()) {
+                result.add(new DocumentList(crawlJobDao.getCrawlUrl(crawlJobId), reporter.getOoxmlReport(crawlJobId, batchJob.getCrawlSinceTime())));
+            }
+            return result;
         }
-        return result;
+        catch (Exception e) {
+            logger.error("Error on list of Open office XML files request for batch job "+ job, e);
+        }
+        return null;
     }
 }

@@ -4,12 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class EmailAddress {
     private String emailAddress;
+    private String batchJobId;
 
-    private String job;
-
-    public EmailAddress() {
-        // Jackson deserialization
-    }
+    public EmailAddress() {}
 
     public EmailAddress(String address) {
         emailAddress = address;
@@ -24,13 +21,13 @@ public class EmailAddress {
     public void setEmailAddress(String emailAddress) { this.emailAddress = emailAddress; }
 
     @JsonProperty
-    public String getJob() {
-        return job;
+    public String getBatchJobId() {
+        return batchJobId;
     }
 
     @JsonProperty
-    public void setJob(String job) {
-        this.job = job;
+    public void setBatchJobId(String batchJobId) {
+        this.batchJobId = batchJobId;
     }
 
 }

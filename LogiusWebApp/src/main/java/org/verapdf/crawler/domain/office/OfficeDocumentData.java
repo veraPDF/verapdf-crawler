@@ -1,6 +1,6 @@
 package org.verapdf.crawler.domain.office;
 
-public class OfficeFileData {
+public class OfficeDocumentData {
 
     private String jobId;
     private String fileUrl;

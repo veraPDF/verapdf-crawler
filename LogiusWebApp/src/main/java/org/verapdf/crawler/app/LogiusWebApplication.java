@@ -39,7 +39,7 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
             client.setBaseDirectory(configuration.getResourcePath());
             resourceManager = new ResourceManager( client,
                     configuration.getEmailServer(),
-                    configuration.getVerapdfPath(),
+                    configuration.getVerapdfUrl(),
                     configuration.getCredentials());
             environment.jersey().register(resourceManager.getInfoResourse());
             environment.jersey().register(resourceManager.getReportResource());
