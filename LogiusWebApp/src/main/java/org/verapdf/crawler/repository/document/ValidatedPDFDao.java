@@ -85,14 +85,12 @@ public class ValidatedPDFDao {
     }
 
     public Map<String, String> getPdfPropertiesWithXpath() {
-        logger.info("List of pdf properties requested");
         List<Map<String, Object>> results = template.queryForList(String.format("select %s, %s from %s",
                 FIELD_PDF_PROPERTY_NAME, FIELD_PDF_PROPERTY_XPATH, PDF_PROPERTIES_TABLE_NAME));
         Map<String, String> result = new HashMap<>();
         for(Map entry: results) {
             result.put(entry.get(FIELD_PDF_PROPERTY_NAME).toString(), entry.get(FIELD_PDF_PROPERTY_XPATH).toString());
         }
-        logger.info("Result: " + result);
         return result;
     }
 

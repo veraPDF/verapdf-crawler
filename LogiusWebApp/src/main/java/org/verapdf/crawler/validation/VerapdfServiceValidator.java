@@ -61,26 +61,30 @@ public class VerapdfServiceValidator implements PDFValidator {
         try {
             sendValidationSettings(validatedPDFDao);
             sendValidationRequest(filename);
-            int validationRetries = 0;
 
+            int validationRetries = 0;
             for (int i = 0; i < MAX_VALIDATION_TIMEOUT_IN_MINUTES * 6; i++) {
                 int responseCode = getValidationStatus();
+                logger.info("Response code is " + responseCode);
                 if (responseCode == HttpStatus.SC_OK) { // Vaidation is finished
+                    logger.info("Validation is finished");
                     return getValidationResult();
                 }
                 // Validation is in process
                 if (responseCode == HttpStatus.SC_PROCESSING) {
+                    logger.info("Validation is in progress");
                     Thread.sleep(10 * 1000);
                     continue;
                 }
                 // Something went wrong and validation was not finished
                 if (responseCode == HttpStatus.SC_CONTINUE) {
+                    logger.info("Something went wrong and validation was not finished");
                     validationRetries++;
-                    sendValidationSettings(validatedPDFDao);
-                    sendValidationRequest(filename);
                     if (validationRetries == MAX_VALIDATION_RETRIES) {
                         throw new Exception("Failed to process document " + filename);
                     }
+                    sendValidationSettings(validatedPDFDao);
+                    sendValidationRequest(filename);
                     // Reset timeout cycle
                     i = 0;
                 } else { // Got unexpected response code
@@ -103,6 +107,7 @@ public class VerapdfServiceValidator implements PDFValidator {
         propertiesPost.setEntity(new StringEntity(mapper.writeValueAsString(properties)));
         httpClient.execute(propertiesPost);
         propertiesPost.releaseConnection();
+        logger.info("Validation settings have been sent");
     }
 
     private void sendValidationRequest(String filename) throws IOException {
@@ -110,13 +115,20 @@ public class VerapdfServiceValidator implements PDFValidator {
         post.setEntity(new StringEntity(filename));
         httpClient.execute(post);
         post.releaseConnection();
+        logger.info("Validation request have been sent");
     }
 
     private int getValidationStatus() throws IOException {
-        return httpClient.execute(new HttpGet(verapdfUrl)).getStatusLine().getStatusCode();
+        HttpGet get = new HttpGet(verapdfUrl);
+        int result = httpClient.execute(get).getStatusLine().getStatusCode();
+        get.releaseConnection();
+        return result;
     }
 
     private VeraPDFValidationResult getValidationResult() throws IOException {
-        return new ObjectMapper().readValue(httpClient.execute(new HttpGet(verapdfUrl)).getEntity().getContent(), VeraPDFValidationResult.class);
+        HttpGet get = new HttpGet(verapdfUrl);
+        VeraPDFValidationResult result = new ObjectMapper().readValue(httpClient.execute(new HttpGet(verapdfUrl)).getEntity().getContent(), VeraPDFValidationResult.class);
+        get.releaseConnection();
+        return result;
     }
 }
