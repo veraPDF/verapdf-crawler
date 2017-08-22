@@ -8,6 +8,8 @@ import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.verapdf.crawler.app.healthchecks.HeritrixHealthCheck;
+import org.verapdf.crawler.app.healthchecks.VeraPDFServiceHealthCheck;
 import org.verapdf.crawler.app.resources.ResourceManager;
 
 public class LogiusWebApplication extends Application<LogiusConfiguration> {
@@ -44,6 +46,8 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
             environment.jersey().register(resourceManager.getInfoResourse());
             environment.jersey().register(resourceManager.getReportResource());
             environment.jersey().register(resourceManager.getControlResource());
+            environment.healthChecks().register("heritrix", new HeritrixHealthCheck(client));
+            environment.healthChecks().register("verapdf", new VeraPDFServiceHealthCheck(configuration.getVerapdfUrl()));
         } catch (Exception e) {
             logger.error("Error on logius web application startup", e);
             e.printStackTrace();

@@ -217,7 +217,7 @@ public class ControlResource {
     @Path("/office_document")
     @Consumes(MediaType.APPLICATION_JSON)
     public void addMicrosoftOfficeFile(OfficeDocumentData data) {
-        logger.info("Received information about office document" + data.getFileUrl());
+        logger.info("Received information about office document " + data.getFileUrl());
         if(stringEndsWithItemFromList(data.getFileUrl(), ODF_SUFFIXES)) {
             insertDocumentDao.addOdfFile(data.getFileUrl(), data.getJobId(), data.getLastModified());
         }
@@ -294,6 +294,7 @@ public class ControlResource {
             } else {
                 result = reporter.getReport(job, jobURL, crawlSince);
             }
+            crawlJobDao.setStatus(job, result.getStatus());
             CurrentJob jobData = crawlJobDao.getCrawlJob(job);
 
             if (result.getStatus().startsWith("finished") || result.getStatus().startsWith("aborted")) {
