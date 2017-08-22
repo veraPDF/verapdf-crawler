@@ -1,12 +1,25 @@
 package org.verapdf.service;
 
 import com.codahale.metrics.annotation.Timed;
+import org.verapdf.core.VeraPDFException;
 import org.verapdf.crawler.domain.validation.VeraPDFValidationResult;
+import org.verapdf.features.FeatureExtractorConfig;
+import org.verapdf.pdfa.validation.validators.ValidatorConfig;
+import org.verapdf.processor.BatchProcessor;
+import org.verapdf.processor.ProcessorConfig;
+import org.verapdf.processor.ProcessorFactory;
+import org.verapdf.processor.TaskType;
+import org.verapdf.processor.reports.BatchSummary;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,11 +49,13 @@ public class ValidationResource {
 
     @POST
     @Timed
-    public void processValidateRequest(String filename) throws InterruptedException {
+    public void processValidateRequest(String filename) {
         if(status.equals(STATUS_ACTIVE)) {
             discardCurrentJob();
         }
-        validate(filename);
+        status = STATUS_ACTIVE;
+        this.validationResult = validate(filename);
+        status = STATUS_FINISHED;
     }
 
     @GET
@@ -63,17 +78,39 @@ public class ValidationResource {
         validationResult = null;
     }
 
-    private void validate(String filename) throws InterruptedException {
-        status = STATUS_ACTIVE;
-
-        validationResult = new VeraPDFValidationResult();
-        validationResult.setValidationErrors(new ArrayList<>());
-        validationResult.setValid(true);
-        for(Map.Entry<String, String> property: validationSettings.entrySet()) {
-            validationResult.addProperty(property.getKey(), property.getValue());
+    private VeraPDFValidationResult validate(String filename) {
+        File xmlReport;
+        try {
+            xmlReport = File.createTempFile("veraPDF-tempXMLReport", ".xml"); //$NON-NLS-1$//$NON-NLS-2$
+            xmlReport.deleteOnExit();
+        } catch (IOException e) {
+            return generateProcessingErrorResult("Can not generate temp file for report. Error: " + e.getMessage());
         }
-        Thread.sleep(1000);
+        try (OutputStream mrrReport = new FileOutputStream(xmlReport)) {
+            ProcessType processType = veraAppConfig.getProcessType();
+            EnumSet<TaskType> tasks = processType.getTasks();
+            ValidatorConfig validatorConfig = this.configManager.getValidatorConfig();
+            FeatureExtractorConfig featuresConfig = this.configManager.getFeaturesConfig();
+            ProcessorConfig resultConfig = ProcessorFactory.fromValues(validatorConfig, featuresConfig,
+                    this.configManager.getPluginsCollectionConfig(), this.configManager.getFixerConfig(), tasks,
+                    veraAppConfig.getFixesFolder())
+            try (BatchProcessor processor = ProcessorFactory.fileBatchProcessor(resultConfig);) {
+                VeraAppConfig applicationConfig = this.configManager.getApplicationConfig();
+                BatchSummary batchSummary = processor.process(this.pdfs,
+                        ProcessorFactory.getHandler(FormatOption.MRR, applicationConfig.isVerbose(), mrrReport,
+                                applicationConfig.getMaxFailsDisplayed(), validatorConfig.isRecordPasses()));
+            }
+        } catch (IOException e) {
 
-        status = STATUS_FINISHED;
+        } catch (VeraPDFException e) {
+
+        }
+    }
+
+    private static VeraPDFValidationResult generateProcessingErrorResult(String errorMessage) {
+        VeraPDFValidationResult res = new VeraPDFValidationResult();
+        res.setValid(false);
+        res.setProcessingError(errorMessage);
+        return res;
     }
 }
