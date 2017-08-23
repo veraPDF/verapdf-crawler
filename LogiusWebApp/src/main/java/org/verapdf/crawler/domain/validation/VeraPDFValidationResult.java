@@ -24,8 +24,8 @@ public class VeraPDFValidationResult {
     }
 
     @JsonProperty
-    public void setValidationErrors(List<ValidationError> validationErrors) {
-        this.validationErrors = validationErrors;
+    public void setValidationErrors(List<ValidationError> validationErrorWithdescriptions) {
+        this.validationErrors = validationErrorWithdescriptions;
     }
 
     @JsonProperty

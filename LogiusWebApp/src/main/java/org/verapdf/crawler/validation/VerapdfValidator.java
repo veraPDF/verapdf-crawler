@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
-import org.verapdf.crawler.domain.validation.ValidationError;
+import org.verapdf.crawler.domain.validation.ValidationErrorWithdescription;
 import org.verapdf.crawler.repository.document.ValidatedPDFDao;
 import org.verapdf.processor.reports.Reports;
 import org.verapdf.processor.reports.RuleSummary;
@@ -30,7 +30,7 @@ public class VerapdfValidator implements PDFValidator {
     public boolean validateAndWirteResult(String filename, String fileUrl, ValidatedPDFDao validatedPDFDao) throws Exception {
         ValidationReport validationReport = getValidationReportForFile(filename);
         for(RuleSummary rule: validationReport.getDetails().getRuleSummaries()) {
-            validatedPDFDao.addErrorToDocument(new ValidationError(rule.getSpecification(), rule.getClause(),
+            validatedPDFDao.addErrorToDocument(new ValidationErrorWithdescription(rule.getSpecification(), rule.getClause(),
                     Integer.toString(rule.getTestNumber()), rule.getDescription()), fileUrl);
         }
         return validationReport.getDetails().getFailedRules() == 0;

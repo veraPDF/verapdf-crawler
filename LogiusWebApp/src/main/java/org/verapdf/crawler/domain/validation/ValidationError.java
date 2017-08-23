@@ -6,13 +6,11 @@ public class ValidationError {
     private String specification;
     private String clause;
     private String testNumber;
-    private String description;
 
-    public ValidationError(String specification, String clause, String testNumber, String description) {
+    ValidationError(String specification, String clause, String testNumber) {
         this.specification = specification;
         this.clause = clause;
         this.testNumber = testNumber;
-        this.description = description;
     }
 
     @JsonProperty
@@ -45,13 +43,4 @@ public class ValidationError {
         this.testNumber = testNumber;
     }
 
-    @JsonProperty
-    public String getDescription() {
-        return description;
-    }
-
-    @JsonProperty
-    public void setDescription(String description) {
-        this.description = description;
-    }
 }
