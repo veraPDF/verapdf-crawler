@@ -1,5 +1,6 @@
 package org.verapdf.crawler.domain.crawling;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDate;
@@ -30,6 +31,7 @@ public class BatchJob {
     }
 
     @JsonProperty
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd HH:mm:ss")
     public LocalDateTime getCrawlSinceTime() {
         return crawlSinceTime;
     }

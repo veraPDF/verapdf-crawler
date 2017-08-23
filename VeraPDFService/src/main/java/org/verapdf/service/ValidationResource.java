@@ -1,15 +1,9 @@
 package org.verapdf.service;
 
 import com.codahale.metrics.annotation.Timed;
-import org.verapdf.core.VeraPDFException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.validation.VeraPDFValidationResult;
-import org.verapdf.features.FeatureExtractorConfig;
-import org.verapdf.pdfa.validation.validators.ValidatorConfig;
-import org.verapdf.processor.BatchProcessor;
-import org.verapdf.processor.ProcessorConfig;
-import org.verapdf.processor.ProcessorFactory;
-import org.verapdf.processor.TaskType;
-import org.verapdf.processor.reports.BatchSummary;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -31,6 +25,7 @@ public class ValidationResource {
     private final static String STATUS_ACTIVE = "active";
     private final static String STATUS_FINISHED = "finished";
 
+    private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
     private Map<String, String> validationSettings;
     private String status;
     private VeraPDFValidationResult validationResult;
@@ -49,7 +44,8 @@ public class ValidationResource {
 
     @POST
     @Timed
-    public void processValidateRequest(String filename) {
+    public void processValidateRequest(String filename) throws InterruptedException {
+        logger.info("Starting processing of " + filename);
         if(status.equals(STATUS_ACTIVE)) {
             discardCurrentJob();
         }
@@ -73,6 +69,7 @@ public class ValidationResource {
     @DELETE
     @Timed
     public void discardCurrentJob() {
+        logger.info("Terminating current job");
         //?? veraPDF.stop();
         status = STATUS_IDLE;
         validationResult = null;

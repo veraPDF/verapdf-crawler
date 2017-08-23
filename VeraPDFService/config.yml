@@ -5,3 +5,15 @@ server:
   adminConnectors:
   - type: http
     port: 8101
+logging:
+  level: WARN
+  loggers:
+    "CustomLogger":
+      additive: false
+      level: INFO
+      appenders:
+      - type: file
+        currentLogFilename: /home/anton/Documents/Logius/logs/verapdfService.log
+        archive: true
+        archivedLogFilenamePattern: /home/anton/Documents/Logius/logs/logius-%d.log
+        archivedFileCount: 10

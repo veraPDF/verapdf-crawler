@@ -32,6 +32,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
@@ -65,11 +66,17 @@ public class HeritrixClient {
     }
 
     public void setBaseDirectory(String baseDirectory) { HeritrixClient.baseDirectory = baseDirectory; }
-
     public String getBaseDirectory() { return baseDirectory; }
 
     public void setHttpClient(HttpClient httpClient) {
         this.httpClient = httpClient;
+    }
+
+    public boolean testHeritrixAvailability() throws IOException {
+        HttpGet get = new HttpGet(baseUrl + "engine");
+        boolean result = httpClient.execute(get).getStatusLine().getStatusCode() == 200;
+        get.releaseConnection();
+        return result;
     }
 
     public int getDownloadedCount(String job) throws IOException, ParserConfigurationException, SAXException {
@@ -211,14 +218,20 @@ public class HeritrixClient {
     }
 
     public String getConfig(String jobUrl) throws IOException {
-        String config = getLogFileByURL(jobUrl + "sample_configuration.cxml");
+        String jobDirectory = jobUrl.substring(jobUrl.indexOf("anypath/") + 8);
+        File file = new File(jobDirectory + "sample_configuration.cxml");
+        if(!file.exists()) {
+            file = new File(jobDirectory + "crawler-beans.cxml");
+        }
+        byte[] encoded = Files.readAllBytes(Paths.get(file.getAbsolutePath()));
+        /*String config = getLogFileByURL(jobUrl + "sample_configuration.cxml");
         if(config.equals("")) {
             config = getLogFileByURL(jobUrl + "crawler-beans.cxml");
-        }
-        return config;
+        }*/
+        return new String(encoded);
     }
 
-    private String getLogFileByURL(String url) throws IOException {
+    /*private String getLogFileByURL(String url) throws IOException {
         HttpGet get = new HttpGet(url);
         InputStream response = httpClient.execute(get).getEntity().getContent();
         Scanner sc = new Scanner(response);
@@ -230,7 +243,7 @@ public class HeritrixClient {
         if(result.toString().contains("The page you are looking for does not exist"))
             return "";
         return result.toString();
-    }
+    }*/
 
     //<editor-fold desc="Private helpers">
 
