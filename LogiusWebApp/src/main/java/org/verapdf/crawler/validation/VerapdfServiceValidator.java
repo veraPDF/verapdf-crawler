@@ -10,7 +10,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.validation.ValidationError;
-import org.verapdf.crawler.domain.validation.ValidationErrorWithdescription;
 import org.verapdf.crawler.domain.validation.VeraPDFValidationResult;
 import org.verapdf.crawler.repository.document.ValidatedPDFDao;
 
