@@ -35,6 +35,7 @@ public class VeraPDFProcessor implements Runnable {
 	private final String filePath;
 	private Process process;
 	private ValidationResource resource;
+	private boolean stopped = false;
 
 	VeraPDFProcessor(String verapdfPath, String filePath, ValidationResource resource) {
 		this.verapdfPath = verapdfPath;
@@ -42,7 +43,7 @@ public class VeraPDFProcessor implements Runnable {
 		this.resource = resource;
 	}
 
-	private File getVeraPDFReport(String filename) throws IOException {
+	private File getVeraPDFReport(String filename) throws IOException, InterruptedException {
 		String[] cmd = {verapdfPath, "--extract", "--format", "mrr", "--maxfailuresdisplayed", "1", filename};
 		ProcessBuilder pb = new ProcessBuilder().inheritIO();
 		Path outputPath = Files.createTempFile("veraPDFReport", ".xml");
@@ -53,13 +54,8 @@ public class VeraPDFProcessor implements Runnable {
 		file.deleteOnExit();
 		pb.redirectOutput(file);
 		pb.command(cmd);
-		try {
-			this.process = pb.start();
-			this.process.waitFor();
-		} catch (InterruptedException e) {
-			logger.info("Process interrupted. Message: " + e.getMessage());
-			return null;
-		}
+		this.process = pb.start();
+		this.process.waitFor();
 		return file;
 	}
 
@@ -69,18 +65,26 @@ public class VeraPDFProcessor implements Runnable {
 		File report = null;
 		try {
 			report = getVeraPDFReport(this.filePath);
-			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-			dbf.setNamespaceAware(true);
-			DocumentBuilder db = dbf.newDocumentBuilder();
-			Document document = db.parse(report);
-			XPathFactory xpf = XPathFactory.newInstance();
-			XPath xpath = xpf.newXPath();
-			// Uncomment this for specifying namespaces if it will be necessary
+			if (report != null) {
+				DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+				dbf.setNamespaceAware(true);
+				DocumentBuilder db = dbf.newDocumentBuilder();
+				Document document = db.parse(report);
+				XPathFactory xpf = XPathFactory.newInstance();
+				XPath xpath = xpf.newXPath();
+				// Uncomment this for specifying namespaces if it will be necessary
 //		SimpleNamespaceContext nsc = new SimpleNamespaceContext();
 //		nsc.setPrefix(SchematronGenerator.SCH_PREFIX, SchematronGenerator.SCH_NAMESPACE);
 //		xpath.setNamespaceContext(nsc);
-			result = generateBaseResult(report, document, xpath);
-			// TODO: add properties evaluating here
+				result = generateBaseResult(document, xpath);
+				// TODO: add properties evaluating here
+			} else {
+				result = generateProblemResult("Some problem in report generation");
+			}
+		} catch (InterruptedException e) {
+			String message = "Process has been interrupted: " + e.getMessage();
+			logger.info(message);
+			result = generateProblemResult(message);
 		} catch (Throwable e) {
 			String message = "Some problem in generating result: " + e.getMessage();
 			logger.info(message);
@@ -90,10 +94,12 @@ public class VeraPDFProcessor implements Runnable {
 				logger.info("Report has not been deleted manually");
 			}
 		}
-		this.resource.validationFinished(result);
+		if (!stopped) {
+			this.resource.validationFinished(result);
+		}
 	}
 
-	private VeraPDFValidationResult generateBaseResult(File report, Document document, XPath xpath) throws XPathExpressionException {
+	private VeraPDFValidationResult generateBaseResult(Document document, XPath xpath) throws XPathExpressionException {
 		VeraPDFValidationResult result = new VeraPDFValidationResult();
 		String exceptionPath = BASE_PATH + "taskResult/exceptionMessage";
 		String exception = (String) xpath.evaluate(exceptionPath,
@@ -142,6 +148,7 @@ public class VeraPDFProcessor implements Runnable {
 	}
 
 	void stopProcess() {
+		this.stopped = true;
 		if (this.process != null && this.process.isAlive()) {
 			this.process.destroy();
 		}
