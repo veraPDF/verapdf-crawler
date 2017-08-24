@@ -16,23 +16,23 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Path("/")
 @Produces(MediaType.APPLICATION_JSON)
 public class ValidationResource {
 
-    private final static String STATUS_IDLE = "idle";
-    private final static String STATUS_ACTIVE = "active";
-    private final static String STATUS_FINISHED = "finished";
-
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
+    private final ExecutorService service = Executors.newFixedThreadPool(1);
+    private final String veraPDFPath;
+    private VeraPDFProcessor veraPDFProcessor;
     private Map<String, String> validationSettings;
-    private String status;
     private VeraPDFValidationResult validationResult;
 
-    ValidationResource() {
-        validationSettings = new HashMap<>();
-        status = STATUS_IDLE;
+    ValidationResource(String veraPDFPath) {
+        this.validationSettings = new HashMap<>();
+        this.veraPDFPath = veraPDFPath;
     }
 
     @POST
@@ -44,23 +44,24 @@ public class ValidationResource {
 
     @POST
     @Timed
-    public void processValidateRequest(String filename) throws InterruptedException {
+    public Response processValidateRequest(String filename) throws InterruptedException {
         logger.info("Starting processing of " + filename);
-        if(status.equals(STATUS_ACTIVE)) {
-            discardCurrentJob();
+        synchronized (this) {
+            if (evaluateStatus() == Status.ACTIVE) {
+                return Response.status(102).build();
+            }
         }
-        status = STATUS_ACTIVE;
-        this.validationResult = validate(filename);
-        status = STATUS_FINISHED;
+        validate(filename);
+        return Response.accepted().build();
     }
 
     @GET
     @Timed
     public Response getStatus() {
-        if(status.equals(STATUS_ACTIVE)) {
+        if(evaluateStatus() == Status.ACTIVE) {
             return Response.status(102).build();
         }
-        if(status.equals(STATUS_FINISHED)) {
+        if(evaluateStatus() == Status.FINISHED) {
             return Response.ok(validationResult).build();
         }
         return Response.status(100).build();
@@ -70,44 +71,35 @@ public class ValidationResource {
     @Timed
     public void discardCurrentJob() {
         logger.info("Terminating current job");
-        //?? veraPDF.stop();
-        status = STATUS_IDLE;
+        if (this.veraPDFProcessor != null) {
+            this.veraPDFProcessor.stopProcess();
+            this.veraPDFProcessor = null;
+        }
         validationResult = null;
     }
 
-    private VeraPDFValidationResult validate(String filename) {
-        File xmlReport;
-        try {
-            xmlReport = File.createTempFile("veraPDF-tempXMLReport", ".xml"); //$NON-NLS-1$//$NON-NLS-2$
-            xmlReport.deleteOnExit();
-        } catch (IOException e) {
-            return generateProcessingErrorResult("Can not generate temp file for report. Error: " + e.getMessage());
-        }
-        try (OutputStream mrrReport = new FileOutputStream(xmlReport)) {
-            ProcessType processType = veraAppConfig.getProcessType();
-            EnumSet<TaskType> tasks = processType.getTasks();
-            ValidatorConfig validatorConfig = this.configManager.getValidatorConfig();
-            FeatureExtractorConfig featuresConfig = this.configManager.getFeaturesConfig();
-            ProcessorConfig resultConfig = ProcessorFactory.fromValues(validatorConfig, featuresConfig,
-                    this.configManager.getPluginsCollectionConfig(), this.configManager.getFixerConfig(), tasks,
-                    veraAppConfig.getFixesFolder())
-            try (BatchProcessor processor = ProcessorFactory.fileBatchProcessor(resultConfig);) {
-                VeraAppConfig applicationConfig = this.configManager.getApplicationConfig();
-                BatchSummary batchSummary = processor.process(this.pdfs,
-                        ProcessorFactory.getHandler(FormatOption.MRR, applicationConfig.isVerbose(), mrrReport,
-                                applicationConfig.getMaxFailsDisplayed(), validatorConfig.isRecordPasses()));
-            }
-        } catch (IOException e) {
+    private void validate(String filename) {
+        this.veraPDFProcessor = new VeraPDFProcessor(veraPDFPath, filename, this);
+        service.submit(veraPDFProcessor);
+    }
 
-        } catch (VeraPDFException e) {
+    void validationFinished(VeraPDFValidationResult result) {
+        this.validationResult = result;
+        this.veraPDFProcessor = null;
+        //TODO: send message to main service
+    }
 
+    private Status evaluateStatus() {
+        if (this.veraPDFProcessor != null) {
+            return Status.ACTIVE;
+        } else {
+            return validationResult == null ? Status.IDLE : Status.FINISHED;
         }
     }
 
-    private static VeraPDFValidationResult generateProcessingErrorResult(String errorMessage) {
-        VeraPDFValidationResult res = new VeraPDFValidationResult();
-        res.setValid(false);
-        res.setProcessingError(errorMessage);
-        return res;
+    private enum Status {
+        IDLE,
+        ACTIVE,
+        FINISHED
     }
 }

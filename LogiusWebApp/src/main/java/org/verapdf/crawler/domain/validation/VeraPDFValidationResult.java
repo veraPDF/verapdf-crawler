@@ -8,14 +8,12 @@ import java.util.List;
 import java.util.Map;
 
 public class VeraPDFValidationResult {
-    private boolean isValid;
-    private List<ValidationError> validationErrors;
-    private Map<String, String> properties;
-    private String processingError;
+    private boolean isValid = false;
+    private List<ValidationError> validationErrors = new ArrayList<>();
+    private Map<String, String> properties = new HashMap<>();
+    private String processingError = null;
 
     public VeraPDFValidationResult() {
-        validationErrors = new ArrayList<>();
-        properties = new HashMap<>();
     }
 
     @JsonProperty
@@ -24,8 +22,8 @@ public class VeraPDFValidationResult {
     }
 
     @JsonProperty
-    public void setValidationErrors(List<ValidationError> validationErrorWithdescriptions) {
-        this.validationErrors = validationErrorWithdescriptions;
+    public void setValidationErrors(List<ValidationError> validationErrors) {
+        this.validationErrors = validationErrors;
     }
 
     @JsonProperty

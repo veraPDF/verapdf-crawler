@@ -1,15 +1,12 @@
 package org.verapdf.service;
 
 import io.dropwizard.Application;
-import io.dropwizard.Configuration;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import org.verapdf.pdfa.VeraGreenfieldFoundryProvider;
 
-public class VerapdfServiceApp extends Application<Configuration> {
+public class VerapdfServiceApp extends Application<VeraPDFServiceConfiguration> {
 
     public static void main(String[] args) throws Exception {
-        VeraGreenfieldFoundryProvider.initialise();
         new VerapdfServiceApp().run(args);
     }
 
@@ -19,11 +16,11 @@ public class VerapdfServiceApp extends Application<Configuration> {
     }
 
     @Override
-    public void initialize(Bootstrap<Configuration> bootstrap) { }
+    public void initialize(Bootstrap<VeraPDFServiceConfiguration> bootstrap) { }
 
     @Override
-    public void run(Configuration configuration, Environment environment) {
+    public void run(VeraPDFServiceConfiguration configuration, Environment environment) {
         environment.jersey().setUrlPattern("/*");
-        environment.jersey().register(new ValidationResource());
+        environment.jersey().register(new ValidationResource(configuration.getVerapdfPath()));
     }
 }
