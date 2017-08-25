@@ -58,10 +58,11 @@ public class ValidationResource {
     @GET
     @Timed
     public Response getStatus() {
-        if(evaluateStatus() == Status.ACTIVE) {
+        Status status = evaluateStatus();
+        if(status == Status.ACTIVE) {
             return Response.status(102).build();
         }
-        if(evaluateStatus() == Status.FINISHED) {
+        if(status == Status.FINISHED) {
             return Response.ok(validationResult).build();
         }
         return Response.status(100).build();

@@ -51,9 +51,6 @@ public class VeraPDFProcessor implements Runnable {
 		ProcessBuilder pb = new ProcessBuilder().inheritIO();
 		Path outputPath = Files.createTempFile("veraPDFReport", ".xml");
 		File file = outputPath.toFile();
-		if (!file.createNewFile()) {
-			return null;
-		}
 		file.deleteOnExit();
 		pb.redirectOutput(file);
 		pb.command(cmd);
@@ -68,7 +65,7 @@ public class VeraPDFProcessor implements Runnable {
 		File report = null;
 		try {
 			report = getVeraPDFReport(this.filePath);
-			if (report != null) {
+			if (report != null && !stopped) {
 				DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 				dbf.setNamespaceAware(true);
 				DocumentBuilder db = dbf.newDocumentBuilder();
@@ -121,13 +118,16 @@ public class VeraPDFProcessor implements Runnable {
 		String exception = (String) xpath.evaluate(exceptionPath,
 				document,
 				XPathConstants.STRING);
-		result.setProcessingError(exception);
+		if (exception != null && !exception.isEmpty()) {
+			result.setProcessingError(exception);
+		}
 
 		String isCompliantPath = VALIDATION_REPORT_PATH + "@isCompliant";
-		Boolean isCompliant = (Boolean) xpath.evaluate(isCompliantPath,
+		String isCompliantString = (String) xpath.evaluate(isCompliantPath,
 				document,
-				XPathConstants.BOOLEAN);
-		if (isCompliant != null) {
+				XPathConstants.STRING);
+		boolean isCompliant = Boolean.parseBoolean(isCompliantString);
+		if (isCompliant) {
 			result.setValid(isCompliant);
 			if (!isCompliant) {
 				result.setValidationErrors(getvalidationErrors(document, xpath));
@@ -145,7 +145,7 @@ public class VeraPDFProcessor implements Runnable {
 		for (int i = 0; i < rules.getLength(); ++i) {
 			Node rule = rules.item(i);
 			NamedNodeMap attributes = rule.getAttributes();
-			if (attributes.getNamedItem("status").getNodeValue().equals("failed")) {
+			if (attributes.getNamedItem("status").getNodeValue().equalsIgnoreCase("failed")) {
 				String specification = attributes.getNamedItem("specification").getNodeValue();
 				String clause = attributes.getNamedItem("clause").getNodeValue();
 				String testNumber = attributes.getNamedItem("testNumber").getNodeValue();
