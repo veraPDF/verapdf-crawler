@@ -79,7 +79,7 @@ public class ValidationResource {
     }
 
     private void validate(String filename) {
-        this.veraPDFProcessor = new VeraPDFProcessor(veraPDFPath, filename, this);
+        this.veraPDFProcessor = new VeraPDFProcessor(veraPDFPath, filename, this, this.validationSettings);
         service.submit(veraPDFProcessor);
     }
 

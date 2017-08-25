@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Maksim Bezrukov
@@ -36,11 +37,13 @@ public class VeraPDFProcessor implements Runnable {
 	private Process process;
 	private ValidationResource resource;
 	private boolean stopped = false;
+	private final Map<String, String> propertiesPaths;
 
-	VeraPDFProcessor(String verapdfPath, String filePath, ValidationResource resource) {
+	VeraPDFProcessor(String verapdfPath, String filePath, ValidationResource resource, Map<String, String> propertiesPaths) {
 		this.verapdfPath = verapdfPath;
 		this.filePath = filePath;
 		this.resource = resource;
+		this.propertiesPaths = propertiesPaths;
 	}
 
 	private File getVeraPDFReport(String filename) throws IOException, InterruptedException {
@@ -61,7 +64,7 @@ public class VeraPDFProcessor implements Runnable {
 
 	@Override
 	public void run() {
-		VeraPDFValidationResult result = null;
+		VeraPDFValidationResult result;
 		File report = null;
 		try {
 			report = getVeraPDFReport(this.filePath);
@@ -77,18 +80,20 @@ public class VeraPDFProcessor implements Runnable {
 //		nsc.setPrefix(SchematronGenerator.SCH_PREFIX, SchematronGenerator.SCH_NAMESPACE);
 //		xpath.setNamespaceContext(nsc);
 				result = generateBaseResult(document, xpath);
-				// TODO: add properties evaluating here
+				if (this.propertiesPaths != null && !this.propertiesPaths.isEmpty()) {
+					addProperties(result, document, xpath);
+				}
 			} else {
 				result = generateProblemResult("Some problem in report generation");
 			}
 		} catch (InterruptedException e) {
-			String message = "Process has been interrupted: " + e.getMessage();
-			logger.info(message);
-			result = generateProblemResult(message);
+			String message = "Process has been interrupted";
+			logger.info(message, e);
+			result = generateProblemResult(message, e);
 		} catch (Throwable e) {
-			String message = "Some problem in generating result: " + e.getMessage();
-			logger.info(message);
-			result = generateProblemResult(message);
+			String message = "Some problem in generating result";
+			logger.info(message, e);
+			result = generateProblemResult(message, e);
 		} finally {
 			if (report != null && !report.delete()) {
 				logger.info("Report has not been deleted manually");
@@ -96,6 +101,17 @@ public class VeraPDFProcessor implements Runnable {
 		}
 		if (!stopped) {
 			this.resource.validationFinished(result);
+		}
+	}
+
+	private void addProperties(VeraPDFValidationResult result, Document document, XPath xpath) {
+		for (Map.Entry<String, String> property : this.propertiesPaths.entrySet()) {
+			try {
+				String value = (String) xpath.evaluate(property.getValue(), document, XPathConstants.STRING);
+				result.addProperty(property.getKey(), value);
+			} catch (Throwable e) {
+				logger.info("Some problem in obtaining property", e);
+			}
 		}
 	}
 
@@ -152,6 +168,10 @@ public class VeraPDFProcessor implements Runnable {
 		if (this.process != null && this.process.isAlive()) {
 			this.process.destroy();
 		}
+	}
+
+	private VeraPDFValidationResult generateProblemResult(String message, Throwable e) {
+		return generateProblemResult(message + ": " + e.getMessage());
 	}
 
 	private VeraPDFValidationResult generateProblemResult(String message) {
