@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.verapdf.crawler.domain.validation.ValidationError;
-import org.verapdf.crawler.domain.validation.ValidationErrorWithdescription;
 
 import javax.sql.DataSource;
 import java.util.HashMap;
@@ -43,9 +42,9 @@ public class ValidatedPDFDao {
         List<String> errors = template.query(String.format("select %s from %s where %s=? and %s=? and %s=?",
                 FIELD_ID, VALIDATION_ERRORS_TABLE_NAME, FIELD_FLAVOUR, FIELD_CLAUSE, FIELD_TEST_NUMBER), (resultSet, i) -> resultSet.getString("id"), rule.getSpecification(), rule.getClause(), rule.getTestNumber());
         if(errors.isEmpty()) { // There is no such error in database, need to insert and link to document
-            template.update(String.format("insert into %s (%s, %s, %s) values (?, ?, ?)", VALIDATION_ERRORS_TABLE_NAME,
-                    FIELD_FLAVOUR, FIELD_CLAUSE, FIELD_TEST_NUMBER),
-                    rule.getSpecification(), rule.getClause(), rule.getTestNumber());
+            template.update(String.format("insert into %s (%s, %s, %s, %s) values (?, ?, ?, ?)", VALIDATION_ERRORS_TABLE_NAME,
+                    FIELD_FLAVOUR, FIELD_CLAUSE, FIELD_TEST_NUMBER, FIELD_DESCRIPTION),
+                    rule.getSpecification(), rule.getClause(), rule.getTestNumber(), rule.getDescription());
 
             String newRuleId = template.query(String.format("select %s from %s where %s=? and %s=? and %s=?",
                     FIELD_ID, VALIDATION_ERRORS_TABLE_NAME, FIELD_FLAVOUR, FIELD_CLAUSE, FIELD_TEST_NUMBER), (resultSet, i) -> resultSet.getString("id"), rule.getSpecification(), rule.getClause(), rule.getTestNumber()).get(0);

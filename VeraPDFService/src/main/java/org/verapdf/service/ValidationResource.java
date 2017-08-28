@@ -8,26 +8,25 @@ import org.verapdf.crawler.domain.validation.VeraPDFValidationResult;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Path("/")
 @Produces(MediaType.APPLICATION_JSON)
 public class ValidationResource {
 
-    private final static String STATUS_IDLE = "idle";
-    private final static String STATUS_ACTIVE = "active";
-    private final static String STATUS_FINISHED = "finished";
-
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
+    private final ExecutorService service = Executors.newFixedThreadPool(1);
+    private final String veraPDFPath;
+    private VeraPDFProcessor veraPDFProcessor;
     private Map<String, String> validationSettings;
-    private String status;
     private VeraPDFValidationResult validationResult;
 
-    ValidationResource() {
-        validationSettings = new HashMap<>();
-        status = STATUS_IDLE;
+    ValidationResource(String veraPDFPath) {
+        this.validationSettings = new HashMap<>();
+        this.veraPDFPath = veraPDFPath;
     }
 
     @POST
@@ -39,21 +38,26 @@ public class ValidationResource {
 
     @POST
     @Timed
-    public void processValidateRequest(String filename) throws InterruptedException {
+    public Response processValidateRequest(String filename) throws InterruptedException {
         logger.info("Starting processing of " + filename);
-        if(status.equals(STATUS_ACTIVE)) {
-            discardCurrentJob();
+        synchronized (this) {
+            if (evaluateStatus() == Status.ACTIVE) {
+                return Response.status(102).build();
+            }
         }
         validate(filename);
+        return Response.accepted().build();
     }
 
     @GET
     @Timed
     public Response getStatus() {
-        if(status.equals(STATUS_ACTIVE)) {
+        Status status = evaluateStatus();
+        logger.info("Status requested, status is " + status);
+        if(status == Status.ACTIVE) {
             return Response.status(102).build();
         }
-        if(status.equals(STATUS_FINISHED)) {
+        if(status == Status.FINISHED) {
             return Response.ok(validationResult).build();
         }
         return Response.status(100).build();
@@ -63,22 +67,35 @@ public class ValidationResource {
     @Timed
     public void discardCurrentJob() {
         logger.info("Terminating current job");
-        //?? veraPDF.stop();
-        status = STATUS_IDLE;
+        if (this.veraPDFProcessor != null) {
+            this.veraPDFProcessor.stopProcess();
+            this.veraPDFProcessor = null;
+        }
         validationResult = null;
     }
 
-    private void validate(String filename) throws InterruptedException {
-        status = STATUS_ACTIVE;
+    private void validate(String filename) {
+        this.veraPDFProcessor = new VeraPDFProcessor(veraPDFPath, filename, this, this.validationSettings);
+        service.submit(veraPDFProcessor);
+    }
 
-        validationResult = new VeraPDFValidationResult();
-        validationResult.setValidationErrors(new ArrayList<>());
-        validationResult.setValid(true);
-        for(Map.Entry<String, String> property: validationSettings.entrySet()) {
-            validationResult.addProperty(property.getKey(), property.getValue());
+    void validationFinished(VeraPDFValidationResult result) {
+        this.validationResult = result;
+        this.veraPDFProcessor = null;
+        //TODO: send message to main service
+    }
+
+    private Status evaluateStatus() {
+        if (this.veraPDFProcessor != null) {
+            return Status.ACTIVE;
+        } else {
+            return validationResult == null ? Status.IDLE : Status.FINISHED;
         }
-        Thread.sleep(1000);
+    }
 
-        status = STATUS_FINISHED;
+    private enum Status {
+        IDLE,
+        ACTIVE,
+        FINISHED
     }
 }
