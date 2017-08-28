@@ -16,9 +16,12 @@ $(document).ready(function() {
     });
 });
 
-window.onload = loadAllJobs;
+// window.onload = loadAllJobs;
 
 function main() {
+    window.location = "domains.html";
+
+    /*
     $("#report_link").text("");
     $("#number_of_crawled_urls").text("");
     $("#crawl_url").text("");
@@ -53,7 +56,7 @@ function main() {
         error: function(result) {
                 reportError("Error on job creation");
         }
-    });
+    });*/
 }
 
 function appendCrawlJob(id, url) {

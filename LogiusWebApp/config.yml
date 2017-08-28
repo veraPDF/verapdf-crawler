@@ -16,6 +16,7 @@ credentials:
   user: root
   password: anton
 resourcePath: /home/anton/Documents/Logius/LogiusWebApp/src/main/resources/
+heritrixUrl: https://localhost:8443/
 heritrixLogin: admin
 heritrixPassword: logius
 verapdfUrl: http://localhost:8100

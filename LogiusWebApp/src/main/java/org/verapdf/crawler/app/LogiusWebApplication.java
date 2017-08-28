@@ -35,7 +35,8 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
         environment.jersey().setUrlPattern("/api/*");
         final ResourceManager resourceManager;
         try {
-            HeritrixClient client = new HeritrixClient("https://localhost:8443/",
+            HeritrixClient client = new HeritrixClient(
+                    configuration.getHeritrixUrl(),
                     configuration.getHeritrixLogin(),
                     configuration.getHeritrixPassword());
             client.setBaseDirectory(configuration.getResourcePath());

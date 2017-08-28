@@ -41,18 +41,17 @@ public class ODFProcessor extends MirrorWriterProcessor {
 
     @Override
     protected void innerProcess(CrawlURI crawlURI) {
-
-        String baseDir = getPath().getFile().getAbsolutePath();
-        String time = "Last-Modified: Thu, 01 Jan 1970 00:00:01 GMT";
-        Header header = crawlURI.getHttpMethod().getResponseHeader("Last-Modified");
-        if(header != null) {
-            time = header.toString().substring(0, header.toString().length() - 2);
-        }
-
-        String[] parts = baseDir.split("/");
-        String jobId = parts[parts.length - 3];
-
         try {
+            String baseDir = getPath().getFile().getCanonicalPath();
+            String time = "Last-Modified: Thu, 01 Jan 1970 00:00:01 GMT";
+            Header header = crawlURI.getHttpMethod().getResponseHeader("Last-Modified");
+            if(header != null) {
+                time = header.toString().substring(0, header.toString().length() - 2);
+            }
+
+            String[] parts = baseDir.split("/");
+            String jobId = parts[parts.length - 3];
+
             URL url = new URL(logiusUrl + "api/office_document");
             String data = "{\"jobId\":\"" + jobId + "\", \"fileUrl\":\"" +
                     crawlURI.toString() + "\", \"" + "lastModified\":\"" + time + "\"}";
