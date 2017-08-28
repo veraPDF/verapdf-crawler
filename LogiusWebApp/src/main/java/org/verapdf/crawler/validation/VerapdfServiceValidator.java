@@ -2,6 +2,7 @@ package org.verapdf.crawler.validation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpStatus;
+import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -10,11 +11,12 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.validation.ValidationError;
-import org.verapdf.crawler.domain.validation.ValidationErrorWithdescription;
 import org.verapdf.crawler.domain.validation.VeraPDFValidationResult;
 import org.verapdf.crawler.repository.document.ValidatedPDFDao;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Map;
 
 public class VerapdfServiceValidator implements PDFValidator {
@@ -64,9 +66,8 @@ public class VerapdfServiceValidator implements PDFValidator {
             sendValidationRequest(filename);
 
             int validationRetries = 0;
-            for (int i = 0; i < MAX_VALIDATION_TIMEOUT_IN_MINUTES * 6; i++) {
+            for (int i = 0; i < MAX_VALIDATION_TIMEOUT_IN_MINUTES * 12; i++) {
                 int responseCode = getValidationStatus();
-                logger.info("Response code is " + responseCode);
                 if (responseCode == HttpStatus.SC_OK) { // Vaidation is finished
                     logger.info("Validation is finished");
                     return getValidationResult();
@@ -74,7 +75,7 @@ public class VerapdfServiceValidator implements PDFValidator {
                 // Validation is in process
                 if (responseCode == HttpStatus.SC_PROCESSING) {
                     logger.info("Validation is in progress");
-                    Thread.sleep(10 * 1000);
+                    Thread.sleep(5 * 1000);
                     continue;
                 }
                 // Something went wrong and validation was not finished
@@ -120,9 +121,11 @@ public class VerapdfServiceValidator implements PDFValidator {
     }
 
     private int getValidationStatus() throws IOException {
-        HttpGet get = new HttpGet(verapdfUrl);
-        int result = httpClient.execute(get).getStatusLine().getStatusCode();
-        get.releaseConnection();
+        HttpURLConnection connection = (HttpURLConnection) new URL(verapdfUrl).openConnection();
+        connection.setRequestMethod("GET");
+
+        int result = connection.getResponseCode();
+        logger.info("Response code is " + result);
         return result;
     }
 

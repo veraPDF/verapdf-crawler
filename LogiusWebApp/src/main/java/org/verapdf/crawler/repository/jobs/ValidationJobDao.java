@@ -20,10 +20,12 @@ public class ValidationJobDao {
         this.template = new JdbcTemplate(dataSource);
     }
 
-    public List<ValidationJobData> removeAll() {
-        List<ValidationJobData> result = template.query("select * from " + VALIDATION_JOB_TABLE_NAME, new ValidationJobMapper());
-        for(ValidationJobData data: result) {
-            deleteJob(data);
+    public ValidationJobData removeOneJob() {
+        List<ValidationJobData> validationJobs = template.query("select * from " + VALIDATION_JOB_TABLE_NAME, new ValidationJobMapper());
+        ValidationJobData result = null;
+        if(!validationJobs.isEmpty()) {
+            result = validationJobs.get(0);
+            deleteJob(result);
         }
         return result;
     }
