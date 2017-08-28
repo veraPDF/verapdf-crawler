@@ -8,6 +8,7 @@ import io.dropwizard.Configuration;
 public class LogiusConfiguration extends Configuration {
     private EmailServer emailServer;
     private MySqlCredentials credentials;
+    private String heritrixUrl;
     private String heritrixLogin;
     private String heritrixPassword;
     private String resourcePath;
@@ -41,6 +42,16 @@ public class LogiusConfiguration extends Configuration {
     @JsonProperty
     public void setResourcePath(String resourcePath) {
         this.resourcePath = resourcePath;
+    }
+
+    @JsonProperty
+    public String getHeritrixUrl() {
+        return heritrixUrl;
+    }
+
+    @JsonProperty
+    public void setHeritrixUrl(String heritrixUrl) {
+        this.heritrixUrl = heritrixUrl;
     }
 
     @JsonProperty
