@@ -17,7 +17,6 @@ public class ValidationService implements Runnable {
     private final ValidationJobDao validationJobDao;
     private final InsertDocumentDao insertDocumentDao;
     private final ValidatedPDFDao validatedPDFDao;
-    private List<ValidationJobData> validationJobs;
 
     public boolean isRunning() {
         return isRunning;
@@ -42,41 +41,38 @@ public class ValidationService implements Runnable {
     }
 
     public Integer getQueueSize() {
-        return validationJobDao.getQueueSize() + validationJobs.size();
+        return validationJobDao.getQueueSize();
     }
 
     @Override
     public void run() {
         while (isRunning) {
-            validationJobs = validationJobDao.removeAll();
-            if(validationJobs != null && !validationJobs.isEmpty()) {
-                for(ValidationJobData data: validationJobs) {
+            ValidationJobData data = validationJobDao.removeOneJob();
+            if(data != null) {
+                try {
+                    logger.info("Validating " + data.getUri());
+                    boolean validationResult;
                     try {
-                        logger.info("Validating " + data.getUri());
-                        boolean validationResult;
-                        try {
-                                validationResult = validator.validateAndWirteResult(data.getFilepath(), data.getUri(), validatedPDFDao);
-                            } catch (Exception e) {
-                                logger.error("Error in validator",e);
-                                validationResult = false;
-                            }
-                            String[] parts = data.getJobDirectory().split("/");
-                            String jobId = parts[parts.length - 3];
-                            if (validationResult) {
-                                insertDocumentDao.addPdfFile(data, jobId);
-                            } else {
-                                insertDocumentDao.addInvalidPdfFile(data, jobId);
-                            }
+                        validationResult = validator.validateAndWirteResult(data.getFilepath(), data.getUri(), validatedPDFDao);
                     } catch (Exception e) {
-                        logger.error("Error in validation runner",e);
+                        logger.error("Error in validator", e);
+                        validationResult = false;
                     }
-                    finally {
-                        if(data != null && data.getFilepath() != null) {
-                            new File(data.getFilepath()).delete();
-                        }
-                        }
+                    String[] parts = data.getJobDirectory().split("/");
+                    String jobId = parts[parts.length - 3];
+                    if (validationResult) {
+                        insertDocumentDao.addPdfFile(data, jobId);
+                    } else {
+                        insertDocumentDao.addInvalidPdfFile(data, jobId);
+                    }
+                } catch (Exception e) {
+                    logger.error("Error in validation runner", e);
+                } finally {
+                    if (data != null && data.getFilepath() != null) {
+                        new File(data.getFilepath()).delete();
                     }
                 }
+            }
             else {
                 try {
                     Thread.sleep(60 * 1000);

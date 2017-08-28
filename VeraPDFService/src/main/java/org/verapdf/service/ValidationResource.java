@@ -8,12 +8,6 @@ import org.verapdf.crawler.domain.validation.VeraPDFValidationResult;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -59,6 +53,7 @@ public class ValidationResource {
     @Timed
     public Response getStatus() {
         Status status = evaluateStatus();
+        logger.info("Status requested, status is " + status);
         if(status == Status.ACTIVE) {
             return Response.status(102).build();
         }
