@@ -4,6 +4,8 @@ import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 
+import java.io.IOException;
+
 public class VerapdfServiceApp extends Application<VeraPDFServiceConfiguration> {
 
     public static void main(String[] args) throws Exception {
@@ -19,8 +21,8 @@ public class VerapdfServiceApp extends Application<VeraPDFServiceConfiguration> 
     public void initialize(Bootstrap<VeraPDFServiceConfiguration> bootstrap) { }
 
     @Override
-    public void run(VeraPDFServiceConfiguration configuration, Environment environment) {
+    public void run(VeraPDFServiceConfiguration configuration, Environment environment) throws IOException {
         environment.jersey().setUrlPattern("/*");
-        environment.jersey().register(new ValidationResource(configuration.getVerapdfPath()));
+        environment.jersey().register(new ValidationResource(configuration.getVerapdfPath(), configuration.getLogiusUrl()));
     }
 }

@@ -16,7 +16,6 @@ public class ValidationService implements Runnable {
     private final PDFValidator validator;
     private final ValidationJobDao validationJobDao;
     private final InsertDocumentDao insertDocumentDao;
-    private final ValidatedPDFDao validatedPDFDao;
 
     public boolean isRunning() {
         return isRunning;
@@ -27,12 +26,11 @@ public class ValidationService implements Runnable {
     }
 
     private boolean isRunning;
-    public ValidationService(String verapdfUrl, DataSource dataSource, ValidatedPDFDao validatedPDFDao) {
+    public ValidationService(DataSource dataSource, PDFValidator validator) {
         validationJobDao = new ValidationJobDao(dataSource);
         insertDocumentDao = new InsertDocumentDao(dataSource);
         isRunning = true;
-        this.validatedPDFDao = validatedPDFDao;
-        validator = new VerapdfServiceValidator(verapdfUrl);
+        this.validator = validator;
     }
 
     public void addJob(ValidationJobData data) throws IOException {
@@ -53,7 +51,7 @@ public class ValidationService implements Runnable {
                     logger.info("Validating " + data.getUri());
                     boolean validationResult;
                     try {
-                        validationResult = validator.validateAndWirteResult(data.getFilepath(), data.getUri(), validatedPDFDao);
+                        validationResult = validator.validateAndWirteResult(data.getFilepath(), data.getUri());
                     } catch (Exception e) {
                         logger.error("Error in validator", e);
                         validationResult = false;
@@ -68,7 +66,7 @@ public class ValidationService implements Runnable {
                 } catch (Exception e) {
                     logger.error("Error in validation runner", e);
                 } finally {
-                    if (data != null && data.getFilepath() != null) {
+                    if (data.getFilepath() != null) {
                         new File(data.getFilepath()).delete();
                     }
                 }
