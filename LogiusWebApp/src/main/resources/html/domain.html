@@ -46,14 +46,24 @@
     <h4 class="domain-name">Results for <span>www.duallab.com</span></h4>
 
     <div class="job-details d-flex justify-content-end">
-        <span class="job-date mr-auto">Tested on 25 Aug 2017, 16:36 - 25 Aug 2017, 17:15</span>
+        <div class="mr-auto">
+            <span class="job-date mr-auto" id="job-date"></span>        
+            <b></b>
+            <div id="job-mails"></div>
+        </div>
         <div class="d-flex flex-column align-items-center">
             <b>Finished</b>
-            <a href="index.html" class="action d-flex flex-column">
-                <span class="material-icons">replay</span>
-                <span class="label">Restart</span>
-            </a>
-        </div>
+            <div class="d-flex flex-row align-items-center">
+                <a href="index.html" class="action d-flex flex-column">
+                    <span class="material-icons">replay</span>
+                    <span class="label">Restart</span>
+                </a>
+                <a href="index.html" class="action d-flex flex-column">
+                        <span class="material-icons">pause</span>
+                        <span class="label">Pause</span>
+                </a>
+            </div>                       
+        </div> 
     </div>
 
     <ul class="nav nav-tabs" role="tablist">

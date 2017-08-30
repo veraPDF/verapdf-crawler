@@ -337,3 +337,19 @@ a.action .label {
 .links {
   padding-top: 20px;
 }
+
+#job-mails {
+  margin-bottom: 20px;
+}
+
+a.action.edit{
+  margin-left: 15px;
+}
+
+.accept-decline-btn-container{
+  display: inline-block;
+}
+
+.accept-decline-btn-container *{
+  display : block;
+}
