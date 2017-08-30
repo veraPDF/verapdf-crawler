@@ -25,6 +25,83 @@ $(function () {
         }
     });
 
+    var mailsList = ['example1@report.com', 'example2@report.com']
+    var curentDomain = getUrlParameter("domain");
+    var correct = true;
+
+    $('#job-date').text((curentDomain==='www.vananaarbeter.nl'||curentDomain==='secure5.svb.nl')?'Tested on 25 Aug 2017, 16:36':'Tested on 25 Aug 2017, 16:36 - 25 Aug 2017, 17:15');
+    var setMails = function(){
+        if(curentDomain==='www.duallab.com'){
+            $('#job-mails').text(mailsList.join(', '));
+            $('#job-mails').siblings('b').text('Report sent to:');        
+        }else{      
+            var t = document.createTextNode(mailsList.join(', '));
+            $('#job-mails').append(t);
+            var editIcon = $(`<a href="#" class="action edit" >
+                                <span class="material-icons"
+                                    data-placement="top" title="edit emails" id="edit-icon">create</span>
+                            </a>`) ;
+            editIcon.children('span').tooltip();
+            $('#job-mails').append(editIcon);
+            $('#job-mails').siblings('b').text('Send report to:');
+        }
+    }
+
+    setMails();
+
+    $('#job-mails').on('click', "#edit-icon", (function(){
+        $(this).tooltip('dispose');
+        var textarea = $("<textarea id='editable-mail-list'></textarea>");
+        textarea.append($('#job-mails')[0].firstChild.data);
+        textarea.css({"width":"80%", "height":"70px", "resize": "none"});
+        $('#job-mails').empty();
+        $('#job-mails').css({"width":"600px"})
+        $('#job-mails').prepend(textarea);
+        var icons = $(`<div class="accept-decline-btn-container">
+                            <a href="#" class="action edit" >
+                                <span class="material-icons" id="done-icon" 
+                                    data-placement="top" title="Apply changes">done</span>
+                            </a>
+                            <a href="#" class="action edit" >
+                                <span class="material-icons" id="clear-icon" 
+                                data-placement="top" title="Discard changes">clear</span>
+                            </a>
+                        </div>`);
+        $('#job-mails').append(icons);        
+        $('#done-icon').tooltip();   
+        $('#clear-icon').tooltip();      
+    }));
+
+    $('#job-mails').on('click', "#done-icon", (function(){
+        if(correct){
+            $(this).tooltip('dispose')
+            var content = $('#editable-mail-list')[0].value;
+            mailsList = content.split(/\s*,\s*/);
+            $('#job-mails').empty();
+            setMails();
+        }        
+    }));
+
+    $('#job-mails').on('click', "#clear-icon", (function(){
+        $(this).tooltip('dispose')
+        $('#job-mails').empty();
+        setMails();                 
+    }));
+    
+    $('#job-mails').on('focusout', '#editable-mail-list', (function() {
+        $('#job-mails').children('p').remove()
+        var content = $(this)[0].value.split(/\s*,\s*/);
+        for(var i = 0; i < content.length; i++){
+            if(!content[i].match(/.+?\@.+/g)){
+                $('#job-mails').append($('<p style="color: red">you enter incorrect e-mail</p>'));
+                correct = false;
+                $(this).focus();
+                return;
+            }
+        }
+        correct = true;        
+    }));
+    
     var summaryDatePicker = new Pikaday({
         field: document.getElementById('summary-date-input'),
         firstDay: 1,
