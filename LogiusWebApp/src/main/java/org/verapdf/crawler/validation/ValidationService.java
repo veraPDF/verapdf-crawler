@@ -4,12 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.validation.ValidationJobData;
 import org.verapdf.crawler.repository.document.InsertDocumentDao;
-import org.verapdf.crawler.repository.document.ValidatedPDFDao;
 import org.verapdf.crawler.repository.jobs.ValidationJobDao;
 
 import javax.sql.DataSource;
 import java.io.*;
-import java.util.List;
 
 public class ValidationService implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
@@ -45,7 +43,7 @@ public class ValidationService implements Runnable {
     @Override
     public void run() {
         while (isRunning) {
-            ValidationJobData data = validationJobDao.removeOneJob();
+            ValidationJobData data = validationJobDao.getOneJob();
             if(data != null) {
                 try {
                     logger.info("Validating " + data.getUri());
@@ -68,6 +66,7 @@ public class ValidationService implements Runnable {
                 } finally {
                     if (data.getFilepath() != null) {
                         new File(data.getFilepath()).delete();
+                        validationJobDao.deleteJob(data);
                     }
                 }
             }
