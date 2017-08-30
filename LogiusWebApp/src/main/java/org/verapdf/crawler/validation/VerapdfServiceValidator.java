@@ -2,7 +2,6 @@ package org.verapdf.crawler.validation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpStatus;
-import org.apache.http.NoHttpResponseException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -11,14 +10,20 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.validation.ValidationError;
+import org.verapdf.crawler.domain.validation.ValidationSettings;
 import org.verapdf.crawler.domain.validation.VeraPDFValidationResult;
 import org.verapdf.crawler.repository.document.ValidatedPDFDao;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 
+@Path("/verapdf-service")
 public class VerapdfServiceValidator implements PDFValidator {
 
     private final static int MAX_VALIDATION_TIMEOUT_IN_MINUTES = 5;
@@ -26,15 +31,29 @@ public class VerapdfServiceValidator implements PDFValidator {
 
     private final String verapdfUrl;
     private final HttpClient httpClient;
+    private final ValidatedPDFDao validatedPDFDao;
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
-    VerapdfServiceValidator(String verapdfUrl) {
+    public VerapdfServiceValidator(String verapdfUrl, ValidatedPDFDao validatedPDFDao) {
         this.verapdfUrl = verapdfUrl;
         httpClient = HttpClientBuilder.create().build();
+        this.validatedPDFDao = validatedPDFDao;
+    }
+
+    @GET
+    @Path("/settings")
+    public ValidationSettings getValidationSettings() {
+        return new ValidationSettings(validatedPDFDao.getPdfPropertiesWithXpath(), new HashMap<>());
+    }
+
+    @POST
+    @Path("/result")
+    public void setValidationResult(VeraPDFValidationResult result) {
+        
     }
 
     @Override
-    public boolean validateAndWirteResult(String localFilename, String fileUrl, ValidatedPDFDao validatedPDFDao) throws Exception {
+    public boolean validateAndWirteResult(String localFilename, String fileUrl) throws Exception {
         VeraPDFValidationResult result;
         try {
             result = validate(localFilename, validatedPDFDao);
@@ -105,8 +124,7 @@ public class VerapdfServiceValidator implements PDFValidator {
         HttpPost propertiesPost = new HttpPost(verapdfUrl + "/properties");
         propertiesPost.setHeader("Content-Type", "application/json");
         ObjectMapper mapper = new ObjectMapper();
-        Map<String, String> properties = validatedPDFDao.getPdfPropertiesWithXpath();
-        propertiesPost.setEntity(new StringEntity(mapper.writeValueAsString(properties)));
+        propertiesPost.setEntity(new StringEntity(mapper.writeValueAsString(getValidationSettings())));
         httpClient.execute(propertiesPost);
         propertiesPost.releaseConnection();
         logger.info("Validation settings have been sent");

@@ -13,7 +13,9 @@ import org.verapdf.crawler.report.HeritrixReporter;
 import org.verapdf.crawler.repository.document.ValidatedPDFDao;
 import org.verapdf.crawler.repository.jobs.BatchJobDao;
 import org.verapdf.crawler.repository.jobs.CrawlJobDao;
+import org.verapdf.crawler.validation.PDFValidator;
 import org.verapdf.crawler.validation.ValidationService;
+import org.verapdf.crawler.validation.VerapdfServiceValidator;
 
 import javax.sql.DataSource;
 
@@ -25,6 +27,7 @@ public class ResourceManager {
     private final ReportResource reportResource;
     private final ControlResource controlResource;
     private final CrawlJobDao crawlJobDao;
+    private final VerapdfServiceValidator validatorResource;
 
     private String resourceUri;
     private final ValidationService validationService;
@@ -37,8 +40,9 @@ public class ResourceManager {
 
         HeritrixReporter reporter = new HeritrixReporter(client, dataSource, crawlJobDao);
         this.emailServer = emailServer;
-
-        validationService = new ValidationService(verapdfUrl, dataSource, new ValidatedPDFDao(dataSource));
+        PDFValidator validator = new VerapdfServiceValidator(verapdfUrl, new ValidatedPDFDao(dataSource));
+        validatorResource = (VerapdfServiceValidator) validator;
+        validationService = new ValidationService(dataSource, validator);
         infoResourse = new InfoResourse(validationService, batchJobDao);
         reportResource = new ReportResource(reporter, crawlJobDao, batchJobDao);
         controlResource = new ControlResource(client, reporter, emailServer,validationService,
@@ -74,6 +78,10 @@ public class ResourceManager {
     String getResourceUri() { return resourceUri; }
 
     void setResourceUri(String resourceUri) { this.resourceUri = resourceUri; }
+
+    public VerapdfServiceValidator getValidatorResource() {
+        return validatorResource;
+    }
 
     EmailServer getEmailServer() { return emailServer; }
 
