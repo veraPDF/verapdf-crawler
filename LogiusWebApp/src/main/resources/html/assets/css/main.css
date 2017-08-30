@@ -74,8 +74,17 @@ body.container-fluid {
   display: none;
 }
 
+.tooltip.error .tooltip-inner {
+  background-color: #fd5858;
+  color: white;
+}
 
-/* index.html */
+.tooltip.error .arrow::before {
+  border-top-color: #fd5858;
+}
+
+
+  /* index.html */
 .main-form {
   font-size: 22px;
 }
@@ -247,22 +256,84 @@ a.action .label {
 }
 
 /* Domain details */
+.status-paused .action.pause {
+  display: none!important;
+}
+
+.status-running .action.resume {
+  display: none!important;
+}
+
+.status-finished .action.pause, .status-finished .action.resume {
+  display: none!important;
+}
+
+.status-failed .action.pause, .status-failed .action.resume {
+  display: none!important;
+}
+
 .domain-name span {
   text-decoration: underline;
 }
 
-.job-details {
+.job-details span.job-date {
   font-size: 14px;
 }
 
-.job-details span.job-date, .job-details b {
-  margin-top: 5px;
+.job-details .status-text {
+  text-transform: capitalize;
+  display: block;
+  margin-bottom: 10px;
 }
 
-.job-details b {
-  display: block;
-  font-size: 16px;
-  margin-bottom: 10px;
+.job-mails {
+  padding-top: 10px;
+}
+
+.job-mails .label {
+  display: inline-block;
+  padding-right: 10px;
+  padding-top: 7px;
+}
+
+.job-mails .read-mode-view {
+  display: flex;
+  min-height: 66px;
+}
+
+.job-mails .edit-mode-view, .job-mails.edit-mode .read-mode-view {
+  display: none;
+}
+
+.job-mails.edit-mode .edit-mode-view {
+  display: flex;
+}
+
+.job-mails .action {
+  width: 25px;
+  padding: 2px 0;
+}
+
+.job-mails .action.edit {
+  margin-left: 10px;
+  margin-top: 6px;
+  visibility: hidden;
+}
+
+.job-mails.editable .action.edit {
+  visibility: visible;
+}
+
+.job-mails span.job-mails-list {
+  padding-top: 7px;
+}
+
+.job-mails textarea.job-mails-list {
+  width: 400px;
+}
+
+.job-mails textarea.job-mails-list.error {
+  background-color: #ffc9ca;
 }
 
 .nav-tabs .nav-link {
@@ -336,20 +407,4 @@ a.action .label {
 
 .links {
   padding-top: 20px;
-}
-
-#job-mails {
-  margin-bottom: 20px;
-}
-
-a.action.edit{
-  margin-left: 15px;
-}
-
-.accept-decline-btn-container{
-  display: inline-block;
-}
-
-.accept-decline-btn-container *{
-  display : block;
 }
