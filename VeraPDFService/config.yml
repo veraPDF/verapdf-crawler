@@ -17,5 +17,5 @@ logging:
       - type: file
         currentLogFilename: /home/anton/Documents/Logius/logs/verapdfService.log
         archive: true
-        archivedLogFilenamePattern: /home/anton/Documents/Logius/logs/logius-%d.log
+        archivedLogFilenamePattern: /home/anton/Documents/Logius/logs/verapdfService-%d.log
         archivedFileCount: 10

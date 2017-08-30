@@ -247,8 +247,6 @@ public class ControlResource {
     }
 
     private String startCrawlJob(String domain, boolean overwrite){
-        // TODO: rework overwirite
-        overwrite = false;
         try {
             if (resourceManager.getResourceUri() == null && uriInfo != null) {
                 resourceManager.setResourceUri(uriInfo.getBaseUri().toString());

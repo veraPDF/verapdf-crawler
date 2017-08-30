@@ -32,9 +32,13 @@ public class ValidationResource {
     ValidationResource(String veraPDFPath, String logiusUrl) throws IOException {
         this.validationSettings = new ValidationSettings();
         this.veraPDFPath = veraPDFPath;
-        HttpClient client = HttpClientBuilder.create().build();
-        HttpResponse response = client.execute(new HttpGet(logiusUrl + "/verapdf-service/settings"));
-        validationSettings = new ObjectMapper().readValue(response.getEntity().getContent(), ValidationSettings.class);
+        try {
+            HttpClient client = HttpClientBuilder.create().build();
+            HttpResponse response = client.execute(new HttpGet(logiusUrl + "/verapdf-service/settings"));
+            validationSettings = new ObjectMapper().readValue(response.getEntity().getContent(), ValidationSettings.class);
+        } catch (Throwable e) {
+            logger.error("Can not get validation settings", e);
+        }
     }
 
     @POST
@@ -83,7 +87,7 @@ public class ValidationResource {
     }
 
     private void validate(String filename) {
-        this.veraPDFProcessor = new VeraPDFProcessor(veraPDFPath, filename, this, this.validationSettings.getValidationProperties());
+        this.veraPDFProcessor = new VeraPDFProcessor(veraPDFPath, filename, this, this.validationSettings);
         service.submit(veraPDFProcessor);
     }
 

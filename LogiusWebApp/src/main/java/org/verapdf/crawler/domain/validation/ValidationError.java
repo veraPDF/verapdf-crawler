@@ -8,6 +8,9 @@ public class ValidationError {
     private String testNumber;
     private String description;
 
+    public ValidationError() {
+    }
+
     public ValidationError(String specification, String clause, String testNumber, String description) {
         this.specification = specification;
         this.clause = clause;
