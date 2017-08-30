@@ -1,8 +1,10 @@
 package org.verapdf.service;
 
+import javanet.staxutils.SimpleNamespaceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.validation.ValidationError;
+import org.verapdf.crawler.domain.validation.ValidationSettings;
 import org.verapdf.crawler.domain.validation.VeraPDFValidationResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -37,13 +39,13 @@ public class VeraPDFProcessor implements Runnable {
 	private Process process;
 	private ValidationResource resource;
 	private boolean stopped = false;
-	private final Map<String, String> propertiesPaths;
+	private final ValidationSettings settings;
 
-	VeraPDFProcessor(String verapdfPath, String filePath, ValidationResource resource, Map<String, String> propertiesPaths) {
+	VeraPDFProcessor(String verapdfPath, String filePath, ValidationResource resource, ValidationSettings settings) {
 		this.verapdfPath = verapdfPath;
 		this.filePath = filePath;
 		this.resource = resource;
-		this.propertiesPaths = propertiesPaths;
+		this.settings = settings;
 	}
 
 	private File getVeraPDFReport(String filename) throws IOException, InterruptedException {
@@ -72,12 +74,11 @@ public class VeraPDFProcessor implements Runnable {
 				Document document = db.parse(report);
 				XPathFactory xpf = XPathFactory.newInstance();
 				XPath xpath = xpf.newXPath();
-				// Uncomment this for specifying namespaces if it will be necessary
-//		SimpleNamespaceContext nsc = new SimpleNamespaceContext();
-//		nsc.setPrefix(SchematronGenerator.SCH_PREFIX, SchematronGenerator.SCH_NAMESPACE);
-//		xpath.setNamespaceContext(nsc);
+				SimpleNamespaceContext nsc = new SimpleNamespaceContext();
+				addNameSpaces(nsc);
+				xpath.setNamespaceContext(nsc);
 				result = generateBaseResult(document, xpath);
-				if (this.propertiesPaths != null && !this.propertiesPaths.isEmpty()) {
+				if (this.settings != null) {
 					addProperties(result, document, xpath);
 				}
 			} else {
@@ -101,8 +102,23 @@ public class VeraPDFProcessor implements Runnable {
 		}
 	}
 
+	private void addNameSpaces(SimpleNamespaceContext nsc) {
+		if (this.settings != null) {
+			Map<String, String> namespaces = this.settings.getNamespaces();
+			if (namespaces != null) {
+				for (Map.Entry<String, String> entry : namespaces.entrySet()) {
+					nsc.setPrefix(entry.getKey(), entry.getValue());
+				}
+			}
+		}
+	}
+
 	private void addProperties(VeraPDFValidationResult result, Document document, XPath xpath) {
-		for (Map.Entry<String, String> property : this.propertiesPaths.entrySet()) {
+		Map<String, String> validationProperties = this.settings.getValidationProperties();
+		if (validationProperties == null) {
+			return;
+		}
+		for (Map.Entry<String, String> property : validationProperties.entrySet()) {
 			try {
 				String value = (String) xpath.evaluate(property.getValue(), document, XPathConstants.STRING);
 				result.addProperty(property.getKey(), value);
@@ -127,11 +143,9 @@ public class VeraPDFProcessor implements Runnable {
 				document,
 				XPathConstants.STRING);
 		boolean isCompliant = Boolean.parseBoolean(isCompliantString);
-		if (isCompliant) {
-			result.setValid(isCompliant);
-			if (!isCompliant) {
-				result.setValidationErrors(getvalidationErrors(document, xpath));
-			}
+		result.setValid(isCompliant);
+		if (!isCompliant) {
+			result.setValidationErrors(getvalidationErrors(document, xpath));
 		}
 		return result;
 	}
@@ -154,7 +168,8 @@ public class VeraPDFProcessor implements Runnable {
 				for (int j = 0; j < children.getLength(); ++j) {
 					Node child = children.item(j);
 					if (child.getNodeName().equals("description")) {
-						description = child.getNodeValue();
+						description = child.getTextContent();
+						break;
 					}
 				}
 				res.add(new ValidationError(specification, clause, testNumber, description));

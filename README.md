@@ -5,7 +5,7 @@ In order to install Logius crawler you'll need
  * Java 7 and Java 8, which can be downloaded [from Oracle](http://www.oracle.com/technetwork/java/javase/downloads/index.html), or for 
  Linux users [OpenJDK](http://openjdk.java.net/install/index.html).
  * Heritrix 3 need to be installed, [web page with details](https://webarchive.jira.com/wiki/display/Heritrix)
- * Verapdf need to be installed, [you can download the latest version here](http://downloads.verapdf.org/gf/).
+ * Verapdf need to be installed, [you can download the latest version here](http://downloads.verapdf.org/).
  Note that you should preferably use the latest version of verapdf.
  
 ### Installing Logius web application
@@ -47,12 +47,6 @@ Here your_login and your_password are the credentials you should pass to LogiusW
         `is_finished` tinyint(1) DEFAULT '0',
         `status` varchar(10) DEFAULT NULL
       );
-    CREATE TABLE `validation_jobs` (
-    `filepath` varchar(255) DEFAULT NULL,
-    `job_directory` varchar(255) DEFAULT NULL,
-    `file_url` varchar(255) DEFAULT NULL,
-    `time_last_modified` datetime DEFAULT NULL
-    );
     CREATE TABLE `batch_crawl_jobs` (
       `id` varchar(36) DEFAULT NULL,
       `is_finished` tinyint(1) DEFAULT '0',

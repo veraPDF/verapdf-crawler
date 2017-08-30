@@ -17,6 +17,8 @@ import org.verapdf.crawler.repository.document.ValidatedPDFDao;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -24,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Path("/verapdf-service")
+@Produces(MediaType.APPLICATION_JSON)
 public class VerapdfServiceValidator implements PDFValidator {
 
     private final static int MAX_VALIDATION_TIMEOUT_IN_MINUTES = 5;
