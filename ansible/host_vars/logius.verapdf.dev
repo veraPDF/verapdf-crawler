@@ -1,34 +1,66 @@
 ---
-ansible_ssh_host: 192.168.10.100
-hostdomain: verapdf.dev
-hostname: "logius.{{ hostdomain }}"
-heritrix_host_name: "heritrix.{{ hostdomain }}"
-heritrix_install_java: true
-heritrix_nginx_access: true
-heritrix_use_self_cert: true
+# Development box setup for the logius crawler app and Heritrix.
+# Used by Vagrantfile to set up a local development VM
+# bais of a server roll
 
+# Hostname variables
+#
+# IP Address host machine, MUST be a debian jessie box at present.
+# This is set to the IP address of the VM in the Vagrantfile in the project root.
+ansible_ssh_host: 192.168.10.100
+# Domain of host, used to derive custom sub-domains
+hostdomain: verapdf.dev
+# Custom sub-domain for Logius app GUI
+hostname: "logius.{{ hostdomain }}"
+
+# System variables
+#
+# Set machine timezone
 timezone_zone: Europe/London
+# Install apt dependencies, Java 8 could be added here for Ubuntu Xenial installs
 apt_install:
   - maven
 
+# Heretrix setup variables
+#
+# Custom sub-domain for Heritrix GUI if required
+heritrix_host_name: "heritrix.{{ hostdomain }}"
+# Set true if Java 8 installation required from Jessie backports
+heritrix_install_java: true
+# Set true if you want to provide external access to the Heritrix GUI via nginx
+heritrix_nginx_access: true
+# Set true to generate self signed SSL certs for a development box
+heritrix_use_self_cert: true
+
+# Logius application variables
+#
 logius_app:
+  # Database admin password, this is fine for development machine config.
+  # Don't check your production password into a public Git repo.
   db_admin_password: vagrant
+  # Application database schema name
   db_schema_name: logius
+  # Application database user
   db_user_name: logius
+  # Application database password
   db_password: vagrant
+  # Web application port
   port: 9000
+  # Web application admin port
   admin_port: 9001
 
+# MySQL config derived from app config
+#
 mysql_root_password: "{{ logius_app.db_admin_password }}"
-
 mysql_databases:
   - name: "{{ logius_app.db_schema_name }}"
-
 mysql_users:
   - name: "{{ logius_app.db_user_name }}"
     password: "{{ logius_app.db_password }}"
     priv: "{{ logius_app.db_schema_name }}.*:ALL"
 
+# nginx config
+#
 nginx_vhosts:
   - name:
       -  "{{ hostname }}"
