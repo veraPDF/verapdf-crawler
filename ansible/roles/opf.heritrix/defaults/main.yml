@@ -1,0 +1,22 @@
+# defaults file for heritrix
+---
+heritrix_install_java: false
+heritrix_nginx_access: false
+
+heritrix_install_root: "/opt"
+heritrix_version: "3.2.0"
+heritrix_root: "{{ heritrix_install_root }}/heritrix-{{ heritrix_version }}"
+heritrix_executable: "{{ heritrix__root }}/bin/heritrix"
+
+heritrix_linux_user: "heritrix"
+heritrix_linux_group: "{{ heritrix_linux_user }}"
+
+heritrix_use_self_cert: false
+heritrix_nginx_ssl_path: /etc/nginx/ssl
+heritrix_ssl_cert_path: "{{ heretrix_nginx_ssl_path }}/cert.crt"
+heritrix_ssl_key_path: "{{ heretrix_nginx_ssl_path }}/cert.key"
+heritrix_host_name: "heritrix.verapdf.dev"
+
+heritrix_port: 8443
+heritrix_admin_user: "admin"
+heritrix_admin_password: "admin"

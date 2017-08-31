@@ -1,6 +1,11 @@
 ---
 ansible_ssh_host: 192.168.10.100
-hostname: logius.verapdf.dev
+hostdomain: verapdf.dev
+hostname: "logius.{{ hostdomain }}"
+heritrix_host_name: "heritrix.{{ hostdomain }}"
+heritrix_install_java: true
+heritrix_nginx_access: true
+heritrix_use_self_cert: true
 
 timezone_zone: Europe/London
 apt_install:
@@ -31,7 +36,7 @@ nginx_vhosts:
     listen:
       - 80
     template: '_proxy'
-    upstream_name: "localhost:{{ logius_app.port }}"
+    upstream_name: "localhost:{{ logius_app.port }}/"
     proxy_params:
       - "proxy_redirect off;"
       - "proxy_set_header Host $host;"
