@@ -1,4 +1,4 @@
-# test file for heritrix
+# test file for verapdf.heritrix
 ---
 - hosts: localhost
   connection: local

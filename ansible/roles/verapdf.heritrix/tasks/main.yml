@@ -1,4 +1,4 @@
-# tasks file for heritrix
+# tasks file for verapdf.heritrix
 ---
 - name: Add backports repo for Java 8 in Debian
   apt_repository:

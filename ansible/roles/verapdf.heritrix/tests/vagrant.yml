@@ -1,4 +1,4 @@
-# test file for heritrix
+# test file for verapdf.heritrix
 ---
 - hosts: all
   remote_user: vagrant

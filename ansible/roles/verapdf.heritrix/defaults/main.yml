@@ -1,4 +1,4 @@
-# defaults file for heritrix
+# defaults file for verapdf.heritrix
 ---
 heritrix_install_java: false
 heritrix_nginx_access: false
