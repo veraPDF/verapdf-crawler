@@ -1,5 +1,5 @@
 [servers:children]
-heretrix
+heritrix
 
-[heretrix]
+[heritrix]
 logius.verapdf.dev
