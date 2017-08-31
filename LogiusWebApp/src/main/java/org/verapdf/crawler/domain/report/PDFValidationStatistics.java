@@ -18,7 +18,7 @@ public class PDFValidationStatistics {
         this.numberOfValidPdfDocuments = numberOfValidPdfDocuments;
     }
 
-    PDFValidationStatistics() {
+    public PDFValidationStatistics() {
         statistics = new ArrayList<>();
     }
 

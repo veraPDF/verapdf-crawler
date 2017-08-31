@@ -1,21 +1,20 @@
 package org.verapdf.service;
 
 import com.codahale.metrics.annotation.Timed;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.domain.validation.ValidationSettings;
 import org.verapdf.crawler.domain.validation.VeraPDFValidationResult;
+import org.apache.http.client.HttpClient;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -27,18 +26,25 @@ public class ValidationResource {
     private final ExecutorService service = Executors.newFixedThreadPool(1);
     private final String veraPDFPath;
     private VeraPDFProcessor veraPDFProcessor;
-    private Map<String, String> validationSettings;
+    private ValidationSettings validationSettings;
     private VeraPDFValidationResult validationResult;
 
-    ValidationResource(String veraPDFPath) {
-        this.validationSettings = new HashMap<>();
+    ValidationResource(String veraPDFPath, String logiusUrl) throws IOException {
+        this.validationSettings = new ValidationSettings();
         this.veraPDFPath = veraPDFPath;
+        try {
+            HttpClient client = HttpClientBuilder.create().build();
+            HttpResponse response = client.execute(new HttpGet(logiusUrl + "/verapdf-service/settings"));
+            validationSettings = new ObjectMapper().readValue(response.getEntity().getContent(), ValidationSettings.class);
+        } catch (Throwable e) {
+            logger.error("Can not get validation settings", e);
+        }
     }
 
     @POST
     @Path("/properties")
     @Timed
-    public void setValidationSettings(Map<String, String> validationSettings) {
+    public void setValidationSettings(ValidationSettings validationSettings) {
         this.validationSettings = validationSettings;
     }
 
@@ -58,10 +64,12 @@ public class ValidationResource {
     @GET
     @Timed
     public Response getStatus() {
-        if(evaluateStatus() == Status.ACTIVE) {
+        Status status = evaluateStatus();
+        logger.info("Status requested, status is " + status);
+        if(status == Status.ACTIVE) {
             return Response.status(102).build();
         }
-        if(evaluateStatus() == Status.FINISHED) {
+        if(status == Status.FINISHED) {
             return Response.ok(validationResult).build();
         }
         return Response.status(100).build();
@@ -79,7 +87,7 @@ public class ValidationResource {
     }
 
     private void validate(String filename) {
-        this.veraPDFProcessor = new VeraPDFProcessor(veraPDFPath, filename, this);
+        this.veraPDFProcessor = new VeraPDFProcessor(veraPDFPath, filename, this, this.validationSettings);
         service.submit(veraPDFProcessor);
     }
 

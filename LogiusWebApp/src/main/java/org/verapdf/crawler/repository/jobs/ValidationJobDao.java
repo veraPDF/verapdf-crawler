@@ -20,15 +20,16 @@ public class ValidationJobDao {
         this.template = new JdbcTemplate(dataSource);
     }
 
-    public List<ValidationJobData> removeAll() {
-        List<ValidationJobData> result = template.query("select * from " + VALIDATION_JOB_TABLE_NAME, new ValidationJobMapper());
-        for(ValidationJobData data: result) {
-            deleteJob(data);
+    public ValidationJobData getOneJob() {
+        List<ValidationJobData> validationJobs = template.query("select * from " + VALIDATION_JOB_TABLE_NAME, new ValidationJobMapper());
+        ValidationJobData result = null;
+        if(!validationJobs.isEmpty()) {
+            result = validationJobs.get(0);
         }
         return result;
     }
 
-    private void deleteJob(ValidationJobData job) {
+    public void deleteJob(ValidationJobData job) {
         template.update(String.format("delete from %s where %s=?", VALIDATION_JOB_TABLE_NAME, FIELD_FILEPATH), job.getFilepath());
     }
 

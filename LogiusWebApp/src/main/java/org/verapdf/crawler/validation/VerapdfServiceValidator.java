@@ -10,12 +10,23 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.validation.ValidationError;
+import org.verapdf.crawler.domain.validation.ValidationSettings;
 import org.verapdf.crawler.domain.validation.VeraPDFValidationResult;
 import org.verapdf.crawler.repository.document.ValidatedPDFDao;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 
+@Path("/verapdf-service")
+@Produces(MediaType.APPLICATION_JSON)
 public class VerapdfServiceValidator implements PDFValidator {
 
     private final static int MAX_VALIDATION_TIMEOUT_IN_MINUTES = 5;
@@ -23,15 +34,29 @@ public class VerapdfServiceValidator implements PDFValidator {
 
     private final String verapdfUrl;
     private final HttpClient httpClient;
+    private final ValidatedPDFDao validatedPDFDao;
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
-    VerapdfServiceValidator(String verapdfUrl) {
+    public VerapdfServiceValidator(String verapdfUrl, ValidatedPDFDao validatedPDFDao) {
         this.verapdfUrl = verapdfUrl;
         httpClient = HttpClientBuilder.create().build();
+        this.validatedPDFDao = validatedPDFDao;
+    }
+
+    @GET
+    @Path("/settings")
+    public ValidationSettings getValidationSettings() {
+        return new ValidationSettings(validatedPDFDao.getPdfPropertiesWithXpath(), new HashMap<>());
+    }
+
+    @POST
+    @Path("/result")
+    public void setValidationResult(VeraPDFValidationResult result) {
+        
     }
 
     @Override
-    public boolean validateAndWirteResult(String localFilename, String fileUrl, ValidatedPDFDao validatedPDFDao) throws Exception {
+    public boolean validateAndWirteResult(String localFilename, String fileUrl) throws Exception {
         VeraPDFValidationResult result;
         try {
             result = validate(localFilename, validatedPDFDao);
@@ -63,9 +88,8 @@ public class VerapdfServiceValidator implements PDFValidator {
             sendValidationRequest(filename);
 
             int validationRetries = 0;
-            for (int i = 0; i < MAX_VALIDATION_TIMEOUT_IN_MINUTES * 6; i++) {
+            for (int i = 0; i < MAX_VALIDATION_TIMEOUT_IN_MINUTES * 12; i++) {
                 int responseCode = getValidationStatus();
-                logger.info("Response code is " + responseCode);
                 if (responseCode == HttpStatus.SC_OK) { // Vaidation is finished
                     logger.info("Validation is finished");
                     return getValidationResult();
@@ -73,7 +97,7 @@ public class VerapdfServiceValidator implements PDFValidator {
                 // Validation is in process
                 if (responseCode == HttpStatus.SC_PROCESSING) {
                     logger.info("Validation is in progress");
-                    Thread.sleep(10 * 1000);
+                    Thread.sleep(5 * 1000);
                     continue;
                 }
                 // Something went wrong and validation was not finished
@@ -103,8 +127,7 @@ public class VerapdfServiceValidator implements PDFValidator {
         HttpPost propertiesPost = new HttpPost(verapdfUrl + "/properties");
         propertiesPost.setHeader("Content-Type", "application/json");
         ObjectMapper mapper = new ObjectMapper();
-        Map<String, String> properties = validatedPDFDao.getPdfPropertiesWithXpath();
-        propertiesPost.setEntity(new StringEntity(mapper.writeValueAsString(properties)));
+        propertiesPost.setEntity(new StringEntity(mapper.writeValueAsString(getValidationSettings())));
         httpClient.execute(propertiesPost);
         propertiesPost.releaseConnection();
         logger.info("Validation settings have been sent");
@@ -119,9 +142,11 @@ public class VerapdfServiceValidator implements PDFValidator {
     }
 
     private int getValidationStatus() throws IOException {
-        HttpGet get = new HttpGet(verapdfUrl);
-        int result = httpClient.execute(get).getStatusLine().getStatusCode();
-        get.releaseConnection();
+        HttpURLConnection connection = (HttpURLConnection) new URL(verapdfUrl).openConnection();
+        connection.setRequestMethod("GET");
+
+        int result = connection.getResponseCode();
+        logger.info("Response code is " + result);
         return result;
     }
 

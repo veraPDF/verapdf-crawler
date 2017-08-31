@@ -15,7 +15,7 @@ public class ValidatedPDFDao {
     private final static String VALIDATION_ERRORS_REFERENCE_TABLE_NAME = "validation_errors_in_document";
     public final static String PROPERTIES_TABLE_NAME = "document_properties";
     final static String PDF_PROPERTIES_TABLE_NAME = "pdf_properties";
-    private final static String FIELD_FLAVOUR = "flavour";
+    private final static String FIELD_SPECIFICATION = "specification";
     private final static String FIELD_CLAUSE = "clause";
     private final static String FIELD_TEST_NUMBER = "test_number";
     private final static String FIELD_DESCRIPTION = "description";
@@ -40,14 +40,14 @@ public class ValidatedPDFDao {
 
     public void addErrorToDocument(ValidationError rule, String documentUrl) {
         List<String> errors = template.query(String.format("select %s from %s where %s=? and %s=? and %s=?",
-                FIELD_ID, VALIDATION_ERRORS_TABLE_NAME, FIELD_FLAVOUR, FIELD_CLAUSE, FIELD_TEST_NUMBER), (resultSet, i) -> resultSet.getString("id"), rule.getSpecification(), rule.getClause(), rule.getTestNumber());
+                FIELD_ID, VALIDATION_ERRORS_TABLE_NAME, FIELD_SPECIFICATION, FIELD_CLAUSE, FIELD_TEST_NUMBER), (resultSet, i) -> resultSet.getString("id"), rule.getSpecification(), rule.getClause(), rule.getTestNumber());
         if(errors.isEmpty()) { // There is no such error in database, need to insert and link to document
             template.update(String.format("insert into %s (%s, %s, %s, %s) values (?, ?, ?, ?)", VALIDATION_ERRORS_TABLE_NAME,
-                    FIELD_FLAVOUR, FIELD_CLAUSE, FIELD_TEST_NUMBER, FIELD_DESCRIPTION),
+                    FIELD_SPECIFICATION, FIELD_CLAUSE, FIELD_TEST_NUMBER, FIELD_DESCRIPTION),
                     rule.getSpecification(), rule.getClause(), rule.getTestNumber(), rule.getDescription());
 
             String newRuleId = template.query(String.format("select %s from %s where %s=? and %s=? and %s=?",
-                    FIELD_ID, VALIDATION_ERRORS_TABLE_NAME, FIELD_FLAVOUR, FIELD_CLAUSE, FIELD_TEST_NUMBER), (resultSet, i) -> resultSet.getString("id"), rule.getSpecification(), rule.getClause(), rule.getTestNumber()).get(0);
+                    FIELD_ID, VALIDATION_ERRORS_TABLE_NAME, FIELD_SPECIFICATION, FIELD_CLAUSE, FIELD_TEST_NUMBER), (resultSet, i) -> resultSet.getString("id"), rule.getSpecification(), rule.getClause(), rule.getTestNumber()).get(0);
 
             template.update(String.format("insert into %s (%s, %s) values (?, ?)", VALIDATION_ERRORS_REFERENCE_TABLE_NAME,
                     FIELD_ERRORS_DOCUMENT_URL, FIELD_ERROR_ID), documentUrl, newRuleId);

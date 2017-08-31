@@ -1,5 +1,7 @@
 package org.verapdf.crawler.repository.document;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.verapdf.crawler.domain.report.PDFValidationStatistics;
 import org.verapdf.crawler.domain.report.PdfPropertyStatistics;
@@ -14,6 +16,7 @@ import java.util.Map;
 
 public class ReportDocumentDao {
     private final JdbcTemplate template;
+    private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
     public ReportDocumentDao(DataSource dataSource) {
         this.template = new JdbcTemplate(dataSource);
@@ -24,18 +27,24 @@ public class ReportDocumentDao {
     // inner join documents on document_properties.document_url = documents.document_url) group by value;
 
     public PDFValidationStatistics getValidationStatistics(String crawlJobId, LocalDateTime sinceTime) {
-        String sql = String.format("select any_value(%s.%s), any_value(%s), count(*) as `number` from ((%s inner join %s on %s.%s=%s.%s) inner join %s on %s.%s=%s.%s) where %s=? and %s>? group by %s",
-                ValidatedPDFDao.PROPERTIES_TABLE_NAME, ValidatedPDFDao.FIELD_PROPERTY_VALUE,
-                ValidatedPDFDao.FIELD_PDF_PROPERTY_READABLE_NAME, ValidatedPDFDao.PDF_PROPERTIES_TABLE_NAME,
-                ValidatedPDFDao.PROPERTIES_TABLE_NAME, ValidatedPDFDao.PDF_PROPERTIES_TABLE_NAME,
-                ValidatedPDFDao.FIELD_PDF_PROPERTY_NAME, ValidatedPDFDao.PROPERTIES_TABLE_NAME,
-                ValidatedPDFDao.FIELD_PROPERTY_NAME, InsertDocumentDao.DOCUMENTS_TABLE_NAME,
-                ValidatedPDFDao.PROPERTIES_TABLE_NAME, ValidatedPDFDao.FIELD_PROPERTIES_DOCUMENT_URL,
-                InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_DOCUMENT_URL,
-                InsertDocumentDao.FIELD_JOB_ID, InsertDocumentDao.FIELD_LAST_MODIFIED, ValidatedPDFDao.FIELD_PROPERTY_VALUE);
-        List<PdfPropertyStatistics> statistics = template.query(sql, new PdfPropertyStatisticsMapper(),crawlJobId, sinceTime);
-        return new PDFValidationStatistics(statistics, getNumberOfInvalidFilesForJob(crawlJobId, sinceTime),
-                getNumberOfValidFilesForJob(crawlJobId, sinceTime));
+        try {
+            String sql = String.format("select any_value(%s.%s), any_value(%s), count(*) as `number` from ((%s inner join %s on %s.%s=%s.%s) inner join %s on %s.%s=%s.%s) where %s=? and %s>? group by %s",
+                    ValidatedPDFDao.PROPERTIES_TABLE_NAME, ValidatedPDFDao.FIELD_PROPERTY_VALUE,
+                    ValidatedPDFDao.FIELD_PDF_PROPERTY_READABLE_NAME, ValidatedPDFDao.PDF_PROPERTIES_TABLE_NAME,
+                    ValidatedPDFDao.PROPERTIES_TABLE_NAME, ValidatedPDFDao.PDF_PROPERTIES_TABLE_NAME,
+                    ValidatedPDFDao.FIELD_PDF_PROPERTY_NAME, ValidatedPDFDao.PROPERTIES_TABLE_NAME,
+                    ValidatedPDFDao.FIELD_PROPERTY_NAME, InsertDocumentDao.DOCUMENTS_TABLE_NAME,
+                    ValidatedPDFDao.PROPERTIES_TABLE_NAME, ValidatedPDFDao.FIELD_PROPERTIES_DOCUMENT_URL,
+                    InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_DOCUMENT_URL,
+                    InsertDocumentDao.FIELD_JOB_ID, InsertDocumentDao.FIELD_LAST_MODIFIED, ValidatedPDFDao.FIELD_PROPERTY_VALUE);
+            List<PdfPropertyStatistics> statistics = template.query(sql, new PdfPropertyStatisticsMapper(), crawlJobId, sinceTime);
+            return new PDFValidationStatistics(statistics, getNumberOfInvalidFilesForJob(crawlJobId, sinceTime),
+                    getNumberOfValidFilesForJob(crawlJobId, sinceTime));
+        }
+        catch (Throwable e) {
+            logger.error("Error in validation statistics query",e);
+            return new PDFValidationStatistics();
+        }
     }
 
     //<editor-fold desc="Invalid pdf files">

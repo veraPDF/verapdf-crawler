@@ -35,7 +35,8 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
         environment.jersey().setUrlPattern("/api/*");
         final ResourceManager resourceManager;
         try {
-            HeritrixClient client = new HeritrixClient("https://localhost:8443/",
+            HeritrixClient client = new HeritrixClient(
+                    configuration.getHeritrixUrl(),
                     configuration.getHeritrixLogin(),
                     configuration.getHeritrixPassword());
             client.setBaseDirectory(configuration.getResourcePath());
@@ -46,6 +47,7 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
             environment.jersey().register(resourceManager.getInfoResourse());
             environment.jersey().register(resourceManager.getReportResource());
             environment.jersey().register(resourceManager.getControlResource());
+            environment.jersey().register(resourceManager.getValidatorResource());
             environment.healthChecks().register("heritrix", new HeritrixHealthCheck(client));
             environment.healthChecks().register("verapdf", new VeraPDFServiceHealthCheck(configuration.getVerapdfUrl()));
         } catch (Exception e) {
