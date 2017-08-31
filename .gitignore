@@ -40,3 +40,8 @@ ansible/*.retry
 
 # Vagrant directory
 .vagrant*
+
+# Eclipse files
+.settings
+.classpath
+.project

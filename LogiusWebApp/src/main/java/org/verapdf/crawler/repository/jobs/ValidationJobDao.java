@@ -10,23 +10,35 @@ import java.util.List;
 
 public class ValidationJobDao {
     private final JdbcTemplate template;
+    private static final String VALIDATION_JOB_TABLE_NAME = "validation_jobs";
+    public static final String FIELD_FILEPATH = "filepath";
+    public static final String FIELD_JOB_DIRECTORY = "job_directory";
+    public static final String FIELD_FILE_URL = "file_url";
+    public static final String FIELD_LAST_MODIFIED= "time_last_modified";
 
     public ValidationJobDao(DataSource dataSource) {
         this.template = new JdbcTemplate(dataSource);
     }
 
-    public List<ValidationJobData> getAllJobs() {
-        String sql = "select * from validation_jobs";
-        return template.query(sql, new ValidationJobMapper());
+    public List<ValidationJobData> removeAll() {
+        List<ValidationJobData> result = template.query("select * from " + VALIDATION_JOB_TABLE_NAME, new ValidationJobMapper());
+        for(ValidationJobData data: result) {
+            deleteJob(data);
+        }
+        return result;
     }
 
-    public void deleteJob(ValidationJobData job) {
-        String sql = "delete from validation_jobs where filepath=?";
-        template.update(sql, job.getFilepath());
+    private void deleteJob(ValidationJobData job) {
+        template.update(String.format("delete from %s where %s=?", VALIDATION_JOB_TABLE_NAME, FIELD_FILEPATH), job.getFilepath());
     }
 
     public void addJob(ValidationJobData job) {
-        String sql = "insert into validation_jobs (filepath, job_directory, file_url, time_last_modified) values (?,?,?,?)";
-        template.update(sql, job.getFilepath(), job.getJobDirectory(), job.getUri(), DaoUtils.getSqlTimeFromLastmodified(job.getTime()));
+        template.update(String.format("insert into %s (%s, %s, %s, %s) values (?,?,?,?)",
+                VALIDATION_JOB_TABLE_NAME, FIELD_FILEPATH, FIELD_JOB_DIRECTORY, FIELD_FILE_URL,FIELD_LAST_MODIFIED),
+                job.getFilepath(), job.getJobDirectory(), job.getUri(), DaoUtils.getSqlTimeFromLastmodified(job.getTime()));
+    }
+
+    public Integer getQueueSize() {
+        return template.queryForObject(String.format("select count(*) from %s", VALIDATION_JOB_TABLE_NAME), Integer.class);
     }
 }

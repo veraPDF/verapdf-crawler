@@ -1,0 +1,20 @@
+server:
+  applicationConnectors:
+  - type: http 
+    port: 8100
+  adminConnectors:
+  - type: http
+    port: 8101
+verapdfPath: /home/anton/verapdf/verapdf
+logging:
+  level: WARN
+  loggers:
+    "CustomLogger":
+      additive: false
+      level: INFO
+      appenders:
+      - type: file
+        currentLogFilename: /home/anton/Documents/Logius/logs/verapdfService.log
+        archive: true
+        archivedLogFilenamePattern: /home/anton/Documents/Logius/logs/logius-%d.log
+        archivedFileCount: 10

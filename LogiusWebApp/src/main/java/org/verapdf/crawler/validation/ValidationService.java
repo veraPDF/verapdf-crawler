@@ -2,21 +2,22 @@ package org.verapdf.crawler.validation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.domain.validation.ValidationReportData;
 import org.verapdf.crawler.domain.validation.ValidationJobData;
-import org.verapdf.crawler.repository.file.InsertFileDao;
+import org.verapdf.crawler.repository.document.InsertDocumentDao;
+import org.verapdf.crawler.repository.document.ValidatedPDFDao;
 import org.verapdf.crawler.repository.jobs.ValidationJobDao;
 
 import javax.sql.DataSource;
 import java.io.*;
-import java.util.LinkedList;
+import java.util.List;
 
 public class ValidationService implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
-    private final LinkedList<ValidationJobData> queue;
     private final PDFValidator validator;
     private final ValidationJobDao validationJobDao;
-    private final InsertFileDao insertFileDao;
+    private final InsertDocumentDao insertDocumentDao;
+    private final ValidatedPDFDao validatedPDFDao;
+    private List<ValidationJobData> validationJobs;
 
     public boolean isRunning() {
         return isRunning;
@@ -27,64 +28,60 @@ public class ValidationService implements Runnable {
     }
 
     private boolean isRunning;
-    public ValidationService(String verapdfPath, DataSource dataSource) {
-        this.queue = new LinkedList<>();
+    public ValidationService(String verapdfUrl, DataSource dataSource, ValidatedPDFDao validatedPDFDao) {
         validationJobDao = new ValidationJobDao(dataSource);
-        insertFileDao = new InsertFileDao(dataSource);
+        insertDocumentDao = new InsertDocumentDao(dataSource);
         isRunning = true;
-        validator = new VerapdfValidator(verapdfPath);
-        queue.addAll(validationJobDao.getAllJobs());
+        this.validatedPDFDao = validatedPDFDao;
+        validator = new VerapdfServiceValidator(verapdfUrl);
     }
 
     public void addJob(ValidationJobData data) throws IOException {
-        queue.add(data);
         validationJobDao.addJob(data);
         logger.info("Added validation job " + data.getUri());
     }
 
     public Integer getQueueSize() {
-        return queue.size();
+        return validationJobDao.getQueueSize() + validationJobs.size();
     }
 
     @Override
     public void run() {
         while (isRunning) {
-            ValidationJobData data = new ValidationJobData();
-            try {
-                if(!queue.isEmpty()) {
-                    data = queue.remove();
-                    validationJobDao.deleteJob(data);
-                    logger.info("Validating " + data.getUri());
-                    ValidationReportData result;
+            validationJobs = validationJobDao.removeAll();
+            if(validationJobs != null && !validationJobs.isEmpty()) {
+                for(ValidationJobData data: validationJobs) {
                     try {
-                        result = validator.validateAndWirteErrors(data.getFilepath(), data.errorOccurances);
+                        logger.info("Validating " + data.getUri());
+                        boolean validationResult;
+                        try {
+                                validationResult = validator.validateAndWirteResult(data.getFilepath(), data.getUri(), validatedPDFDao);
+                            } catch (Exception e) {
+                                logger.error("Error in validator",e);
+                                validationResult = false;
+                            }
+                            String[] parts = data.getJobDirectory().split("/");
+                            String jobId = parts[parts.length - 3];
+                            if (validationResult) {
+                                insertDocumentDao.addPdfFile(data, jobId);
+                            } else {
+                                insertDocumentDao.addInvalidPdfFile(data, jobId);
+                            }
+                    } catch (Exception e) {
+                        logger.error("Error in validation runner",e);
                     }
-                    catch (Exception e) {
-                        result = new ValidationReportData();
-                        result.setValid(false);
-                        result.setFailedRules(0);
-                        result.setPassedRules(0);
-                    }
-                    String[] parts = data.getJobDirectory().split("/");
-                    String jobId = parts[parts.length - 3];
-                    if(result.isValid()) {
-                        insertFileDao.addValidPdfFile(data, jobId);
-                    }
-                    else {
-                        result.setUrl(data.getUri());
-                        result.setLastModified(data.getTime());
-                        insertFileDao.addInvalidPdfFile(result, jobId);
+                    finally {
+                        if(data != null && data.getFilepath() != null) {
+                            new File(data.getFilepath()).delete();
+                        }
+                        }
                     }
                 }
-                else {
-                    Thread.sleep(60000);
-                }
-            } catch (Exception e) {
-                logger.error("Error in validation runner",e);
-            }
-            finally {
-                if(data != null && data.getFilepath() != null) {
-                    new File(data.getFilepath()).delete();
+            else {
+                try {
+                    Thread.sleep(60 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
         }

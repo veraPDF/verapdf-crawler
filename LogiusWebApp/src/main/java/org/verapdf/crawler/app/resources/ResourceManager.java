@@ -7,15 +7,15 @@ import org.verapdf.crawler.domain.crawling.BatchJob;
 import org.verapdf.crawler.domain.crawling.CurrentJob;
 import org.verapdf.crawler.domain.database.MySqlCredentials;
 import org.verapdf.crawler.domain.email.EmailServer;
-import org.verapdf.crawler.domain.report.SingleURLJobReport;
+import org.verapdf.crawler.domain.report.CrawlJobReport;
 import org.verapdf.crawler.app.engine.HeritrixClient;
 import org.verapdf.crawler.report.HeritrixReporter;
+import org.verapdf.crawler.repository.document.ValidatedPDFDao;
+import org.verapdf.crawler.repository.jobs.BatchJobDao;
 import org.verapdf.crawler.repository.jobs.CrawlJobDao;
 import org.verapdf.crawler.validation.ValidationService;
 
 import javax.sql.DataSource;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 
 public class ResourceManager {
     private final static String JDBC_DRIVER = "com.mysql.jdbc.Driver";
@@ -24,36 +24,36 @@ public class ResourceManager {
     private final InfoResourse infoResourse;
     private final ReportResource reportResource;
     private final ControlResource controlResource;
-    private final ArrayList<CurrentJob> currentJobs;
-    private final ArrayList<BatchJob> batchJobs;
     private final CrawlJobDao crawlJobDao;
 
     private String resourceUri;
     private final ValidationService validationService;
     private final EmailServer emailServer;
 
-    public ResourceManager(HeritrixClient client, EmailServer emailServer, String verapdfPath, MySqlCredentials credentials) {
+    public ResourceManager(HeritrixClient client, EmailServer emailServer, String verapdfUrl, MySqlCredentials credentials) {
         DataSource dataSource = createMySqlDatasource(credentials);
         crawlJobDao = new CrawlJobDao(dataSource);
+        BatchJobDao batchJobDao = new BatchJobDao(dataSource);
 
-        currentJobs = new ArrayList<>();
-        batchJobs = new ArrayList<>();
-        HeritrixReporter reporter = new HeritrixReporter(client, dataSource);
+        HeritrixReporter reporter = new HeritrixReporter(client, dataSource, crawlJobDao);
         this.emailServer = emailServer;
 
-        validationService = new ValidationService(verapdfPath, dataSource);
-        infoResourse = new InfoResourse(validationService, client, currentJobs, this);
-        reportResource = new ReportResource(reporter, this, credentials);
-        controlResource = new ControlResource(currentJobs, client, reporter, emailServer, batchJobs, validationService, this, crawlJobDao, dataSource);
+        validationService = new ValidationService(verapdfUrl, dataSource, new ValidatedPDFDao(dataSource));
+        infoResourse = new InfoResourse(validationService, batchJobDao);
+        reportResource = new ReportResource(reporter, crawlJobDao, batchJobDao);
+        controlResource = new ControlResource(client, reporter, emailServer,validationService,
+                this, crawlJobDao, dataSource, batchJobDao);
 
-        for(CurrentJob job: crawlJobDao.getAllJobs()) {
-            if(job.getFinishTime() == null) {
-                crawlJobDao.writeFinishTime(job);
+        for(BatchJob batchJob: batchJobDao.getBatchJobs()) {
+            for (String jobId: batchJob.getCrawlJobs()) {
+                CurrentJob job = crawlJobDao.getCrawlJob(jobId);
+                if (job.getFinishTime() == null) {
+                    crawlJobDao.writeFinishTime(job.getId());
+                }
             }
         }
-        currentJobs.addAll(crawlJobDao.getAllJobs());
 
-        new Thread(new StatusMonitor(this)).start();
+        new Thread(new StatusMonitor(batchJobDao, controlResource)).start();
         validationService.start();
         new Thread(validationService).start();
         logger.info("Validation service started.");
@@ -71,49 +71,11 @@ public class ResourceManager {
         return controlResource;
     }
 
-    CurrentJob getJobById(String job) {
-        for(CurrentJob jobData : currentJobs) {
-            if(jobData.getId().equals(job))
-                return jobData;
-        }
-        return null;
-    }
-
-    ArrayList<BatchJob> getBatchJobs() { return batchJobs; }
-
-    CurrentJob getJobByCrawlUrl(String crawlUrl) {
-        for(CurrentJob jobData : currentJobs) {
-            if(jobData.getCrawlURL().equals(crawlUrl))
-                return jobData;
-        }
-        return null;
-    }
-
-    SingleURLJobReport getJob(String job) { return controlResource.getJob(job); }
-
     String getResourceUri() { return resourceUri; }
 
     void setResourceUri(String resourceUri) { this.resourceUri = resourceUri; }
 
     EmailServer getEmailServer() { return emailServer; }
-
-    ArrayList<CurrentJob> getCurrentJobs() { return currentJobs; }
-
-    String getExistingJobURLbyJobId(String job) {
-        for(CurrentJob jobData : currentJobs) {
-            if(jobData.getId().equals(job))
-                return jobData.getJobURL();
-        }
-        return "";
-    }
-
-    LocalDateTime getTimeByJobId(String job) {
-        for(CurrentJob jobData : currentJobs) {
-            if(jobData.getId().equals(job))
-                return jobData.getCrawlSinceTime();
-        }
-        return null;
-    }
 
     private DataSource createMySqlDatasource(MySqlCredentials credentials) {
         DataSource dataSource = new DriverManagerDataSource();
