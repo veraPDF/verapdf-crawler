@@ -6,8 +6,9 @@ Server Stack
 ------------
 - Debian
 - nginx
-- Java 7 (for Heretrix) and Java 8 (for the application)
-- Heretrix
+- MySQL for database
+- Java 8 for Heritrix and the application
+- Heritrix
 - veraPDF
 
 Pre-requisites
@@ -52,11 +53,40 @@ A quick explanation of the options:
 - `--keyfile` points to the private key file needed to access the machine, here we point to the vagrant machines private key file `verapdf-crawler/.vagrant-wrkstn/machines/default/virtualbox/private_key.`
 - `-u` the remote ssh user, for vagrant machines we
 
-### Task Overview
+### Configuration
+We provide a configuration for the vagrant box, at [ansible/host_vars/logius.verapdf.dev](ansible/host_vars/logius.verapdf.dev). Bear in mind this is intended as a development box. You'll probably not want to expose the Heritrix admin GUI via nginx on public boxes.
+
+The config file is pretty well documented and could be used as the basis of a production server roll out, we use it for ours.
+
+### OTS Ansible Tasks Overview
+These are the off the shelf Ansible jobs from Ansible Galaxy used to set up the debian box.
+
+#### tersmitten.hostname
+Sets the remote machine hostname, deals with /etc/hostname and the like.
 
 #### tersmitten.apt
-Performs apt cache update and dist-update
+Performs apt cache update, dist-update and installs apt modules.
 
+#### tersmitten.timezone
+Sets up server timezone.
+
+#### geerlingguy.mysql
+Installs and congigures MySQL database used as an application DB.
+
+#### HanXHX.nginx
+Installs the nginx web server used to provide external access to the application web GUI and, optionally, the Heritrix admin GUI.
+
+#### heritrix installation notes
+
+    cd /opt
+    wget http://builds.archive.org/maven2/org/archive/heritrix/heritrix/3.2.0/heritrix-3.2.0-dist.tar.gz
+    tar -xzvf heritrix/3.2.0/heritrix-3.2.0-dist.tar.gz
+    export HERITRIX_HOME=/opt/heritrix-3.2.0
+    chmod u+x $HERITRIX_HOME/bin/heritrix
+    keytool -keystore adhoc.keystore -storepass password -keypass password -alias adhoc -genkey -keyalg RSA -dname "CN=Heritrix Ad-Hoc HTTPS Certificate" -validity 3650
+    sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout  /etc/nginx/cert.key -out /etc/nginx/cert.crt
+
+Unzip as sudo to /opt
 
 
 Troubleshooting
