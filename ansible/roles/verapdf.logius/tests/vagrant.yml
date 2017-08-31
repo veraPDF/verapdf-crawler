@@ -1,0 +1,7 @@
+# test file for verapdf.logius
+---
+- hosts: all
+  remote_user: vagrant
+  become: true
+  roles:
+    - ../../

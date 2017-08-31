@@ -1,0 +1,42 @@
+# tasks file for verapdf.logius
+---
+- name: Create logius group
+  group:
+    name: "{{ logius_linux_group }}"
+    state: present
+
+- name: Create logius user
+  user:
+    name: "{{ logius_linux_user }}"
+    groups:
+      - "{{ logius_heritrix_group }}"
+      - "{{ logius_linux_group }}"
+    createhome: no
+    system: yes
+
+- name: Set ownership of heritrix installation
+  file:
+    path: "{{ heritrix_root }}"
+    owner: "{{ heritrix_linux_user }}"
+    group: "{{ heritrix_linux_group }}"
+    recurse: yes
+
+- name: Add nginx configuration file to sites-available
+  template:
+    src: "etc/nginx/sites-available/heritrix-nginx.j2"
+    dest: "/etc/nginx/sites-available/{{ heritrix_host_name }}"
+    owner: root
+    group: root
+    mode: 0644
+  register: heritrix_site_available
+  when: heritrix_nginx_access
+
+- name: Create nginx sites-enabled symlink
+  file:
+    path: "/etc/nginx/sites-enabled/{{ heritrix_host_name }}"
+    src: "/etc/nginx/sites-available/{{ heritrix_host_name }}"
+    state: link
+    owner: root
+    group: root
+    mode: 0644
+  notify: reload nginx
