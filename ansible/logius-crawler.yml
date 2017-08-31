@@ -11,9 +11,10 @@
     - { role: tersmitten.timezone }
     - { role: tersmitten.apt }
 
-- hosts: heretrix
+- hosts: heritrix
   become: true
   roles:
     - { role: geerlingguy.mysql }
     - { role: HanXHX.nginx }
-    - { role: opf.heritrix }
+    - { role: verapdf.heritrix }
+    - { role: verapdf.logius }
