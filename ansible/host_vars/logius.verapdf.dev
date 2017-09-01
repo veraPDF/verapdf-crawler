@@ -34,30 +34,33 @@ heritrix_use_self_cert: true
 
 # Logius application variables
 #
-logius_app:
-  # Database admin password, this is fine for development machine config.
-  # Don't check your production password into a public Git repo.
-  db_admin_password: vagrant
-  # Application database schema name
-  db_schema_name: logius
-  # Application database user
-  db_user_name: logius
-  # Application database password
-  db_password: vagrant
-  # Web application port
-  port: 9000
-  # Web application admin port
+logius:
+  db:
+    # Database admin password, this is fine for development machine config.
+    # Don't check your production password into a public Git repo.
+    admin_password: vagrant
+    # Application database schema name
+    schema_name: logius
+    # Application database user
+    user_name: logius
+    # Application database password
+    password: vagrant
+    # Web application port
+  app:
+    port: 9000
+    # Web application admin port
   admin_port: 9001
+  # m
 
 # MySQL config derived from app config
 #
-mysql_root_password: "{{ logius_app.db_admin_password }}"
+mysql_root_password: "{{ logius.db.admin_password }}"
 mysql_databases:
-  - name: "{{ logius_app.db_schema_name }}"
+  - name: "{{ logius.db.schema_name }}"
 mysql_users:
-  - name: "{{ logius_app.db_user_name }}"
-    password: "{{ logius_app.db_password }}"
-    priv: "{{ logius_app.db_schema_name }}.*:ALL"
+  - name: "{{ logius.db.user_name }}"
+    password: "{{ logius.db.password }}"
+    priv: "{{ logius.db.schema_name }}.*:ALL"
 
 # nginx config
 #
@@ -68,7 +71,7 @@ nginx_vhosts:
     listen:
       - 80
     template: '_proxy'
-    upstream_name: "localhost:{{ logius_app.port }}/"
+    upstream_name: "localhost:{{ logius.app.port }}/"
     proxy_params:
       - "proxy_redirect off;"
       - "proxy_set_header Host $host;"

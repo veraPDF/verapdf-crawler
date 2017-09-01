@@ -1,2 +1,44 @@
 # defaults file for verapdf.logius
 ---
+# Single entry for gmail address
+gmail_notification_account: logiuscrawlernotifier@gmail.com
+# Application config
+logius:
+  install:
+    dest: "/opt"
+  app:
+    name: "logius"
+    dirs:
+      home: "{{ logius_app.install.dest }}/{{ logius_app.name }}"
+      web: "{{ logius.app.dirs.home }}/web"
+      console: "{{ logius.app.dirs.home }}/console"
+      sample: "{{ logius.app.dirs.home }}/sample"
+  db:
+    # Database admin password, this is fine for development machine config.
+    # Don't check your production password into a public Git repo.
+    admin_password: vagrant
+    # Application database schema name
+    schema_name: logius
+  # Application database user
+    user_name: logius
+  # Application database password
+    password: vagrant
+  # Database host
+    host: localhost
+  # Database port
+    port: 3306
+  # Derived connection string
+    connection_string: "jdbc:mysql://{{ logius.db.host }}:{{ logius.db_port }}/{{ logius.db.schema_name }}?useSSL=false"
+  web:
+    # Connection type (http | https)
+    connection_type: http
+    # Web application port
+    port: 9000
+    # Web application admin port
+    admin_port: 9001
+  gmail:
+    host: smtp.gmail.com
+    address: {{ gmail_notification_account }}
+    user: {{ gmail_notification_account }}
+    password: Logius2017
+    port: 587
