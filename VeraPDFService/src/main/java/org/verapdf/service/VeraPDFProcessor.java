@@ -53,7 +53,6 @@ public class VeraPDFProcessor implements Runnable {
 		ProcessBuilder pb = new ProcessBuilder().inheritIO();
 		Path outputPath = Files.createTempFile("veraPDFReport", ".xml");
 		File file = outputPath.toFile();
-		file.deleteOnExit();
 		pb.redirectOutput(file);
 		pb.command(cmd);
 		this.process = pb.start();
