@@ -22,6 +22,12 @@ public class CrawlJobResource {
         return null;
     }
 
+    @POST
+    @Path("/{domain}")
+    public CurrentJob restartCrawlJob(@PathParam("domain") String domain) {
+        return null;
+    }
+
     @GET
     @Path("/{domain}")
     public CurrentJob getCrawlJob(@PathParam("domain") String domain) {
