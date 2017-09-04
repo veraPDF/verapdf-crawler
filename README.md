@@ -38,59 +38,82 @@ Here your_login and your_password are the credentials you should pass to LogiusW
    Logius application requires connection to MySQL database to store information about crwal jobs, validation jobs and processed documents. You are supposed to provide connecting parameters (connection string, username, password) in configuration file. Currently database schema consists of the following 6 tables (described using SQL statements that create tables):
    
    ```sh
-    CREATE TABLE `crawl_jobs` (
-        `id` varchar(36) DEFAULT NULL,
-        `crawl_url` varchar(255) DEFAULT NULL,
-        `job_url` varchar(255) DEFAULT NULL,
-        `start_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        `finish_time` datetime DEFAULT NULL,
-        `is_finished` tinyint(1) DEFAULT '0',
-        `status` varchar(10) DEFAULT NULL
-      );
-    CREATE TABLE `batch_crawl_jobs` (
-      `id` varchar(36) DEFAULT NULL,
+    CREATE TABLE `crawl_job_requests` (
+      `id` varchar(36) NOT NULL,
       `is_finished` tinyint(1) DEFAULT '0',
       `report_email` varchar(255) DEFAULT NULL,
-      `crawl_since` datetime DEFAULT NULL
+      `crawl_since` datetime DEFAULT NULL,
+      PRIMARY KEY (`id`)
     );
-    CREATE TABLE `crawl_jobs_in_batch` (
-      `batch_job_id` varchar(36) DEFAULT NULL,
-      `crawl_job_id` varchar(36) DEFAULT NULL
+    CREATE TABLE `crawl_jobs` (
+      `id` varchar(36) NOT NULL,
+      `domain` varchar(255) NOT NULL,
+      `job_url` varchar(255) DEFAULT NULL,
+      `start_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      `finish_time` datetime DEFAULT NULL,
+      `is_finished` tinyint(1) DEFAULT '0',
+      `job_status` varchar(10) DEFAULT NULL,
+      PRIMARY KEY (`id`),
+      UNIQUE KEY `crawl_jobs_domain_uindex` (`domain`)
     );
-    CREATE TABLE `document_properties` (
-      `name` varchar(255) DEFAULT NULL,
-      `value` varchar(255) DEFAULT NULL,
-      `document_url` varchar(255) DEFAULT NULL
+    CREATE TABLE `crawl_job_requests_crawl_jobs` (
+      `crawl_job_request_id` varchar(36) NOT NULL,
+      `crawl_job_id` varchar(36) NOT NULL,
+      PRIMARY KEY (`crawl_job_request_id`,`crawl_job_id`),
+      CONSTRAINT `crawl_job_requests_crawl_jobs_crawl_jobs_id_fk` FOREIGN KEY (`crawl_job_id`) REFERENCES `crawl_jobs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT `crawl_job_requests_crawl_jobs_crawl_job_requests_id_fk` FOREIGN KEY (`crawl_job_request_id`) REFERENCES `crawl_job_requests` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
     );
     CREATE TABLE `documents` (
-      `crawl_job_id` varchar(36) DEFAULT NULL,
-      `document_url` varchar(255) DEFAULT NULL,
+      `document_url` varchar(255) NOT NULL,
+      `crawl_job_id` varchar(36) NOT NULL,
       `last_modified` datetime DEFAULT NULL,
-      `document_type` varchar(127) DEFAULT NULL
+      `document_type` varchar(127) DEFAULT NULL,
+      `document_status` enum('open','not_open') NOT NULL,
+      PRIMARY KEY (`document_url`),
+      KEY `documents_crawl_jobs_id_fk` (`crawl_job_id`),
+      CONSTRAINT `documents_crawl_jobs_id_fk` FOREIGN KEY (`crawl_job_id`) REFERENCES `crawl_jobs` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+    );
+    CREATE TABLE `document_properties` (
+      `document_url` varchar(255) NOT NULL,
+      `property_name` varchar(255) NOT NULL,
+      `property_value` varchar(255) DEFAULT NULL,
+      PRIMARY KEY (`document_url`,`property_name`),
+      CONSTRAINT `document_properties_documents_document_url_fk` FOREIGN KEY (`document_url`) REFERENCES `documents` (`document_url`) ON DELETE CASCADE ON UPDATE CASCADE
     );
     CREATE TABLE `pdf_properties` (
-       `name` varchar(127) DEFAULT NULL,
-       `xpath` varchar(255) DEFAULT NULL,
-       `human_readable_name` varchar(255) DEFAULT NULL
-     );
-     CREATE TABLE `validation_errors` (
-       `specification` varchar(32) DEFAULT NULL,
-       `clause` varchar(16) DEFAULT NULL,
-       `test_number` varchar(4) DEFAULT NULL,
-       `description` varchar(512) DEFAULT NULL,
-       `id` int(11) NOT NULL AUTO_INCREMENT,
-       PRIMARY KEY (`id`)
-     );
-     CREATE TABLE `validation_errors_in_document` (
-       `document_url` varchar(255) DEFAULT NULL,
-       `error_id` int(11) DEFAULT NULL
-     );
-     CREATE TABLE `validation_jobs` (
-       `filepath` varchar(255) DEFAULT NULL,
-       `job_directory` varchar(255) DEFAULT NULL,
-       `file_url` varchar(255) DEFAULT NULL,
-       `time_last_modified` datetime DEFAULT NULL
-     );
+      `property_name` varchar(127) NOT NULL,
+      `xpath` varchar(255) NOT NULL,
+      PRIMARY KEY (`property_name`)
+    );
+    CREATE TABLE `pdf_properties_namespaces` (
+      `namespace_prefix` varchar(20) NOT NULL,
+      `namespace_url` varchar(255) NOT NULL,
+      PRIMARY KEY (`namespace_prefix`)
+    );
+    CREATE TABLE `validation_errors` (
+      `id` int(11) NOT NULL AUTO_INCREMENT,
+      `specification` varchar(32) DEFAULT NULL,
+      `clause` varchar(16) DEFAULT NULL,
+      `test_number` varchar(4) DEFAULT NULL,
+      `description` varchar(512) DEFAULT NULL,
+      PRIMARY KEY (`id`),
+      UNIQUE KEY `validation_errors_specification_clause_test_number_pk` (`specification`,`clause`,`test_number`)
+    );
+    CREATE TABLE `documents_validation_errors` (
+      `document_url` varchar(255) NOT NULL DEFAULT '',
+      `error_id` int(11) NOT NULL DEFAULT '0',
+      PRIMARY KEY (`document_url`,`error_id`),
+      CONSTRAINT `documents_validation_errors_documents_document_url_fk` FOREIGN KEY (`document_url`) REFERENCES `documents` (`document_url`) ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT `documents_validation_errors_validation_errors_id_fk` FOREIGN KEY (`error_id`) REFERENCES `validation_errors` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+    );
+    CREATE TABLE `pdf_validation_jobs_queue` (
+      `document_url` varchar(255) NOT NULL DEFAULT '',
+      `job_directory` varchar(255) NOT NULL,
+      `filepath` varchar(255) NOT NULL,
+      `time_last_modified` datetime DEFAULT NULL,
+      `validation_status` enum('not_started','in_progress') NOT NULL DEFAULT 'not_started',
+      PRIMARY KEY (`document_url`)
+    );
 ```
   
 ### Running Logius application
