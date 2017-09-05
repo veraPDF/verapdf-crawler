@@ -13,13 +13,13 @@ import java.util.List;
 
 public class CrawlRequestDao {
     private final JdbcTemplate template;
-    static final String BATCH_JOB_TABLE_NAME = "batch_crawl_jobs";
-    static final String BATCH_REFERENCE_TABLE_NAME = "crawl_jobs_in_batch";
+    static final String BATCH_JOB_TABLE_NAME = "crawl_job_requests";
+    static final String BATCH_REFERENCE_TABLE_NAME = "crawl_job_requests_crawl_jobs";
     public static final String FIELD_ID = "id";
     public static final String FIELD_IS_FINISHED = "is_finished";
     public static final String FIELD_REPORT_EMAIL = "report_email";
     public static final String FIELD_CRAWL_SINCE = "crawl_since";
-    static final String FIELD_BATCH_JOB_ID = "batch_job_id";
+    static final String FIELD_BATCH_JOB_ID = "crawl_job_request_id";
     static final String FIELD_CRAWL_JOB_ID = "crawl_job_id";
 
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");

@@ -31,7 +31,7 @@ public class ReportDocumentDao {
         try {
             String sql = String.format("select any_value(%s.%s), any_value(%s), count(*) as `number` from ((%s inner join %s on %s.%s=%s.%s) inner join %s on %s.%s=%s.%s) where %s=? and %s>? group by %s",
                     ValidatedPDFDao.PROPERTIES_TABLE_NAME, ValidatedPDFDao.FIELD_PROPERTY_VALUE,
-                    ValidatedPDFDao.FIELD_PDF_PROPERTY_READABLE_NAME, ValidatedPDFDao.PDF_PROPERTIES_TABLE_NAME,
+                    ValidatedPDFDao.FIELD_PDF_PROPERTY_NAME, ValidatedPDFDao.PDF_PROPERTIES_TABLE_NAME,
                     ValidatedPDFDao.PROPERTIES_TABLE_NAME, ValidatedPDFDao.PDF_PROPERTIES_TABLE_NAME,
                     ValidatedPDFDao.FIELD_PDF_PROPERTY_NAME, ValidatedPDFDao.PROPERTIES_TABLE_NAME,
                     ValidatedPDFDao.FIELD_PROPERTY_NAME, InsertDocumentDao.DOCUMENTS_TABLE_NAME,
@@ -60,25 +60,25 @@ public class ReportDocumentDao {
 
     //<editor-fold desc="Invalid pdf files">
     public Integer getNumberOfInvalidFilesForJob(String crawlJobId, LocalDateTime sinceTime) {
-        return template.queryForObject(String.format("select count(*) from %s where %s=? and %s=? and %s>?",
-                InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_DOCUMENT_TYPE,
+        return template.queryForObject(String.format("select count(*) from %s where %s=? and %s=? and %s=? and %s>?",
+                InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_DOCUMENT_TYPE, InsertDocumentDao.FIELD_DOCUMENT_STATUS,
                 InsertDocumentDao.FIELD_JOB_ID, InsertDocumentDao.FIELD_LAST_MODIFIED),
-                new Object[] {InsertDocumentDao.TYPE_INVALID_PDF, crawlJobId, getSqlTimeString(sinceTime)}, Integer.class);
+                new Object[] {InsertDocumentDao.TYPE_PDF, InsertDocumentDao.STATUS_NOT_OPEN, crawlJobId, getSqlTimeString(sinceTime)}, Integer.class);
     }
 
     public List<String> getInvalidPdfFiles(String crawlJobId, LocalDateTime sinceTime) {
-        return template.query(String.format("select %s from %s where %s=? and %s=? and %s>?",
+        return template.query(String.format("select %s from %s where %s=? and %s=? and %s=? and %s>?",
                 InsertDocumentDao.FIELD_DOCUMENT_URL, InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_DOCUMENT_TYPE,
-                InsertDocumentDao.FIELD_JOB_ID, InsertDocumentDao.FIELD_LAST_MODIFIED),
-                new FileUrlMapper(), InsertDocumentDao.TYPE_INVALID_PDF, crawlJobId, getSqlTimeString(sinceTime));
+                InsertDocumentDao.FIELD_DOCUMENT_STATUS, InsertDocumentDao.FIELD_JOB_ID, InsertDocumentDao.FIELD_LAST_MODIFIED),
+                new FileUrlMapper(), InsertDocumentDao.TYPE_PDF, InsertDocumentDao.STATUS_NOT_OPEN, crawlJobId, getSqlTimeString(sinceTime));
     }
     //</editor-fold>
     //<editor-fold desc="Valid pdf files">
     public Integer getNumberOfValidFilesForJob(String crawlJobId, LocalDateTime sinceTime) {
-        return template.queryForObject(String.format("select count(*) from %s where %s=? and %s=? and %s>?",
-                InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_DOCUMENT_TYPE,
+        return template.queryForObject(String.format("select count(*) from %s where %s=? and %s=? and %s=? and %s>?",
+                InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_DOCUMENT_TYPE, InsertDocumentDao.FIELD_DOCUMENT_STATUS,
                 InsertDocumentDao.FIELD_JOB_ID, InsertDocumentDao.FIELD_LAST_MODIFIED),
-                new Object[] {InsertDocumentDao.TYPE_VALID_PDF, crawlJobId, getSqlTimeString(sinceTime)}, Integer.class);
+                new Object[] {InsertDocumentDao.TYPE_PDF, InsertDocumentDao.STATUS_OPEN, crawlJobId, getSqlTimeString(sinceTime)}, Integer.class);
     }
     //</editor-fold>
     //<editor-fold desc="ODF files">
@@ -128,51 +128,6 @@ public class ReportDocumentDao {
                 new FileUrlMapper(), InsertDocumentDao.TYPE_OOXML, crawlJobId, getSqlTimeString(sinceTime));
     }
 
-    //</editor-fold>
-    /*
-    private Integer getNumberOfPdf17Documents(String crawlJobId, LocalDateTime sinceTime) {
-        return template.queryForObject(String.format("select count(*) from %s inner join %s on %s.%s=%s.%s where %s=? and %s=? and %s=? and %s>?",
-                InsertDocumentDao.DOCUMENTS_TABLE_NAME, ValidatedPDFDao.PROPERTIES_TABLE_NAME,
-                InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_DOCUMENT_URL,
-                ValidatedPDFDao.PROPERTIES_TABLE_NAME, ValidatedPDFDao.FIELD_PROPERTIES_DOCUMENT_URL,
-                ValidatedPDFDao.FIELD_PROPERTY_NAME, ValidatedPDFDao.FIELD_PROPERTY_VALUE,
-                InsertDocumentDao.FIELD_JOB_ID, InsertDocumentDao.FIELD_LAST_MODIFIED),
-                new Object[]{ValidatedPDFDao.PROPERTY_VERSION, ValidatedPDFDao.PDF_VERSION_17, crawlJobId, sinceTime}, Integer.class);
-    }
-
-    private Integer getNumberOfValidPdfA1Documents(String crawlJobId, LocalDateTime sinceTime) {
-        return template.queryForObject(String.format("select count(*) from %s inner join %s on %s.%s=%s.%s where %s=? and %s=? and %s=? and %s=? and %s>?",
-                InsertDocumentDao.DOCUMENTS_TABLE_NAME, ValidatedPDFDao.PROPERTIES_TABLE_NAME,
-                InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_DOCUMENT_URL,
-                ValidatedPDFDao.PROPERTIES_TABLE_NAME, ValidatedPDFDao.FIELD_PROPERTIES_DOCUMENT_URL,
-                ValidatedPDFDao.FIELD_PROPERTY_NAME, ValidatedPDFDao.FIELD_PROPERTY_VALUE, InsertDocumentDao.FIELD_DOCUMENT_TYPE,
-                InsertDocumentDao.FIELD_JOB_ID, InsertDocumentDao.FIELD_LAST_MODIFIED),
-                new Object[]{ValidatedPDFDao.PROPERTY_FLAVOUR, ValidatedPDFDao.PDF_FLAVOUR_A1, InsertDocumentDao.TYPE_VALID_PDF,
-                        crawlJobId, sinceTime}, Integer.class);
-    }
-
-    private Integer getNumberOfValidPdfA2Documents(String crawlJobId, LocalDateTime sinceTime) {
-        return template.queryForObject(String.format("select count(*) from %s inner join %s on %s.%s=%s.%s where %s=? and %s=? and %s=? and %s=? and %s>?",
-                InsertDocumentDao.DOCUMENTS_TABLE_NAME, ValidatedPDFDao.PROPERTIES_TABLE_NAME,
-                InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_DOCUMENT_URL,
-                ValidatedPDFDao.PROPERTIES_TABLE_NAME, ValidatedPDFDao.FIELD_PROPERTIES_DOCUMENT_URL,
-                ValidatedPDFDao.FIELD_PROPERTY_NAME, ValidatedPDFDao.FIELD_PROPERTY_VALUE, InsertDocumentDao.FIELD_DOCUMENT_TYPE,
-                InsertDocumentDao.FIELD_JOB_ID, InsertDocumentDao.FIELD_LAST_MODIFIED),
-                new Object[]{ValidatedPDFDao.PROPERTY_FLAVOUR, ValidatedPDFDao.PDF_FLAVOUR_A2, InsertDocumentDao.TYPE_VALID_PDF,
-                        crawlJobId, sinceTime}, Integer.class);
-    }
-
-    private Integer getNumberOfValidPdfA3Documents(String crawlJobId, LocalDateTime sinceTime) {
-        return template.queryForObject(String.format("select count(*) from %s inner join %s on %s.%s=%s.%s where %s=? and %s=? and %s=? and %s=? and %s>?",
-                InsertDocumentDao.DOCUMENTS_TABLE_NAME, ValidatedPDFDao.PROPERTIES_TABLE_NAME,
-                InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_DOCUMENT_URL,
-                ValidatedPDFDao.PROPERTIES_TABLE_NAME, ValidatedPDFDao.FIELD_PROPERTIES_DOCUMENT_URL,
-                ValidatedPDFDao.FIELD_PROPERTY_NAME, ValidatedPDFDao.FIELD_PROPERTY_VALUE, InsertDocumentDao.FIELD_DOCUMENT_TYPE,
-                InsertDocumentDao.FIELD_JOB_ID, InsertDocumentDao.FIELD_LAST_MODIFIED),
-                new Object[]{ValidatedPDFDao.PROPERTY_FLAVOUR, ValidatedPDFDao.PDF_FLAVOUR_A3, InsertDocumentDao.TYPE_VALID_PDF,
-                        crawlJobId, sinceTime}, Integer.class);
-    }
-    */
     private String getSqlTimeString(LocalDateTime time) {
         if(time == null) {
             return "0000-00-00 00:00:00";

@@ -19,9 +19,9 @@ public class CrawlJobDao {
 
     private static final String CRAWL_JOB_TABLE_NAME = "crawl_jobs";
     public static final String FIELD_ID = "id";
-    public static final String FIELD_CRAWL_URL = "crawl_url";
+    public static final String FIELD_CRAWL_URL = "domain";
     public static final String FIELD_JOB_URL = "job_url";
-    public static final String FIELD_STATUS = "status";
+    public static final String FIELD_STATUS = "job_status";
     public static final String FIELD_START_TIME = "start_time";
     public static final String FIELD_FINISH_TIME = "finish_time";
     public static final String FIELD_IS_FINISHED = "is_finished";
