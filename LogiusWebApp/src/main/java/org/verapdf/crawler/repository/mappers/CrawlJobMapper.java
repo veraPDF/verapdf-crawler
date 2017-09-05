@@ -1,21 +1,19 @@
 package org.verapdf.crawler.repository.mappers;
 
 import org.springframework.jdbc.core.RowMapper;
-import org.verapdf.crawler.domain.crawling.CurrentJob;
+import org.verapdf.crawler.domain.crawling.CrawlJob;
 import org.verapdf.crawler.repository.jobs.CrawlJobDao;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
-public class CrawlJobMapper implements RowMapper<CurrentJob> {
+public class CrawlJobMapper implements RowMapper<CrawlJob> {
     @Override
-    public CurrentJob mapRow(ResultSet resultSet, int i) throws SQLException {
+    public CrawlJob mapRow(ResultSet resultSet, int i) throws SQLException {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        CurrentJob result = new CurrentJob(resultSet.getString(CrawlJobDao.FIELD_ID),
+        CrawlJob result = new CrawlJob(resultSet.getString(CrawlJobDao.FIELD_ID),
                                         resultSet.getString(CrawlJobDao.FIELD_JOB_URL),
                                         resultSet.getString(CrawlJobDao.FIELD_CRAWL_URL),
                                         LocalDateTime.parse(resultSet.getString(CrawlJobDao.FIELD_START_TIME), formatter));

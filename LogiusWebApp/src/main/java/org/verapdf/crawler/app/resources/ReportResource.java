@@ -2,12 +2,12 @@ package org.verapdf.crawler.app.resources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.domain.crawling.BatchJob;
-import org.verapdf.crawler.domain.crawling.CurrentJob;
-import org.verapdf.crawler.domain.report.CrawlJobReport;
+import org.verapdf.crawler.domain.crawling.CrawlRequest;
+import org.verapdf.crawler.domain.crawling.CrawlJob;
+import org.verapdf.crawler.domain.report.CrawlJobSummary;
 import org.verapdf.crawler.domain.report.DocumentList;
 import org.verapdf.crawler.report.HeritrixReporter;
-import org.verapdf.crawler.repository.jobs.BatchJobDao;
+import org.verapdf.crawler.repository.jobs.CrawlRequestDao;
 import org.verapdf.crawler.repository.jobs.CrawlJobDao;
 
 import javax.ws.rs.GET;
@@ -26,13 +26,13 @@ public class ReportResource {
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
     private final HeritrixReporter reporter;
-    private final BatchJobDao batchJobDao;
+    private final CrawlRequestDao crawlRequestDao;
     private final CrawlJobDao crawlJobDao;
 
-    ReportResource(HeritrixReporter reporter, CrawlJobDao crawlJobDao, BatchJobDao batchJobDao) {
+    ReportResource(HeritrixReporter reporter, CrawlJobDao crawlJobDao, CrawlRequestDao crawlRequestDao) {
         this.reporter = reporter;
         this.crawlJobDao = crawlJobDao;
-        this.batchJobDao = batchJobDao;
+        this.crawlRequestDao = crawlRequestDao;
     }
 
     @GET
@@ -40,13 +40,13 @@ public class ReportResource {
     @Path("/ods_report/{batchJob}/{crawlJob}")
     public Response getODSReport(@PathParam("batchJob") String batchJob, @PathParam("crawlJob") String crawlJob) {
         try {
-            CurrentJob currentJob = crawlJobDao.getCrawlJob(crawlJob);
+            CrawlJob currentJob = crawlJobDao.getCrawlJob(crawlJob);
             String jobURL = currentJob.getJobURL();
             File file;
             if (jobURL.equals("")) {
-                file = reporter.buildODSReport(crawlJob, batchJobDao.getCrawlSince(batchJob));
+                file = reporter.buildODSReport(crawlJob, crawlRequestDao.getCrawlSince(batchJob));
             } else {
-                file = reporter.buildODSReport(crawlJob, jobURL, batchJobDao.getCrawlSince(batchJob));
+                file = reporter.buildODSReport(crawlJob, jobURL, crawlRequestDao.getCrawlSince(batchJob));
             }
             logger.info("ODS report requested for job " + crawlJob);
             return Response.ok(file, MediaType.APPLICATION_OCTET_STREAM)
@@ -61,17 +61,17 @@ public class ReportResource {
 
     @GET
     @Path("/{job}")
-    public List<CrawlJobReport> getReport(@PathParam("job") String job) {
+    public List<CrawlJobSummary> getReport(@PathParam("job") String job) {
         try {
-            BatchJob batchJob = batchJobDao.getBatchJob(job);
+            CrawlRequest crawlRequest = crawlRequestDao.getBatchJob(job);
             logger.info("Job report requested for batch job " + job);
-            List<CrawlJobReport> result = new ArrayList<>();
-            for(String crawlJobId: batchJob.getCrawlJobs()) {
+            List<CrawlJobSummary> result = new ArrayList<>();
+            for(String crawlJobId: crawlRequest.getCrawlJobs()) {
                 String jobURL = crawlJobDao.getCrawlJob(crawlJobId).getJobURL();
                 if (jobURL.equals("")) {
-                    result.add(reporter.getReport(crawlJobId, batchJob.getCrawlSinceTime()));
+                    result.add(reporter.getReport(crawlJobId, crawlRequest.getCrawlSinceTime()));
                 } else {
-                    result.add(reporter.getReport(crawlJobId, jobURL, batchJob.getCrawlSinceTime()));
+                    result.add(reporter.getReport(crawlJobId, jobURL, crawlRequest.getCrawlSinceTime()));
                 }
             }
             return result;
@@ -88,9 +88,9 @@ public class ReportResource {
         try {
             logger.info("List of Microsoft office files requested for batch job " + job);
             List<DocumentList> result = new ArrayList<>();
-            BatchJob batchJob = batchJobDao.getBatchJob(job);
-            for(String crawlJobId: batchJob.getCrawlJobs()) {
-                result.add(new DocumentList(crawlJobDao.getCrawlUrl(crawlJobId), reporter.getOfficeReport(crawlJobId, batchJob.getCrawlSinceTime())));
+            CrawlRequest crawlRequest = crawlRequestDao.getBatchJob(job);
+            for(String crawlJobId: crawlRequest.getCrawlJobs()) {
+                result.add(new DocumentList(crawlJobDao.getCrawlUrl(crawlJobId), reporter.getOfficeReport(crawlJobId, crawlRequest.getCrawlSinceTime())));
             }
             return result;
         }
@@ -106,9 +106,9 @@ public class ReportResource {
         try {
             logger.info("List of invalid PDF documents requested for batch job " + job);
             List<DocumentList> result = new ArrayList<>();
-            BatchJob batchJob = batchJobDao.getBatchJob(job);
-            for(String crawlJobId: batchJob.getCrawlJobs()) {
-                result.add(new DocumentList(crawlJobDao.getCrawlUrl(crawlJobId), reporter.getInvalidPdfReport(crawlJobId, batchJob.getCrawlSinceTime())));
+            CrawlRequest crawlRequest = crawlRequestDao.getBatchJob(job);
+            for(String crawlJobId: crawlRequest.getCrawlJobs()) {
+                result.add(new DocumentList(crawlJobDao.getCrawlUrl(crawlJobId), reporter.getInvalidPdfReport(crawlJobId, crawlRequest.getCrawlSinceTime())));
             }
             return result;
         }
@@ -124,9 +124,9 @@ public class ReportResource {
         try {
             logger.info("List of Open office XML files requested for batch job " + job);
             List<DocumentList> result = new ArrayList<>();
-            BatchJob batchJob = batchJobDao.getBatchJob(job);
-            for(String crawlJobId: batchJob.getCrawlJobs()) {
-                result.add(new DocumentList(crawlJobDao.getCrawlUrl(crawlJobId), reporter.getOoxmlReport(crawlJobId, batchJob.getCrawlSinceTime())));
+            CrawlRequest crawlRequest = crawlRequestDao.getBatchJob(job);
+            for(String crawlJobId: crawlRequest.getCrawlJobs()) {
+                result.add(new DocumentList(crawlJobDao.getCrawlUrl(crawlJobId), reporter.getOoxmlReport(crawlJobId, crawlRequest.getCrawlSinceTime())));
             }
             return result;
         }

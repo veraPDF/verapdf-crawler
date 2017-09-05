@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.verapdf.crawler.domain.report.PDFValidationStatistics;
 import org.verapdf.crawler.domain.report.PdfPropertyStatistics;
+import org.verapdf.crawler.repository.jobs.CrawlRequestDao;
 import org.verapdf.crawler.repository.mappers.FileUrlMapper;
 import org.verapdf.crawler.repository.mappers.PdfPropertyStatisticsMapper;
 
@@ -45,6 +46,16 @@ public class ReportDocumentDao {
             logger.error("Error in validation statistics query",e);
             return new PDFValidationStatistics();
         }
+    }
+
+    public List<String> getMatchingPropertyValues(String crawlJobId, String name, String valueFilter) {
+        return template.query(String.format("select %s from %s inner join %s on %s.%s=%s.%s where %s=? and %s=? and %s like ? group by %s",
+                ValidatedPDFDao.FIELD_PROPERTY_VALUE, InsertDocumentDao.DOCUMENTS_TABLE_NAME, ValidatedPDFDao.PROPERTIES_TABLE_NAME,
+                InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_DOCUMENT_URL, ValidatedPDFDao.PROPERTIES_TABLE_NAME,
+                ValidatedPDFDao.FIELD_PROPERTIES_DOCUMENT_URL, InsertDocumentDao.FIELD_JOB_ID, ValidatedPDFDao.FIELD_PROPERTY_NAME,
+                ValidatedPDFDao.FIELD_PROPERTY_VALUE, ValidatedPDFDao.FIELD_PROPERTY_VALUE),
+                new Object[]{crawlJobId, name, "%" + valueFilter + "%"},
+                (resultSet, i) -> resultSet.getString(ValidatedPDFDao.FIELD_PROPERTY_VALUE));
     }
 
     //<editor-fold desc="Invalid pdf files">

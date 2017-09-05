@@ -1,32 +1,26 @@
 package org.verapdf.crawler.app.resources;
 
-import com.codahale.metrics.annotation.Timed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.crawling.*;
 import org.verapdf.crawler.domain.email.EmailAddress;
 import org.verapdf.crawler.domain.email.EmailServer;
 import org.verapdf.crawler.domain.office.OfficeDocumentData;
-import org.verapdf.crawler.domain.report.CrawlJobReport;
+import org.verapdf.crawler.domain.report.CrawlJobSummary;
 import org.verapdf.crawler.domain.validation.ValidationJobData;
 import org.verapdf.crawler.app.email.SendEmail;
 import org.verapdf.crawler.app.engine.HeritrixClient;
 import org.verapdf.crawler.report.HeritrixReporter;
 import org.verapdf.crawler.repository.document.InsertDocumentDao;
-import org.verapdf.crawler.repository.jobs.BatchJobDao;
+import org.verapdf.crawler.repository.jobs.CrawlRequestDao;
 import org.verapdf.crawler.repository.jobs.CrawlJobDao;
 import org.verapdf.crawler.validation.ValidationService;
 
 import javax.sql.DataSource;
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -38,8 +32,6 @@ public class ControlResource {
     private static final String[] OFFICE_SUFFIXES = {".doc", ".xls", ".ppt"};
     private static final String[] OOXML_SUFFIXES = {".docx", ".xlsx", ".pptx"};
 
-    @Context
-    private UriInfo uriInfo;
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
     private final HeritrixClient client;
@@ -49,12 +41,12 @@ public class ControlResource {
     private final ResourceManager resourceManager;
     private final CrawlJobDao crawlJobDao;
     private final InsertDocumentDao insertDocumentDao;
-    private final BatchJobDao batchJobDao;
+    private final CrawlRequestDao crawlRequestDao;
 
     ControlResource(HeritrixClient client, HeritrixReporter reporter,
                     EmailServer emailServer, ValidationService service,
                     ResourceManager resourceManager, CrawlJobDao crawlJobDao,
-                    DataSource dataSource, BatchJobDao batchJobDao) {
+                    DataSource dataSource, CrawlRequestDao crawlRequestDao) {
         this.client = client;
         this.reporter = reporter;
         this.emailServer = emailServer;
@@ -62,11 +54,10 @@ public class ControlResource {
         this.resourceManager = resourceManager;
         this.crawlJobDao = crawlJobDao;
         this.insertDocumentDao = new InsertDocumentDao(dataSource);
-        this.batchJobDao = batchJobDao;
+        this.crawlRequestDao = crawlRequestDao;
     }
 
     @POST
-    @Timed
     @Path("/pause/{job}")
     public void pauseJob(@PathParam("job") String job) {
         try {
@@ -80,7 +71,6 @@ public class ControlResource {
     }
 
     @POST
-    @Timed
     @Path("/unpause/{job}")
     public void unpauseJob(@PathParam("job") String job) {
         try {
@@ -94,7 +84,6 @@ public class ControlResource {
     }
 
     @POST
-    @Timed
     @Path("/terminate/{job}")
     public void terminateJob(@PathParam("job") String job) {
         try {
@@ -107,7 +96,6 @@ public class ControlResource {
     }
 
     @POST
-    @Timed
     @Path("/delete/{job}")
     public void deleteJob(@PathParam("job") String job) {
         try {
@@ -120,62 +108,40 @@ public class ControlResource {
     }
 
     @POST
-    @Timed
     @Path("/restart/{job}")
     public void restartJob(@PathParam("job") String job) {
         try {
-            CurrentJob currentJob = crawlJobDao.getCrawlJob(job);
+            CrawlJob crawlJob = crawlJobDao.getCrawlJob(job);
             List<String> list = new ArrayList<>();
-            list.add(currentJob.getCrawlURL());
+            list.add(crawlJob.getCrawlURL());
             crawlJobDao.setJobFinished(job, false);
             client.teardownJob(job);
             client.createJob(job, list);
             client.buildJob(job);
             client.launchJob(job);
-            logger.info("Crawl job on "+ currentJob.getCrawlURL() + " restarted");
+            logger.info("Crawl job on "+ crawlJob.getCrawlURL() + " restarted");
         }
         catch (Exception e) {
             logger.error("Error restarting job", e);
         }
     }
 
-    @POST
-    @Timed
-    @Produces("text/plain")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public String startBatchJob(StartBatchJobData jobData) {
-        String id = UUID.randomUUID().toString();
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        BatchJob batch = new BatchJob(id, jobData.getReportEmail(),
-                LocalDateTime.of(LocalDate.parse(jobData.getDate(), dateFormatter), LocalTime.MIN));
-        logger.info("Batch job creation on domains: " + String.join(", ",jobData.getDomains()));
-        for(String domain : jobData.getDomains()) {
-            batch.getCrawlJobs().add(startCrawlJob(domain, jobData.isDoOverwrite()));
-        }
-        batchJobDao.addBatchJob(batch);
-        return id;
-    }
-
     @GET
-    @Timed
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{job}")
-    public List<CrawlJobReport> getBatchJob(@PathParam("job") String jobId) {
-        if (resourceManager.getResourceUri() == null && uriInfo != null) {
-            resourceManager.setResourceUri(uriInfo.getBaseUri().toString());
-        }
-        List<CrawlJobReport> result = new ArrayList<>();
+    public List<CrawlJobSummary> getBatchJob(@PathParam("job") String jobId) {
+        List<CrawlJobSummary> result = new ArrayList<>();
         boolean isBatchJobFinished = true;
-        BatchJob job = batchJobDao.getBatchJob(jobId);
+        CrawlRequest job = crawlRequestDao.getBatchJob(jobId);
         for(String crawlJobId: job.getCrawlJobs()) {
-            CrawlJobReport report = getJob(crawlJobId, job.getCrawlSinceTime());
+            CrawlJobSummary report = getJob(crawlJobId, job.getCrawlSinceTime());
             result.add(report);
             if(report.getFinishTime() == null) {
                 isBatchJobFinished = false;
             }
         }
         if(isBatchJobFinished && !job.isFinished()) {
-            batchJobDao.setJobFinished(jobId);
+            crawlRequestDao.setJobFinished(jobId);
             List<String> domains = new ArrayList<>();
             for(String crawlJobId: job.getCrawlJobs()) {
                 domains.add(crawlJobDao.getCrawlUrl(crawlJobId));
@@ -190,16 +156,14 @@ public class ControlResource {
     }
 
     @POST
-    @Timed
     @Path("/email")
     @Consumes(MediaType.APPLICATION_JSON)
     public void setReportEmail(EmailAddress address) {
         logger.info("Email address updated for batch job " + address.getBatchJobId());
-        batchJobDao.setReportEmail(address.getBatchJobId(), address.getEmailAddress());
+        crawlRequestDao.setReportEmail(address.getBatchJobId(), address.getEmailAddress());
     }
 
     @POST
-    @Timed
     @Path("/validation")
     @Consumes(MediaType.APPLICATION_JSON)
     public void addValidationJob(ValidationJobData data) {
@@ -213,7 +177,6 @@ public class ControlResource {
     }
 
     @POST
-    @Timed
     @Path("/office_document")
     @Consumes(MediaType.APPLICATION_JSON)
     public void addMicrosoftOfficeFile(OfficeDocumentData data) {
@@ -229,71 +192,24 @@ public class ControlResource {
         }
     }
 
-    private String trimUrl(String url) {
-        if(!url.startsWith("http://") && !url.startsWith("https://")) {
-            url = "https://" + url;
-        }
-        if(url.contains("?")) {
-            url = url.substring(0, url.indexOf("?"));
-        }
-        if(url.endsWith("/")) {
-            url = url.substring(0, url.length() - 1);
-        }
-        return url;
-    }
+
 
     private boolean stringEndsWithItemFromList(String string, String[] suffixes) {
         return Arrays.stream(suffixes).parallel().anyMatch(string::endsWith);
     }
 
-    private String startCrawlJob(String domain, boolean overwrite){
-        try {
-            if (resourceManager.getResourceUri() == null && uriInfo != null) {
-                resourceManager.setResourceUri(uriInfo.getBaseUri().toString());
-            }
-            if (crawlJobDao.doesJobExist(trimUrl(domain)) && !overwrite) { // This URL has already been crawled and job is not forced to overwrite
-                return crawlJobDao.getCrawlJobByCrawlUrl(trimUrl(domain)).getId();
-            } else {
-                if (overwrite && crawlJobDao.doesJobExist(trimUrl(domain))) { // This URL has already been crawled but the old job needs to be overwritten
-                    client.teardownJob(crawlJobDao.getCrawlJobByCrawlUrl(trimUrl(domain)).getId());
-                    crawlJobDao.removeJob(crawlJobDao.getCrawlJobByCrawlUrl(trimUrl(domain)));
-                }
-                // Brand new URL
-                ArrayList<String> list = new ArrayList<>();
-                if (domain.startsWith("http://") || domain.startsWith("https://")) {
-                    list.add(trimUrl(domain));
-                } else {
-                    list.add(trimUrl(domain));
-                    list.add(list.get(0).replace("https://", "http://"));
-                }
-
-                String id = UUID.randomUUID().toString();
-                client.createJob(id, list);
-                client.buildJob(id);
-                client.launchJob(id);
-                crawlJobDao.addJob(new CurrentJob(id, "", trimUrl(domain), LocalDateTime.now()));
-                logger.info("Job creation on " + domain);
-                return id;
-            }
-        }
-        catch (Exception e) {
-            logger.error("Error on job creation", e);
-            return "";
-        }
-    }
-
-    private CrawlJobReport getJob(String job, LocalDateTime crawlSince) {
-        try {
+    private CrawlJobSummary getJob(String job, LocalDateTime crawlSince) {
+        /*try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
             String jobURL = crawlJobDao.getCrawlJob(job).getJobURL();
-            CrawlJobReport result;
+            CrawlJobSummary result;
             if (jobURL.equals("")) {
                 result = reporter.getReport(job, crawlSince);
             } else {
                 result = reporter.getReport(job, jobURL, crawlSince);
             }
             crawlJobDao.setStatus(job, result.getStatus());
-            CurrentJob jobData = crawlJobDao.getCrawlJob(job);
+            CrawlJob jobData = crawlJobDao.getCrawlJob(job);
 
             if (result.getStatus().startsWith("finished") || result.getStatus().startsWith("aborted")) {
                 if (!jobData.isFinished()) {
@@ -316,7 +232,7 @@ public class ControlResource {
         catch (Exception e) {
             logger.error("Error on job data request", e);
             e.printStackTrace();
-        }
+        }*/
         return null;
     }
 }

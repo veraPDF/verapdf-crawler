@@ -2,22 +2,11 @@ package org.verapdf.crawler.domain.crawling;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class StartBatchJobData {
+public class CrawlRequestData {
 
     private String[] domains;
     private String date;
     private String reportEmail;
-    private boolean doOverwrite;
-
-    @JsonProperty
-    public boolean isDoOverwrite() {
-        return doOverwrite;
-    }
-
-    @JsonProperty
-    public void setDoOverwrite(boolean doOverwrite) {
-        this.doOverwrite = doOverwrite;
-    }
 
     @JsonProperty
     public String[] getDomains() {
@@ -49,7 +38,7 @@ public class StartBatchJobData {
         this.reportEmail = reportEmail;
     }
 
-    public StartBatchJobData() {
+    public CrawlRequestData() {
 
     }
 }

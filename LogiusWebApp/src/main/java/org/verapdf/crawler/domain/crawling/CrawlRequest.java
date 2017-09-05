@@ -10,14 +10,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BatchJob {
+public class CrawlRequest {
     private List<String> crawlJobs;
     private final String id;
     private boolean isFinished;
     private final String emailAddress;
     private final LocalDateTime crawlSinceTime;
 
-    public BatchJob(String id, String emailAddress, LocalDateTime crawlSinceTime) {
+    public CrawlRequest(String id, String emailAddress, LocalDateTime crawlSinceTime) {
         crawlJobs = new ArrayList<>();
         this.id = id;
         this.emailAddress = emailAddress;
