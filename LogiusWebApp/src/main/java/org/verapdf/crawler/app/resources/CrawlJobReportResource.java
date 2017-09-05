@@ -15,7 +15,8 @@ public class CrawlJobReportResource {
 
     @GET
     @Path("/summary")
-    public CrawlJobReport getSummary(@QueryParam("domain") String domain) {
+    public CrawlJobReport getSummary(@QueryParam("domain") String domain,
+                                     @QueryParam("startDate") String startDate) {
         // todo: rename CrawlJobReport to CrawlJobSummary
         return null;
     }

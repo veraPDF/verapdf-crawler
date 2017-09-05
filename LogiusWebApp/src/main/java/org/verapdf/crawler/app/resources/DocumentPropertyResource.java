@@ -11,7 +11,9 @@ public class DocumentPropertyResource {
 
     @GET
     @Path("/{propertyName}/values")
-    public List<String> getDocumentPropertyValues(@PathParam("propertyName") String propertyName, @QueryParam("domain") String domain) {
+    public List<String> getDocumentPropertyValues(@PathParam("propertyName") String propertyName,
+                                                  @QueryParam("domain") String domain,
+                                                  @QueryParam("propertyValueFilter") String propertyValueFilter) {
         // todo: return the list of all values for property in the selected domain (used for dropdowns)
         return null;
     }
