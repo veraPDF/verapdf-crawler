@@ -1,44 +1,67 @@
 # defaults file for verapdf.logius
 ---
 # Single entry for gmail address
-gmail_notification_account: logiuscrawlernotifier@gmail.com
 # Application config
-logius:
-  install:
-    dest: "/opt"
-  app:
-    name: "logius"
-    dirs:
-      home: "{{ logius_app.install.dest }}/{{ logius_app.name }}"
-      web: "{{ logius.app.dirs.home }}/web"
-      console: "{{ logius.app.dirs.home }}/console"
-      sample: "{{ logius.app.dirs.home }}/sample"
-  db:
-    # Database admin password, this is fine for development machine config.
-    # Don't check your production password into a public Git repo.
-    admin_password: vagrant
-    # Application database schema name
-    schema_name: logius
-  # Application database user
-    user_name: logius
-  # Application database password
-    password: vagrant
-  # Database host
-    host: localhost
-  # Database port
-    port: 3306
-  # Derived connection string
-    connection_string: "jdbc:mysql://{{ logius.db.host }}:{{ logius.db_port }}/{{ logius.db.schema_name }}?useSSL=false"
-  web:
-    # Connection type (http | https)
-    connection_type: http
-    # Web application port
-    port: 9000
-    # Web application admin port
-    admin_port: 9001
-  gmail:
-    host: smtp.gmail.com
-    address: {{ gmail_notification_account }}
-    user: {{ gmail_notification_account }}
-    password: Logius2017
-    port: 587
+logius_install_dest: "/var/lib"
+logius_git_url: "https://github.com/veraPDF/verapdf-crawler.git"
+logius_git_root: "/vagrant"
+logius_git_branch: "integration"
+logius_git_update: no
+
+logius_app_name: "logius"
+logius_server_name: "localhost"
+
+logius_linux_group: "{{ logius_app_name }}"
+logius_linux_user: "{{ logius_app_name }}"
+
+logius_app_home: "{{ logius_install_dest }}/{{ logius_app_name }}"
+logius_app_bin: "{{ logius_app_home }}/bin"
+logius_app_config: "{{ logius_app_home }}/config"
+logius_app_resources: "{{ logius_app_home }}/resources"
+logius_log_dir: "/var/log/{{ logius_app_name }}"
+
+# Database admin password, this is fine for development machine config.
+# Don't check your production password into a public Git repo.
+logius_db_admin_password: vagrant
+# Application database schema name
+logius_db_schema_name: "{{ logius_app_name }}"
+# Application database user
+logius_db_user_name: "{{ logius_app_name }}"
+# Application database password
+logius_db_password: vagrant
+# Database host
+logius_db_host: localhost
+# Database port
+logius_db_port: 3306
+# Derived connection string
+logius_db_connection_string: "jdbc:mysql://{{ logius_db_host }}:{{ logius_db_port }}/{{ logius_db_schema_name }}?useSSL=false"
+# Connection type (http | https)
+logius_web_connection_type: http
+# Web application port
+logius_web_port: 9000
+# Web application admin port
+logius_web_admin_port: 9001
+# veraPPDF service port
+logius_verapdf_port: 8100
+# veraPPDF service admin port
+logius_verapdf_admin_port: 8101
+# Sample Web application port
+logius_samp_port: 8081
+# Web sample application admin port
+logius_samp_admin_port: 8082
+
+logius_heritrix_home: "/opt/heritrix-3.2.0"
+logius_heritrix_port: 8443
+# Connection type (http | https)
+logius_heritrix_connection_type: https
+logius_heritrix_url: "{{ logius_heritrix_connection_type }}://{{ logius_server_name }}:{{ logius_heritrix_port }}/"
+logius_heritrix_admin_user: admin
+logius_heritrix_admin_password: logius
+logius_verapdf_service_url: "{{ logius_web_connection_type }}://{{ logius_server_name }}:{{ logius_verapdf_port }}/"
+
+logius_gmail_notification_account: logiuscrawlernotifier@gmail.com
+logius_gmail_host: smtp.gmail.com
+logius_gmail_address: "{{ logius_gmail_notification_account }}"
+logius_gmail_user: "{{ logius_gmail_notification_account }}"
+logius_gmail_password: Logius2017
+logius_gmail_port: 587

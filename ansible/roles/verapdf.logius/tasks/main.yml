@@ -9,34 +9,96 @@
   user:
     name: "{{ logius_linux_user }}"
     groups:
-      - "{{ logius_heritrix_group }}"
       - "{{ logius_linux_group }}"
+      - "heritrix"
     createhome: no
     system: yes
 
-- name: Set ownership of heritrix installation
-  file:
-    path: "{{ heritrix_root }}"
-    owner: "{{ heritrix_linux_user }}"
-    group: "{{ heritrix_linux_group }}"
-    recurse: yes
+- name: Clone git repository
+  git:
+    repo: "{{ logius_git_url }}"
+    dest: "{{ logius_git_root }}"
+    version: "{{ logius_git_branch }}"
+    update: "{{ logius_git_update }}"
 
-- name: Add nginx configuration file to sites-available
+- name: Build Maven project
+  command: mvn clean package
+  args:
+    chdir: "{{ logius_git_root }}"
+    creates: "{{ logius_git_root }}/LogiusWebApp/target/LogiusWebApp-1.0-SNAPSHOT.jar"
+
+- name: Create application install directory
+  file:
+    path: "{{ logius_app_home }}/{{ item }}"
+    state: directory
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: "755"
+  with_items:
+    - "bin"
+    - "config"
+    - "resources"
+
+- name: Create application log directory
+  file:
+    path: "{{ logius_log_dir }}"
+    state: directory
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: "744"
+  with_items:
+    - "bin"
+    - "config"
+    - "resources"
+
+- name: Copy application resources files
+  copy:
+    src: "{{ logius_git_root }}/LogiusWebApp/src/main/resources/{{ item }}"
+    remote_src: true
+    dest: "{{ logius_app_resources }}/{{ item }}"
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: "755"
+  with_items:
+    - "sample_configuration.cxml"
+    - "sample_report.ods"
+
+- name: Deploy application jars
+  copy:
+    src: "{{ logius_git_root }}/{{ item.src_dir }}/target/{{ item.src_file }}"
+    remote_src: true
+    dest: "{{ item.dest_dir }}/{{ item.dest_file }}"
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: "755"
+  with_items:
+    - { src_dir: "LogiusWebApp", src_file: "LogiusWebApp-1.0-SNAPSHOT.jar", dest_dir: "{{ logius_app_bin }}", dest_file: "web-app-1.0.jar" }
+    - { src_dir: "VeraPDFService", src_file: "VeraPDFService-1.0-SNAPSHOT.jar", dest_dir: "{{ logius_app_bin }}", dest_file: "verapdf-service-1.0.jar" }
+    - { src_dir: "SampleWebApp", src_file: "SampleWebApp-1.0-SNAPSHOT.jar", dest_dir: "{{ logius_app_bin }}", dest_file: "sample-web-app-1.0.jar" }
+    - { src_dir: "HeritrixExtention", src_file: "HeritrixExtention.jar", dest_dir: "{{ logius_heritrix_home }}/lib", dest_file: "logius-heritrix-extenstion.jar" }
+
+- name: Add Web app configuration templates
   template:
-    src: "etc/nginx/sites-available/heritrix-nginx.j2"
-    dest: "/etc/nginx/sites-available/{{ heritrix_host_name }}"
-    owner: root
-    group: root
+    src: "var/lib/logius/config/{{ item }}.yml.j2"
+    dest: "{{ logius_app_config }}/{{ item }}.yml"
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
     mode: 0644
-  register: heritrix_site_available
-  when: heritrix_nginx_access
+  with_items:
+    - "web-app"
+    - "sample-web-app"
+    - "verapdf-service"
 
-- name: Create nginx sites-enabled symlink
-  file:
-    path: "/etc/nginx/sites-enabled/{{ heritrix_host_name }}"
-    src: "/etc/nginx/sites-available/{{ heritrix_host_name }}"
-    state: link
-    owner: root
-    group: root
-    mode: 0644
-  notify: reload nginx
+- name: Add Web app startup script
+  template:
+    src: "var/lib/logius/run.sh.j2"
+    dest: "{{ logius_app_home }}/run.sh"
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: 0755
+
+- name: Create app DB Schema
+  mysql_db:
+    state: import
+    name: "logius"
+    target: "{{ logius_git_root }}/LogiusWebApp/src/main/resources/schema.sql"

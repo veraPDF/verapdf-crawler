@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+nohup java -jar {{ logius_app_bin }}/web-app-1.0.jar server {{ logius_app_config }}/web-app.yml >/dev/null 2>&1 &
+nohup java -jar {{ logius_app_bin }}/sample-web-app-1.0.jar server {{ logius_app_config }}/sample-web-app.yml >/dev/null 2>&1 &
+nohup java -jar {{ logius_app_bin }}/verapdf-service-1.0.jar server {{ logius_app_config }}/verapdf-service.yml >/dev/null 2>&1 &
+
+echo "Starting heritrix"
+export JAVA_OPTS=-Xmx2048M
+export HERITRIX_HOME={{ logius_heritrix_home }}
+export HERITRIX_OUT={{ logius_log_dir }}/heritrix_out.log
+{{ logius_heritrix_home }}/bin/heritrix -a {{ logius_heritrix_admin_user }}:{{ logius_heritrix_admin_password}} -p {{ logius_heritrix_port }}
