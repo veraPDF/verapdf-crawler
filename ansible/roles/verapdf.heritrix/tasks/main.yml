@@ -50,6 +50,7 @@
     path: "{{ heritrix_root }}"
     owner: "{{ heritrix_linux_user }}"
     group: "{{ heritrix_linux_group }}"
+    mode: 774
     recurse: yes
 
 - name: Set executable permission for heritrix appear
