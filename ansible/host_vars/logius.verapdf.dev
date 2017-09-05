@@ -20,6 +20,7 @@ timezone_zone: Europe/London
 # Install apt dependencies, Java 8 could be added here for Ubuntu Xenial installs
 apt_install:
   - maven
+  - git
 
 # Heretrix setup variables
 #
@@ -32,35 +33,15 @@ heritrix_nginx_access: true
 # Set true to generate self signed SSL certs for a development box
 heritrix_use_self_cert: true
 
-# Logius application variables
-#
-logius:
-  db:
-    # Database admin password, this is fine for development machine config.
-    # Don't check your production password into a public Git repo.
-    admin_password: vagrant
-    # Application database schema name
-    schema_name: logius
-    # Application database user
-    user_name: logius
-    # Application database password
-    password: vagrant
-    # Web application port
-  app:
-    port: 9000
-    # Web application admin port
-  admin_port: 9001
-  # m
-
 # MySQL config derived from app config
 #
-mysql_root_password: "{{ logius.db.admin_password }}"
+mysql_root_password: "{{ logius_db_admin_password }}"
 mysql_databases:
-  - name: "{{ logius.db.schema_name }}"
+  - name: "{{ logius_db_schema_name }}"
 mysql_users:
-  - name: "{{ logius.db.user_name }}"
-    password: "{{ logius.db.password }}"
-    priv: "{{ logius.db.schema_name }}.*:ALL"
+  - name: "{{ logius_db_user_name }}"
+    password: "{{ logius_db_password }}"
+    priv: "{{ logius_db_schema_name }}.*:ALL"
 
 # nginx config
 #
@@ -71,7 +52,7 @@ nginx_vhosts:
     listen:
       - 80
     template: '_proxy'
-    upstream_name: "localhost:{{ logius.app.port }}/"
+    upstream_name: "localhost:{{ logius_web_port }}/"
     proxy_params:
       - "proxy_redirect off;"
       - "proxy_set_header Host $host;"
