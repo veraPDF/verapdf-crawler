@@ -55,7 +55,7 @@ public class HeritrixReporter {
     }
 
     private void setFields(CrawlJobSummary report, String job, LocalDateTime time) {
-        report.setPdfStatistics(reportDocumentDao.getValidationStatistics(job, time));
+        //report.setPdfStatistics(reportDocumentDao.getValidationStatistics(job, time));
         report.setNumberOfODFDocuments(reportDocumentDao.getNumberOfOdfFilesForJob(job, time));
         report.setNumberOfOfficeDocuments(reportDocumentDao.getNumberOfMicrosoftFilesForJob(job, time));
         report.setNumberOfOoxmlDocuments(reportDocumentDao.getNumberOfOoxmlFilesForJob(job, time));

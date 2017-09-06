@@ -5,15 +5,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.verapdf.crawler.domain.report.PDFValidationStatistics;
 import org.verapdf.crawler.domain.report.PdfPropertyStatistics;
-import org.verapdf.crawler.repository.jobs.CrawlRequestDao;
 import org.verapdf.crawler.repository.mappers.FileUrlMapper;
-import org.verapdf.crawler.repository.mappers.PdfPropertyStatisticsMapper;
 
 import javax.sql.DataSource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
 
 public class ReportDocumentDao {
     private final JdbcTemplate template;
@@ -27,7 +24,7 @@ public class ReportDocumentDao {
     // ((pdf_properties inner join document_properties on pdf_properties.name=document_properties.name)
     // inner join documents on document_properties.document_url = documents.document_url) group by value;
 
-    public PDFValidationStatistics getValidationStatistics(String crawlJobId, LocalDateTime sinceTime) {
+    /*public PDFValidationStatistics getValidationStatistics(String crawlJobId, LocalDateTime sinceTime) {
         try {
             String sql = String.format("select any_value(%s.%s), any_value(%s), count(*) as `number` from ((%s inner join %s on %s.%s=%s.%s) inner join %s on %s.%s=%s.%s) where %s=? and %s>? group by %s",
                     ValidatedPDFDao.PROPERTIES_TABLE_NAME, ValidatedPDFDao.FIELD_PROPERTY_VALUE,
@@ -46,7 +43,7 @@ public class ReportDocumentDao {
             logger.error("Error in validation statistics query",e);
             return new PDFValidationStatistics();
         }
-    }
+    }*/
 
     public List<String> getMatchingPropertyValues(String crawlJobId, String name, String valueFilter) {
         return template.query(String.format("select %s from %s inner join %s on %s.%s=%s.%s where %s=? and %s=? and %s like ? group by %s",
