@@ -46,7 +46,7 @@ public class VerapdfServiceValidator implements PDFValidator {
     @GET
     @Path("/settings")
     public ValidationSettings getValidationSettings() {
-        return new ValidationSettings(validatedPDFDao.getPdfPropertiesWithXpath(), new HashMap<>());
+        return new ValidationSettings(validatedPDFDao.getPdfPropertiesWithXpath(), validatedPDFDao.getNamespaceMap());
     }
 
     @POST

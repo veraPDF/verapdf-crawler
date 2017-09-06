@@ -3,7 +3,7 @@ package org.verapdf.crawler.domain.report;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class CrawlJobReport {
+public class CrawlJobSummary {
     private String id;
     private String url;
     private String status;
@@ -17,10 +17,10 @@ public class CrawlJobReport {
     private int numberOfOoxmlDocuments;
 
 
-    public CrawlJobReport() {
+    public CrawlJobSummary() {
     }
 
-    public CrawlJobReport(String id, String url, String status, int numberOfCrawledUrls) {
+    public CrawlJobSummary(String id, String url, String status, int numberOfCrawledUrls) {
         this.id = id;
         this.url = url;
         this.status = status;

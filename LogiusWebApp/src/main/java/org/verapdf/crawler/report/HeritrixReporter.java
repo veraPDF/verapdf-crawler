@@ -2,8 +2,8 @@ package org.verapdf.crawler.report;
 
 import org.jopendocument.dom.spreadsheet.Sheet;
 import org.jopendocument.dom.spreadsheet.SpreadSheet;
-import org.verapdf.crawler.domain.crawling.CurrentJob;
-import org.verapdf.crawler.domain.report.CrawlJobReport;
+import org.verapdf.crawler.domain.crawling.CrawlJob;
+import org.verapdf.crawler.domain.report.CrawlJobSummary;
 import org.verapdf.crawler.app.engine.HeritrixClient;
 import org.verapdf.crawler.repository.document.ReportDocumentDao;
 import org.verapdf.crawler.repository.jobs.CrawlJobDao;
@@ -31,9 +31,13 @@ public class HeritrixReporter {
         reportDocumentDao = new ReportDocumentDao(dataSource);
     }
 
+    public String getCrawlJobStatus(String job) throws ParserConfigurationException, SAXException, IOException {
+        return client.getCurrentJobStatus(job).replaceAll("\\s+","");
+    }
+
     // If time is null settings were not provided
-    public CrawlJobReport getReport(String job, LocalDateTime time) throws IOException, ParserConfigurationException, SAXException {
-        CrawlJobReport result = new CrawlJobReport(job,
+    public CrawlJobSummary getReport(String job, LocalDateTime time) throws IOException, ParserConfigurationException, SAXException {
+        CrawlJobSummary result = new CrawlJobSummary(job,
                 client.getListOfCrawlUrls(job).get(0),
                 client.getCurrentJobStatus(job).replaceAll("\\s+",""),
                 client.getDownloadedCount(job));
@@ -41,28 +45,28 @@ public class HeritrixReporter {
         return result;
     }
 
-    public CrawlJobReport getReport(String job, String jobURL, LocalDateTime time) throws IOException {
+    public CrawlJobSummary getReport(String job, String jobURL, LocalDateTime time) throws IOException {
         String config = client.getConfig(jobURL);
-        CrawlJobReport result = new CrawlJobReport(job,
+        CrawlJobSummary result = new CrawlJobSummary(job,
                 HeritrixClient.getListOfCrawlUrlsFromXml(config).get(0),
                 "finished",0);
         setFields(result, job, time);
         return result;
     }
 
-    private void setFields(CrawlJobReport report, String job, LocalDateTime time) {
+    private void setFields(CrawlJobSummary report, String job, LocalDateTime time) {
         report.setPdfStatistics(reportDocumentDao.getValidationStatistics(job, time));
         report.setNumberOfODFDocuments(reportDocumentDao.getNumberOfOdfFilesForJob(job, time));
         report.setNumberOfOfficeDocuments(reportDocumentDao.getNumberOfMicrosoftFilesForJob(job, time));
         report.setNumberOfOoxmlDocuments(reportDocumentDao.getNumberOfOoxmlFilesForJob(job, time));
-        CurrentJob crawlJob = crawlJobDao.getCrawlJob(job);
+        CrawlJob crawlJob = crawlJobDao.getCrawlJob(job);
         report.setStartTime(crawlJob.getStartTime().format(FORMATTER));
         if(crawlJob.getFinishTime() != null) {
             report.setFinishTime(crawlJob.getFinishTime().format(FORMATTER));
         }
     }
 
-    private File buildODSReport(CrawlJobReport reportData, LocalDateTime time) throws IOException {
+    private File buildODSReport(CrawlJobSummary reportData, LocalDateTime time) throws IOException {
         File file = new File(HeritrixClient.baseDirectory + "sample_report.ods");
         final Sheet totalSheet = SpreadSheet.createFromFile(file).getSheet(0);
         totalSheet.ensureColumnCount(2);
@@ -94,12 +98,12 @@ public class HeritrixReporter {
     }
 
     public File buildODSReport(String job, LocalDateTime time) throws IOException, ParserConfigurationException, SAXException {
-        CrawlJobReport reportData = getReport(job, time);
+        CrawlJobSummary reportData = getReport(job, time);
         return buildODSReport(reportData, time);
     }
 
     public File buildODSReport(String job, String jobURL, LocalDateTime time) throws IOException {
-        CrawlJobReport reportData = getReport(job, jobURL, time);
+        CrawlJobSummary reportData = getReport(job, jobURL, time);
         return buildODSReport(reportData,time);
     }
 

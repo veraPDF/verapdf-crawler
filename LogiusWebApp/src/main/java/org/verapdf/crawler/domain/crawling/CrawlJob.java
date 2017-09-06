@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
 
-public class CurrentJob {
+public class CrawlJob {
 
     private final String id;
     private String jobURL;
@@ -15,7 +15,7 @@ public class CurrentJob {
 
     private boolean isFinished = false;
 
-    public CurrentJob(String id, String jobURL, String crawlURL, LocalDateTime startTime) {
+    public CrawlJob(String id, String jobURL, String crawlURL, LocalDateTime startTime) {
         this.id = id;
         this.jobURL = jobURL;
         this.crawlURL = crawlURL;

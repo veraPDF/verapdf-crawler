@@ -2,19 +2,16 @@ package org.verapdf.crawler.app.resources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.domain.crawling.BatchJob;
-import org.verapdf.crawler.domain.crawling.CurrentJob;
-import org.verapdf.crawler.app.email.SendEmail;
-import org.verapdf.crawler.repository.jobs.BatchJobDao;
-import org.verapdf.crawler.repository.jobs.CrawlJobDao;
+import org.verapdf.crawler.domain.crawling.CrawlRequest;
+import org.verapdf.crawler.repository.jobs.CrawlRequestDao;
 
 public class StatusMonitor implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
-    private final BatchJobDao batchJobDao;
+    private final CrawlRequestDao crawlRequestDao;
     private final ControlResource controlResource;
 
-    StatusMonitor(BatchJobDao batchJobDao, ControlResource controlResource) {
-        this.batchJobDao = batchJobDao;
+    StatusMonitor(CrawlRequestDao crawlRequestDao, ControlResource controlResource) {
+        this.crawlRequestDao = crawlRequestDao;
         this.controlResource = controlResource;
     }
 
@@ -22,7 +19,7 @@ public class StatusMonitor implements Runnable {
     public void run() {
         while(true) {
             try {
-                for (BatchJob batch : batchJobDao.getBatchJobs()) {
+                for (CrawlRequest batch : crawlRequestDao.getBatchJobs()) {
                     controlResource.getBatchJob(batch.getId());
                 }
 
