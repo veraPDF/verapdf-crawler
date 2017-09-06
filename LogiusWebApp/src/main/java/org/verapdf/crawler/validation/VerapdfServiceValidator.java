@@ -10,8 +10,10 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.domain.validation.ValidationError;
+import org.verapdf.crawler.domain.validation.ValidationJobData;
 import org.verapdf.crawler.domain.validation.ValidationSettings;
 import org.verapdf.crawler.domain.validation.VeraPDFValidationResult;
+import org.verapdf.crawler.repository.document.InsertDocumentDao;
 import org.verapdf.crawler.repository.document.ValidatedPDFDao;
 
 import javax.ws.rs.GET;
@@ -29,17 +31,19 @@ import java.util.Map;
 @Produces(MediaType.APPLICATION_JSON)
 public class VerapdfServiceValidator implements PDFValidator {
 
-    private final static int MAX_VALIDATION_TIMEOUT_IN_MINUTES = 5;
-    private final static int MAX_VALIDATION_RETRIES = 2;
+    private static final int MAX_VALIDATION_TIMEOUT_IN_MINUTES = 5;
+    private static final int MAX_VALIDATION_RETRIES = 2;
 
     private final String verapdfUrl;
     private final HttpClient httpClient;
+    private final InsertDocumentDao insertDocumentDao;
     private final ValidatedPDFDao validatedPDFDao;
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
-    public VerapdfServiceValidator(String verapdfUrl, ValidatedPDFDao validatedPDFDao) {
+    public VerapdfServiceValidator(String verapdfUrl, InsertDocumentDao insertDocumentDao, ValidatedPDFDao validatedPDFDao) {
         this.verapdfUrl = verapdfUrl;
         httpClient = HttpClientBuilder.create().build();
+        this.insertDocumentDao = insertDocumentDao;
         this.validatedPDFDao = validatedPDFDao;
     }
 
@@ -56,9 +60,11 @@ public class VerapdfServiceValidator implements PDFValidator {
     }
 
     @Override
-    public boolean validateAndWirteResult(String localFilename, String fileUrl) throws Exception {
+    public void validateAndWriteResult(ValidationJobData data) throws Exception {
         VeraPDFValidationResult result;
+        String fileUrl = data.getUri();
         try {
+            String localFilename = data.getFilepath();
             result = validate(localFilename, validatedPDFDao);
             while (result == null) {
                 logger.info("Could not reach validation service, retry in one minute");
@@ -66,19 +72,24 @@ public class VerapdfServiceValidator implements PDFValidator {
                 result = validate(localFilename, validatedPDFDao);
             }
         }
-        catch (Exception e) {
+        catch (Throwable e) {
             logger.error("Error in validation service",e);
-            validatedPDFDao.addProcessingError(e.getMessage(), fileUrl);
-            return false;
+            result = new VeraPDFValidationResult();
+            result.addValidationError(new ValidationError(e.getMessage()));
         }
+        String[] parts = data.getJobDirectory().split("/");
+        String jobId = parts[parts.length - 3];
+        insertDocumentDao.addPdfFile(data, jobId, getStatus(result));
         for(ValidationError error: result.getValidationErrors()) {
             validatedPDFDao.addErrorToDocument(error, fileUrl);
         }
         for(Map.Entry<String, String> property: result.getProperties().entrySet()) {
             validatedPDFDao.insertPropertyForDocument(property.getKey(), property.getValue(), fileUrl);
         }
-        validatedPDFDao.addProcessingError(result.getProcessingError(), fileUrl);
-        return result.isValid();
+    }
+
+    private InsertDocumentDao.Status getStatus(VeraPDFValidationResult result) {
+        return result.isValid() ? InsertDocumentDao.Status.OPEN : InsertDocumentDao.Status.NOT_OPEN;
     }
 
     private VeraPDFValidationResult validate(String filename, ValidatedPDFDao validatedPDFDao) throws Exception {

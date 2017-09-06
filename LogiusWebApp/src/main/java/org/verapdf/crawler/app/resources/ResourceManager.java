@@ -9,6 +9,7 @@ import org.verapdf.crawler.domain.database.MySqlCredentials;
 import org.verapdf.crawler.domain.email.EmailServer;
 import org.verapdf.crawler.app.engine.HeritrixClient;
 import org.verapdf.crawler.report.HeritrixReporter;
+import org.verapdf.crawler.repository.document.InsertDocumentDao;
 import org.verapdf.crawler.repository.document.ValidatedPDFDao;
 import org.verapdf.crawler.repository.jobs.CrawlRequestDao;
 import org.verapdf.crawler.repository.jobs.CrawlJobDao;
@@ -19,7 +20,7 @@ import org.verapdf.crawler.validation.VerapdfServiceValidator;
 import javax.sql.DataSource;
 
 public class ResourceManager {
-    private final static String JDBC_DRIVER = "com.mysql.jdbc.Driver";
+    private static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
 
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
     private final InfoResourse infoResourse;
@@ -39,7 +40,7 @@ public class ResourceManager {
 
         HeritrixReporter reporter = new HeritrixReporter(client, dataSource, crawlJobDao);
         this.emailServer = emailServer;
-        PDFValidator validator = new VerapdfServiceValidator(verapdfUrl, new ValidatedPDFDao(dataSource));
+        PDFValidator validator = new VerapdfServiceValidator(verapdfUrl, new InsertDocumentDao(dataSource), new ValidatedPDFDao(dataSource));
         validatorResource = (VerapdfServiceValidator) validator;
         validationService = new ValidationService(dataSource, validator);
         infoResourse = new InfoResourse(validationService, crawlRequestDao);
