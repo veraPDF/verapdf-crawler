@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <title>Crawl jobs</title>
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" crossorigin="anonymous"></script>
 
@@ -25,10 +25,9 @@
     <nav id="menu_container">
         <ul id="menu">
             <li><a href="index.html">Home</a></li>
-            <li><a href="domains.html">Tested domains</a></li>
+            <li><a href="domains.html">Test results</a></li>
+            <li><a href="#">What we test</a></li>            
             <li><a href="#">About</a></li>
-            <li><a href="#">What we test</a></li>
-            <li><a href="#">News</a></li>
             <li><a href="#">Contact</a></li>
         </ul>
     </nav>
@@ -43,17 +42,20 @@
         </div>
     </form>
 
-    <table class="table domains-list">
+    <table class="table domains-list" id="crawl_job_list">
         <thead>
         <tr>
             <th class="col-domain">Domain</th>
+            <th class="col-date">Date start</th>            
+            <th class="col-date">Date finish</th>
             <th class="col-status">Status</th>
             <th colspan="2" class="col-actions">Actions</th>
         </tr>
         </thead>
         <tbody>
-        <tr>
+        <!-- <tr>
             <td><a href="domain.html?domain=www.vananaarbeter.nl">www.vananaarbeter.nl</a></td>
+            <td></td>
             <td>Running</td>
             <td class="col-actions">
                 <a href="#" class="action d-flex flex-column">
@@ -69,7 +71,8 @@
             </td>
         </tr>
         <tr>
-            <td><a href="domain.html?domain=secure5.svb.nl">secure5.svb.nl</a></td>
+            <td><a href="domain.html?domain=secure5.svb.nl">secure5.svb.nl</a></td>            
+            <td></td>
             <td>Paused</td>
             <td class="col-actions">
                 <a href="#" class="action d-flex flex-column">
@@ -86,6 +89,7 @@
         </tr>
         <tr>
             <td><a href="domain.html?domain=www.duallab.com">www.duallab.com</a></td>
+            <td></td>
             <td>Finished</td>
             <td class="col-actions">
 
@@ -96,17 +100,21 @@
                     <span class="label">Restart</span>
                 </a>
             </td>
-        </tr>
+        </tr> -->
         </tbody>
     </table>
 
     <nav>
-        <ul class="pagination pagination-sm justify-content-center">
-            <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-            <li class="page-item"><a class="page-link" href="#">2</a></li>
-            <li class="page-item"><a class="page-link" href="#">3</a></li>
-            <li class="page-item"><a class="page-link" href="#">Next</a></li>
+        <ul class="pagination pagination-sm justify-content-center" id = 'pagination-container'>
+            <li class="page-item" id='previous'><a class="page-link" href="#">Previous</a></li> 
+            <li class="page-item hide" id='zero'><a class="page-link" href="#">1</a></li>           
+            <li class="page-item disabled hide" id = 'first-dots'><a class="page-link" href="#">...</a></li>
+            <li class="page-item active" id='first'><a class="page-link" href="#">1</a></li>
+            <li class="page-item" id='second'><a class="page-link" href="#">2</a></li>
+            <li class="page-item" id = 'third'><a class="page-link" href="#">3</a></li>
+            <li class="page-item disabled" id = 'second-dots'><a class="page-link" href="#">...</a></li>
+            <li class="page-item" id='last'><a class="page-link" href="#"></a></li>
+            <li class="page-item" id='next'><a class="page-link" href="#">Next</a></li>
         </ul>
     </nav>
 </main>
