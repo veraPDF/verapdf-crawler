@@ -1,15 +1,19 @@
 $(function () {
+    var totalPagesAmount = 0;
     function loadAllJobs(limit) {
         $.ajax({
             url: "/info/list" + '?limit=' + limit,
             type: "GET",
             success: function (result, textStatus, request) {
+                var row = $("#crawl_job_list").children('tbody').children('tr').clone();
                 $("#crawl_job_list").children('tbody').empty();
                 result.forEach(function (item, i, arr) {
-                    appendCrawlJob(item.crawlURL, item.startTime, item.finishTime, item.status);
+                    appendCrawlJob(item.crawlURL, item.startTime, item.finishTime, item.status, row[0]);
                 });
+                totalPagesAmount = parseInt(request.getResponseHeader('X-Total-Count'));
+                totalPagesAmount = Math.floor(request.getResponseHeader('X-Total-Count') / 10) + 1;
 
-                setPages(parseInt(request.getResponseHeader('X-Total-Count')), limit);
+                setPages(request.getResponseHeader('X-Total-Count'), limit);
 
             },
             error: function (result) {
@@ -28,16 +32,16 @@ $(function () {
             $('#pagination-container').children('#next').addClass('disabled');
         }
 
-        if (pagesAmount <= 4) {
+        if (pagesAmount < 6) {
             for (var i = 0; i < 5; i++) {
                 if (i < pagesAmount) {
                     // $($('#pagination-container').children()[1 + i]).children('a').text(i + 1);
                 } else {
-                    $($('#pagination-container').children()[1 + i]).addClass('hide');
+                    $($('#pagination-container').children()[2 + i]).addClass('hide');
                 }
             }
         } else {
-            $('#pagination-container').children('#last').children('a').text(pagesAmount);
+            // $('#pagination-container').children('#last').children('a').text(pagesAmount);
             // $('#pagination-container').children('#first').children('a').text('1');
             // $('#pagination-container').children('#second').children('a').text('2');
             // $('#pagination-container').children('#third').children('a').text('3');
@@ -45,51 +49,33 @@ $(function () {
 
     }
 
-    function appendCrawlJob(url, start, end, status) {
-
-        var row = $("<tr></tr>");
-
-        var link = document.createElement("a");
-        link.setAttribute("href", "domain.html?domain=" + url)
-        link.append(document.createTextNode(url));
-        // link.innerHTML = url;
-
-        row.append($('<td></td>').append(link));
-        row.append($('<td></td>').append(document.createTextNode(start)));
+    function appendCrawlJob(url, start, end, status, row) {
+        var row1 = $(row).clone();
+        row1.find('#domain').text(url)
+        row1.find('#domain')[0].setAttribute("href", "domain.html?domain=" + url);
+        row1.children('#start').text(start)
         if (status === 'running') {
-            row.append($('<td></td>'));
-            row.append($('<td></td>').append(document.createTextNode('Running')));
-            var a = $('<a href="#" class="action d-flex flex-column"></a>');
-            a.append($('<span class="material-icons"></span>').text('pause'));
-            a.append($('<span class="label"></span>').text('Pause'));
-            row.append($('<td class="col-actions"></td>').append(a));
-            a = $('<a href="#" class="action d-flex flex-column"></a>');
-            a.append($('<span class="material-icons"></span>').text('replay'));
-            a.append($('<span class="label"></span>').text('Replay'));
-            row.append($('<td class="col-actions"></td>').append(a));
+            $(row1).children('#status').text('Running');
+            $(row1).find('#action1 span:first-child').text('pause');
+            $(row1).find('#action1 span:last-child').text('Pause');
+            $(row1).find('#action2 span:first-child').text('replay');
+            $(row1).find('#action2 span:last-child').text('Replay');
 
         } else if (status === 'paused') {
-            row.append($('<td></td>'));
-            row.append($('<td></td>').append(document.createTextNode('Paused')));
-            var a = $('<a href="#" class="action d-flex flex-column"></a>');
-            a.append($('<span class="material-icons"></span>').text('play_arrow'));
-            a.append($('<span class="label"></span>').text('Resume'));
-            row.append($('<td class="col-actions"></td>').append(a));
-            a = $('<a href="#" class="action d-flex flex-column"></a>');
-            a.append($('<span class="material-icons"></span>').text('replay'));
-            a.append($('<span class="label"></span>').text('Restart'));
-            row.append($('<td class="col-actions"></td>').append(a));
+            $(row1).children('#status').text('Running');
+            $(row1).find('#action1 span:first-child').text('play_arrow');
+            $(row1).find('#action1 span:last-child').text('Resume');
+            $(row1).find('#action2 span:first-child').text('replay');
+            $(row1).find('#action2 span:last-child').text('Restart');
+
         } else {
-            row.append($('<td></td>').append(document.createTextNode(end)));
-            row.append($('<td></td>').append(document.createTextNode('Finished')));
-            var a = $('<a href="#" class="action d-flex flex-column"></a>');
-            a.append($('<span class="material-icons"></span>').text('replay'));
-            a.append($('<span class="label"></span>').text('Restart'));
-            row.append($('<td class="col-actions"></td>'));
-            row.append($('<td class="col-actions"></td>').append(a));
+            row1.children('#end').text(end)
+            $(row1).children('#status').text('Finished');
+            $(row1).find('#action2 span:first-child').text('replay');
+            $(row1).find('#action2 span:last-child').text('Restart');
         }
 
-        $("#crawl_job_list").children('tbody').append(row);
+        $("#crawl_job_list").children('tbody').append(row1);
 
     }
 
@@ -109,40 +95,83 @@ $(function () {
 
         loadAllJobs(parseInt($(this).text() - 1) * 10);
 
-        if ($(this).parent('li')[0].id === 'third') {
-            $('#first').children('a').text(parseInt($('#first').children('a').text()) + 1);
-            $('#second').children('a').text(parseInt($('#second').children('a').text()) + 1);
-            $('#third').children('a').text(parseInt($('#third').children('a').text()) + 1);
-            $('#second').addClass('active');
-            $('#second-dots').removeClass('hide');
-            $('#first-dots').addClass('hide');
+        if ($(this).parent('li')[0].id === 'fifth') {
+            var diff = totalPagesAmount - parseInt($('#fifth').children('a').text());
 
-            if (parseInt($('#third').children('a').text()) + 1 === parseInt($('#last').children('a').text())) {
-                $('#second-dots').addClass('hide');
-                $('#first-dots').removeClass('hide');
+            if (diff < 4) {
+                $('#first').children('a').text(parseInt($('#first').children('a').text()) + diff);
+                $('#second').children('a').text(parseInt($('#second').children('a').text()) + diff);
+                $('#third').children('a').text(parseInt($('#third').children('a').text()) + diff);
+                $('#fourth').children('a').text(parseInt($('#fourth').children('a').text()) + diff);
+                $('#fifth').children('a').text(parseInt($('#fifth').children('a').text()) + diff);
             }
-            if (parseInt($('#third').children('a').text()) === parseInt($('#last').children('a').text())) {
-                $('#last').addClass('hide');
-                $('#first-dots').removeClass('hide');
-                $('#second-dots').addClass('hide');
+
+            switch (diff) {
+                case 0:
+                    $('#fifth').addClass('active');
+                    break;
+                case 1:
+                    $('#fourth').addClass('active');
+                    break;
+
+                case 2:
+                    $('#third').addClass('active');
+                    break;
+
+                case 3:
+                    $('#second').addClass('active');
+                    break;
+
+                default:
+                    $('#first').children('a').text(parseInt($('#first').children('a').text()) + 4);
+                    $('#second').children('a').text(parseInt($('#second').children('a').text()) + 4);
+                    $('#third').children('a').text(parseInt($('#third').children('a').text()) + 4);
+                    $('#fourth').children('a').text(parseInt($('#fourth').children('a').text()) + 4);
+                    $('#fifth').children('a').text(parseInt($('#fifth').children('a').text()) + 4);
+                    $('#first').addClass('active');
+                    break;
             }
-        } else if ($(this).parent('li')[0].id === 'last') {
-            $('#second-dots').addClass('hide');
-            $('#first-dots').removeClass('hide');
-            $('#last').addClass('active');
-            $('#first').children('a').text(parseInt($('#last').children('a').text()) - 3);
-            $('#second').children('a').text(parseInt($('#last').children('a').text()) - 2);
-            $('#third').children('a').text(parseInt($('#last').children('a').text()) - 1);
 
         } else if ($(this).parent('li')[0].id === 'first') {
-            if(parseInt($('#third').children('a').text()) > 2){
+            var diff = parseInt($('#first').children('a').text()) - 1;
 
-            } else{}
+            if (diff < 4) {
+                $('#first').children('a').text(parseInt($('#first').children('a').text()) - diff);
+                $('#second').children('a').text(parseInt($('#second').children('a').text()) - diff);
+                $('#third').children('a').text(parseInt($('#third').children('a').text()) - diff);
+                $('#fourth').children('a').text(parseInt($('#fourth').children('a').text()) - diff);
+                $('#fifth').children('a').text(parseInt($('#fifth').children('a').text()) - diff);
+            }
 
-        } else if ($(this).parent('li')[0].id === 'second') {
-            $('#second').addClass('active');            
+            switch (diff) {
+                case 0:
+                    $('#first').addClass('active');
+                    break;
+                case 1:
+                    $('#second').addClass('active');
+                    break;
+
+                case 2:
+                    $('#third').addClass('active');
+                    break;
+
+                case 3:
+                    $('#fourth').addClass('active');
+                    break;
+
+                default:
+                    $('#first').children('a').text(parseInt($('#first').children('a').text()) - 4);
+                    $('#second').children('a').text(parseInt($('#second').children('a').text()) - 4);
+                    $('#third').children('a').text(parseInt($('#third').children('a').text()) - 4);
+                    $('#fourth').children('a').text(parseInt($('#fourth').children('a').text()) - 4);
+                    $('#fifth').children('a').text(parseInt($('#fifth').children('a').text()) - 4);
+                    $('#fifth').addClass('active');
+                    break;
+            }
+
+        } else {
+            $(this).parent('li').addClass('active');
         }
-
 
     });
 
