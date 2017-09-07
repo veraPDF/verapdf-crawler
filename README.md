@@ -82,8 +82,9 @@ Here your_login and your_password are the credentials you should pass to LogiusW
     );
     CREATE TABLE `pdf_properties` (
       `property_name` varchar(127) NOT NULL,
+      `xpath_index` int(11) NOT NULL DEFAULT '0',
       `xpath` varchar(255) NOT NULL,
-      PRIMARY KEY (`property_name`)
+      PRIMARY KEY (`property_name`,`xpath_index`)
     );
     CREATE TABLE `pdf_properties_namespaces` (
       `namespace_prefix` varchar(20) NOT NULL,

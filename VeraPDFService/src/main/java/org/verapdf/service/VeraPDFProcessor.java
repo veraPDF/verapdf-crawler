@@ -113,14 +113,19 @@ public class VeraPDFProcessor implements Runnable {
 	}
 
 	private void addProperties(VeraPDFValidationResult result, Document document, XPath xpath) {
-		Map<String, String> validationProperties = this.settings.getValidationProperties();
+		Map<String, List<String>> validationProperties = this.settings.getValidationProperties();
 		if (validationProperties == null) {
 			return;
 		}
-		for (Map.Entry<String, String> property : validationProperties.entrySet()) {
+		for (Map.Entry<String, List<String>> property : validationProperties.entrySet()) {
 			try {
-				String value = (String) xpath.evaluate(property.getValue(), document, XPathConstants.STRING);
-				result.addProperty(property.getKey(), value);
+				for (String propertyXPath : property.getValue()) {
+					String value = (String) xpath.evaluate(propertyXPath, document, XPathConstants.STRING);
+					result.addProperty(property.getKey(), value);
+					if (value != null && !value.isEmpty()) {
+						break;
+					}
+				}
 			} catch (Throwable e) {
 				logger.info("Some problem in obtaining property", e);
 			}
@@ -134,7 +139,7 @@ public class VeraPDFProcessor implements Runnable {
 				document,
 				XPathConstants.STRING);
 		if (exception != null && !exception.isEmpty()) {
-			result.setProcessingError(exception);
+			result.addValidationError(new ValidationError(exception));
 		}
 
 		String isCompliantPath = VALIDATION_REPORT_PATH + "@isCompliant";
@@ -144,13 +149,12 @@ public class VeraPDFProcessor implements Runnable {
 		boolean isCompliant = Boolean.parseBoolean(isCompliantString);
 		result.setValid(isCompliant);
 		if (!isCompliant) {
-			result.setValidationErrors(getvalidationErrors(document, xpath));
+			addValidationErrors(result, document, xpath);
 		}
 		return result;
 	}
 
-	private List<ValidationError> getvalidationErrors(Document document, XPath xpath) throws XPathExpressionException {
-		List<ValidationError> res = new ArrayList<>();
+	private void addValidationErrors(VeraPDFValidationResult result, Document document, XPath xpath) throws XPathExpressionException {
 		String rulesPath = VALIDATION_REPORT_PATH + "details/rule";
 		NodeList rules = (NodeList) xpath.evaluate(rulesPath,
 				document,
@@ -171,10 +175,9 @@ public class VeraPDFProcessor implements Runnable {
 						break;
 					}
 				}
-				res.add(new ValidationError(specification, clause, testNumber, description));
+				result.addValidationError(new ValidationError(specification, clause, testNumber, description));
 			}
 		}
-		return res;
 	}
 
 	void stopProcess() {
@@ -190,7 +193,7 @@ public class VeraPDFProcessor implements Runnable {
 
 	private VeraPDFValidationResult generateProblemResult(String message) {
 		VeraPDFValidationResult res = new VeraPDFValidationResult();
-		res.setProcessingError(message);
+		res.addValidationError(new ValidationError(message));
 		return res;
 	}
 }

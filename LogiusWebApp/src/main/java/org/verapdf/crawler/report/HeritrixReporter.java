@@ -19,7 +19,7 @@ import java.util.List;
 
 public class HeritrixReporter {
 
-    private final static DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss");
 
     private final HeritrixClient client;
     private final ReportDocumentDao reportDocumentDao;
