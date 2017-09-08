@@ -64,8 +64,8 @@ public class CrawlRequestDao {
         return result;
     }
 
-    public String getIdByEmail(String emailAddress) {
-        return template.queryForObject(String.format("select %s from %s where %s=?", FIELD_CRAWL_JOB_ID, BATCH_JOB_TABLE_NAME, FIELD_REPORT_EMAIL), new Object[]{emailAddress}, String.class);
+    public List<String> getIdsByEmail(String emailAddress) {
+        return template.queryForList(String.format("select %s from %s where %s=?", FIELD_CRAWL_JOB_ID, BATCH_JOB_TABLE_NAME, FIELD_REPORT_EMAIL), new Object[]{emailAddress}, String.class);
     }
 
     public void setJobFinished(String batchJob) {

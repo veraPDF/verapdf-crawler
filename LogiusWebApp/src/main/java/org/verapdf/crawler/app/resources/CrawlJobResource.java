@@ -114,7 +114,10 @@ public class CrawlJobResource {
     public List<CrawlRequest> unlinkCrawlRequests(@PathParam("domain") String domain, @QueryParam("email") String email) {
         // todo: unlink all CrawlRequests with specified email from CrawlJob
         // todo: clarify if possible/required to terminate CrawlJob if no associated CrawlRequests left
-        crawlRequestDao.unlinkCrawlJob(crawlRequestDao.getIdByEmail(email), crawlJobDao.getIdByUrl(domain));
+        List<String> idsByEmail = crawlRequestDao.getIdsByEmail(email);
+        for (String crawlRequestID : idsByEmail) {
+            crawlRequestDao.unlinkCrawlJob(crawlRequestID, crawlJobDao.getIdByUrl(domain));
+        }
         return null;
     }
 

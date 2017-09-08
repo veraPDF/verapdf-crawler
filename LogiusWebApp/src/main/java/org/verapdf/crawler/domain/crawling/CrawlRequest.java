@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class CrawlRequest {
@@ -60,6 +61,6 @@ public class CrawlRequest {
 
     @JsonProperty
     public void setCrawlJobs(List<String> crawlJobs) {
-        this.crawlJobs = crawlJobs;
+        this.crawlJobs = crawlJobs == null ? Collections.emptyList() : new ArrayList<>(crawlJobs);
     }
 }

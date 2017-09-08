@@ -77,9 +77,7 @@ public class VerapdfServiceValidator implements PDFValidator {
             result = new VeraPDFValidationResult();
             result.addValidationError(new ValidationError(e.getMessage()));
         }
-        String[] parts = data.getJobDirectory().split("/");
-        String jobId = parts[parts.length - 3];
-        insertDocumentDao.addPdfFile(data, jobId, getStatus(result));
+        insertDocumentDao.addPdfFile(data, data.getJobID(), getStatus(result));
         for(ValidationError error: result.getValidationErrors()) {
             validatedPDFDao.addErrorToDocument(error, fileUrl);
         }
