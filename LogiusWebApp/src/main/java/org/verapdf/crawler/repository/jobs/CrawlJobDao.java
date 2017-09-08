@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.verapdf.crawler.domain.crawling.CrawlJob;
+import org.verapdf.crawler.repository.document.InsertDocumentDao;
 import org.verapdf.crawler.repository.mappers.CrawlJobMapper;
 
 import javax.sql.DataSource;
@@ -58,9 +59,10 @@ public class CrawlJobDao {
                 , job.getId(), job.getCrawlURL(), job.getJobURL());
     }
 
-    public void removeJob(CrawlJob job) {
-        logger.info("Job removed from database: " + job.getId());
-        template.update(String.format("delete from %s where %s=?", CRAWL_JOB_TABLE_NAME, FIELD_ID), job.getId());
+    public void removeJob(String jobId) {
+        logger.info("Job removed from database: " + jobId);
+        template.update(String.format("delete from %s where %s=?", InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_JOB_ID), jobId);
+        template.update(String.format("delete from %s where %s=?", CRAWL_JOB_TABLE_NAME, FIELD_ID), jobId);
     }
 
     public LocalDateTime writeFinishTime(String jobId) {

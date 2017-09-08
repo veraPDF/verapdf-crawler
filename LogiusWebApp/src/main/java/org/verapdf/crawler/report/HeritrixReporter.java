@@ -25,10 +25,10 @@ public class HeritrixReporter {
     private final ReportDocumentDao reportDocumentDao;
     private final CrawlJobDao crawlJobDao;
 
-    public HeritrixReporter(HeritrixClient client, DataSource dataSource, CrawlJobDao crawlJobDao) {
+    public HeritrixReporter(HeritrixClient client, ReportDocumentDao reportDocumentDao, CrawlJobDao crawlJobDao) {
         this.client = client;
         this.crawlJobDao = crawlJobDao;
-        reportDocumentDao = new ReportDocumentDao(dataSource);
+        this.reportDocumentDao = reportDocumentDao;
     }
 
     public String getCrawlJobStatus(String job) throws ParserConfigurationException, SAXException, IOException {

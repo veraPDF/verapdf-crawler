@@ -22,10 +22,6 @@ public class InfoResourse {
     }
 
     @GET
-    @Path("/{job}/email_address")
-    public String getReportEmail(@PathParam("job") String job) { return crawlRequestDao.getReportEmail(job); }
-
-    @GET
     @Path("/queue")
     @Produces(MediaType.TEXT_PLAIN)
     public String getQueueSize() {

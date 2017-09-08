@@ -31,7 +31,7 @@ public class CrawlJobResource {
     private final HeritrixReporter reporter;
     private final EmailServer emailServer;
 
-    public CrawlJobResource(CrawlJobDao crawlJobDao, HeritrixClient client, CrawlRequestDao crawlRequestDao, HeritrixReporter reporter, EmailServer emailServer) {
+    CrawlJobResource(CrawlJobDao crawlJobDao, HeritrixClient client, CrawlRequestDao crawlRequestDao, HeritrixReporter reporter, EmailServer emailServer) {
         this.crawlJobDao = crawlJobDao;
         this.client = client;
         this.crawlRequestDao = crawlRequestDao;
@@ -97,7 +97,7 @@ public class CrawlJobResource {
             crawlJob.setStatus("paused");
         }
         if(crawlJob.getStatus().equals("paused") && update.getStatus().equals("running")) {
-            pauseJob(crawlJob.getId());
+            unpauseJob(crawlJob.getId());
             crawlJob.setStatus("running");
         }
         return crawlJob;
@@ -114,6 +114,7 @@ public class CrawlJobResource {
     public List<CrawlRequest> unlinkCrawlRequests(@PathParam("domain") String domain, @QueryParam("email") String email) {
         // todo: unlink all CrawlRequests with specified email from CrawlJob
         // todo: clarify if possible/required to terminate CrawlJob if no associated CrawlRequests left
+
         return null;
     }
 
@@ -182,5 +183,14 @@ public class CrawlJobResource {
         }
     }
 
-
+    private void deleteJob(String job) {
+        try {
+            client.terminateJob(job);
+            logger.info("Crawl job on "+ crawlJobDao.getCrawlUrl(job) + " is being deleted");
+            crawlJobDao.removeJob(job);
+        }
+        catch (Exception e) {
+            logger.error("Error deleting job", e);
+        }
+    }
 }

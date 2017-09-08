@@ -3,6 +3,7 @@ package org.verapdf.crawler.repository.document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.verapdf.crawler.domain.report.ErrorStatistics;
 import org.verapdf.crawler.domain.validation.ValidationError;
 
 import javax.sql.DataSource;
@@ -11,8 +12,8 @@ import java.util.*;
 public class ValidatedPDFDao {
     private static final String VALIDATION_ERRORS_TABLE_NAME = "validation_errors";
     private static final String VALIDATION_ERRORS_REFERENCE_TABLE_NAME = "documents_validation_errors";
-    public static final String PROPERTIES_TABLE_NAME = "document_properties";
-    static final String PDF_PROPERTIES_TABLE_NAME = "pdf_properties";
+    static final String PROPERTIES_TABLE_NAME = "document_properties";
+    private static final String PDF_PROPERTIES_TABLE_NAME = "pdf_properties";
     private final String PDF_PROPERTIES_NAMESPACES_TABLE_NAME = "pdf_properties_namespaces";
     private static final String FIELD_SPECIFICATION = "specification";
     private static final String FIELD_CLAUSE = "clause";
@@ -22,13 +23,17 @@ public class ValidatedPDFDao {
     private static final String FIELD_ERRORS_DOCUMENT_URL = "document_url";
     private static final String FIELD_ERROR_ID = "error_id";
     static final String FIELD_PROPERTY_NAME = "property_name";
-    public static final String FIELD_PROPERTY_VALUE = "property_value";
+    static final String FIELD_PROPERTY_VALUE = "property_value";
     static final String FIELD_PROPERTIES_DOCUMENT_URL = "document_url";
-    static final String FIELD_PDF_PROPERTY_NAME = "property_name";
+    private static final String FIELD_PDF_PROPERTY_NAME = "property_name";
     private static final String FIELD_PDF_PROPERTY_XPATH_INDEX = "xpath_index";
     private static final String FIELD_PDF_PROPERTY_XPATH = "xpath";
     private static final String FIELD_NAMESPACE_PREFIX = "namespace_prefix";
     private static final String FIELD_NAMESPACE_URL = "namespace_url";
+
+    private static final String PROPERTY_PRODUCER = "pdf_producer";
+    private static final String PROPERTY_VERSION = "pdf_specification";
+    private static final String PROPERTY_FLAVOR = "pdf_flavor";
 
     private final JdbcTemplate template;
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
@@ -60,7 +65,7 @@ public class ValidatedPDFDao {
                 new Object[]{documentUrl, propertyName}, String.class);
     }
 
-    public void addRuleError(ValidationError rule, String documentUrl) {
+    private void addRuleError(ValidationError rule, String documentUrl) {
 		List<String> errors = template.query(String.format("select %s from %s where %s=? and %s=? and %s=?",
 				FIELD_ID, VALIDATION_ERRORS_TABLE_NAME, FIELD_SPECIFICATION, FIELD_CLAUSE, FIELD_TEST_NUMBER),
 				(resultSet, i) -> resultSet.getString(FIELD_ID), rule.getSpecification(), rule.getClause(), rule.getTestNumber());
@@ -82,7 +87,7 @@ public class ValidatedPDFDao {
 		}
 	}
 
-    public void addProcessingError(String processingError, String documentUrl) {
+    private void addProcessingError(String processingError, String documentUrl) {
         List<String> errors = template.query(String.format("select %s from %s where %s is null and %s is null and %s is null and %s=?",
                 FIELD_ID, VALIDATION_ERRORS_TABLE_NAME, FIELD_SPECIFICATION, FIELD_CLAUSE, FIELD_TEST_NUMBER, FIELD_DESCRIPTION),
                 (resultSet, i) -> resultSet.getString(FIELD_ID), processingError);
@@ -100,6 +105,37 @@ public class ValidatedPDFDao {
             template.update(String.format("insert into %s (%s, %s) values (?, ?)", VALIDATION_ERRORS_REFERENCE_TABLE_NAME,
                     FIELD_ERRORS_DOCUMENT_URL, FIELD_ERROR_ID), documentUrl, errors.get(0));
         }
+    }
+
+    public ErrorStatistics getErrorStatistics(String jobId, String startDate, String flavor, String version, String producer) {
+        String sql = "SELECT " + VALIDATION_ERRORS_TABLE_NAME + "." + FIELD_DESCRIPTION + ", COUNT(doc." + InsertDocumentDao.FIELD_DOCUMENT_URL +") AS `doc_count` \n" +
+                "FROM " + VALIDATION_ERRORS_REFERENCE_TABLE_NAME + "AS err\n" +
+                "     INNER JOIN " + InsertDocumentDao.DOCUMENTS_TABLE_NAME + "AS doc ON err." + FIELD_ERRORS_DOCUMENT_URL + "=doc." + InsertDocumentDao.FIELD_DOCUMENT_URL + " \n" +
+                "     INNER JOIN " + VALIDATION_ERRORS_TABLE_NAME + " ON err." + FIELD_ERROR_ID + "=" + VALIDATION_ERRORS_TABLE_NAME + "." + FIELD_ID + " \n";
+        if(flavor != null && !flavor.isEmpty()) {
+            sql += "INNER JOIN " + PROPERTIES_TABLE_NAME + " AS flavor ON doc." + InsertDocumentDao.FIELD_DOCUMENT_URL + "=flavor." + FIELD_PROPERTIES_DOCUMENT_URL + " AND flavor." + FIELD_PROPERTY_NAME + "=?";
+        }
+        if(version != null && !version.isEmpty()) {
+            sql += "INNER JOIN " + PROPERTIES_TABLE_NAME + " AS version ON doc." + InsertDocumentDao.FIELD_DOCUMENT_URL + "=version." + FIELD_PROPERTIES_DOCUMENT_URL + " AND version." + FIELD_PROPERTY_NAME + "=?";
+        }
+        if(producer != null && !producer.isEmpty()) {
+            sql += "INNER JOIN " + PROPERTIES_TABLE_NAME + " AS producer ON doc." + InsertDocumentDao.FIELD_DOCUMENT_URL + "=producer." + FIELD_PROPERTIES_DOCUMENT_URL + " AND producer." + FIELD_PROPERTY_NAME + "=?";
+        }
+        sql += "WHERE doc." + InsertDocumentDao.FIELD_JOB_ID + "=? AND doc." + InsertDocumentDao.FIELD_LAST_MODIFIED + ">? ";
+        if(flavor != null && !flavor.isEmpty()) {
+            sql += "AND flavor." + FIELD_PROPERTY_VALUE + "=? ";
+        }
+        if(version != null && !version.isEmpty()) {
+            sql += "AND version." + FIELD_PROPERTY_VALUE + "=? ";
+        }
+        if(producer != null && !producer.isEmpty()) {
+            sql += "AND producer." + FIELD_PROPERTY_VALUE + " LIKE ?";
+        }
+        sql += "GROUP BY " + VALIDATION_ERRORS_TABLE_NAME + "." + FIELD_DESCRIPTION + "\n" +
+                "ORDER BY doc_count DESC\n" +
+                "LIMIT 10";
+        return new ErrorStatistics(template.query(sql, (resultSet, i) -> new ErrorStatistics.ErrorCount(resultSet.getString(VALIDATION_ERRORS_TABLE_NAME + "." + FIELD_DESCRIPTION), resultSet.getInt("doc_count")),
+                PROPERTY_FLAVOR, PROPERTY_VERSION, PROPERTY_PRODUCER, jobId, startDate, flavor, version, producer));
     }
 
     public Map<String, String> getNamespaceMap() {
