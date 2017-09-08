@@ -7,8 +7,8 @@ import org.verapdf.crawler.repository.DaoUtils;
 import javax.sql.DataSource;
 
 public class InsertDocumentDao {
-    static final String DOCUMENTS_TABLE_NAME = "documents";
-    static final String FIELD_JOB_ID = "crawl_job_id";
+    public static final String DOCUMENTS_TABLE_NAME = "documents";
+    public static final String FIELD_JOB_ID = "crawl_job_id";
     static final String FIELD_DOCUMENT_URL = "document_url";
     static final String FIELD_LAST_MODIFIED = "last_modified";
     static final String FIELD_DOCUMENT_TYPE = "document_type";

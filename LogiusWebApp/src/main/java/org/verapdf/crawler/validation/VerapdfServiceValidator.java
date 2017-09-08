@@ -56,7 +56,7 @@ public class VerapdfServiceValidator implements PDFValidator {
     @POST
     @Path("/result")
     public void setValidationResult(VeraPDFValidationResult result) {
-        
+        // todo: interrupt sleep
     }
 
     @Override
@@ -95,7 +95,6 @@ public class VerapdfServiceValidator implements PDFValidator {
     private VeraPDFValidationResult validate(String filename, ValidatedPDFDao validatedPDFDao) throws Exception {
         logger.info("Sending file " + filename + " to validator");
         try {
-            sendValidationSettings(validatedPDFDao);
             sendValidationRequest(filename);
 
             int validationRetries = 0;
@@ -118,7 +117,6 @@ public class VerapdfServiceValidator implements PDFValidator {
                     if (validationRetries == MAX_VALIDATION_RETRIES) {
                         throw new Exception("Failed to process document " + filename);
                     }
-                    sendValidationSettings(validatedPDFDao);
                     sendValidationRequest(filename);
                     // Reset timeout cycle
                     i = 0;
@@ -134,7 +132,8 @@ public class VerapdfServiceValidator implements PDFValidator {
         }
     }
 
-    private void sendValidationSettings(ValidatedPDFDao validatedPDFDao) throws IOException {
+    // Temporary removed
+    /*private void sendValidationSettings(ValidatedPDFDao validatedPDFDao) throws IOException {
         HttpPost propertiesPost = new HttpPost(verapdfUrl + "/properties");
         propertiesPost.setHeader("Content-Type", "application/json");
         ObjectMapper mapper = new ObjectMapper();
@@ -142,7 +141,7 @@ public class VerapdfServiceValidator implements PDFValidator {
         httpClient.execute(propertiesPost);
         propertiesPost.releaseConnection();
         logger.info("Validation settings have been sent");
-    }
+    }*/
 
     private void sendValidationRequest(String filename) throws IOException {
         HttpPost post = new HttpPost(verapdfUrl);

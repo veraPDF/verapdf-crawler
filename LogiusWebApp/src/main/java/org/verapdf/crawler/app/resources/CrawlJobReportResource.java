@@ -2,9 +2,11 @@ package org.verapdf.crawler.app.resources;
 
 import org.verapdf.crawler.domain.crawling.CrawlJob;
 import org.verapdf.crawler.domain.report.CrawlJobSummary;
+import org.verapdf.crawler.domain.report.ErrorStatistics;
 import org.verapdf.crawler.domain.report.PDFValidationStatistics;
 import org.verapdf.crawler.domain.report.PdfPropertyStatistics;
 import org.verapdf.crawler.report.HeritrixReporter;
+import org.verapdf.crawler.repository.document.ValidatedPDFDao;
 import org.verapdf.crawler.repository.jobs.CrawlJobDao;
 import org.xml.sax.SAXException;
 
@@ -22,10 +24,12 @@ public class CrawlJobReportResource {
 
     private final CrawlJobDao crawlJobDao;
     private final HeritrixReporter reporter;
+    private final ValidatedPDFDao validatedPDFDao;
 
-    public CrawlJobReportResource(CrawlJobDao crawlJobDao, HeritrixReporter reporter) {
+    CrawlJobReportResource(CrawlJobDao crawlJobDao, HeritrixReporter reporter, ValidatedPDFDao validatedPDFDao) {
         this.crawlJobDao = crawlJobDao;
         this.reporter = reporter;
+        this.validatedPDFDao = validatedPDFDao;
     }
 
     @GET
@@ -85,26 +89,12 @@ public class CrawlJobReportResource {
 
     @GET
     @Path("/error-statistics")
-    public PDFValidationStatistics getErrorStatistics(@QueryParam("domain") String domain,
-                                                      @QueryParam("startDate") String startDate,
-                                                      @QueryParam("flavor") String flavor,
-                                                      @QueryParam("version") String version,
-                                                      @QueryParam("producer") String producer) {
-        // todo: rename to ErrorStatistics
-        /* todo: change to the following structure
-            {
-                totalCount: 2311,
-                topErrorStatistics: [{
-                    description: 'Error 1 description',
-                    count: 345
-                }, {
-                    description: 'Error 2 description',
-                    count: 234
-                }, ...]
-            }
-            same as producers, return top 10 most frequent errors, order by count desc
-         */
-        return null;
+    public ErrorStatistics getErrorStatistics(@QueryParam("domain") String domain,
+                                              @QueryParam("startDate") String startDate,
+                                              @QueryParam("flavor") String flavor,
+                                              @QueryParam("version") String version,
+                                              @QueryParam("producer") String producer) {
+        return validatedPDFDao.getErrorStatistics(crawlJobDao.getCrawlJobByCrawlUrl(domain).getId(), startDate, flavor, version, producer);
     }
 
     @GET

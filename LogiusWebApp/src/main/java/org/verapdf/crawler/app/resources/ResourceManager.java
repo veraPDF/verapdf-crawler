@@ -10,6 +10,7 @@ import org.verapdf.crawler.domain.email.EmailServer;
 import org.verapdf.crawler.app.engine.HeritrixClient;
 import org.verapdf.crawler.report.HeritrixReporter;
 import org.verapdf.crawler.repository.document.InsertDocumentDao;
+import org.verapdf.crawler.repository.document.ReportDocumentDao;
 import org.verapdf.crawler.repository.document.ValidatedPDFDao;
 import org.verapdf.crawler.repository.jobs.CrawlRequestDao;
 import org.verapdf.crawler.repository.jobs.CrawlJobDao;
@@ -26,27 +27,32 @@ public class ResourceManager {
     private final InfoResourse infoResourse;
     private final ReportResource reportResource;
     private final ControlResource controlResource;
-    private final CrawlJobDao crawlJobDao;
+    private final CrawlJobReportResource crawlJobReportResource;
+    private final CrawlJobResource crawlJobResource;
+    private final CrawlRequestResource crawlRequestResource;
+    private final DocumentPropertyResource documentPropertyResource;
     private final VerapdfServiceValidator validatorResource;
 
-    private String resourceUri;
     private final ValidationService validationService;
-    private final EmailServer emailServer;
 
     public ResourceManager(HeritrixClient client, EmailServer emailServer, String verapdfUrl, MySqlCredentials credentials) {
         DataSource dataSource = createMySqlDatasource(credentials);
-        crawlJobDao = new CrawlJobDao(dataSource);
+        CrawlJobDao crawlJobDao = new CrawlJobDao(dataSource);
         CrawlRequestDao crawlRequestDao = new CrawlRequestDao(dataSource);
+        ReportDocumentDao reportDocumentDao = new ReportDocumentDao(dataSource);
 
-        HeritrixReporter reporter = new HeritrixReporter(client, dataSource, crawlJobDao);
-        this.emailServer = emailServer;
-        PDFValidator validator = new VerapdfServiceValidator(verapdfUrl, new InsertDocumentDao(dataSource), new ValidatedPDFDao(dataSource));
+        HeritrixReporter reporter = new HeritrixReporter(client, reportDocumentDao, crawlJobDao);
+        ValidatedPDFDao validatedPDFDao = new ValidatedPDFDao(dataSource);
+        PDFValidator validator = new VerapdfServiceValidator(verapdfUrl, new InsertDocumentDao(dataSource), validatedPDFDao);
         validatorResource = (VerapdfServiceValidator) validator;
         validationService = new ValidationService(dataSource, validator);
         infoResourse = new InfoResourse(validationService, crawlRequestDao);
         reportResource = new ReportResource(reporter, crawlJobDao, crawlRequestDao);
-        controlResource = new ControlResource(client, reporter, emailServer,validationService,
-                this, crawlJobDao, dataSource, crawlRequestDao);
+        controlResource = new ControlResource(client, emailServer,validationService, crawlJobDao, dataSource, crawlRequestDao);
+        crawlJobReportResource = new CrawlJobReportResource(crawlJobDao, reporter, validatedPDFDao);
+        crawlJobResource = new CrawlJobResource(crawlJobDao, client, crawlRequestDao, reporter, emailServer);
+        crawlRequestResource = new CrawlRequestResource(client, crawlRequestDao, crawlJobDao);
+        documentPropertyResource = new DocumentPropertyResource(reportDocumentDao, crawlJobDao);
 
         for(CrawlRequest crawlRequest : crawlRequestDao.getBatchJobs()) {
             for (String jobId: crawlRequest.getCrawlJobs()) {
@@ -75,15 +81,25 @@ public class ResourceManager {
         return controlResource;
     }
 
-    String getResourceUri() { return resourceUri; }
+    public CrawlJobReportResource getCrawlJobReportResource() {
+        return crawlJobReportResource;
+    }
 
-    void setResourceUri(String resourceUri) { this.resourceUri = resourceUri; }
+    public CrawlJobResource getCrawlJobResource() {
+        return crawlJobResource;
+    }
+
+    public CrawlRequestResource getCrawlRequestResource() {
+        return crawlRequestResource;
+    }
+
+    public DocumentPropertyResource getDocumentPropertyResource() {
+        return documentPropertyResource;
+    }
 
     public VerapdfServiceValidator getValidatorResource() {
         return validatorResource;
     }
-
-    EmailServer getEmailServer() { return emailServer; }
 
     private DataSource createMySqlDatasource(MySqlCredentials credentials) {
         DataSource dataSource = new DriverManagerDataSource();

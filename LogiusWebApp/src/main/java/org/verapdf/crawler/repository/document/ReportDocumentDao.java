@@ -3,8 +3,7 @@ package org.verapdf.crawler.repository.document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.verapdf.crawler.domain.report.PDFValidationStatistics;
-import org.verapdf.crawler.domain.report.PdfPropertyStatistics;
+import org.verapdf.crawler.domain.report.DomainDocument;
 import org.verapdf.crawler.repository.mappers.FileUrlMapper;
 
 import javax.sql.DataSource;
@@ -19,10 +18,6 @@ public class ReportDocumentDao {
     public ReportDocumentDao(DataSource dataSource) {
         this.template = new JdbcTemplate(dataSource);
     }
-
-    //select any_value(document_properties.value), any_value(human_readable_name), count(*) as `num` from
-    // ((pdf_properties inner join document_properties on pdf_properties.name=document_properties.name)
-    // inner join documents on document_properties.document_url = documents.document_url) group by value;
 
     /*public PDFValidationStatistics getValidationStatistics(String crawlJobId, LocalDateTime sinceTime) {
         try {
@@ -53,6 +48,20 @@ public class ReportDocumentDao {
                 ValidatedPDFDao.FIELD_PROPERTY_VALUE, ValidatedPDFDao.FIELD_PROPERTY_VALUE),
                 new Object[]{crawlJobId, name, "%" + valueFilter + "%"},
                 (resultSet, i) -> resultSet.getString(ValidatedPDFDao.FIELD_PROPERTY_VALUE));
+    }
+
+    public List<DomainDocument> getDomainDocuments(String jobId, String startDate,
+                                                   String type, Integer start, Integer limit, List<String> properties) {
+        /* maybe this one where ? - every element from properties
+        SELECT docs.domain, docs.document_type, docs.document_status, ?.propery_name, ?.property_value, err.description FROM crawl_jobs AS jobs
+	        INNER JOIN documents AS docs ON jobs.id=docs.crawl_job_id
+	        INNER JOIN documents_validation_errors ON docs.domain=documents_validation_errors.document_url
+	        INNER JOIN validation_errors AS err ON documents_validation_errors.error_id=err.id
+	        INNER JOIN document_properties AS ? ON docs.domain=?.document_url AND ?.property_name=?
+        where jobs.id="" AND docs.last_modified>"2015-01-01" AND docs.document_type=""
+        LIMIT ?, ?
+         */
+        return null;
     }
 
     //<editor-fold desc="Invalid pdf files">

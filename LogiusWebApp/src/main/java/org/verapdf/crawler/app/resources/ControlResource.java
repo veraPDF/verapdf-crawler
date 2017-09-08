@@ -35,23 +35,17 @@ public class ControlResource {
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
     private final HeritrixClient client;
-    private final HeritrixReporter reporter;
     private final EmailServer emailServer;
     private final ValidationService service;
-    private final ResourceManager resourceManager;
     private final CrawlJobDao crawlJobDao;
     private final InsertDocumentDao insertDocumentDao;
     private final CrawlRequestDao crawlRequestDao;
 
-    ControlResource(HeritrixClient client, HeritrixReporter reporter,
-                    EmailServer emailServer, ValidationService service,
-                    ResourceManager resourceManager, CrawlJobDao crawlJobDao,
-                    DataSource dataSource, CrawlRequestDao crawlRequestDao) {
+    ControlResource(HeritrixClient client, EmailServer emailServer, ValidationService service,
+                    CrawlJobDao crawlJobDao, DataSource dataSource, CrawlRequestDao crawlRequestDao) {
         this.client = client;
-        this.reporter = reporter;
         this.emailServer = emailServer;
         this.service = service;
-        this.resourceManager = resourceManager;
         this.crawlJobDao = crawlJobDao;
         this.insertDocumentDao = new InsertDocumentDao(dataSource);
         this.crawlRequestDao = crawlRequestDao;
