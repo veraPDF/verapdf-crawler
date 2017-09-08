@@ -96,7 +96,7 @@ public class CrawlJobDao {
     }
 
     public String getIdByUrl(String url) {
-        return template.queryForObject(String.format("select %s from %s where %s like ?", FIELD_JOB_URL, CRAWL_JOB_TABLE_NAME, FIELD_CRAWL_URL), new Object[]{"%" + url + "%"}, String.class);
+        return template.queryForObject(String.format("select %s from %s where %s like ?", FIELD_ID, CRAWL_JOB_TABLE_NAME, FIELD_CRAWL_URL), new Object[]{"%" + url + "%"}, String.class);
     }
 
     public String getCrawlUrl(String jobId) {

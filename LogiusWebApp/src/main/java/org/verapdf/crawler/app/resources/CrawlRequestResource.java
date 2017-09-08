@@ -44,23 +44,22 @@ public class CrawlRequestResource {
 
     private String startCrawlJob(String domain){
         try {
-            if (crawlJobDao.doesJobExist(trimUrl(domain))) { // This URL has already been crawled
-                return crawlJobDao.getCrawlJobByCrawlUrl(trimUrl(domain)).getId();
+            String url = trimUrl(domain);
+            if (crawlJobDao.doesJobExist(url)) { // This URL has already been crawled
+                return crawlJobDao.getIdByUrl(url);
             } else {
                 // Brand new URL
                 ArrayList<String> list = new ArrayList<>();
-                if (domain.startsWith("http://") || domain.startsWith("https://")) {
-                    list.add(trimUrl(domain));
-                } else {
-                    list.add(trimUrl(domain));
+                list.add(url);
+                if (!domain.startsWith("http://") && !domain.startsWith("https://")) {
                     list.add(list.get(0).replace("https://", "http://"));
                 }
 
                 String id = UUID.randomUUID().toString();
+                crawlJobDao.addJob(new CrawlJob(id, "", url, LocalDateTime.now()));
                 client.createJob(id, list);
                 client.buildJob(id);
                 client.launchJob(id);
-                crawlJobDao.addJob(new CrawlJob(id, "", trimUrl(domain), LocalDateTime.now()));
                 logger.info("Job creation on " + domain);
                 return id;
             }
