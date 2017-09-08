@@ -27,9 +27,11 @@ $(function () {
         var carrentPage = limit / 10 + 1;
         if (limit == 0) {
             $('#pagination-container').children('#previous').addClass('disabled');
-        }
-        if (limit == (pagesAmount - 1) * 10) {
+        } else if (limit == (pagesAmount - 1) * 10) {
             $('#pagination-container').children('#next').addClass('disabled');
+        } else {
+            $('#pagination-container').children('#previous').removeClass('disabled');
+            $('#pagination-container').children('#next').removeClass('disabled');
         }
 
         if (pagesAmount < 6) {
@@ -55,6 +57,7 @@ $(function () {
         row1.find('#domain')[0].setAttribute("href", "domain.html?domain=" + url);
         row1.children('#start').text(start)
         if (status === 'running') {
+            row1.children('#end').text('')
             $(row1).children('#status').text('Running');
             $(row1).find('#action1 span:first-child').text('pause');
             $(row1).find('#action1 span:last-child').text('Pause');
@@ -62,7 +65,8 @@ $(function () {
             $(row1).find('#action2 span:last-child').text('Replay');
 
         } else if (status === 'paused') {
-            $(row1).children('#status').text('Running');
+            row1.children('#end').text('')
+            $(row1).children('#status').text('Paused');
             $(row1).find('#action1 span:first-child').text('play_arrow');
             $(row1).find('#action1 span:last-child').text('Resume');
             $(row1).find('#action2 span:first-child').text('replay');
@@ -91,11 +95,10 @@ $(function () {
     }
 
     $(".page-item .page-link").on("click", function (e) {
-        $('#pagination-container').children('.active').removeClass('active');
-
-        loadAllJobs(parseInt($(this).text() - 1) * 10);
 
         if ($(this).parent('li')[0].id === 'fifth') {
+            $('#pagination-container').children('.active').removeClass('active');
+            loadAllJobs(parseInt($(this).text() - 1) * 10);
             var diff = totalPagesAmount - parseInt($('#fifth').children('a').text());
 
             if (diff < 4) {
@@ -133,6 +136,9 @@ $(function () {
             }
 
         } else if ($(this).parent('li')[0].id === 'first') {
+            $('#pagination-container').children('.active').removeClass('active');
+            loadAllJobs(parseInt($(this).text() - 1) * 10);
+
             var diff = parseInt($('#first').children('a').text()) - 1;
 
             if (diff < 4) {
@@ -169,11 +175,101 @@ $(function () {
                     break;
             }
 
+        } else if ($(this).parent('li')[0].id === 'previous') {
+            if ($('#pagination-container').children('.active')[0].id === "first") {
+                $('#first').children('a').text(parseInt($('#first').children('a').text()) - 1);
+                $('#second').children('a').text(parseInt($('#second').children('a').text()) - 1);
+                $('#third').children('a').text(parseInt($('#third').children('a').text()) - 1);
+                $('#fourth').children('a').text(parseInt($('#fourth').children('a').text()) - 1);
+                $('#fifth').children('a').text(parseInt($('#fifth').children('a').text()) - 1);
+            } else {
+                $('#pagination-container').children('.active').removeClass('active').prev().addClass('active')
+            }
+
+            loadAllJobs(parseInt($('#pagination-container').children('.active').children('a').text() - 1) * 10);
+
+        } else if ($(this).parent('li')[0].id === 'next') {
+            if ($('#pagination-container').children('.active')[0].id === "fifth") {
+                $('#first').children('a').text(parseInt($('#first').children('a').text()) + 1);
+                $('#second').children('a').text(parseInt($('#second').children('a').text()) + 1);
+                $('#third').children('a').text(parseInt($('#third').children('a').text()) + 1);
+                $('#fourth').children('a').text(parseInt($('#fourth').children('a').text()) + 1);
+                $('#fifth').children('a').text(parseInt($('#fifth').children('a').text()) + 1);
+            } else {
+                $('#pagination-container').children('.active').removeClass('active').next().addClass('active')
+            }
+
+            loadAllJobs(parseInt($('#pagination-container').children('.active').children('a').text() - 1) * 10);
+
+        } else if ($(this).parent('li')[0].id === 'start') {
+            $('#pagination-container').children('.active').removeClass('active');
+            loadAllJobs(0);
+
+            $('#first').children('a').text(1);
+            $('#second').children('a').text(2);
+            $('#third').children('a').text(3);
+            $('#fourth').children('a').text(4);
+            $('#fifth').children('a').text(5);
+            $('#first').addClass('active');
+
+        } else if ($(this).parent('li')[0].id === 'end') {
+            $('#pagination-container').children('.active').removeClass('active');
+            loadAllJobs(parseInt(totalPagesAmount - 1) * 10);
+
+            $('#first').children('a').text(totalPagesAmount - 4);
+            $('#second').children('a').text(totalPagesAmount - 3);
+            $('#third').children('a').text(totalPagesAmount - 2);
+            $('#fourth').children('a').text(totalPagesAmount - 1);
+            $('#fifth').children('a').text(totalPagesAmount);
+            $('#fifth').addClass('active');
+
         } else {
+            $('#pagination-container').children('.active').removeClass('active');
+            loadAllJobs(parseInt($(this).text() - 1) * 10);
+
             $(this).parent('li').addClass('active');
         }
 
     });
+
+    $("#crawl_job_list").on("click", '#action1', function (e) {
+        var link = $(this);
+        if($(this).children().last().text() === 'Pause'){
+            $.ajax({
+                url: "/pause/" + $($(this).parent().siblings()[0]).children().text(),
+                type: "POST",
+                success: function (result) {
+                    link.children().first().text("play_arrow");                    
+                    link.children().last().text("Resume");
+                },
+                error: function (result) {
+                }
+            });
+        }else if ($(this).children().last().text() === 'Resume'){
+            $.ajax({
+                url: "/unpause/" + $($(this).parent().siblings()[0]).children().text(),
+                type: "POST",
+                success: function (result) {
+                    link.children().first().text("pause");                    
+                    link.children().last().text("Pause");            
+                },
+                error: function (result) {
+                }
+            });
+        }
+        
+    })
+
+    $("#crawl_job_list").on("click", '#action2', function (e) {
+        $.ajax({
+            url: "/restart/" + $($(this).parent().siblings()[0]).children().text(),
+            type: "POST",
+            success: function (result) {                
+            },
+            error: function (result) {
+            }
+        });
+    })
 
     loadAllJobs(0);
 });

@@ -38,7 +38,7 @@ function main() {
         type:"POST",
         async:false,
         data: postData,
-        headers: {"Content-type":"application/json"}, data:postData,
+        headers: {"Content-type":"application/json"},
         success: function(result){},
         error: function(result) {
                 // reportError("Error on job creation");
