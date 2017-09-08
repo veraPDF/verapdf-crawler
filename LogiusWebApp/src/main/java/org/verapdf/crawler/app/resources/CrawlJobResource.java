@@ -106,7 +106,7 @@ public class CrawlJobResource {
     @GET
     @Path("/{domain}/requests")
     public List<CrawlRequest> getCrawlJobRequests(@PathParam("domain") String domain) {
-        return crawlRequestDao.getCrawlRequestsForCrawlJob(crawlJobDao.getCrawlJobByCrawlUrl(domain).getId());
+        return crawlRequestDao.getCrawlRequestsForCrawlJob(crawlJobDao.getIdByUrl(domain));
     }
 
     @DELETE
@@ -114,7 +114,7 @@ public class CrawlJobResource {
     public List<CrawlRequest> unlinkCrawlRequests(@PathParam("domain") String domain, @QueryParam("email") String email) {
         // todo: unlink all CrawlRequests with specified email from CrawlJob
         // todo: clarify if possible/required to terminate CrawlJob if no associated CrawlRequests left
-
+        crawlRequestDao.unlinkCrawlJob(crawlRequestDao.getIdByEmail(email), crawlJobDao.getIdByUrl(domain));
         return null;
     }
 

@@ -5,16 +5,13 @@ import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.app.engine.HeritrixClient;
 import org.verapdf.crawler.domain.crawling.CrawlJob;
 import org.verapdf.crawler.domain.crawling.CrawlRequest;
-import org.verapdf.crawler.domain.crawling.CrawlRequestData;
 import org.verapdf.crawler.repository.jobs.CrawlRequestDao;
 import org.verapdf.crawler.repository.jobs.CrawlJobDao;
 
 import javax.ws.rs.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Path("/crawl-requests")
@@ -31,18 +28,18 @@ public class CrawlRequestResource {
     }
 
     @POST
-    public CrawlRequest createCrawlRequest(CrawlRequestData jobData) {
+    public CrawlRequest createCrawlRequest(CrawlRequest jobData) {
         // todo: add list of links to created/linked CrawlJob
         String id = UUID.randomUUID().toString();
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        CrawlRequest batch = new CrawlRequest(id, jobData.getReportEmail(),
-                LocalDateTime.of(LocalDate.parse(jobData.getDate(), dateFormatter), LocalTime.MIN));
-        logger.info("Batch job creation on domains: " + String.join(", ",jobData.getDomains()));
-        for(String domain : jobData.getDomains()) {
-            batch.getCrawlJobs().add(startCrawlJob(domain));
+        jobData.setId(id);
+        List<String> domains = jobData.getCrawlJobs();
+        jobData.setCrawlJobs(new ArrayList<>());
+        logger.info("Batch job creation on domains: " + String.join(", ", domains));
+        for(String domain : domains) {
+            jobData.getCrawlJobs().add(startCrawlJob(domain));
         }
-        crawlRequestDao.addBatchJob(batch);
-        return batch;
+        crawlRequestDao.addBatchJob(jobData);
+        return jobData;
     }
 
     private String startCrawlJob(String domain){

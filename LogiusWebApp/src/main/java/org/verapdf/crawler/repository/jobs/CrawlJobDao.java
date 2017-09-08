@@ -61,7 +61,6 @@ public class CrawlJobDao {
 
     public void removeJob(String jobId) {
         logger.info("Job removed from database: " + jobId);
-        template.update(String.format("delete from %s where %s=?", InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_JOB_ID), jobId);
         template.update(String.format("delete from %s where %s=?", CRAWL_JOB_TABLE_NAME, FIELD_ID), jobId);
     }
 
@@ -96,6 +95,10 @@ public class CrawlJobDao {
         return template.query(String.format("select * from %s where %s like ?", CRAWL_JOB_TABLE_NAME, FIELD_CRAWL_URL), new CrawlJobMapper(), "%" + url + "%").get(0);
     }
 
+    public String getIdByUrl(String url) {
+        return template.queryForObject(String.format("select %s from %s where %s like ?", FIELD_JOB_URL, CRAWL_JOB_TABLE_NAME, FIELD_CRAWL_URL), new Object[]{"%" + url + "%"}, String.class);
+    }
+
     public String getCrawlUrl(String jobId) {
         return template.queryForObject(String.format("select %s from %s where %s=?", FIELD_CRAWL_URL, CRAWL_JOB_TABLE_NAME, FIELD_ID), new Object[] {jobId}, String.class);
     }
@@ -115,5 +118,9 @@ public class CrawlJobDao {
 
     public void setJobUrl(String jobId, String jobUrl) {
         template.update(String.format("update %s set %s=? where %s=?", CRAWL_JOB_TABLE_NAME, FIELD_JOB_URL, FIELD_ID), jobUrl, jobId);
+    }
+
+    public List<String> getActiveDomains() {
+        return template.queryForList(String.format("select %s from %s where %s=?", FIELD_JOB_URL, CRAWL_JOB_TABLE_NAME, FIELD_IS_FINISHED), new Object[]{false}, String.class);
     }
 }

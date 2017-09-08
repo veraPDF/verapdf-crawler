@@ -26,6 +26,6 @@ public class DocumentPropertyResource {
                                                   @QueryParam("domain") String domain,
                                                   @QueryParam("propertyValueFilter") String propertyValueFilter) {
         // todo: return the list of all values for property in the selected domain (used for dropdowns)
-        return reportDocumentDao.getMatchingPropertyValues(crawlJobDao.getCrawlJobByCrawlUrl(domain).getId(), propertyName, propertyValueFilter);
+        return reportDocumentDao.getMatchingPropertyValues(crawlJobDao.getIdByUrl(domain), propertyName, propertyValueFilter);
     }
 }

@@ -34,7 +34,7 @@ public class PDFProcessor extends MirrorWriterProcessor {
             String data = "{\"filepath\":\"" + baseDir + File.separator + mps +
                     "\", \"jobDirectory\":\"" + baseDir + "\", \"" +
                     "time\":\"" + time + "\", \"uri\":\"" + curi.getURI() + "\"}";
-            URL url = new URL(logiusUrl + "api/validation");
+            URL url = new URL(logiusUrl + "api/heritrix/pdf");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type","application/json");
