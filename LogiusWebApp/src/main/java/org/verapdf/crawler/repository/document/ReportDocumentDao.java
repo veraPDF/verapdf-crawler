@@ -52,7 +52,7 @@ public class ReportDocumentDao {
 
     public List<DomainDocument> getDomainDocuments(String jobId, String startDate,
                                                    String type, Integer start, Integer limit, List<String> properties) {
-        /* maybe this one where ? - every element from properties
+        /* Replace ? with property for all properties in list
         SELECT docs.domain, docs.document_type, docs.document_status, ?.propery_name, ?.property_value, err.description FROM crawl_jobs AS jobs
 	        INNER JOIN documents AS docs ON jobs.id=docs.crawl_job_id
 	        INNER JOIN documents_validation_errors ON docs.domain=documents_validation_errors.document_url

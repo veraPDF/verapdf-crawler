@@ -94,7 +94,7 @@ public class CrawlJobReportResource {
                                               @QueryParam("flavor") String flavor,
                                               @QueryParam("version") String version,
                                               @QueryParam("producer") String producer) {
-        return validatedPDFDao.getErrorStatistics(crawlJobDao.getCrawlJobByCrawlUrl(domain).getId(), startDate, flavor, version, producer);
+        return validatedPDFDao.getErrorStatistics(crawlJobDao.getIdByUrl(domain), startDate, flavor, version, producer);
     }
 
     @GET

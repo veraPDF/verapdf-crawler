@@ -12,7 +12,7 @@ import java.util.List;
 
 public class CrawlRequest {
     private List<String> crawlJobs;
-    private final String id;
+    private String id;
     private boolean isFinished;
     private final String emailAddress;
     private final LocalDateTime crawlSinceTime;
@@ -38,6 +38,9 @@ public class CrawlRequest {
 
     @JsonProperty
     public String getId() { return  id; }
+
+    @JsonProperty
+    public void setId(String id) { this.id = id; }
 
     @JsonProperty
     public List<String> getCrawlJobs() { return crawlJobs; }

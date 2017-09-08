@@ -24,9 +24,7 @@ public class ResourceManager {
     private static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
 
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
-    private final InfoResourse infoResourse;
-    private final ReportResource reportResource;
-    private final ControlResource controlResource;
+    private final HeritrixDataResource heritrixDataResource;
     private final CrawlJobReportResource crawlJobReportResource;
     private final CrawlJobResource crawlJobResource;
     private final CrawlRequestResource crawlRequestResource;
@@ -46,9 +44,7 @@ public class ResourceManager {
         PDFValidator validator = new VerapdfServiceValidator(verapdfUrl, new InsertDocumentDao(dataSource), validatedPDFDao);
         validatorResource = (VerapdfServiceValidator) validator;
         validationService = new ValidationService(dataSource, validator);
-        infoResourse = new InfoResourse(validationService, crawlRequestDao);
-        reportResource = new ReportResource(reporter, crawlJobDao, crawlRequestDao);
-        controlResource = new ControlResource(client, emailServer,validationService, crawlJobDao, dataSource, crawlRequestDao);
+        heritrixDataResource = new HeritrixDataResource(validationService, dataSource);
         crawlJobReportResource = new CrawlJobReportResource(crawlJobDao, reporter, validatedPDFDao);
         crawlJobResource = new CrawlJobResource(crawlJobDao, client, crawlRequestDao, reporter, emailServer);
         crawlRequestResource = new CrawlRequestResource(client, crawlRequestDao, crawlJobDao);
@@ -63,22 +59,14 @@ public class ResourceManager {
             }
         }
 
-        new Thread(new StatusMonitor(crawlRequestDao, controlResource)).start();
+        new Thread(new StatusMonitor(crawlJobDao, crawlJobResource)).start();
         validationService.start();
         new Thread(validationService).start();
         logger.info("Validation service started.");
     }
 
-    public InfoResourse getInfoResourse() {
-        return infoResourse;
-    }
-
-    public ReportResource getReportResource() {
-        return reportResource;
-    }
-
-    public ControlResource getControlResource() {
-        return controlResource;
+    public HeritrixDataResource getHeritrixDataResource() {
+        return heritrixDataResource;
     }
 
     public CrawlJobReportResource getCrawlJobReportResource() {

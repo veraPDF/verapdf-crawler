@@ -64,6 +64,10 @@ public class CrawlRequestDao {
         return result;
     }
 
+    public String getIdByEmail(String emailAddress) {
+        return template.queryForObject(String.format("select %s from %s where %s=?", FIELD_CRAWL_JOB_ID, BATCH_JOB_TABLE_NAME, FIELD_REPORT_EMAIL), new Object[]{emailAddress}, String.class);
+    }
+
     public void setJobFinished(String batchJob) {
         template.update(String.format("update %s set %s=? where %s=?", BATCH_JOB_TABLE_NAME, FIELD_IS_FINISHED, FIELD_ID), true, batchJob);
     }
@@ -80,5 +84,13 @@ public class CrawlRequestDao {
 
     public String getReportEmail(String jobId) {
         return template.queryForObject(String.format("select %s from %s where %s=?", FIELD_REPORT_EMAIL, BATCH_JOB_TABLE_NAME, FIELD_ID), new Object[] {jobId}, String.class);
+    }
+
+    public void unlinkCrawlJob(String batchJobId, String crawlJobId) {
+        template.update(String.format("delete from %s where %s=? and %s=?", BATCH_REFERENCE_TABLE_NAME, FIELD_BATCH_JOB_ID, FIELD_CRAWL_JOB_ID), batchJobId, crawlJobId);
+        Integer remainCrawlJobCount = template.queryForObject(String.format("select count(*) from %s where %s=?", BATCH_JOB_TABLE_NAME, FIELD_ID), new Object[]{batchJobId}, Integer.class);
+        if(remainCrawlJobCount == null || remainCrawlJobCount == 0) {
+            template.update(String.format("delete from %s where %s=?", BATCH_JOB_TABLE_NAME, FIELD_ID), batchJobId);
+        }
     }
 }
