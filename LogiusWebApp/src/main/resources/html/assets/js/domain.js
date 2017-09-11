@@ -53,7 +53,7 @@ $(function () {
     //     }
     // };
     // var currentDomainName = getUrlParameter("domain");
-    var currentDomain = [];//domains[currentDomainName];
+    var currentDomain = {};//domains[currentDomainName];
 
     function domainInfoLoaded(job) {
         currentDomain = job;
@@ -105,6 +105,75 @@ $(function () {
         return { valid: true, emails: emails };
     }
 
+    $("#summary-date-input").on("keydown", function (e) {
+        if (e.keyCode == 13) {
+            loadSummaryData();
+        }
+    });
+
+    function loadSummaryData() {
+        var startDate = $("#summary-date-input")[0].value === "" ? currentDomain.startTime : $("#summary-date-input")[0].value;
+        $.ajax({
+            url: "/summary?domain=" + currentDomain.crawlURL + "&startDate=" + startDate,
+            type: "GET",
+            success: function (result) {
+                // domainInfoLoaded(result);
+                // summaryChart.data.datasets[0].data[0] = 343;
+                // summaryChart.update()
+            },
+            error: function (result) {
+                // reportError("Error on job loading");
+            }
+        });
+    }
+
+    $("#documents-date-input").on("keydown", function (e) {
+        if (e.keyCode == 13) {
+            loadDocumentsData();
+        }
+    });
+
+    function loadDocumentsData() {
+        var startDate = $("documents-date-input")[0].value === "" ? currentDomain.startTime : $("documents-date-input")[0].value;
+        $.ajax({
+            url: "/document-statistics?domain=" + currentDomain.crawlURL + "&startDate=" + startDate,
+            type: "GET",
+            success: function (result) {
+                // domainInfoLoaded(result);
+                // summaryChart.data.datasets[0].data[0] = 343;
+                // summaryChart.update()
+            },
+            error: function (result) {
+                // reportError("Error on job loading");
+            }
+        });
+
+    }
+
+    $("#errors-producer-input").on("keydown", function (e) {
+        if (e.keyCode == 13) {
+            loadErrorsData();
+        }
+    });
+
+    function loadErrorsData() {
+
+        var startDate = $("errors-producer-input")[0].value === "" ? currentDomain.startTime : $("errors-producer-input")[0].value;
+        $.ajax({
+            url: "/error-statistics?domain=" + currentDomain.crawlURL + "&startDate=" + startDate,
+            type: "GET",
+            success: function (result) {
+                // domainInfoLoaded(result);
+                // summaryChart.data.datasets[0].data[0] = 343;
+                // summaryChart.update()
+            },
+            error: function (result) {
+                // reportError("Error on job loading");
+            }
+        });
+
+    }
+
     $('.job-mails .edit').on('click', function () {
         $('.job-mails').addClass('edit-mode');
     });
@@ -123,12 +192,30 @@ $(function () {
         $('.job-mails').removeClass('edit-mode');
     });
 
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        // e.target // newly activated tab
+        // e.relatedTarget // previous active tab
+
+        switch (e.target.text) {
+            case "Summary":
+                loadSummaryData();
+                break;
+            case "Documents":
+                loadDocumentsData();
+                break;
+            case "Common errors":
+                loadErrorsData();
+                break;
+        }
+
+    })
+
     $.ajax({
         url: "/crawl-jobs/" + getUrlParameter("domain"),
         type: "GET",
         success: function (result) {
             domainInfoLoaded(result);
-
+            loadSummaryData();
         },
         error: function (result) {
             // reportError("Error on job loading");
@@ -150,15 +237,22 @@ $(function () {
         }
     });
 
-    $("#action-resume").on('click', function () {        
+    $("#action-resume").on('click', function () {
+        var putData = Object.assign({}, currentDomain);
+        putData.status = 'running';
+
         $.ajax({
             url: "/crawl-jobs/" + getUrlParameter("domain") + "/requests",
             type: "PUT",
-            data: "{\"domain\":\" fikytfkutf \"}",
+            data: JSON.stringify(putData),
+            headers: { "Content-type": "application/json" },
             success: function (result) {
+                $('.main').removeClass('status-' + currentDomain.status, { children: true });
+
                 // domainInfoLoaded(result);
-    
-    
+                domainInfoLoaded(putData);
+
+
             },
             error: function (result) {
                 // reportError("Error on job loading");
@@ -166,17 +260,22 @@ $(function () {
         });
     });
 
-
     $("#action-pause").on('click', function () {
+        var putData = Object.assign({}, currentDomain);
+        putData.status = 'paused';
+
         $.ajax({
             url: "/crawl-jobs/" + getUrlParameter("domain") + "/requests",
             type: "PUT",
             // async:false,
-            data: "{\"domain\":\" fikytfkutf \"}",
-            headers: {"Content-type":"application/json"},
+            data: JSON.stringify(putData),
+            headers: { "Content-type": "application/json" },
             success: function (result) {
-                // domainInfoLoaded(result);    
-    
+                $('.main').removeClass('status-' + currentDomain.status, { children: true });
+
+                // domainInfoLoaded(result);   
+                domainInfoLoaded(putData);
+
             },
             error: function (result) {
                 // reportError("Error on job loading");
@@ -185,8 +284,20 @@ $(function () {
     });
 
     $("#action-restart").on('click', function () {
+        $.ajax({
+            url: "/crawl-jobs/" + getUrlParameter("domain"),
+            type: "POST",
+            success: function (result) {
+                // domainInfoLoaded(result);
+            },
+            error: function (result) {
+                // reportError("Error on job loading");
+            }
+        });
 
     });
+
+
 
     // Summary tab components
 

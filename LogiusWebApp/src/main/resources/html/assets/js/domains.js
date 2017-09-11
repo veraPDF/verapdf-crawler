@@ -234,26 +234,46 @@ $(function () {
 
     $("#crawl_job_list").on("click", '#action1', function (e) {
         var link = $(this);
+        var currRow = $(this).parent().parent();
+        var putData = {}; 
+        putData.crawlURL = currRow.find('#domain').text();
+        putData.startTime = currRow.children('#start').text();
+        putData.finishTime = currRow.children('#end').text();
+        
         if($(this).children().last().text() === 'Pause'){
+            putData.status = 'paused';
+            
             $.ajax({
-                url: "/pause/" + $($(this).parent().siblings()[0]).children().text(),
-                type: "POST",
+                url: "/crawl-jobs/" + link.parent().siblings().first().text() + "/requests",
+                type: "PUT",
+                // async:false,
+                data: JSON.stringify(putData),
+                headers: { "Content-type": "application/json" },
                 success: function (result) {
-                    link.children().first().text("play_arrow");                    
+                    link.children().first().text("play_arrow");
                     link.children().last().text("Resume");
+    
                 },
                 error: function (result) {
+                    // reportError("Error on job loading");
                 }
             });
         }else if ($(this).children().last().text() === 'Resume'){
+            putData.status = 'running';            
+
             $.ajax({
-                url: "/unpause/" + $($(this).parent().siblings()[0]).children().text(),
-                type: "POST",
+                url: "/crawl-jobs/" + link.parent().siblings().first().text() + "/requests",
+                type: "PUT",
+                // async:false,
+                data: JSON.stringify(putData),
+                headers: { "Content-type": "application/json" },
                 success: function (result) {
                     link.children().first().text("pause");                    
-                    link.children().last().text("Pause");            
+                    link.children().last().text("Pause"); 
+    
                 },
                 error: function (result) {
+                    // reportError("Error on job loading");
                 }
             });
         }
