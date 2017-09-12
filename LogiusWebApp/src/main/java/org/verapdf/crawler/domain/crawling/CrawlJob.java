@@ -3,22 +3,26 @@ package org.verapdf.crawler.domain.crawling;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 public class CrawlJob {
 
-    private final String id;
+    private String domain;
+    private String id;
     private String jobURL;
-    private final String crawlURL;
-    private LocalDateTime startTime;
-    private LocalDateTime finishTime;
+    private Date startTime;
+    private Date finishTime;
     private String status;
 
     private boolean isFinished = false;
 
-    public CrawlJob(String id, String jobURL, String crawlURL, LocalDateTime startTime) {
+    public CrawlJob() {
+    }
+
+    public CrawlJob(String id, String jobURL, String domain, Date startTime) {
         this.id = id;
         this.jobURL = jobURL;
-        this.crawlURL = crawlURL;
+        this.domain = domain;
         this.startTime = startTime;
     }
 
@@ -32,23 +36,18 @@ public class CrawlJob {
     }
 
     @JsonProperty
-    public String getCrawlURL() {
-        return crawlURL;
+    public String getDomain() {
+        return domain;
     }
 
     @JsonProperty
-    public LocalDateTime getStartTime() {
+    public Date getStartTime() {
         return startTime;
     }
 
     @JsonProperty
-    public LocalDateTime getFinishTime() {
+    public Date getFinishTime() {
         return finishTime;
-    }
-
-    @JsonProperty
-    public void setFinishTime(LocalDateTime finishTime) {
-        this.finishTime = finishTime;
     }
 
     @JsonProperty
@@ -61,11 +60,38 @@ public class CrawlJob {
         this.status = status;
     }
 
+    @JsonProperty
     public boolean isFinished() {
         return isFinished;
     }
 
+    @JsonProperty
     public void setFinished(boolean isFinished) {
         this.isFinished = isFinished;
+    }
+
+    @JsonProperty
+    public void setDomain(String domain) {
+        this.domain = domain;
+    }
+
+    @JsonProperty
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    @JsonProperty
+    public void setJobURL(String jobURL) {
+        this.jobURL = jobURL;
+    }
+
+    @JsonProperty
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }
+
+    @JsonProperty
+    public void setFinishTime(Date finishTime) {
+        this.finishTime = finishTime;
     }
 }

@@ -122,12 +122,16 @@ public class HeritrixClient {
         post.releaseConnection();
     }
 
-    public String createJob(String job, List<String> crawlUrls) throws IOException{
+    public String createJob(String job, String domain) throws IOException{
         HttpPost post = new HttpPost(baseUrl + "engine/");
         post.setEntity(new StringEntity("createpath=" + job +"&action=create"));
 
         httpClient.execute(post);
         post.releaseConnection();
+
+        ArrayList<String> crawlUrls = new ArrayList<>();
+        crawlUrls.add("https://" + domain);
+        crawlUrls.add("http://" + domain);
 
         String configurationFile = createCrawlConfiguration(job, crawlUrls, baseDirectory + job + "_configuration.cxml");
         submitConfigFile(job, configurationFile);

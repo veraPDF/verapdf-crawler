@@ -9,14 +9,13 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class BatchJobMapper implements RowMapper<CrawlRequest> {
+public class CrawlRequestMapper implements RowMapper<CrawlRequest> {
 
     @Override
     public CrawlRequest mapRow(ResultSet resultSet, int i) throws SQLException {
         CrawlRequest result = new CrawlRequest(resultSet.getString(CrawlRequestDao.FIELD_ID),
                                 resultSet.getString(CrawlRequestDao.FIELD_REPORT_EMAIL),
-                LocalDateTime.parse(resultSet.getString(CrawlRequestDao.FIELD_CRAWL_SINCE),
-                        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                resultSet.getDate(CrawlRequestDao.FIELD_CRAWL_SINCE));
         result.setFinished(resultSet.getBoolean(CrawlRequestDao.FIELD_IS_FINISHED));
         return result;
     }

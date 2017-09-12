@@ -107,7 +107,7 @@ public class ValidatedPDFDao {
         }
     }
 
-    public ErrorStatistics getErrorStatistics(String jobId, String startDate, String flavor, String version, String producer) {
+    public ErrorStatistics getErrorStatistics(String domain, String startDate, String flavor, String version, String producer) {
         String sql = "SELECT " + VALIDATION_ERRORS_TABLE_NAME + "." + FIELD_DESCRIPTION + ", COUNT(doc." + InsertDocumentDao.FIELD_DOCUMENT_URL +") AS `doc_count` \n" +
                 "FROM " + VALIDATION_ERRORS_REFERENCE_TABLE_NAME + "AS err\n" +
                 "     INNER JOIN " + InsertDocumentDao.DOCUMENTS_TABLE_NAME + "AS doc ON err." + FIELD_ERRORS_DOCUMENT_URL + "=doc." + InsertDocumentDao.FIELD_DOCUMENT_URL + " \n" +
@@ -121,7 +121,7 @@ public class ValidatedPDFDao {
         if(producer != null && !producer.isEmpty()) {
             sql += "INNER JOIN " + PROPERTIES_TABLE_NAME + " AS producer ON doc." + InsertDocumentDao.FIELD_DOCUMENT_URL + "=producer." + FIELD_PROPERTIES_DOCUMENT_URL + " AND producer." + FIELD_PROPERTY_NAME + "=?";
         }
-        sql += "WHERE doc." + InsertDocumentDao.FIELD_JOB_ID + "=? AND doc." + InsertDocumentDao.FIELD_LAST_MODIFIED + ">? ";
+        sql += "WHERE doc." + InsertDocumentDao.CRAWL_JOB_DOMAIN + "=? AND doc." + InsertDocumentDao.FIELD_LAST_MODIFIED + ">? ";
         if(flavor != null && !flavor.isEmpty()) {
             sql += "AND flavor." + FIELD_PROPERTY_VALUE + "=? ";
         }
@@ -135,7 +135,7 @@ public class ValidatedPDFDao {
                 "ORDER BY doc_count DESC\n" +
                 "LIMIT 10";
         return new ErrorStatistics(template.query(sql, (resultSet, i) -> new ErrorStatistics.ErrorCount(resultSet.getString(VALIDATION_ERRORS_TABLE_NAME + "." + FIELD_DESCRIPTION), resultSet.getInt("doc_count")),
-                PROPERTY_FLAVOR, PROPERTY_VERSION, PROPERTY_PRODUCER, jobId, startDate, flavor, version, producer));
+                PROPERTY_FLAVOR, PROPERTY_VERSION, PROPERTY_PRODUCER, domain, startDate, flavor, version, producer));
     }
 
     public Map<String, String> getNamespaceMap() {

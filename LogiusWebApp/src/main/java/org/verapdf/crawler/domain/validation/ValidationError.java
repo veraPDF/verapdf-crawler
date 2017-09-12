@@ -1,5 +1,6 @@
 package org.verapdf.crawler.domain.validation;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ValidationError {
@@ -22,8 +23,9 @@ public class ValidationError {
         this.description = description;
     }
 
+    @JsonIgnore
     public boolean isRuleBasedError() {
-        return this.specification == null && this.clause == null && this.testNumber == null;
+        return this.specification != null && this.clause != null && this.testNumber != null;
     }
 
     @JsonProperty

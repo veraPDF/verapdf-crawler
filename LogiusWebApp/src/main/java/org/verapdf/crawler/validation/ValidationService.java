@@ -12,20 +12,17 @@ public class ValidationService implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
     private final PDFValidator validator;
     private final ValidationJobDao validationJobDao;
+    private boolean running;
 
-    public boolean isRunning() {
-        return isRunning;
+    public ValidationService(DataSource dataSource, PDFValidator validator) {
+        validationJobDao = new ValidationJobDao(dataSource);
+        running = false;
+        this.validator = validator;
     }
 
     public void start() {
-        isRunning = true;
-    }
-
-    private boolean isRunning;
-    public ValidationService(DataSource dataSource, PDFValidator validator) {
-        validationJobDao = new ValidationJobDao(dataSource);
-        isRunning = true;
-        this.validator = validator;
+        running = true;
+        new Thread(this).start();
     }
 
     public void addJob(ValidationJobData data) throws IOException {
@@ -39,7 +36,7 @@ public class ValidationService implements Runnable {
 
     @Override
     public void run() {
-        while (isRunning) {
+        while (running) {
             ValidationJobData data = validationJobDao.getOneJob();
             if(data != null) {
                 try {

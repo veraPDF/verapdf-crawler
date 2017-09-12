@@ -33,6 +33,7 @@ public class ResourceManager {
 
     private final ValidationService validationService;
 
+    // TODO: refactor such that all resources will be stored in list
     public ResourceManager(HeritrixClient client, EmailServer emailServer, String verapdfUrl, MySqlCredentials credentials) {
         DataSource dataSource = createMySqlDatasource(credentials);
         CrawlJobDao crawlJobDao = new CrawlJobDao(dataSource);
@@ -41,27 +42,16 @@ public class ResourceManager {
 
         HeritrixReporter reporter = new HeritrixReporter(client, reportDocumentDao, crawlJobDao);
         ValidatedPDFDao validatedPDFDao = new ValidatedPDFDao(dataSource);
-        PDFValidator validator = new VerapdfServiceValidator(verapdfUrl, new InsertDocumentDao(dataSource), validatedPDFDao);
+        PDFValidator validator = new VerapdfServiceValidator(verapdfUrl, new InsertDocumentDao(dataSource), validatedPDFDao, crawlJobDao);
         validatorResource = (VerapdfServiceValidator) validator;
         validationService = new ValidationService(dataSource, validator);
-        heritrixDataResource = new HeritrixDataResource(validationService, dataSource);
+        heritrixDataResource = new HeritrixDataResource(validationService, crawlJobDao, dataSource);
         crawlJobReportResource = new CrawlJobReportResource(crawlJobDao, reporter, validatedPDFDao);
         crawlJobResource = new CrawlJobResource(crawlJobDao, client, crawlRequestDao, reporter, emailServer);
         crawlRequestResource = new CrawlRequestResource(client, crawlRequestDao, crawlJobDao);
-        documentPropertyResource = new DocumentPropertyResource(reportDocumentDao, crawlJobDao);
+        documentPropertyResource = new DocumentPropertyResource(reportDocumentDao);
 
-        for(CrawlRequest crawlRequest : crawlRequestDao.getBatchJobs()) {
-            for (String jobId: crawlRequest.getCrawlJobs()) {
-                CrawlJob job = crawlJobDao.getCrawlJob(jobId);
-                if (job.getFinishTime() == null) {
-                    crawlJobDao.writeFinishTime(job.getId());
-                }
-            }
-        }
-
-        new Thread(new StatusMonitor(crawlJobDao, crawlJobResource)).start();
         validationService.start();
-        new Thread(validationService).start();
         logger.info("Validation service started.");
     }
 
