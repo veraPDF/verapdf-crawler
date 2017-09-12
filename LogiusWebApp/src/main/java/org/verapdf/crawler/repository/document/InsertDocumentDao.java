@@ -8,7 +8,7 @@ import javax.sql.DataSource;
 
 public class InsertDocumentDao {
     public static final String DOCUMENTS_TABLE_NAME = "documents";
-    public static final String FIELD_JOB_ID = "crawl_job_id";
+    public static final String CRAWL_JOB_DOMAIN = "crawl_job_domain";
     static final String FIELD_DOCUMENT_URL = "document_url";
     static final String FIELD_LAST_MODIFIED = "last_modified";
     static final String FIELD_DOCUMENT_TYPE = "document_type";
@@ -24,28 +24,28 @@ public class InsertDocumentDao {
         this.template = new JdbcTemplate(dataSource);
     }
 
-    public void addPdfFile(ValidationJobData data, String jobId, Status status) {
+    public void addPdfFile(ValidationJobData data, String domain, Status status) {
         template.update(String.format("insert into %s (%s, %s, %s, %s, %s) values(?,?,?, '%s', ?)", DOCUMENTS_TABLE_NAME,
-                FIELD_DOCUMENT_URL, FIELD_LAST_MODIFIED, FIELD_JOB_ID, FIELD_DOCUMENT_TYPE, FIELD_DOCUMENT_STATUS, TYPE_PDF),
-                data.getUri(), data.getTime(), jobId, status.getDataBaseValue());
+                FIELD_DOCUMENT_URL, FIELD_LAST_MODIFIED, CRAWL_JOB_DOMAIN, FIELD_DOCUMENT_TYPE, FIELD_DOCUMENT_STATUS, TYPE_PDF),
+                data.getUri(), data.getTime(), domain, status.getDataBaseValue());
     }
 
-    public void addMicrosoftOfficeFile(String fileUrl, String jobId, String lastModified) {
+    public void addMicrosoftOfficeFile(String fileUrl, String domain, String lastModified) {
         template.update(String.format("insert into %s (%s, %s, %s, %s, %s) values(?,?,?, '%s', '%s')", DOCUMENTS_TABLE_NAME,
-                FIELD_DOCUMENT_URL, FIELD_LAST_MODIFIED, FIELD_JOB_ID, FIELD_DOCUMENT_TYPE, FIELD_DOCUMENT_STATUS, TYPE_MICROSOFT, Status.NOT_OPEN.getDataBaseValue()),
-                fileUrl, DaoUtils.getSqlTimeFromLastmodified(lastModified), jobId);
+                FIELD_DOCUMENT_URL, FIELD_LAST_MODIFIED, CRAWL_JOB_DOMAIN, FIELD_DOCUMENT_TYPE, FIELD_DOCUMENT_STATUS, TYPE_MICROSOFT, Status.NOT_OPEN.getDataBaseValue()),
+                fileUrl, DaoUtils.getSqlTimeFromLastmodified(lastModified), domain);
     }
 
-    public void addOdfFile(String fileUrl, String jobId, String lastModified) {
+    public void addOdfFile(String fileUrl, String domain, String lastModified) {
         template.update(String.format("insert into %s (%s, %s, %s, %s, %s) values(?,?,?, '%s', '%s')", DOCUMENTS_TABLE_NAME,
-                FIELD_DOCUMENT_URL, FIELD_LAST_MODIFIED, FIELD_JOB_ID, FIELD_DOCUMENT_TYPE, FIELD_DOCUMENT_STATUS, TYPE_ODF, Status.OPEN.getDataBaseValue()),
-                fileUrl, DaoUtils.getSqlTimeFromLastmodified(lastModified), jobId);
+                FIELD_DOCUMENT_URL, FIELD_LAST_MODIFIED, CRAWL_JOB_DOMAIN, FIELD_DOCUMENT_TYPE, FIELD_DOCUMENT_STATUS, TYPE_ODF, Status.OPEN.getDataBaseValue()),
+                fileUrl, DaoUtils.getSqlTimeFromLastmodified(lastModified), domain);
     }
 
-    public void addOpenOfficeXMLFile(String fileUrl, String jobId, String lastModified) {
+    public void addOpenOfficeXMLFile(String fileUrl, String domain, String lastModified) {
         template.update(String.format("insert into %s (%s, %s, %s, %s, %s) values(?,?,?, '%s', '%s')", DOCUMENTS_TABLE_NAME,
-                FIELD_DOCUMENT_URL, FIELD_LAST_MODIFIED, FIELD_JOB_ID, FIELD_DOCUMENT_TYPE, FIELD_DOCUMENT_STATUS, TYPE_OOXML, Status.NOT_OPEN.getDataBaseValue()),
-                fileUrl, DaoUtils.getSqlTimeFromLastmodified(lastModified), jobId);
+                FIELD_DOCUMENT_URL, FIELD_LAST_MODIFIED, CRAWL_JOB_DOMAIN, FIELD_DOCUMENT_TYPE, FIELD_DOCUMENT_STATUS, TYPE_OOXML, Status.NOT_OPEN.getDataBaseValue()),
+                fileUrl, DaoUtils.getSqlTimeFromLastmodified(lastModified), domain);
     }
 
     public enum Status {

@@ -44,6 +44,7 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
                     configuration.getEmailServer(),
                     configuration.getVerapdfUrl(),
                     configuration.getCredentials());
+            //TODO: for in resources list from resource manager
             environment.jersey().register(resourceManager.getHeritrixDataResource());
             environment.jersey().register(resourceManager.getValidatorResource());
             environment.jersey().register(resourceManager.getCrawlJobReportResource());

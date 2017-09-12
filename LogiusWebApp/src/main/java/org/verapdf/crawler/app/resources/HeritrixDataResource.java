@@ -35,10 +35,12 @@ public class HeritrixDataResource {
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
     private final ValidationService service;
+    private final CrawlJobDao crawlJobDao;
     private final InsertDocumentDao insertDocumentDao;
 
-    HeritrixDataResource(ValidationService service, DataSource dataSource) {
+    HeritrixDataResource(ValidationService service, CrawlJobDao crawlJobDao, DataSource dataSource) {
         this.service = service;
+        this.crawlJobDao = crawlJobDao;
         this.insertDocumentDao = new InsertDocumentDao(dataSource);
     }
 
@@ -60,14 +62,15 @@ public class HeritrixDataResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public void addMicrosoftOfficeFile(OfficeDocumentData data) {
         logger.info("Received information about office document " + data.getFileUrl());
+        String domain = crawlJobDao.getCrawlUrl(data.getJobId());
         if(stringEndsWithItemFromList(data.getFileUrl(), ODF_SUFFIXES)) {
-            insertDocumentDao.addOdfFile(data.getFileUrl(), data.getJobId(), data.getLastModified());
+            insertDocumentDao.addOdfFile(data.getFileUrl(), domain, data.getLastModified());
         }
         if(stringEndsWithItemFromList(data.getFileUrl(), OFFICE_SUFFIXES)) {
-            insertDocumentDao.addMicrosoftOfficeFile(data.getFileUrl(), data.getJobId(), data.getLastModified());
+            insertDocumentDao.addMicrosoftOfficeFile(data.getFileUrl(), domain, data.getLastModified());
         }
         if(stringEndsWithItemFromList(data.getFileUrl(), OOXML_SUFFIXES)) {
-            insertDocumentDao.addOpenOfficeXMLFile(data.getFileUrl(), data.getJobId(), data.getLastModified());
+            insertDocumentDao.addOpenOfficeXMLFile(data.getFileUrl(), domain, data.getLastModified());
         }
     }
 

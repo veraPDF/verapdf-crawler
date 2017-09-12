@@ -3,23 +3,25 @@ package org.verapdf.crawler.domain.crawling;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
+import javax.persistence.Entity;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
+@Entity
 public class CrawlRequest {
-    private List<String> crawlJobs;
+    private List<String> domains;
     private String id;
     private boolean isFinished;
-    private final String emailAddress;
-    private final LocalDateTime crawlSinceTime;
+    private String emailAddress;
+    private Date crawlSinceTime;
 
-    public CrawlRequest(String id, String emailAddress, LocalDateTime crawlSinceTime) {
-        crawlJobs = new ArrayList<>();
+    public CrawlRequest() {
+    }
+
+    public CrawlRequest(String id, String emailAddress, Date crawlSinceTime) {
+        this.domains = new ArrayList<>();
         this.id = id;
         this.emailAddress = emailAddress;
         this.isFinished = false;
@@ -32,8 +34,8 @@ public class CrawlRequest {
     }
 
     @JsonProperty
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "uuuu-MM-dd HH:mm:ss")
-    public LocalDateTime getCrawlSinceTime() {
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    public Date getCrawlSinceTime() {
         return crawlSinceTime;
     }
 
@@ -44,7 +46,7 @@ public class CrawlRequest {
     public void setId(String id) { this.id = id; }
 
     @JsonProperty
-    public List<String> getCrawlJobs() { return crawlJobs; }
+    public List<String> getDomains() { return domains; }
 
     @JsonProperty
     public boolean isFinished() {
@@ -60,7 +62,18 @@ public class CrawlRequest {
     public String getEmailAddress() { return emailAddress; }
 
     @JsonProperty
-    public void setCrawlJobs(List<String> crawlJobs) {
-        this.crawlJobs = crawlJobs == null ? Collections.emptyList() : new ArrayList<>(crawlJobs);
+    public void setEmailAddress(String emailAddress) {
+        this.emailAddress = emailAddress;
+    }
+
+    @JsonProperty
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    public void setCrawlSinceTime(Date crawlSinceTime) {
+        this.crawlSinceTime = crawlSinceTime;
+    }
+
+    @JsonProperty
+    public void setDomains(List<String> domains) {
+        this.domains = domains == null ? Collections.emptyList() : new ArrayList<>(domains);
     }
 }

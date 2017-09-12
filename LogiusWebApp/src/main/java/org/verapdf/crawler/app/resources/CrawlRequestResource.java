@@ -9,8 +9,10 @@ import org.verapdf.crawler.repository.jobs.CrawlRequestDao;
 import org.verapdf.crawler.repository.jobs.CrawlJobDao;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,57 +30,46 @@ public class CrawlRequestResource {
     }
 
     @POST
-    public CrawlRequest createCrawlRequest(CrawlRequest jobData) {
-        // todo: add list of links to created/linked CrawlJob
+    @Produces(MediaType.APPLICATION_JSON)
+    public CrawlRequest createCrawlRequest(CrawlRequest crawlRequest) {
         String id = UUID.randomUUID().toString();
-        jobData.setId(id);
-        List<String> domains = jobData.getCrawlJobs();
-        jobData.setCrawlJobs(new ArrayList<>());
-        logger.info("Batch job creation on domains: " + String.join(", ", domains));
-        for(String domain : domains) {
-            jobData.getCrawlJobs().add(startCrawlJob(domain));
+        crawlRequest.setId(id);
+        List<String> rawDomains = crawlRequest.getDomains();
+        List<String> domains = new ArrayList<>();
+        for(String rawDomain : rawDomains) {
+            String domain = trimUrl(rawDomain);
+            domains.add(domain);
+            startCrawlJob(domain);
         }
-        crawlRequestDao.addBatchJob(jobData);
-        return jobData;
+        crawlRequest.setDomains(domains);
+        crawlRequestDao.addCrawlRequest(crawlRequest);
+        return crawlRequest;
     }
 
-    private String startCrawlJob(String domain){
+    private void startCrawlJob(String domain){
         try {
-            String url = trimUrl(domain);
-            if (crawlJobDao.doesJobExist(url)) { // This URL has already been crawled
-                return crawlJobDao.getIdByUrl(url);
-            } else {
-                // Brand new URL
-                ArrayList<String> list = new ArrayList<>();
-                list.add(url);
-                if (!domain.startsWith("http://") && !domain.startsWith("https://")) {
-                    list.add(list.get(0).replace("https://", "http://"));
-                }
-
+            if (!crawlJobDao.doesJobExist(domain)) {
                 String id = UUID.randomUUID().toString();
-                crawlJobDao.addJob(new CrawlJob(id, "", url, LocalDateTime.now()));
-                client.createJob(id, list);
+                crawlJobDao.addJob(new CrawlJob(id, "", domain, new Date()));
+                client.createJob(id, domain);
                 client.buildJob(id);
                 client.launchJob(id);
-                logger.info("Job creation on " + domain);
-                return id;
             }
         }
         catch (Exception e) {
             logger.error("Error on job creation", e);
-            return "";
         }
     }
 
     private String trimUrl(String url) {
-        if(!url.startsWith("http://") && !url.startsWith("https://")) {
-            url = "https://" + url;
+        if(url.contains("://")) {
+            url = url.substring(url.indexOf("://") + 3);
+        }
+        if (url.contains("/")) {
+            url = url.substring(0, url.indexOf("/"));
         }
         if(url.contains("?")) {
             url = url.substring(0, url.indexOf("?"));
-        }
-        if(url.endsWith("/")) {
-            url = url.substring(0, url.length() - 1);
         }
         return url;
     }

@@ -17,6 +17,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 
 @Path("/report")
 public class CrawlJobReportResource {
@@ -35,14 +36,14 @@ public class CrawlJobReportResource {
     @GET
     @Path("/summary")
     public CrawlJobSummary getSummary(@QueryParam("domain") String domain,
-                                      @QueryParam("startDate") String startDate) throws IOException, ParserConfigurationException, SAXException {
+                                      @QueryParam("startDate") Date startDate) throws IOException, ParserConfigurationException, SAXException {
         CrawlJob crawlJob = crawlJobDao.getCrawlJobByCrawlUrl(domain);
-        LocalDateTime time;
-        if(startDate == null || startDate.isEmpty()) {
+        Date time;
+        if(startDate == null) {
             time = crawlJob.getStartTime();
         }
         else {
-            time = LocalDateTime.parse(startDate, DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm:ss"));
+            time = startDate;
         }
         if(crawlJob.getJobURL() != null && !crawlJob.getJobURL().isEmpty()) {
             return reporter.getReport(crawlJob.getId(), crawlJob.getJobURL(), time);
@@ -94,7 +95,7 @@ public class CrawlJobReportResource {
                                               @QueryParam("flavor") String flavor,
                                               @QueryParam("version") String version,
                                               @QueryParam("producer") String producer) {
-        return validatedPDFDao.getErrorStatistics(crawlJobDao.getIdByUrl(domain), startDate, flavor, version, producer);
+        return validatedPDFDao.getErrorStatistics(domain, startDate, flavor, version, producer);
     }
 
     @GET

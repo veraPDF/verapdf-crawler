@@ -15,6 +15,7 @@ import org.verapdf.crawler.domain.validation.ValidationSettings;
 import org.verapdf.crawler.domain.validation.VeraPDFValidationResult;
 import org.verapdf.crawler.repository.document.InsertDocumentDao;
 import org.verapdf.crawler.repository.document.ValidatedPDFDao;
+import org.verapdf.crawler.repository.jobs.CrawlJobDao;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -37,14 +38,16 @@ public class VerapdfServiceValidator implements PDFValidator {
     private final String verapdfUrl;
     private final HttpClient httpClient;
     private final InsertDocumentDao insertDocumentDao;
+    private final CrawlJobDao crawlJobDao;
     private final ValidatedPDFDao validatedPDFDao;
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
-    public VerapdfServiceValidator(String verapdfUrl, InsertDocumentDao insertDocumentDao, ValidatedPDFDao validatedPDFDao) {
+    public VerapdfServiceValidator(String verapdfUrl, InsertDocumentDao insertDocumentDao, ValidatedPDFDao validatedPDFDao, CrawlJobDao crawlJobDao) {
         this.verapdfUrl = verapdfUrl;
-        httpClient = HttpClientBuilder.create().build();
+        this.httpClient = HttpClientBuilder.create().build();
         this.insertDocumentDao = insertDocumentDao;
         this.validatedPDFDao = validatedPDFDao;
+        this.crawlJobDao = crawlJobDao;
     }
 
     @GET
@@ -77,7 +80,8 @@ public class VerapdfServiceValidator implements PDFValidator {
             result = new VeraPDFValidationResult();
             result.addValidationError(new ValidationError(e.getMessage()));
         }
-        insertDocumentDao.addPdfFile(data, data.getJobID(), getStatus(result));
+        String domain = crawlJobDao.getCrawlUrl(data.getJobID());
+        insertDocumentDao.addPdfFile(data, domain, getStatus(result));
         for(ValidationError error: result.getValidationErrors()) {
             validatedPDFDao.addErrorToDocument(error, fileUrl);
         }

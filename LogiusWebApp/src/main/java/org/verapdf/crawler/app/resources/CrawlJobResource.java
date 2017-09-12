@@ -52,52 +52,47 @@ public class CrawlJobResource {
         return Response.ok(crawlJobs).header("X-Total-Count", crawlJobDao.countJobsWithFilter(domainFilter)).build();
     }
 
-    @POST
-    @Path("/{domain}")
-    public CrawlJob restartCrawlJob(@PathParam("domain") String domain) {
-        try {
-            CrawlJob crawlJob = crawlJobDao.getCrawlJobByCrawlUrl(domain);
-            List<String> list = new ArrayList<>();
-            list.add(crawlJob.getCrawlURL());
-            crawlJobDao.setJobFinished(domain, false);
-            client.teardownJob(domain);
-            client.createJob(domain, list);
-            client.buildJob(domain);
-            client.launchJob(domain);
-            logger.info("Crawl job on "+ crawlJob.getCrawlURL() + " restarted");
-            return getCrawlJob(domain);
-        }
-        catch (Exception e) {
-            logger.error("Error restarting job", e);
-            return null;
-        }
-    }
+//    @POST
+//    @Path("/{domain}")
+//    public CrawlJob restartCrawlJob(@PathParam("domain") String domain) {
+//        //TODO: REWRITE!!!!
+//        //TODO: should delete this job and launch a new one with new id
+//        try {
+//            CrawlJob crawlJob = crawlJobDao.getCrawlJobByCrawlUrl(domain);
+//            List<String> list = new ArrayList<>();
+//            list.add(crawlJob.getDomain());
+//            crawlJobDao.setJobFinished(domain, false);
+//            client.teardownJob(domain);
+//            client.createJob(domain, list);
+//            client.buildJob(domain);
+//            client.launchJob(domain);
+//            logger.info("Crawl job on "+ crawlJob.getDomain() + " restarted");
+//            return getCrawlJob(domain);
+//        }
+//        catch (Exception e) {
+//            logger.error("Error restarting job", e);
+//            return null;
+//        }
+//    }
 
     @GET
     @Path("/{domain}")
+    @Produces(MediaType.APPLICATION_JSON)
     public CrawlJob getCrawlJob(@PathParam("domain") String domain) throws IOException, SAXException, ParserConfigurationException {
-        CrawlJob crawlJob = crawlJobDao.getCrawlJobByCrawlUrl(domain);
-        if(!crawlJob.isFinished()) {
-            crawlJob.setStatus(reporter.getCrawlJobStatus(crawlJob.getId()));
-            if(crawlJob.getStatus().startsWith("finished") || crawlJob.getStatus().startsWith("aborted")) {
-                setJobFinished(crawlJob);
-            }
-        }
-        return crawlJob;
+        return crawlJobDao.getCrawlJobByCrawlUrl(domain);
     }
 
     @PUT
     @Path("/{domain}")
+    @Produces(MediaType.APPLICATION_JSON)
     public CrawlJob updateCrawlJob(@PathParam("domain") String domain, CrawlJob update) {
-        // todo: apply updates to the job, e.g. change status
-        // Currently only pause/unpause is available
         CrawlJob crawlJob = crawlJobDao.getCrawlJobByCrawlUrl(domain);
         if(crawlJob.getStatus().equals("running") && update.getStatus().equals("paused")) {
-            pauseJob(crawlJob.getId());
+            pauseJob(crawlJob);
             crawlJob.setStatus("paused");
         }
         if(crawlJob.getStatus().equals("paused") && update.getStatus().equals("running")) {
-            unpauseJob(crawlJob.getId());
+            unpauseJob(crawlJob);
             crawlJob.setStatus("running");
         }
         return crawlJob;
@@ -105,24 +100,27 @@ public class CrawlJobResource {
 
     @GET
     @Path("/{domain}/requests")
+    @Produces(MediaType.APPLICATION_JSON)
     public List<CrawlRequest> getCrawlJobRequests(@PathParam("domain") String domain) {
-        return crawlRequestDao.getCrawlRequestsForCrawlJob(crawlJobDao.getIdByUrl(domain));
+        return crawlRequestDao.getCrawlRequestsForCrawlJob(domain);
     }
 
     @DELETE
     @Path("/{domain}/requests")
+    @Produces(MediaType.APPLICATION_JSON)
     public List<CrawlRequest> unlinkCrawlRequests(@PathParam("domain") String domain, @QueryParam("email") String email) {
         // todo: unlink all CrawlRequests with specified email from CrawlJob
         // todo: clarify if possible/required to terminate CrawlJob if no associated CrawlRequests left
         List<String> idsByEmail = crawlRequestDao.getIdsByEmail(email);
         for (String crawlRequestID : idsByEmail) {
-            crawlRequestDao.unlinkCrawlJob(crawlRequestID, crawlJobDao.getIdByUrl(domain));
+            crawlRequestDao.unlinkCrawlJob(crawlRequestID, domain);
         }
         return null;
     }
 
     @GET
     @Path("/{domain}/documents")
+    @Produces(MediaType.APPLICATION_JSON)
     public List<Object> getDomainDocuments(@PathParam("domain") String domain,
                                            @QueryParam("startDate") String startDate,
                                            @QueryParam("type") String type,
@@ -148,52 +146,23 @@ public class CrawlJobResource {
         return null;
     }
 
-    private void setJobFinished(CrawlJob job) throws IOException {
-        crawlJobDao.setJobFinished(job.getId(), true);
-        crawlJobDao.setJobUrl(job.getId(), client.getValidPDFReportUri(job.getId()).replace("mirror/Valid_PDF_Report.txt", ""));
-        logger.info("Writing finish time for job " + job);
-        job.setFinishTime(crawlJobDao.writeFinishTime(job.getId()));
-        job.setFinished(true);
-        client.teardownJob(job.getId());
-        for(String emailAddress: crawlJobDao.getreportEmailsForCrawlJob(job.getId())) {
-            if (emailAddress != null && !emailAddress.equals("")) {
-                String subject = "Crawl job";
-                String text = "Crawl job was finished successfully on domain:\n" + job.getCrawlURL();
-                SendEmail.send(emailAddress, subject, text, emailServer);
-            }
-        }
-    }
-
-    private void pauseJob(String job) {
+    private void pauseJob(CrawlJob job) {
         try {
-            client.pauseJob(job);
-            crawlJobDao.setStatus(job, "paused");
-            logger.info("Crawl job on "+ crawlJobDao.getCrawlUrl(job) + " paused");
+            client.pauseJob(job.getId());
+            crawlJobDao.setStatus(job.getDomain(), "paused");
         }
         catch (Exception e) {
             logger.error("Error pausing job", e);
         }
     }
 
-    private void unpauseJob(String job) {
+    private void unpauseJob(CrawlJob job) {
         try {
-            client.unpauseJob(job);
-            crawlJobDao.setStatus(job, "running");
-            logger.info("Crawl job on "+ crawlJobDao.getCrawlUrl(job) + " unpaused");
+            client.unpauseJob(job.getId());
+            crawlJobDao.setStatus(job.getDomain(), "running");
         }
         catch (Exception e) {
             logger.error("Error unpausing job", e);
-        }
-    }
-
-    private void deleteJob(String job) {
-        try {
-            client.terminateJob(job);
-            logger.info("Crawl job on "+ crawlJobDao.getCrawlUrl(job) + " is being deleted");
-            crawlJobDao.removeJob(job);
-        }
-        catch (Exception e) {
-            logger.error("Error deleting job", e);
         }
     }
 }
