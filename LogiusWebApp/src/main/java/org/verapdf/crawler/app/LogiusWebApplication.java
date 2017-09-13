@@ -44,10 +44,13 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
                     configuration.getEmailServer(),
                     configuration.getVerapdfUrl(),
                     configuration.getCredentials());
-            environment.jersey().register(resourceManager.getInfoResourse());
-            environment.jersey().register(resourceManager.getReportResource());
-            environment.jersey().register(resourceManager.getControlResource());
+            //TODO: for in resources list from resource manager
+            environment.jersey().register(resourceManager.getHeritrixDataResource());
             environment.jersey().register(resourceManager.getValidatorResource());
+            environment.jersey().register(resourceManager.getCrawlJobReportResource());
+            environment.jersey().register(resourceManager.getCrawlJobResource());
+            environment.jersey().register(resourceManager.getCrawlRequestResource());
+            environment.jersey().register(resourceManager.getDocumentPropertyResource());
             environment.healthChecks().register("heritrix", new HeritrixHealthCheck(client));
             environment.healthChecks().register("verapdf", new VeraPDFServiceHealthCheck(configuration.getVerapdfUrl()));
         } catch (Exception e) {

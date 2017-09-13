@@ -2,16 +2,12 @@ package org.verapdf.crawler.domain.validation;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class VeraPDFValidationResult {
     private boolean isValid = false;
     private List<ValidationError> validationErrors = new ArrayList<>();
     private Map<String, String> properties = new HashMap<>();
-    private String processingError = null;
 
     public VeraPDFValidationResult() {
     }
@@ -23,7 +19,11 @@ public class VeraPDFValidationResult {
 
     @JsonProperty
     public void setValidationErrors(List<ValidationError> validationErrors) {
-        this.validationErrors = validationErrors;
+        this.validationErrors = validationErrors == null ? Collections.emptyList() : new ArrayList<>(validationErrors);
+    }
+
+    public void addValidationError(ValidationError error) {
+        this.validationErrors.add(error);
     }
 
     @JsonProperty
@@ -43,17 +43,7 @@ public class VeraPDFValidationResult {
 
     @JsonProperty
     public void setProperties(Map<String, String> properties) {
-        this.properties = properties;
-    }
-
-    @JsonProperty
-    public String getProcessingError() {
-        return processingError;
-    }
-
-    @JsonProperty
-    public void setProcessingError(String processingError) {
-        this.processingError = processingError;
+        this.properties = properties == null ? Collections.emptyMap() : new HashMap<>(properties);
     }
 
     public void addProperty(String name, String value) {

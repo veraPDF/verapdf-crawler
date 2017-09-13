@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class ODFProcessor extends MirrorWriterProcessor {
+public class OfficeDocumentProcessor extends MirrorWriterProcessor {
     private static final String[] supportedExtentions = {".odt",
                                                         ".odc",
                                                         ".odp",
@@ -52,7 +52,7 @@ public class ODFProcessor extends MirrorWriterProcessor {
             String[] parts = baseDir.split("/");
             String jobId = parts[parts.length - 3];
 
-            URL url = new URL(logiusUrl + "api/office_document");
+            URL url = new URL(logiusUrl + "api/heritrix/office_document");
             String data = "{\"jobId\":\"" + jobId + "\", \"fileUrl\":\"" +
                     crawlURI.toString() + "\", \"" + "lastModified\":\"" + time + "\"}";
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();

@@ -33,4 +33,10 @@ public class ValidationJobData {
 
     @JsonProperty
     public void setTime(String time) { this.time = time; }
+
+    public String getJobID() {
+        String[] parts = this.jobDirectory.split("/");
+        String jobId = parts[parts.length - 3];
+        return  jobId;
+    }
 }

@@ -375,7 +375,7 @@
         <!-- <property name="writeRevisitForNotModified" value="true" /> -->
         <!-- <property name="startNewFilesOnCheckpoint" value="true" /> -->
     </bean>
-    <bean id="odfProcessor" class="org.verapdf.crawler.extentionModules.ODFProcessor">
+    <bean id="officeDocumentProcessor" class="org.verapdf.crawler.extentionModules.OfficeDocumentProcessor">
         <property name="shouldProcessRule">
             <bean class="org.archive.modules.deciderules.DecideRuleSequence">
                 <property name="rules">
@@ -416,7 +416,7 @@
             <list>
                 <!-- write to aggregate archival files... -->
                 <ref bean="warcWriter"/>
-                <ref bean="odfProcessor"/>
+                <ref bean="officeDocumentProcessor"/>
                 <!-- ...send each outlink candidate URI to CandidateChain,
                      and enqueue those ACCEPTed to the frontier... -->
                 <ref bean="candidates"/>
