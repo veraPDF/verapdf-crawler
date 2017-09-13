@@ -27,7 +27,9 @@ $(function () {
         var carrentPage = limit / 10 + 1;
         if (limit == 0) {
             $('#pagination-container').children('#previous').addClass('disabled');
+            $('#pagination-container').children('#next').removeClass('disabled');
         } else if (limit == (pagesAmount - 1) * 10) {
+            $('#pagination-container').children('#previous').removeClass('disabled');
             $('#pagination-container').children('#next').addClass('disabled');
         } else {
             $('#pagination-container').children('#previous').removeClass('disabled');
@@ -36,17 +38,10 @@ $(function () {
 
         if (pagesAmount < 6) {
             for (var i = 0; i < 5; i++) {
-                if (i < pagesAmount) {
-                    // $($('#pagination-container').children()[1 + i]).children('a').text(i + 1);
-                } else {
+                if (i >= pagesAmount) {
                     $($('#pagination-container').children()[2 + i]).addClass('hide');
                 }
             }
-        } else {
-            // $('#pagination-container').children('#last').children('a').text(pagesAmount);
-            // $('#pagination-container').children('#first').children('a').text('1');
-            // $('#pagination-container').children('#second').children('a').text('2');
-            // $('#pagination-container').children('#third').children('a').text('3');
         }
 
     }

@@ -258,21 +258,6 @@ a.action .label {
   display: none;
 }
 
-/* .pagination a {
-  color: #1550ad;
-}
-.pagination .active a {
-  color: white;
-  background-color: #1550ad;
-  border-color: white;
-}
-.pagination a, .pagination .disabled a {
-  border-color: #1550ad;
-} */
-/* .pagination li.hide{
-  display: none;
-} */
-
 /* Domain details */
 .status-paused .action.pause {
   display: none!important;
