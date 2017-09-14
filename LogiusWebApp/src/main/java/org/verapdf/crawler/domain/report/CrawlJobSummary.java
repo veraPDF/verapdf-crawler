@@ -3,13 +3,15 @@ package org.verapdf.crawler.domain.report;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class CrawlJobReport {
+import java.util.Date;
+
+public class CrawlJobSummary {
     private String id;
-    private String url;
+    private String domain;
     private String status;
     private int numberOfCrawledUrls;
-    private String startTime;
-    private String finishTime;
+    private Date startTime;
+    private Date finishTime;
 
     private PDFValidationStatistics pdfStatistics;
     private int numberOfODFDocuments;
@@ -17,12 +19,12 @@ public class CrawlJobReport {
     private int numberOfOoxmlDocuments;
 
 
-    public CrawlJobReport() {
+    public CrawlJobSummary() {
     }
 
-    public CrawlJobReport(String id, String url, String status, int numberOfCrawledUrls) {
+    public CrawlJobSummary(String id, String domain, String status, int numberOfCrawledUrls) {
         this.id = id;
-        this.url = url;
+        this.domain = domain;
         this.status = status;
         this.numberOfCrawledUrls = numberOfCrawledUrls;
         this.pdfStatistics = new PDFValidationStatistics();
@@ -34,8 +36,8 @@ public class CrawlJobReport {
     }
 
     @JsonProperty
-    public String getUrl() {
-        return url;
+    public String getDomain() {
+        return domain;
     }
 
     @JsonProperty
@@ -75,12 +77,12 @@ public class CrawlJobReport {
     public void setNumberOfOoxmlDocuments(int numberOfOoxmlDocuments) { this.numberOfOoxmlDocuments = numberOfOoxmlDocuments; }
 
     @JsonProperty
-    public String getStartTime() { return startTime; }
+    public Date getStartTime() { return startTime; }
 
     @JsonProperty
-    public void setStartTime(String startTime) { this.startTime = startTime; }
+    public void setStartTime(Date startTime) { this.startTime = startTime; }
 
-    public String getFinishTime() { return finishTime; }
+    public Date getFinishTime() { return finishTime; }
 
-    public void setFinishTime(String finishTime) { this.finishTime = finishTime; }
+    public void setFinishTime(Date finishTime) { this.finishTime = finishTime; }
 }

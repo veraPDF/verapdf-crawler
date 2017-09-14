@@ -29,16 +29,9 @@ public class ValidationResource {
     private ValidationSettings validationSettings;
     private VeraPDFValidationResult validationResult;
 
-    ValidationResource(String veraPDFPath, String logiusUrl) throws IOException {
-        this.validationSettings = new ValidationSettings();
+    ValidationResource(String veraPDFPath, ValidationSettings validationSettings) throws IOException {
+        this.validationSettings = validationSettings;
         this.veraPDFPath = veraPDFPath;
-        try {
-            HttpClient client = HttpClientBuilder.create().build();
-            HttpResponse response = client.execute(new HttpGet(logiusUrl + "/verapdf-service/settings"));
-            validationSettings = new ObjectMapper().readValue(response.getEntity().getContent(), ValidationSettings.class);
-        } catch (Throwable e) {
-            logger.error("Can not get validation settings", e);
-        }
     }
 
     @POST

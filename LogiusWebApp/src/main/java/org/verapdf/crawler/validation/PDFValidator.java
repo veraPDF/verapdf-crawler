@@ -1,5 +1,7 @@
 package org.verapdf.crawler.validation;
 
+import org.verapdf.crawler.domain.validation.ValidationJobData;
+
 public interface PDFValidator {
-    boolean validateAndWirteResult(String localFilename, String fileUrl) throws Exception;
+    void validateAndWriteResult(ValidationJobData data) throws Exception;
 }

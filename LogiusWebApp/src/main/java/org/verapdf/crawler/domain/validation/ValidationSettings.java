@@ -3,13 +3,14 @@ package org.verapdf.crawler.domain.validation;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ValidationSettings {
-    private Map<String, String> validationProperties = new HashMap<>();
+    private Map<String, List<String>> validationProperties = new HashMap<>();
     private Map<String, String> namespaces = new HashMap<>();
 
-    public ValidationSettings(Map<String, String> validationProperties, Map<String, String> namespaces) {
+    public ValidationSettings(Map<String, List<String>> validationProperties, Map<String, String> namespaces) {
         this.validationProperties = validationProperties;
         this.namespaces = namespaces;
     }
@@ -18,12 +19,12 @@ public class ValidationSettings {
     }
 
     @JsonProperty("properties")
-    public Map<String, String> getValidationProperties() {
+    public Map<String, List<String>> getValidationProperties() {
         return validationProperties;
     }
 
     @JsonProperty("properties")
-    public void setValidationProperties(Map<String, String> validationProperties) {
+    public void setValidationProperties(Map<String, List<String>> validationProperties) {
         this.validationProperties = validationProperties;
     }
 
