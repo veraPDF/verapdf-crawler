@@ -61,7 +61,7 @@ $(function () {
 
         $('.main').addClass('status-' + currentDomain.status, { children: true });
 
-        $('.domain-name span').text(currentDomain.crawlURL);
+        $('.domain-name span').text(currentDomain.domain);
 
         $('.job-date').text(currentDomain.isComplete ? 'Tested on ' + currentDomain.startTime + ' - ' + currentDomain.finishTime : 'Test started on ' + currentDomain.startTime);
 
@@ -211,7 +211,7 @@ $(function () {
     })
 
     $.ajax({
-        url: "/crawl-jobs/" + getUrlParameter("domain"),
+        url: "api/crawl-jobs/" + getUrlParameter("domain"),
         type: "GET",
         success: function (result) {
             domainInfoLoaded(result);
@@ -223,13 +223,27 @@ $(function () {
     });
 
     $.ajax({
-        url: "/crawl-jobs/" + getUrlParameter("domain") + "/requests",
+        url: "api/crawl-jobs/" + getUrlParameter("domain") + "/requests",
         type: "GET",
         success: function (result) {
             // domainInfoLoaded(result);
 
-            $('span.job-mails-list').text(result.join(', '));
-            $('textarea.job-mails-list').val(result.join(', '));
+            var mailsList;
+            for (var i = 0; i < result.length; i++) {
+                if (i !== result.length - 1) {
+                    if (result[i].emailAddress) {
+                        mailsList += result[i].emailAddress + ", ";
+                    }
+                } else {
+                    if (result[i].emailAddress) {
+                        mailsList += result[i].emailAddress;
+                    }
+                }
+
+            }
+
+            $('span.job-mails-list').text(mailsList);
+            $('textarea.job-mails-list').val(mailsList);
 
         },
         error: function (result) {

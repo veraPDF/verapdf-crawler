@@ -1,14 +1,15 @@
 $(function () {
+    var  URL = "/api/crawl-jobs"
     var totalPagesAmount = 0;
     function loadAllJobs(limit) {
         $.ajax({
-            url: "/info/list" + '?limit=' + limit,
+            url: "/api/crawl-jobs" + '?limit=' + limit,
             type: "GET",
             success: function (result, textStatus, request) {
                 var row = $("#crawl_job_list").children('tbody').children('tr').clone();
                 $("#crawl_job_list").children('tbody').empty();
                 result.forEach(function (item, i, arr) {
-                    appendCrawlJob(item.crawlURL, item.startTime, item.finishTime, item.status, row[0]);
+                    appendCrawlJob(item.domain, item.startTime, item.finishTime, item.status, row[0]);
                 });
                 totalPagesAmount = parseInt(request.getResponseHeader('X-Total-Count'));
                 totalPagesAmount = Math.floor(request.getResponseHeader('X-Total-Count') / 10) + 1;

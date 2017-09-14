@@ -1,47 +1,53 @@
-var URL = "/crawl-requests";
+var URL = "/api/crawl-requests";
 
-$(document).ready(function() {
+$(document).ready(function () {
     document.getElementById("date_input").value = "01-01-2015";
     $("input:button").click(main);
 
     var picker = new Pikaday(
-    {
-        field: document.getElementById('date_input'),
-        firstDay: 1,
-        minDate: new Date(2000, 12, 31),
-        maxDate: new Date(2020, 12, 31),
-        yearRange: [2000,2020],
-        showTime: false,
-        format: 'YYYY-MM-DD',
-        disableDayFn: function(date){
-            var currDate =new Date();
-            return currDate.valueOf()<date.valueOf();
-        }
-    });
+        {
+            field: document.getElementById('date_input'),
+            firstDay: 1,
+            minDate: new Date(2000, 12, 31),
+            maxDate: new Date(2020, 12, 31),
+            yearRange: [2000, 2020],
+            showTime: false,
+            format: 'YYYY-MM-DD',
+            disableDayFn: function (date) {
+                var currDate = new Date();
+                return currDate.valueOf() < date.valueOf();
+            }
+        });
 });
 
 function main() {
 
-    if(document.getElementById("email_input").value) {
+    if (document.getElementById("email_input").value) {
         var regexp = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-        if(!regexp.test(document.getElementById("email_input").value)) {
+        if (!regexp.test(document.getElementById("email_input").value)) {
             // reportError("Invalid email format");
             return;
         }
     }
 
     var crawlUrlList = new Array(document.getElementById("urlinput").value);
-    var postData = "{\"domain\":\"" + document.getElementById("urlinput").value +
-    "\", \"startTime\":\"" + document.getElementById("date_input").value + "\"" +
-    ", \"reportEmail\":\"" + document.getElementById("email_input").value + "\"}";
-    $.ajax({url: URL,
-        type:"POST",
-        async:false,
-        data: postData,
-        headers: {"Content-type":"application/json"},
-        success: function(result){},
-        error: function(result) {
-                // reportError("Error on job creation");
+    var postData = {};
+    postData.domains = [];
+    postData.domains.push(document.getElementById("urlinput").value);
+    postData.emailAddress = document.getElementById("date_input").value;
+    postData.crawlSinceTime = document.getElementById("email_input").value;
+
+    $.ajax({
+        url: URL,
+        type: "POST",
+        data: JSON.stringify(postData),
+        async: false,
+        headers: {
+            "content-type": "application/json"
+        },
+        success: function (result) { },
+        error: function (result) {
+            // reportError("Error on job creation");
         }
     });
 }
@@ -90,7 +96,7 @@ function main() {
 // }
 
 function keyListener(e) {
-    if(e.keyCode == 13) {
+    if (e.keyCode == 13) {
         main();
     }
 }
