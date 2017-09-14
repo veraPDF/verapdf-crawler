@@ -1,15 +1,10 @@
 package org.verapdf.service;
 
 import com.codahale.metrics.annotation.Timed;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.domain.validation.ValidationSettings;
-import org.verapdf.crawler.domain.validation.VeraPDFValidationResult;
-import org.apache.http.client.HttpClient;
+import org.verapdf.crawler.api.validation.ValidationSettings;
+import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -35,7 +30,7 @@ public class ValidationResource {
     }
 
     @POST
-    @Path("/properties")
+    @Path("/settings")
     @Timed
     public void setValidationSettings(ValidationSettings validationSettings) {
         this.validationSettings = validationSettings;
