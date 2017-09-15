@@ -1,16 +1,21 @@
 $(function () {
-    var  URL = "/api/crawl-jobs"
+    var URL = "/api/crawl-jobs"
     var totalPagesAmount = 0;
+    function normalizeURL(url){
+        return url.replace(':', '%3A');
+    }
     function loadAllJobs(limit) {
         $.ajax({
-            url: "/api/crawl-jobs" + '?limit=' + limit,
+            url: URL + '?limit=' + limit,
             type: "GET",
             success: function (result, textStatus, request) {
                 var row = $("#crawl_job_list").children('tbody').children('tr').clone();
                 $("#crawl_job_list").children('tbody').empty();
-                result.forEach(function (item, i, arr) {
-                    appendCrawlJob(item.domain, item.startTime, item.finishTime, item.status, row[0]);
-                });
+                if (Array.isArray(result)) {
+                    result.forEach(function (item, i, arr) {
+                        appendCrawlJob(item.domain, item.startTime, item.finishTime, item.status, row[0]);
+                    });
+                }
                 totalPagesAmount = parseInt(request.getResponseHeader('X-Total-Count'));
                 totalPagesAmount = Math.floor(request.getResponseHeader('X-Total-Count') / 10) + 1;
 
@@ -18,7 +23,6 @@ $(function () {
 
             },
             error: function (result) {
-                // reportError("Error on job loading");
             }
         });
     }
@@ -29,6 +33,9 @@ $(function () {
         if (limit == 0) {
             $('#pagination-container').children('#previous').addClass('disabled');
             $('#pagination-container').children('#next').removeClass('disabled');
+            if (pagesAmount == 1) {
+                $('#pagination-container').children('#next').addClass('disabled');
+            }
         } else if (limit == (pagesAmount - 1) * 10) {
             $('#pagination-container').children('#previous').removeClass('disabled');
             $('#pagination-container').children('#next').addClass('disabled');
@@ -112,15 +119,12 @@ $(function () {
                 case 1:
                     $('#fourth').addClass('active');
                     break;
-
                 case 2:
                     $('#third').addClass('active');
                     break;
-
                 case 3:
                     $('#second').addClass('active');
                     break;
-
                 default:
                     $('#first').children('a').text(parseInt($('#first').children('a').text()) + 4);
                     $('#second').children('a').text(parseInt($('#second').children('a').text()) + 4);
@@ -231,59 +235,51 @@ $(function () {
     $("#crawl_job_list").on("click", '#action1', function (e) {
         var link = $(this);
         var currRow = $(this).parent().parent();
-        var putData = {}; 
-        putData.crawlURL = currRow.find('#domain').text();
+        var putData = {};
+        putData.domain = currRow.find('#domain').text();
         putData.startTime = currRow.children('#start').text();
         putData.finishTime = currRow.children('#end').text();
-        
-        if($(this).children().last().text() === 'Pause'){
+
+        if ($(this).children().last().text() === 'Pause') {
             putData.status = 'paused';
-            
+
             $.ajax({
-                url: "/crawl-jobs/" + link.parent().siblings().first().text() + "/requests",
+                url: URL + "/" + normalizeURL(link.parent().siblings().first().text()),
                 type: "PUT",
-                // async:false,
                 data: JSON.stringify(putData),
                 headers: { "Content-type": "application/json" },
                 success: function (result) {
                     link.children().first().text("play_arrow");
                     link.children().last().text("Resume");
-    
+
                 },
-                error: function (result) {
-                    // reportError("Error on job loading");
-                }
+                error: function (result) { }
             });
-        }else if ($(this).children().last().text() === 'Resume'){
-            putData.status = 'running';            
+        } else if ($(this).children().last().text() === 'Resume') {
+            putData.status = 'running';
 
             $.ajax({
-                url: "/crawl-jobs/" + link.parent().siblings().first().text() + "/requests",
+                url: URL + "/" + normalizeURL(link.parent().siblings().first().text()),
                 type: "PUT",
-                // async:false,
                 data: JSON.stringify(putData),
                 headers: { "Content-type": "application/json" },
                 success: function (result) {
-                    link.children().first().text("pause");                    
-                    link.children().last().text("Pause"); 
-    
+                    link.children().first().text("pause");
+                    link.children().last().text("Pause");
+
                 },
-                error: function (result) {
-                    // reportError("Error on job loading");
-                }
+                error: function (result) { }
             });
         }
-        
+
     })
 
     $("#crawl_job_list").on("click", '#action2', function (e) {
         $.ajax({
-            url: "/restart/" + $($(this).parent().siblings()[0]).children().text(),
+            url: URL + "/" + normalizeURL($($(this).parent().siblings()[0]).children().text()),
             type: "POST",
-            success: function (result) {                
-            },
-            error: function (result) {
-            }
+            success: function (result) { },
+            error: function (result) { }
         });
     })
 
