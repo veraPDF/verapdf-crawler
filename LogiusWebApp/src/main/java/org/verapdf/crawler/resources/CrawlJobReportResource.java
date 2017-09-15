@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.util.Date;
 
 @Path("/report")
-@Produces(MediaType.APPLICATION_JSON)
 public class CrawlJobReportResource {
     // todo: clarify if we need multi-domain statistics (even if not, we use domain as a query param rather than path param to easy migrate in the future)
 
@@ -33,6 +32,7 @@ public class CrawlJobReportResource {
 
     @GET
     @Path("/summary")
+    @Produces(MediaType.APPLICATION_JSON)
     public CrawlJobSummary getSummary(@QueryParam("domain") String domain,
                                       @QueryParam("startDate") Date startDate) throws IOException, ParserConfigurationException, SAXException {
         CrawlJob crawlJob = crawlJobDao.getCrawlJobByCrawlUrl(domain);
@@ -51,9 +51,9 @@ public class CrawlJobReportResource {
 
     @GET
     @Path("/document-statistics")
+    @Produces(MediaType.APPLICATION_JSON)
     public PdfPropertyStatistics getDocumentStatistics(@QueryParam("domain") String domain,
                                                        @QueryParam("startDate") String startDate) {
-        // todo: rename to DocumentStatistics
         /* todo: change to the following structure:
             {
                 totalCount: 5612,
@@ -88,6 +88,7 @@ public class CrawlJobReportResource {
 
     @GET
     @Path("/error-statistics")
+    @Produces(MediaType.APPLICATION_JSON)
     public ErrorStatistics getErrorStatistics(@QueryParam("domain") String domain,
                                               @QueryParam("startDate") String startDate,
                                               @QueryParam("flavor") String flavor,
@@ -97,8 +98,8 @@ public class CrawlJobReportResource {
     }
 
     @GET
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @Path("/full.ods")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response getFullReportAsOds(@QueryParam("domain") String domain,
                                        @QueryParam("startDate") String startDate) {
         // todo: determine structure of ODS report

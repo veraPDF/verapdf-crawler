@@ -4,6 +4,8 @@ import org.verapdf.crawler.api.validation.ValidationSettings;
 import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 import org.verapdf.crawler.db.document.ValidatedPDFDao;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -31,7 +33,7 @@ public class VeraPDFServiceResource {
 
 	@POST
 	@Path("/result")
-	public void setValidationResult(VeraPDFValidationResult result) {
+	public void setValidationResult(@NotNull @Valid VeraPDFValidationResult result) {
 		// todo: interrupt sleep
 	}
 }

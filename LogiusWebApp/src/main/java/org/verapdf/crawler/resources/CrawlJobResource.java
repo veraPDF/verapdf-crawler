@@ -1,5 +1,6 @@
 package org.verapdf.crawler.resources;
 
+import io.dropwizard.jersey.params.IntParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
@@ -11,6 +12,7 @@ import org.verapdf.crawler.db.jobs.CrawlJobDao;
 import org.verapdf.crawler.db.jobs.CrawlRequestDao;
 import org.xml.sax.SAXException;
 
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -40,11 +42,11 @@ public class CrawlJobResource {
 
     @GET
     public Response getJobList(@QueryParam("domainFilter") String domainFilter,
-                               @QueryParam("start") Integer start,
-                               @QueryParam("limit") Integer limit) {
+                               @QueryParam("start") IntParam start,
+                               @QueryParam("limit") IntParam limit) {
         List<CrawlJob> crawlJobs = crawlJobDao.getAllJobsWithFilter(domainFilter);
         if(start != null && limit != null) {
-            return Response.ok(crawlJobs.subList(start, start + limit)).
+            return Response.ok(crawlJobs.subList(start.get(), start.get() + limit.get())).
                     header("X-Total-Count", crawlJobDao.countJobsWithFilter(domainFilter)).build();
         }
         return Response.ok(crawlJobs).header("X-Total-Count", crawlJobDao.countJobsWithFilter(domainFilter)).build();
@@ -81,7 +83,7 @@ public class CrawlJobResource {
 
     @PUT
     @Path("/{domain}")
-    public CrawlJob updateCrawlJob(@PathParam("domain") String domain, CrawlJob update) {
+    public CrawlJob updateCrawlJob(@PathParam("domain") String domain, @NotNull CrawlJob update) {
         CrawlJob crawlJob = crawlJobDao.getCrawlJobByCrawlUrl(domain);
         if(crawlJob.getStatus().equals("running") && update.getStatus().equals("paused")) {
             pauseJob(crawlJob);
@@ -102,7 +104,7 @@ public class CrawlJobResource {
 
     @DELETE
     @Path("/{domain}/requests")
-    public List<CrawlRequest> unlinkCrawlRequests(@PathParam("domain") String domain, @QueryParam("email") String email) {
+    public List<CrawlRequest> unlinkCrawlRequests(@PathParam("domain") String domain, @QueryParam("email") @NotNull String email) {
         // todo: unlink all CrawlRequests with specified email from CrawlJob
         // todo: clarify if possible/required to terminate CrawlJob if no associated CrawlRequests left
         List<String> idsByEmail = crawlRequestDao.getIdsByEmail(email);
@@ -117,8 +119,8 @@ public class CrawlJobResource {
     public List<Object> getDomainDocuments(@PathParam("domain") String domain,
                                            @QueryParam("startDate") String startDate,
                                            @QueryParam("type") String type,
-                                           @QueryParam("start") Integer start,
-                                           @QueryParam("limit") Integer limit,
+                                           @QueryParam("start") IntParam start,
+                                           @QueryParam("limit") IntParam limit,
                                            @QueryParam("property") List<String> properties) {
         /* todo: introduce new domain object DomainDocument with the following structure:
             {

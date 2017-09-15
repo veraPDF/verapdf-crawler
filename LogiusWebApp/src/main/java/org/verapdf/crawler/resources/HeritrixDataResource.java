@@ -9,6 +9,8 @@ import org.verapdf.crawler.db.jobs.CrawlJobDao;
 import org.verapdf.crawler.core.validation.ValidationService;
 
 import javax.sql.DataSource;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
@@ -36,7 +38,7 @@ public class HeritrixDataResource {
 
     @POST
     @Path("/pdf")
-    public void addValidationJob(ValidationJobData data) {
+    public void addValidationJob(@NotNull @Valid ValidationJobData data) {
         logger.info("Received information about PDF file");
         try {
             service.addJob(data);
@@ -48,7 +50,7 @@ public class HeritrixDataResource {
 
     @POST
     @Path("/office_document")
-    public void addMicrosoftOfficeFile(OfficeDocumentData data) {
+    public void addMicrosoftOfficeFile(@NotNull @Valid OfficeDocumentData data) {
         logger.info("Received information about office document " + data.getFileUrl());
         String domain = crawlJobDao.getCrawlUrl(data.getJobId());
         if(stringEndsWithItemFromList(data.getFileUrl(), ODF_SUFFIXES)) {

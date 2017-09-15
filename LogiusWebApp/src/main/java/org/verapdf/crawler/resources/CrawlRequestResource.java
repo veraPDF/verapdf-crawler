@@ -8,6 +8,8 @@ import org.verapdf.crawler.api.crawling.CrawlRequest;
 import org.verapdf.crawler.db.jobs.CrawlRequestDao;
 import org.verapdf.crawler.db.jobs.CrawlJobDao;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
@@ -30,7 +32,7 @@ public class CrawlRequestResource {
     }
 
     @POST
-    public CrawlRequest createCrawlRequest(CrawlRequest crawlRequest) {
+    public CrawlRequest createCrawlRequest(@NotNull @Valid CrawlRequest crawlRequest) {
         String id = UUID.randomUUID().toString();
         crawlRequest.setId(id);
         List<String> rawDomains = crawlRequest.getDomains();
