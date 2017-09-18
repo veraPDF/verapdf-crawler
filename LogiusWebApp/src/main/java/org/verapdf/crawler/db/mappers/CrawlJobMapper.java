@@ -19,7 +19,7 @@ public class CrawlJobMapper implements RowMapper<CrawlJob> {
         if(resultSet.getBoolean(CrawlJobDao.FIELD_IS_FINISHED)) {
             result.setFinished(true);
         }
-        result.setStatus(resultSet.getString(CrawlJobDao.FIELD_STATUS));
+        result.setStatus(CrawlJob.Status.valueOf(resultSet.getString(CrawlJobDao.FIELD_STATUS)));
         if(resultSet.getString(CrawlJobDao.FIELD_FINISH_TIME) != null && !resultSet.getString(CrawlJobDao.FIELD_FINISH_TIME).isEmpty()) {
             result.setFinishTime(resultSet.getDate(CrawlJobDao.FIELD_FINISH_TIME));
         }

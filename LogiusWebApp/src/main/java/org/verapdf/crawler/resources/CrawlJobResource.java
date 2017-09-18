@@ -86,13 +86,13 @@ public class CrawlJobResource {
     @Path("/{domain}")
     public CrawlJob updateCrawlJob(@PathParam("domain") String domain, @NotNull CrawlJob update) {
         CrawlJob crawlJob = crawlJobDao.getCrawlJobByCrawlUrl(domain);
-        if(crawlJob.getStatus().equals("running") && update.getStatus().equals("paused")) {
+        if(crawlJob.getStatus() == CrawlJob.Status.RUNNING && update.getStatus() == CrawlJob.Status.PAUSED) {
             pauseJob(crawlJob);
-            crawlJob.setStatus("paused");
+            crawlJob.setStatus(CrawlJob.Status.PAUSED);
         }
-        if(crawlJob.getStatus().equals("paused") && update.getStatus().equals("running")) {
+        if(crawlJob.getStatus() == CrawlJob.Status.PAUSED && update.getStatus() == CrawlJob.Status.RUNNING) {
             unpauseJob(crawlJob);
-            crawlJob.setStatus("running");
+            crawlJob.setStatus(CrawlJob.Status.RUNNING);
         }
         return crawlJob;
     }
@@ -144,7 +144,7 @@ public class CrawlJobResource {
 
     private void pauseJob(CrawlJob job) {
         try {
-            client.pauseJob(job.getId());
+            client.pauseJob(job.getHeritrixJobId());
             crawlJobDao.setStatus(job.getDomain(), "paused");
         }
         catch (Exception e) {
@@ -154,7 +154,7 @@ public class CrawlJobResource {
 
     private void unpauseJob(CrawlJob job) {
         try {
-            client.unpauseJob(job.getId());
+            client.unpauseJob(job.getHeritrixJobId());
             crawlJobDao.setStatus(job.getDomain(), "running");
         }
         catch (Exception e) {

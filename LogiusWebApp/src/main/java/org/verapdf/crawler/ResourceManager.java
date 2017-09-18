@@ -1,5 +1,6 @@
 package org.verapdf.crawler;
 
+import io.dropwizard.hibernate.HibernateBundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -7,6 +8,8 @@ import org.verapdf.crawler.configurations.MySqlConfiguration;
 import org.verapdf.crawler.configurations.EmailServerConfiguration;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.core.heritrix.HeritrixReporter;
+import org.verapdf.crawler.db.CrawlJobDAO;
+import org.verapdf.crawler.db.CrawlRequestDAO;
 import org.verapdf.crawler.db.document.InsertDocumentDao;
 import org.verapdf.crawler.db.document.ReportDocumentDao;
 import org.verapdf.crawler.db.document.ValidatedPDFDao;
@@ -27,14 +30,18 @@ public class ResourceManager {
 
     private final List<Object> resources = new ArrayList<>();
 
-    public ResourceManager(HeritrixClient client, LogiusConfiguration config) {
-        // Initializing all DAO objects
+    public ResourceManager(LogiusConfiguration config, HeritrixClient client, HibernateBundle<LogiusConfiguration> hibernate) {
+        // Initializing all DAO objects (will be deprecated)
         DataSource dataSource = createMySqlDataSource(config.getMySqlConfiguration());
         CrawlJobDao crawlJobDao = new CrawlJobDao(dataSource);
         CrawlRequestDao crawlRequestDao = new CrawlRequestDao(dataSource);
         ReportDocumentDao reportDocumentDao = new ReportDocumentDao(dataSource);
         ValidatedPDFDao validatedPDFDao = new ValidatedPDFDao(dataSource);
         InsertDocumentDao insertDocumentDao = new InsertDocumentDao(dataSource);
+
+        // Initializing all DAO objects
+        CrawlRequestDAO crawlRequestDAO = new CrawlRequestDAO(hibernate.getSessionFactory());
+        CrawlJobDAO crawlJobDAO = new CrawlJobDAO(hibernate.getSessionFactory());
 
         // Initializing validators and reporters
         HeritrixReporter reporter = new HeritrixReporter(client, reportDocumentDao, crawlJobDao);
@@ -44,7 +51,7 @@ public class ResourceManager {
         // Initializing resources
         resources.add(new CrawlJobReportResource(crawlJobDao, reporter, validatedPDFDao));
         resources.add(new CrawlJobResource(crawlJobDao, client, crawlRequestDao, reporter, config.getEmailServerConfiguration()));
-        resources.add(new CrawlRequestResource(client, crawlRequestDao, crawlJobDao));
+        resources.add(new CrawlRequestResource(client, crawlRequestDAO, crawlJobDAO));
         resources.add(new DocumentPropertyResource(reportDocumentDao));
         resources.add(new HeritrixDataResource(validationService, crawlJobDao, dataSource));
         resources.add(new VeraPDFServiceResource(validatedPDFDao));
