@@ -9,10 +9,6 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <properties>
-        <dropwizard.version>1.0.5</dropwizard.version>
-    </properties>
-
     <artifactId>VeraPDFService</artifactId>
     <dependencies>
         <dependency>

@@ -8,7 +8,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.verapdf.crawler.domain.validation.ValidationSettings;
+import org.verapdf.crawler.api.validation.ValidationSettings;
 
 import java.io.IOException;
 

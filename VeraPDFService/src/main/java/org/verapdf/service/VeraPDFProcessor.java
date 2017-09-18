@@ -3,9 +3,9 @@ package org.verapdf.service;
 import javanet.staxutils.SimpleNamespaceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.domain.validation.ValidationError;
-import org.verapdf.crawler.domain.validation.ValidationSettings;
-import org.verapdf.crawler.domain.validation.VeraPDFValidationResult;
+import org.verapdf.crawler.api.validation.ValidationError;
+import org.verapdf.crawler.api.validation.ValidationSettings;
+import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -20,7 +20,6 @@ import javax.xml.xpath.XPathFactory;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -113,11 +112,11 @@ public class VeraPDFProcessor implements Runnable {
 	}
 
 	private void addProperties(VeraPDFValidationResult result, Document document, XPath xpath) {
-		Map<String, List<String>> validationProperties = this.settings.getValidationProperties();
-		if (validationProperties == null) {
+		Map<String, List<String>> properties = this.settings.getProperties();
+		if (properties == null) {
 			return;
 		}
-		for (Map.Entry<String, List<String>> property : validationProperties.entrySet()) {
+		for (Map.Entry<String, List<String>> property : properties.entrySet()) {
 			try {
 				for (String propertyXPath : property.getValue()) {
 					String value = (String) xpath.evaluate(propertyXPath, document, XPathConstants.STRING);

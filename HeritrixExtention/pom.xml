@@ -11,15 +11,13 @@
 
     <artifactId>HeritrixExtention</artifactId>
 
-
     <packaging>jar</packaging>
 
     <dependencies>
-
         <dependency>
             <groupId>org.archive</groupId>
             <artifactId>heritrix</artifactId>
-            <version>3.3.0</version>
+            <version>3.2.0</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/heritrix.jar</systemPath>
         </dependency>
