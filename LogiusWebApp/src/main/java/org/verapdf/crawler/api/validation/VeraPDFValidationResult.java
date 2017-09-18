@@ -1,6 +1,8 @@
 package org.verapdf.crawler.api.validation;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.verapdf.crawler.db.document.InsertDocumentDao;
 
 import java.util.*;
 
@@ -48,5 +50,10 @@ public class VeraPDFValidationResult {
 
     public void addProperty(String name, String value) {
         properties.put(name, value);
+    }
+
+    @JsonIgnore
+    public InsertDocumentDao.TestResultSummary getTestResultSummary() {
+        return this.isValid() ? InsertDocumentDao.TestResultSummary.OPEN : InsertDocumentDao.TestResultSummary.NOT_OPEN;
     }
 }

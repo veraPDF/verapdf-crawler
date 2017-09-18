@@ -1,9 +1,11 @@
 package org.verapdf.service;
 
 import com.codahale.metrics.annotation.Timed;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.api.validation.ValidationSettings;
+import org.verapdf.crawler.api.validation.VeraPDFServiceStatus;
 import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 
 import javax.ws.rs.*;
@@ -41,8 +43,8 @@ public class ValidationResource {
     public Response processValidateRequest(String filename) throws InterruptedException {
         logger.info("Starting processing of " + filename);
         synchronized (this) {
-            if (evaluateStatus() == Status.ACTIVE) {
-                return Response.status(102).build();
+            if (evaluateStatus() == VeraPDFServiceStatus.ProcessorStatus.ACTIVE) {
+                return Response.status(HttpStatus.SC_LOCKED).build();
             }
         }
         validate(filename);
@@ -51,16 +53,10 @@ public class ValidationResource {
 
     @GET
     @Timed
-    public Response getStatus() {
-        Status status = evaluateStatus();
-        logger.info("Status requested, status is " + status);
-        if(status == Status.ACTIVE) {
-            return Response.status(102).build();
-        }
-        if(status == Status.FINISHED) {
-            return Response.ok(validationResult).build();
-        }
-        return Response.status(100).build();
+    public VeraPDFServiceStatus getStatus() {
+        VeraPDFServiceStatus.ProcessorStatus processorStatus = evaluateStatus();
+        logger.info("Status requested, processorStatus is " + processorStatus);
+        return new VeraPDFServiceStatus(processorStatus, validationResult);
     }
 
     @DELETE
@@ -85,17 +81,11 @@ public class ValidationResource {
         //TODO: send message to main service
     }
 
-    private Status evaluateStatus() {
+    private VeraPDFServiceStatus.ProcessorStatus evaluateStatus() {
         if (this.veraPDFProcessor != null) {
-            return Status.ACTIVE;
+            return VeraPDFServiceStatus.ProcessorStatus.ACTIVE;
         } else {
-            return validationResult == null ? Status.IDLE : Status.FINISHED;
+            return validationResult == null ? VeraPDFServiceStatus.ProcessorStatus.IDLE : VeraPDFServiceStatus.ProcessorStatus.FINISHED;
         }
-    }
-
-    private enum Status {
-        IDLE,
-        ACTIVE,
-        FINISHED
     }
 }
