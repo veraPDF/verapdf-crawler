@@ -63,7 +63,7 @@ body.container-fluid {
 }
 
 .footer {
-  position: absolute;
+  /* position: absolute; */
   bottom: 0;
   width: 100%;
   height: 5px;
@@ -101,7 +101,7 @@ body.container-fluid {
 
 .main-form .form-label {
   display: inline-block;
-  min-width: 200px;
+  min-width: 250px;
 }
 
 .main-form .checkbox-input {
@@ -139,7 +139,7 @@ body.container-fluid {
 }
 
 .input-button {
-  margin: 15px 15px 0 175px;
+  margin: 15px 15px;/* 0 175px;*/
   padding: 10px 20px;
   min-width: 60px;
   min-height: 30px;
@@ -253,6 +253,9 @@ a.action .label {
 }
 .pagination .page-link, .pagination .disabled .page-link {
   border-color: #1550ad;
+}
+.pagination .page-item.hide{
+  display: none;
 }
 
 /* Domain details */

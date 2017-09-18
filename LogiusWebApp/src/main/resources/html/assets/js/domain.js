@@ -31,36 +31,40 @@ $(function () {
 
 
     // Retrieve domain information
-    var domains = {
-        'www.duallab.com': {
-            crawlURL: 'www.duallab.com',
-            startTime: '25 Aug 2017, 16:36',
-            finishTime: '25 Aug 2017, 17:15',
-            status: 'finished',
-            mailsList: ['example1@report.com', 'example2@report.com']
-        },
-        'www.vananaarbeter.nl': {
-            crawlURL: 'www.vananaarbeter.nl',
-            startTime: '25 Aug 2017, 16:36',
-            status: 'running',
-            mailsList: ['example1@report.com', 'example2@report.com']
-        },
-        'secure5.svb.nl': {
-            crawlURL: 'secure5.svb.nl',
-            startTime: '25 Aug 2017, 16:36',
-            status: 'paused',
-            mailsList: ['example1@report.com', 'example2@report.com']
-        }
-    };
-    var currentDomainName = getUrlParameter("domain");
-    var currentDomain = domains[currentDomainName];
+    // var domains = {
+    //     'www.duallab.com': {
+    //         crawlURL: 'www.duallab.com',
+    //         startTime: '25 Aug 2017, 16:36',
+    //         finishTime: '25 Aug 2017, 17:15',
+    //         status: 'finished',
+    //         mailsList: ['example1@report.com', 'example2@report.com']
+    //     },
+    //     'www.vananaarbeter.nl': {
+    //         crawlURL: 'www.vananaarbeter.nl',
+    //         startTime: '25 Aug 2017, 16:36',
+    //         status: 'running',
+    //         mailsList: ['example1@report.com', 'example2@report.com']
+    //     },
+    //     'secure5.svb.nl': {
+    //         crawlURL: 'secure5.svb.nl',
+    //         startTime: '25 Aug 2017, 16:36',
+    //         status: 'paused',
+    //         mailsList: ['example1@report.com', 'example2@report.com']
+    //     }
+    // };
+    // var currentDomainName = getUrlParameter("domain");
+    var currentDomain = {};//domains[currentDomainName];
+    function normalizeURL(url){
+        return url.replace(':', '%3A');
+    }
 
-    function domainInfoLoaded() {
+    function domainInfoLoaded(job) {
+        currentDomain = job;
         currentDomain.isComplete = currentDomain.status === 'finished' || currentDomain.status === 'failed';
 
         $('.main').addClass('status-' + currentDomain.status, { children: true });
 
-        $('.domain-name span').text(currentDomain.crawlURL);
+        $('.domain-name span').text(currentDomain.domain);
 
         $('.job-date').text(currentDomain.isComplete ? 'Tested on ' + currentDomain.startTime + ' - ' + currentDomain.finishTime : 'Test started on ' + currentDomain.startTime);
 
@@ -72,15 +76,15 @@ $(function () {
 
         $('.job-mails .label').text(currentDomain.isComplete ? 'Report sent to:' : 'Send report to:');
 
-        $('span.job-mails-list').text(currentDomain.mailsList.join(', '));
-        $('textarea.job-mails-list').val(currentDomain.mailsList.join(', '));
+        // $('span.job-mails-list').text(currentDomain.mailsList.join(', '));
+        // $('textarea.job-mails-list').val(currentDomain.mailsList.join(', '));
     }
 
     var errorMessage = '';
     var emailTextArea = $('.job-mails textarea.job-mails-list').tooltip({
         trigger: 'manual',
         template: '<div class="tooltip error" role="tooltip"><div class="arrow"></div><div class="tooltip-inner"></div></div>',
-        title: function() {
+        title: function () {
             return errorMessage;
         }
     }).on('focusout', validateEmails);
@@ -89,7 +93,7 @@ $(function () {
         var content = emailTextArea.val();
         var emails = content.split(/\s*,\s*/);
         var invalidEmails = [];
-        $.each(emails, function(index, email) {
+        $.each(emails, function (index, email) {
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                 invalidEmails.push(email);
             }
@@ -104,25 +108,213 @@ $(function () {
         return { valid: true, emails: emails };
     }
 
-    $('.job-mails .edit').on('click', function(){
+    $("#summary-date-input").on("keydown", function (e) {
+        if (e.keyCode == 13) {
+            loadSummaryData();
+        }
+    });
+
+    function loadSummaryData() {
+        var startDate = $("#summary-date-input")[0].value === "" ? currentDomain.startTime : $("#summary-date-input")[0].value;
+        $.ajax({
+            url: "/summary?domain=" + currentDomain.domain + "&startDate=" + startDate,
+            type: "GET",
+            success: function (result) {
+                // domainInfoLoaded(result);
+                // summaryChart.data.datasets[0].data[0] = 343;
+                // summaryChart.update()
+            },
+            error: function (result) {
+                // reportError("Error on job loading");
+            }
+        });
+    }
+
+    $("#documents-date-input").on("keydown", function (e) {
+        if (e.keyCode == 13) {
+            loadDocumentsData();
+        }
+    });
+
+    function loadDocumentsData() {
+        var startDate = $("documents-date-input")[0].value === "" ? currentDomain.startTime : $("documents-date-input")[0].value;
+        $.ajax({
+            url: "/document-statistics?domain=" + currentDomain.domain + "&startDate=" + startDate,
+            type: "GET",
+            success: function (result) {
+                // domainInfoLoaded(result);
+                // summaryChart.data.datasets[0].data[0] = 343;
+                // summaryChart.update()
+            },
+            error: function (result) {
+                // reportError("Error on job loading");
+            }
+        });
+
+    }
+
+    $("#errors-producer-input").on("keydown", function (e) {
+        if (e.keyCode == 13) {
+            loadErrorsData();
+        }
+    });
+
+    function loadErrorsData() {
+
+        var startDate = $("errors-producer-input")[0].value === "" ? currentDomain.startTime : $("errors-producer-input")[0].value;
+        $.ajax({
+            url: "/error-statistics?domain=" + normalizeURL(currentDomain.domain) + "&startDate=" + startDate,
+            type: "GET",
+            success: function (result) {
+                // domainInfoLoaded(result);
+                // summaryChart.data.datasets[0].data[0] = 343;
+                // summaryChart.update()
+            },
+            error: function (result) {
+                // reportError("Error on job loading");
+            }
+        });
+
+    }
+
+    $('.job-mails .edit').on('click', function () {
         $('.job-mails').addClass('edit-mode');
     });
 
-    $('.job-mails .done').on('click', function(){
+    $('.job-mails .done').on('click', function () {
         var validationResult = validateEmails();
         if (validationResult.valid) {
             currentDomain.mailsList = validationResult.emails;
             $('span.job-mails-list').text(currentDomain.mailsList.join(', '));
             $('.job-mails').removeClass('edit-mode');
-        }        
+        }
     });
 
-    $('.job-mails .cancel').on('click', function(){
+    $('.job-mails .cancel').on('click', function () {
         emailTextArea.val(currentDomain.mailsList.join(', ')).removeClass('error').tooltip('hide');
         $('.job-mails').removeClass('edit-mode');
     });
 
-    domainInfoLoaded();
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        // e.target // newly activated tab
+        // e.relatedTarget // previous active tab
+
+        switch (e.target.text) {
+            case "Summary":
+                loadSummaryData();
+                break;
+            case "Documents":
+                loadDocumentsData();
+                break;
+            case "Common errors":
+                loadErrorsData();
+                break;
+        }
+
+    })
+
+    $.ajax({
+        url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
+        type: "GET",
+        success: function (result) {
+            domainInfoLoaded(result);
+            loadSummaryData();
+        },
+        error: function (result) {
+            // reportError("Error on job loading");
+        }
+    });
+
+    $.ajax({
+        url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
+        type: "GET",
+        success: function (result) {
+            // domainInfoLoaded(result);
+
+            var mailsList;
+            for (var i = 0; i < result.length; i++) {
+                if (i !== result.length - 1) {
+                    if (result[i].emailAddress) {
+                        mailsList += result[i].emailAddress + ", ";
+                    }
+                } else {
+                    if (result[i].emailAddress) {
+                        mailsList += result[i].emailAddress;
+                    }
+                }
+
+            }
+
+            $('span.job-mails-list').text(mailsList);
+            $('textarea.job-mails-list').val(mailsList);
+
+        },
+        error: function (result) {
+            // reportError("Error on job loading");
+        }
+    });
+
+    $("#action-resume").on('click', function () {
+        var putData = Object.assign({}, currentDomain);
+        putData.status = 'running';
+
+        $.ajax({
+            url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
+            type: "PUT",
+            data: JSON.stringify(putData),
+            headers: { "Content-type": "application/json" },
+            success: function (result) {
+                $('.main').removeClass('status-' + currentDomain.status, { children: true });
+
+                // domainInfoLoaded(result);
+                domainInfoLoaded(putData);
+
+
+            },
+            error: function (result) {
+                // reportError("Error on job loading");
+            }
+        });
+    });
+
+    $("#action-pause").on('click', function () {
+        var putData = Object.assign({}, currentDomain);
+        putData.status = 'paused';
+
+        $.ajax({
+            url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
+            type: "PUT",
+            // async:false,
+            data: JSON.stringify(putData),
+            headers: { "Content-type": "application/json" },
+            success: function (result) {
+                $('.main').removeClass('status-' + currentDomain.status, { children: true });
+
+                // domainInfoLoaded(result);   
+                domainInfoLoaded(putData);
+
+            },
+            error: function (result) {
+                // reportError("Error on job loading");
+            }
+        });
+    });
+
+    $("#action-restart").on('click', function () {
+        $.ajax({
+            url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
+            type: "POST",
+            success: function (result) {
+                // domainInfoLoaded(result);
+            },
+            error: function (result) {
+                // reportError("Error on job loading");
+            }
+        });
+
+    });
+
+
 
     // Summary tab components
 
@@ -131,7 +323,7 @@ $(function () {
         firstDay: 1,
         minDate: new Date(2017, 7, 4),
         maxDate: new Date(2020, 12, 31),
-        yearRange: [2000,2020],
+        yearRange: [2000, 2020],
         showTime: false,
         format: 'DD-MM-YYYY'
     });
@@ -159,7 +351,7 @@ $(function () {
         firstDay: 1,
         minDate: new Date(2017, 7, 4),
         maxDate: new Date(2020, 12, 31),
-        yearRange: [2000,2020],
+        yearRange: [2000, 2020],
         showTime: false,
         format: 'DD-MM-YYYY'
     });
@@ -168,7 +360,7 @@ $(function () {
     var flavorsChart = new Chart(flavorsChartContext, {
         type: 'bar',
         data: {
-            labels: ['PDF/A-1a', 'PDF/A-1b', 'PDF/A-2a', 'PDF/A-2b','PDF/A-2u', 'PDF/A-3a', 'PDF/A-3b', 'PDF/A-3u', 'Other PDF'],
+            labels: ['PDF/A-1a', 'PDF/A-1b', 'PDF/A-2a', 'PDF/A-2b', 'PDF/A-2u', 'PDF/A-3a', 'PDF/A-3b', 'PDF/A-3u', 'Other PDF'],
             datasets: [{
                 data: [523, 26, 780, 313, 231, 23, 0, 0, 1278],
                 backgroundColor: ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white']
@@ -229,17 +421,17 @@ $(function () {
         minLength: 1,
         highlight: true
     },
-    {
-        name: 'producers',
-        source: engine
-    });
+        {
+            name: 'producers',
+            source: engine
+        });
 
     var errorsDatePicker = new Pikaday({
         field: document.getElementById('errors-date-input'),
         firstDay: 1,
         minDate: new Date(2017, 7, 4),
         maxDate: new Date(2020, 12, 31),
-        yearRange: [2000,2020],
+        yearRange: [2000, 2020],
         showTime: false,
         format: 'DD-MM-YYYY'
     });
