@@ -44,7 +44,7 @@ import java.util.List;
 
 public class HeritrixClient {
 
-    private static String resourcePath;
+    private String configTemplatePath;
     private final String baseUrl;
     private HttpClient httpClient;
 
@@ -63,7 +63,7 @@ public class HeritrixClient {
                         .loadTrustMaterial(null, (x509Certificates, s) -> true)
                         .build(), (s, sslSession) -> true)).setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE).setDefaultCredentialsProvider(credsProvider)
                         .setRetryHandler(new StandardHttpRequestRetryHandler(3, true)).build();
-        HeritrixClient.resourcePath = config.getResourcePath();
+        configTemplatePath = config.getConfigTemplatePath();
     }
 
     public boolean testHeritrixAvailability() throws IOException {
@@ -127,9 +127,9 @@ public class HeritrixClient {
         crawlUrls.add("https://" + domain);
         crawlUrls.add("http://" + domain);
 
-        String configurationFile = createCrawlConfiguration(job, crawlUrls, resourcePath + job + "_configuration.cxml");
+        File configurationFile = createCrawlConfiguration(job, crawlUrls);
         submitConfigFile(job, configurationFile);
-        new File(configurationFile).delete();
+        configurationFile.delete();
 
         return job;
     }
@@ -180,7 +180,7 @@ public class HeritrixClient {
         return result;
     }
 
-    private static String createCrawlConfiguration(String job, List<String> crawlUrls, String targetfileName) throws IOException {
+    private File createCrawlConfiguration(String job, List<String> crawlUrls) throws IOException {
 
         StringBuilder sb = new StringBuilder();
         for(String url: crawlUrls) {
@@ -191,8 +191,8 @@ public class HeritrixClient {
             sb.append(surt);
         }
 
-        File source = new File(resourcePath + "sample_configuration.cxml");
-        File destination = new File(targetfileName);
+        File source = new File(configTemplatePath);
+        File destination = File.createTempFile(job, ".cxml");
         Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         Charset charset = StandardCharsets.UTF_8;
@@ -201,7 +201,7 @@ public class HeritrixClient {
         content = content.replace("******", crawlUrls.get(0));
         content = content.replace("######", sb.toString());
         Files.write(destination.toPath(), content.getBytes(charset));
-        return targetfileName;
+        return destination;
     }
 
     public String getValidPDFReportUri(String job) throws IOException {
@@ -266,10 +266,9 @@ public class HeritrixClient {
         return result;
     }
 
-    private void submitConfigFile(String job, String filename) throws IOException {
-        File file = new File(filename);
+    private void submitConfigFile(String job, File configFile) throws IOException {
         HttpPut put = new HttpPut(baseUrl + "engine/job/" + job + "/jobdir/crawler-beans.cxml");
-        FileEntity entity = new FileEntity(file);
+        FileEntity entity = new FileEntity(configFile);
         put.setEntity(entity);
         httpClient.execute(put);
         put.releaseConnection();

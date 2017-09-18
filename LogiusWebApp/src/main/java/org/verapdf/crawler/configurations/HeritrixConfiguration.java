@@ -15,7 +15,7 @@ public class HeritrixConfiguration {
 	@NotEmpty
 	private String password;
 	@NotEmpty
-	private String resourcePath;
+	private String configTemplatePath;
 
 	public HeritrixConfiguration() {
 	}
@@ -51,12 +51,12 @@ public class HeritrixConfiguration {
 	}
 
 	@JsonProperty
-	public String getResourcePath() {
-		return resourcePath;
+	public String getConfigTemplatePath() {
+		return configTemplatePath;
 	}
 
 	@JsonProperty
-	public void setResourcePath(String resourcePath) {
-		this.resourcePath = resourcePath;
+	public void setConfigTemplatePath(String configTemplatePath) {
+		this.configTemplatePath = configTemplatePath;
 	}
 }
