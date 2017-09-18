@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ResourceManager {
-    private static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
+    private static final String JDBC_DRIVER = "com.mysql.cj.jdbc.Driver";
     private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
     private final List<Object> resources = new ArrayList<>();
