@@ -43,11 +43,9 @@ public class ErrorStatistics {
     }
 
     public static class ErrorCount implements Comparable<ErrorCount> {
-        @JsonProperty
-        public String description;
 
-        @JsonProperty
-        Integer count;
+        private String description;
+        private Integer count;
 
         public ErrorCount() {
         }
@@ -60,6 +58,26 @@ public class ErrorStatistics {
         @Override
         public int compareTo(ErrorCount errorCount) {
             return count.compareTo(errorCount.count);
+        }
+
+        @JsonProperty
+        public String getDescription() {
+            return description;
+        }
+
+        @JsonProperty
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        @JsonProperty
+        public Integer getCount() {
+            return count;
+        }
+
+        @JsonProperty
+        public void setCount(Integer count) {
+            this.count = count;
         }
     }
 }

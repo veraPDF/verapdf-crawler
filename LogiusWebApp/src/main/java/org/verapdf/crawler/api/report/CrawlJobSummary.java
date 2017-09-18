@@ -1,5 +1,6 @@
 package org.verapdf.crawler.api.report;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -10,7 +11,9 @@ public class CrawlJobSummary {
     private String domain;
     private String status;
     private int numberOfCrawledUrls;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date startTime;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date finishTime;
 
     private PDFValidationStatistics pdfStatistics;
@@ -82,7 +85,9 @@ public class CrawlJobSummary {
     @JsonProperty
     public void setStartTime(Date startTime) { this.startTime = startTime; }
 
+    @JsonProperty
     public Date getFinishTime() { return finishTime; }
 
+    @JsonProperty
     public void setFinishTime(Date finishTime) { this.finishTime = finishTime; }
 }

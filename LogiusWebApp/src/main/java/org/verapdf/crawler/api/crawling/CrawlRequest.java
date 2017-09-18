@@ -16,6 +16,7 @@ public class CrawlRequest {
     private String id;
     private boolean isFinished;
     private String emailAddress;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date crawlSinceTime;
 
     public CrawlRequest() {
@@ -62,13 +63,11 @@ public class CrawlRequest {
     }
 
     @JsonProperty
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     public Date getCrawlSinceTime() {
         return crawlSinceTime;
     }
 
     @JsonProperty
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     public void setCrawlSinceTime(Date crawlSinceTime) {
         this.crawlSinceTime = crawlSinceTime;
     }

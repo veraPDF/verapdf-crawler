@@ -1,5 +1,6 @@
 package org.verapdf.crawler.api.crawling;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.hibernate.validator.constraints.NotEmpty;
 
@@ -12,7 +13,9 @@ public class CrawlJob {
 
     private String id;
     private String jobURL;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date startTime;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date finishTime;
     private String status;
     private boolean isFinished = false;

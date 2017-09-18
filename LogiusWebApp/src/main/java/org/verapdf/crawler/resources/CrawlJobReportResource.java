@@ -1,5 +1,9 @@
 package org.verapdf.crawler.resources;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.DateTimeFormatterBuilder;
 import org.verapdf.crawler.api.crawling.CrawlJob;
 import org.verapdf.crawler.api.report.CrawlJobSummary;
 import org.verapdf.crawler.api.report.ErrorStatistics;
@@ -7,6 +11,7 @@ import org.verapdf.crawler.api.report.PdfPropertyStatistics;
 import org.verapdf.crawler.core.heritrix.HeritrixReporter;
 import org.verapdf.crawler.db.document.ValidatedPDFDao;
 import org.verapdf.crawler.db.jobs.CrawlJobDao;
+import org.verapdf.crawler.tools.DateParam;
 import org.xml.sax.SAXException;
 
 import javax.ws.rs.*;
@@ -14,6 +19,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Path("/report")
@@ -34,15 +42,13 @@ public class CrawlJobReportResource {
     @Path("/summary")
     @Produces(MediaType.APPLICATION_JSON)
     public CrawlJobSummary getSummary(@QueryParam("domain") String domain,
-                                      @QueryParam("startDate") Date startDate) throws IOException, ParserConfigurationException, SAXException {
+                                      @QueryParam("startDate") DateParam startDate) throws IOException, ParserConfigurationException, SAXException {
         CrawlJob crawlJob = crawlJobDao.getCrawlJobByCrawlUrl(domain);
-        Date time;
-        if(startDate == null) {
-            time = crawlJob.getStartTime();
+        if (crawlJob == null) {
+            return null;
         }
-        else {
-            time = startDate;
-        }
+        Date parsedDate = DateParam.getDateFromParam(startDate);
+        Date time = parsedDate == null ? crawlJob.getStartTime() : parsedDate;
         if(crawlJob.getJobURL() != null && !crawlJob.getJobURL().isEmpty()) {
             return reporter.getReport(crawlJob.getId(), crawlJob.getJobURL(), time);
         }
@@ -53,7 +59,7 @@ public class CrawlJobReportResource {
     @Path("/document-statistics")
     @Produces(MediaType.APPLICATION_JSON)
     public PdfPropertyStatistics getDocumentStatistics(@QueryParam("domain") String domain,
-                                                       @QueryParam("startDate") String startDate) {
+                                                       @QueryParam("startDate") DateParam startDate) {
         /* todo: change to the following structure:
             {
                 totalCount: 5612,
@@ -90,18 +96,18 @@ public class CrawlJobReportResource {
     @Path("/error-statistics")
     @Produces(MediaType.APPLICATION_JSON)
     public ErrorStatistics getErrorStatistics(@QueryParam("domain") String domain,
-                                              @QueryParam("startDate") String startDate,
+                                              @QueryParam("startDate") DateParam startDate,
                                               @QueryParam("flavor") String flavor,
                                               @QueryParam("version") String version,
                                               @QueryParam("producer") String producer) {
-        return validatedPDFDao.getErrorStatistics(domain, startDate, flavor, version, producer);
+        return validatedPDFDao.getErrorStatistics(domain, DateParam.getDateFromParam(startDate), flavor, version, producer);
     }
 
     @GET
     @Path("/full.ods")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Response getFullReportAsOds(@QueryParam("domain") String domain,
-                                       @QueryParam("startDate") String startDate) {
+                                       @QueryParam("startDate") DateParam startDate) {
         // todo: determine structure of ODS report
         return null;
     }

@@ -30,6 +30,8 @@ import java.util.Map;
 
 public class VeraPDFValidator implements PDFValidator {
 
+    private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
+
     private static final int MAX_VALIDATION_TIMEOUT_IN_MINUTES = 5;
     private static final int MAX_VALIDATION_RETRIES = 2;
 
@@ -38,7 +40,6 @@ public class VeraPDFValidator implements PDFValidator {
     private final InsertDocumentDao insertDocumentDao;
     private final CrawlJobDao crawlJobDao;
     private final ValidatedPDFDao validatedPDFDao;
-    private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
 
     public VeraPDFValidator(VeraPDFServiceConfiguration configuration, InsertDocumentDao insertDocumentDao, ValidatedPDFDao validatedPDFDao, CrawlJobDao crawlJobDao) {
         this.verapdfUrl = configuration.getUrl();

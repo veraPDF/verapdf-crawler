@@ -87,7 +87,8 @@ public class CrawlJobDao {
     }
 
     public CrawlJob getCrawlJobByCrawlUrl(String url) {
-        return template.query(String.format("select * from %s where %s like ?", CRAWL_JOB_TABLE_NAME, FIELD_DOMAIN), new CrawlJobMapper(), "%" + url + "%").get(0);
+        List<CrawlJob> query = template.query(String.format("select * from %s where %s like ?", CRAWL_JOB_TABLE_NAME, FIELD_DOMAIN), new CrawlJobMapper(), "%" + url + "%");
+        return query == null || query.isEmpty() ? null : query.get(0);
     }
 
     public String getIdByUrl(String url) {

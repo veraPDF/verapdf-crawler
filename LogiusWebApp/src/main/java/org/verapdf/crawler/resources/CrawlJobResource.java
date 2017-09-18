@@ -10,6 +10,7 @@ import org.verapdf.crawler.configurations.EmailServerConfiguration;
 import org.verapdf.crawler.core.heritrix.HeritrixReporter;
 import org.verapdf.crawler.db.jobs.CrawlJobDao;
 import org.verapdf.crawler.db.jobs.CrawlRequestDao;
+import org.verapdf.crawler.tools.DateParam;
 import org.xml.sax.SAXException;
 
 import javax.validation.constraints.NotNull;
@@ -117,7 +118,7 @@ public class CrawlJobResource {
     @GET
     @Path("/{domain}/documents")
     public List<Object> getDomainDocuments(@PathParam("domain") String domain,
-                                           @QueryParam("startDate") String startDate,
+                                           @QueryParam("startDate") DateParam startDate,
                                            @QueryParam("type") String type,
                                            @QueryParam("start") IntParam start,
                                            @QueryParam("limit") IntParam limit,

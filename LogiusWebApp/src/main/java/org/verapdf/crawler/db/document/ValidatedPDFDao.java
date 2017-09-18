@@ -107,7 +107,7 @@ public class ValidatedPDFDao {
         }
     }
 
-    public ErrorStatistics getErrorStatistics(String domain, String startDate, String flavor, String version, String producer) {
+    public ErrorStatistics getErrorStatistics(String domain, Date startDate, String flavor, String version, String producer) {
         String sql = "SELECT " + VALIDATION_ERRORS_TABLE_NAME + "." + FIELD_DESCRIPTION + ", COUNT(doc." + InsertDocumentDao.FIELD_DOCUMENT_URL +") AS `doc_count` \n" +
                 "FROM " + VALIDATION_ERRORS_REFERENCE_TABLE_NAME + "AS err\n" +
                 "     INNER JOIN " + InsertDocumentDao.DOCUMENTS_TABLE_NAME + "AS doc ON err." + FIELD_ERRORS_DOCUMENT_URL + "=doc." + InsertDocumentDao.FIELD_DOCUMENT_URL + " \n" +

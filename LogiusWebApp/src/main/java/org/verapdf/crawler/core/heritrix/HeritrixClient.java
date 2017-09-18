@@ -66,10 +66,6 @@ public class HeritrixClient {
         HeritrixClient.resourcePath = config.getResourcePath();
     }
 
-    public void setHttpClient(HttpClient httpClient) {
-        this.httpClient = httpClient;
-    }
-
     public boolean testHeritrixAvailability() throws IOException {
         HttpGet get = new HttpGet(baseUrl + "engine");
         boolean result = httpClient.execute(get).getStatusLine().getStatusCode() == 200;
