@@ -42,6 +42,7 @@ public class CrawlJobReportResource {
         }
         Date parsedDate = DateParam.getDateFromParam(startDate);
         Date time = parsedDate == null ? crawlJob.getStartTime() : parsedDate;
+        //TODO: use db rather than HeritrixReporter
         if(crawlJob.getJobURL() != null && !crawlJob.getJobURL().isEmpty()) {
             return reporter.getReport(crawlJob.getHeritrixJobId(), crawlJob.getJobURL(), time);
         }
