@@ -117,7 +117,7 @@ $(function () {
     function loadSummaryData() {
         var startDate = $("#summary-date-input")[0].value === "" ? currentDomain.startTime : $("#summary-date-input")[0].value;
         $.ajax({
-            url: "/summary?domain=" + currentDomain.domain + "&startDate=" + startDate,
+            url: "api/report/summary?domain=" + currentDomain.domain + "&startDate=" + startDate,
             type: "GET",
             success: function (result) {
                 // domainInfoLoaded(result);
@@ -137,9 +137,9 @@ $(function () {
     });
 
     function loadDocumentsData() {
-        var startDate = $("documents-date-input")[0].value === "" ? currentDomain.startTime : $("documents-date-input")[0].value;
+        var startDate = $("#documents-date-input")[0].value === "" ? currentDomain.startTime : $("documents-date-input")[0].value;
         $.ajax({
-            url: "/document-statistics?domain=" + currentDomain.domain + "&startDate=" + startDate,
+            url: "/api/report/document-statistics?domain=" + currentDomain.domain + "&startDate=" + startDate,
             type: "GET",
             success: function (result) {
                 // domainInfoLoaded(result);
@@ -161,9 +161,9 @@ $(function () {
 
     function loadErrorsData() {
 
-        var startDate = $("errors-producer-input")[0].value === "" ? currentDomain.startTime : $("errors-producer-input")[0].value;
+        var startDate = $("#errors-producer-input")[0].value === "" ? currentDomain.startTime : $("errors-producer-input")[0].value;
         $.ajax({
-            url: "/error-statistics?domain=" + normalizeURL(currentDomain.domain) + "&startDate=" + startDate,
+            url: "api/report/error-statistics?domain=" + normalizeURL(currentDomain.domain) + "&startDate=" + startDate,
             type: "GET",
             success: function (result) {
                 // domainInfoLoaded(result);
@@ -226,12 +226,12 @@ $(function () {
     });
 
     $.ajax({
-        url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
+        url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")) + "/requests",
         type: "GET",
         success: function (result) {
             // domainInfoLoaded(result);
 
-            var mailsList;
+            var mailsList = "";
             for (var i = 0; i < result.length; i++) {
                 if (i !== result.length - 1) {
                     if (result[i].emailAddress) {
@@ -255,7 +255,11 @@ $(function () {
     });
 
     $("#action-resume").on('click', function () {
-        var putData = Object.assign({}, currentDomain);
+        var putData = {};//Object.assign({}, currentDomain);
+        putData.domain = currentDomain.domain;
+        putData.startTime = currentDomain.startTime;
+        putData.finishTime = currentDomain.finishTime;
+
         putData.status = 'running';
 
         $.ajax({
@@ -278,7 +282,10 @@ $(function () {
     });
 
     $("#action-pause").on('click', function () {
-        var putData = Object.assign({}, currentDomain);
+        var putData = {};//Object.assign({}, currentDomain);
+        putData.domain = currentDomain.domain;
+        putData.startTime = currentDomain.startTime;
+        putData.finishTime = currentDomain.finishTime;
         putData.status = 'paused';
 
         $.ajax({

@@ -1,8 +1,38 @@
 var URL = "/api/crawl-requests";
 
 $(document).ready(function () {
-    document.getElementById("date_input").value = "01-01-2015";
+    // $("#date_input").value = "01-01-2015";
     $("input:button").click(main);
+    $('[data-toggle="tooltip"]').tooltip();
+
+
+    var errorDomainMessage = 'Incorrect Domain';
+    var errorMailMessage = 'Incorrect Email';
+    var errorDateMessage = 'Incorrect Date';
+
+    var domainInput = $('#urlinput').tooltip({
+        trigger: 'manual',
+        template: '<div class="tooltip error" role="tooltip"><div class="arrow"></div><div class="tooltip-inner"></div></div>',
+        title: function () {
+            return errorDomainMessage;
+        }
+    });
+
+    var emailInput = $('#email_input').tooltip({
+        trigger: 'manual',
+        template: '<div class="tooltip error" role="tooltip"><div class="arrow"></div><div class="tooltip-inner"></div></div>',
+        title: function () {
+            return errorMailMessage;
+        }
+    });
+
+    var dateInput = $('#date_input').tooltip({
+        trigger: 'manual',
+        template: '<div class="tooltip error" role="tooltip"><div class="arrow"></div><div class="tooltip-inner"></div></div>',
+        title: function () {
+            return errorDateMessage;
+        }
+    })
 
     var picker = new Pikaday(
         {
@@ -20,27 +50,53 @@ $(document).ready(function () {
         });
 });
 
+
+
 function main() {
+    $("input:button").attr("disabled", true);
 
-    if (document.getElementById("email_input").value) {
+    if ($("#email_input")[0].value) {
         var regexp = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-        if (!regexp.test(document.getElementById("email_input").value)) {
+        if (!regexp.test($("#email_input").value)) {
+            $("input:button").attr("disabled", false);
+            $('#email_input').tooltip('show');
             return;
         }
     }
 
-    var crawlUrlList = document.getElementById("urlinput").value.split(', ');
-    var urlRegExp = /^.+\..+$/
-
-    for (var i = 0; i < crawlUrlList.length; i++) {
-        if (!urlRegExp.test(crawlUrlList[i])) {
-            return;
-        }
+    var dateRegExp = /^\d{4}-\d{2}-\d{2}$/
+    if ($("#date_input")[0].value && !dateRegExp.test($("#date_input")[0].value)) {
+        $("input:button").attr("disabled", false);
+        $('#date_input').tooltip('show');
+        return;
     }
+
+
+    if ($("#urlinput")[0].value) {
+        var crawlUrlList = $("#urlinput")[0].value.split(', ');
+        var urlRegExp = /^.+\..+$/
+
+        for (var i = 0; i < crawlUrlList.length; i++) {
+            if (!urlRegExp.test(crawlUrlList[i])) {
+                $("input:button").attr("disabled", false);
+                $('#urlinput').tooltip("show");
+                return;
+            }
+        }
+    } else {
+        $("input:button").attr("disabled", false);
+        $('#urlinput').tooltip("show");
+        return;
+    }
+
     var postData = {};
     postData.domains = crawlUrlList;
-    postData.emailAddress = document.getElementById("email_input").value;
-    postData.crawlSinceTime = document.getElementById("date_input").value;
+    if ($("#email_input")[0].value) {
+        postData.emailAddress = $("#email_input")[0].value;
+    }
+    if ($("#date_input")[0].value) {
+        postData.crawlSinceTime = $("#date_input")[0].value;
+    }
 
     $.ajax({
         url: URL,
@@ -50,12 +106,33 @@ function main() {
         headers: {
             "content-type": "application/json"
         },
-        success: function (result) { },
-        error: function (result) { }
+        success: function (result) {
+            window.location.href = "domains.html";
+        },
+        error: function (result) {
+            reportError(result);
+            $("input:button").attr("disabled", false);
+        }
     });
 }
 
+function reportError(text) {
+    var container = $(".error-message-container");
+    container.text(text);
+    container.css({"color": "red"});
+    // var ul = document.getElementById("crawl_url_list");
+    // var li = document.createElement("li");
+    // var link = document.createElement("p");
+    // link.innerHTML = "<font color=\"red\">* " + text + ".</font>"
+    // li.appendChild(link);
+    // ul.innerHTML = '';
+    // ul.appendChild(li);
+}
+
 function keyListener(e) {
+    $('#urlinput').tooltip("hide");
+    $('#date_input').tooltip("hide");
+    $('#email_input').tooltip("hide");
     if (e.keyCode == 13) {
         main();
     }
