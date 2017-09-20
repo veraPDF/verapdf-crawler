@@ -74,7 +74,6 @@ Vagrant.configure("2") do |config|
       ansible.verbose = "vvvv"
       ansible.limit = "all"
       ansible.inventory_path = "ansible/development"
-      ansible.ask_sudo_pass = true
       ansible.galaxy_role_file = "ansible/roles.txt"
   end
 
