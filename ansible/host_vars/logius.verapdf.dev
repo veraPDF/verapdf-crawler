@@ -19,8 +19,19 @@ hostname: "logius.{{ hostdomain }}"
 timezone_zone: Europe/London
 # Install apt dependencies, Java 8 could be added here for Ubuntu Xenial installs
 apt_install:
-  - maven
   - git
+
+
+# Maven setup variables
+#
+# Maven major version number
+maven_version_major: '3'
+# Maven minor version number
+maven_version_minor: '3'
+# Maven patch version number
+maven_version_patch: '9'
+# SHA256 sum for the Maven redistributable package
+maven_redis_sha256sum: '6e3e9c949ab4695a204f74038717aa7b2689b1be94875899ac1b3fe42800ff82'
 
 # Heretrix setup variables
 #
