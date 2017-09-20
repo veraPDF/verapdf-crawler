@@ -4,7 +4,7 @@ CREATE TABLE `crawl_job_requests` (
   `id`           VARCHAR(36) NOT NULL,
   `is_finished`  TINYINT(1)   DEFAULT '0',
   `report_email` VARCHAR(255) DEFAULT NULL,
-  `crawl_since`  DATETIME     DEFAULT NULL,
+  `crawl_since`  DATE     DEFAULT NULL,
   PRIMARY KEY (`id`)
 );
 DROP TABLE IF EXISTS `document_properties`;
@@ -16,7 +16,7 @@ CREATE TABLE `crawl_jobs` (
   `domain`          VARCHAR(255) NOT NULL,
   `heritrix_job_id` VARCHAR(36)  NOT NULL,
   `job_url`         VARCHAR(255)          DEFAULT NULL,
-  `start_time`      TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `start_time`      DATETIME     NOT NULL DEFAULT NOW(),
   `finish_time`     DATETIME              DEFAULT NULL,
   `is_finished`     TINYINT(1)            DEFAULT '0',
   `job_status`      VARCHAR(10)           DEFAULT NULL,

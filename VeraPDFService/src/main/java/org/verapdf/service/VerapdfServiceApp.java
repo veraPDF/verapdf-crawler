@@ -1,5 +1,6 @@
 package org.verapdf.service;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
@@ -29,8 +30,12 @@ public class VerapdfServiceApp extends Application<VeraPDFServiceConfiguration> 
     @Override
     public void run(VeraPDFServiceConfiguration configuration, Environment environment) throws IOException {
         environment.jersey().setUrlPattern("/*");
+        environment.getObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
         HttpClient client = HttpClientBuilder.create().build();
         HttpResponse response = client.execute(new HttpGet(configuration.getLogiusUrl() + "/verapdf-service/settings"));
-        environment.jersey().register(new ValidationResource(configuration.getVerapdfPath(), new ObjectMapper().readValue(response.getEntity().getContent(), ValidationSettings.class)));
+        ValidationSettings validationSettings = environment.getObjectMapper().readValue(response.getEntity().getContent(), ValidationSettings.class);
+
+        environment.jersey().register(new ValidationResource(configuration.getVerapdfPath(), validationSettings));
     }
 }

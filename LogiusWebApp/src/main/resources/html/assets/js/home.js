@@ -30,13 +30,13 @@ function main() {
     }
 
     var crawlUrlList = document.getElementById("urlinput").value.split(', ');
-    var urlRegExp = /^.+\..+$/
-
-    for (var i = 0; i < crawlUrlList.length; i++) {
-        if (!urlRegExp.test(crawlUrlList[i])) {
-            return;
-        }
-    }
+    //var urlRegExp = /^.+\..+$/;
+    //
+    //for (var i = 0; i < crawlUrlList.length; i++) {
+    //    if (!urlRegExp.test(crawlUrlList[i])) {
+    //        return;
+    //    }
+    //}
     var postData = {};
     postData.domains = crawlUrlList;
     postData.emailAddress = document.getElementById("email_input").value;

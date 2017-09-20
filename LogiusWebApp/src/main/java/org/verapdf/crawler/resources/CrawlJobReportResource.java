@@ -1,9 +1,5 @@
 package org.verapdf.crawler.resources;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.DateTimeFormatterBuilder;
 import org.verapdf.crawler.api.crawling.CrawlJob;
 import org.verapdf.crawler.api.report.CrawlJobSummary;
 import org.verapdf.crawler.api.report.ErrorStatistics;
@@ -19,9 +15,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Path("/report")
@@ -49,10 +42,11 @@ public class CrawlJobReportResource {
         }
         Date parsedDate = DateParam.getDateFromParam(startDate);
         Date time = parsedDate == null ? crawlJob.getStartTime() : parsedDate;
+        //TODO: use db rather than HeritrixReporter
         if(crawlJob.getJobURL() != null && !crawlJob.getJobURL().isEmpty()) {
-            return reporter.getReport(crawlJob.getId(), crawlJob.getJobURL(), time);
+            return reporter.getReport(crawlJob.getHeritrixJobId(), crawlJob.getJobURL(), time);
         }
-        return reporter.getReport(crawlJob.getId(), time);
+        return reporter.getReport(crawlJob.getHeritrixJobId(), time);
     }
 
     @GET

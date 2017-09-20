@@ -9,7 +9,7 @@ import java.util.Map;
 public class DomainDocument {
     private String url;
     private String contentType;
-    private InsertDocumentDao.Status status;
+    private InsertDocumentDao.TestResultSummary testResultSummary;
     private List<String> errors;
     private Map<String, String> properties;
 
@@ -37,13 +37,13 @@ public class DomainDocument {
     }
 
     @JsonProperty
-    public InsertDocumentDao.Status getStatus() {
-        return status;
+    public InsertDocumentDao.TestResultSummary getStatus() {
+        return testResultSummary;
     }
 
     @JsonProperty
-    public void setStatus(InsertDocumentDao.Status status) {
-        this.status = status;
+    public void setStatus(InsertDocumentDao.TestResultSummary testResultSummary) {
+        this.testResultSummary = testResultSummary;
     }
 
     @JsonProperty

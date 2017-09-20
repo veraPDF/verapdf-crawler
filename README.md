@@ -30,7 +30,7 @@ Here your_login and your_password are the credentials you should pass to LogiusW
 
   You may change parameters server:applicationConnectors:port: and server:adminConnectors:port:. You need to configure emailServer: as a email server which will send notifications about finished jobs (it should be gmail server and port: 587 should remain intact).
 
-  The following settings must be provided: resourcePath(path to your "data/" directory), heritrixLogin and heritrixPassword (login and password you used to start heritrix) and verapdfPath(path to verapdf shell script, i.e. "/home/user/verapdf/verapdf").
+  The following settings must be provided: configTemplatePath(path to sample_configuration.cxml file), heritrixLogin and heritrixPassword (login and password you used to start heritrix) and verapdfPath(path to verapdf shell script, i.e. "/home/user/verapdf/verapdf").
 
   It is necessary to set up logging by providing the path to log file under logging.loggers.CustomLogger.appenders.currentLogFilename property. You should modify logging.loggers.CustomLogger.appenders.archivedLogFilenamePattern property accordingly.
 

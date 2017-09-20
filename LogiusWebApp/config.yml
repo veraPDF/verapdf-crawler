@@ -16,7 +16,7 @@ mysql:
   user: root
   password: anton
 heritrix:
-  resourcePath: /home/anton/Documents/Logius/LogiusWebApp/src/main/resources/
+  configTemplatePath: /home/anton/Documents/Logius/LogiusWebApp/src/main/resources/sample_configuration.cxml
   url: https://localhost:8443/
   login: admin
   password: logius

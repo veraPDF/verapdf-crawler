@@ -67,14 +67,14 @@ public class ReportDocumentDao {
         return template.queryForObject(String.format("select count(*) from %s where %s=? and %s=? and %s=? and %s>?",
                 InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_DOCUMENT_TYPE, InsertDocumentDao.FIELD_DOCUMENT_STATUS,
                 InsertDocumentDao.CRAWL_JOB_DOMAIN, InsertDocumentDao.FIELD_LAST_MODIFIED),
-                new Object[] {InsertDocumentDao.TYPE_PDF, InsertDocumentDao.Status.NOT_OPEN.getDataBaseValue(), domain, sinceTime}, Integer.class);
+                new Object[] {InsertDocumentDao.TYPE_PDF, InsertDocumentDao.TestResultSummary.NOT_OPEN.getDataBaseValue(), domain, sinceTime}, Integer.class);
     }
 
     public List<String> getInvalidPdfFiles(String domain, Date sinceTime) {
         return template.query(String.format("select %s from %s where %s=? and %s=? and %s=? and %s>?",
                 InsertDocumentDao.FIELD_DOCUMENT_URL, InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_DOCUMENT_TYPE,
                 InsertDocumentDao.FIELD_DOCUMENT_STATUS, InsertDocumentDao.CRAWL_JOB_DOMAIN, InsertDocumentDao.FIELD_LAST_MODIFIED),
-                new FileUrlMapper(), InsertDocumentDao.TYPE_PDF, InsertDocumentDao.Status.NOT_OPEN.getDataBaseValue(), domain, sinceTime);
+                new FileUrlMapper(), InsertDocumentDao.TYPE_PDF, InsertDocumentDao.TestResultSummary.NOT_OPEN.getDataBaseValue(), domain, sinceTime);
     }
     //</editor-fold>
     //<editor-fold desc="Valid pdf files">
@@ -82,7 +82,7 @@ public class ReportDocumentDao {
         return template.queryForObject(String.format("select count(*) from %s where %s=? and %s=? and %s=? and %s>?",
                 InsertDocumentDao.DOCUMENTS_TABLE_NAME, InsertDocumentDao.FIELD_DOCUMENT_TYPE, InsertDocumentDao.FIELD_DOCUMENT_STATUS,
                 InsertDocumentDao.CRAWL_JOB_DOMAIN, InsertDocumentDao.FIELD_LAST_MODIFIED),
-                new Object[] {InsertDocumentDao.TYPE_PDF, InsertDocumentDao.Status.OPEN.getDataBaseValue(), domain, sinceTime}, Integer.class);
+                new Object[] {InsertDocumentDao.TYPE_PDF, InsertDocumentDao.TestResultSummary.OPEN.getDataBaseValue(), domain, sinceTime}, Integer.class);
     }
     //</editor-fold>
     //<editor-fold desc="ODF files">
