@@ -48,10 +48,10 @@ public class CrawlJobDao {
     }
 
     public void addJob(CrawlJob job) {
-        logger.info("Job inserted into database: " + job.getId());
+        logger.info("Job inserted into database: " + job.getHeritrixJobId());
         template.update(String.format("insert into %s (%s, %s, %s, %s) values (?,?,?,'active')"
                 , CRAWL_JOB_TABLE_NAME, FIELD_HERITRIX_JOB_ID, FIELD_DOMAIN, FIELD_JOB_URL, FIELD_STATUS)
-                , job.getId(), job.getDomain(), job.getJobURL());
+                , job.getHeritrixJobId(), job.getDomain(), job.getJobURL());
     }
 
     public void removeJob(String domain) {

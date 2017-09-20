@@ -2,20 +2,38 @@ package org.verapdf.crawler.api.crawling;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.hibernate.validator.constraints.NotEmpty;
+import org.hibernate.annotations.GenericGenerator;
 
-import javax.persistence.Entity;
+import javax.persistence.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+@Entity
+@Table(name = "crawl_job_requests")
 public class CrawlRequest {
-    @NotEmpty
-    private List<String> domains;
+
+    @Id
+    @GeneratedValue(generator = "uuid2")
+    @GenericGenerator(name = "uuid2", strategy = "uuid2")
+    @JsonProperty
     private String id;
-    private boolean isFinished;
+
+    @Transient
+    @JsonProperty
+    private List<String> domains;
+
+    @Column(name = "is_finished")
+    @JsonProperty
+    private boolean finished;
+
+    @Column(name = "report_email")
+    @JsonProperty
     private String emailAddress;
+
+    @Column(name = "crawl_since")
+    @Temporal(TemporalType.DATE)
+    @JsonProperty
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date crawlSinceTime;
 
@@ -23,51 +41,41 @@ public class CrawlRequest {
     }
 
     public CrawlRequest(String id, String emailAddress, Date crawlSinceTime) {
-        this.domains = new ArrayList<>();
         this.id = id;
+        this.domains = new ArrayList<>();
         this.emailAddress = emailAddress;
-        this.isFinished = false;
+        this.finished = false;
         this.crawlSinceTime = crawlSinceTime;
     }
 
-    @JsonProperty
+    public String getId() { return  id; }
+
+    public void setId(String id) { this.id = id; }
+
     public List<String> getDomains() { return domains; }
 
-    @JsonProperty
     public void setDomains(List<String> domains) {
         this.domains = domains;
     }
 
-    @JsonProperty
-    public String getId() { return  id; }
-
-    @JsonProperty
-    public void setId(String id) { this.id = id; }
-
-    @JsonProperty
     public boolean isFinished() {
-        return isFinished;
+        return finished;
     }
 
-    @JsonProperty
     public void setFinished(boolean finished) {
-        isFinished = finished;
+        this.finished = finished;
     }
 
-    @JsonProperty
     public String getEmailAddress() { return emailAddress; }
 
-    @JsonProperty
     public void setEmailAddress(String emailAddress) {
         this.emailAddress = emailAddress;
     }
 
-    @JsonProperty
     public Date getCrawlSinceTime() {
         return crawlSinceTime;
     }
 
-    @JsonProperty
     public void setCrawlSinceTime(Date crawlSinceTime) {
         this.crawlSinceTime = crawlSinceTime;
     }
