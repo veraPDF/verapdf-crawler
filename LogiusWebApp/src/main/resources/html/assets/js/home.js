@@ -57,7 +57,7 @@ function main() {
 
     if ($("#email_input")[0].value) {
         var regexp = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-        if (!regexp.test($("#email_input").value)) {
+        if (!regexp.test($("#email_input")[0].value)) {
             $("input:button").attr("disabled", false);
             $('#email_input').tooltip('show');
             return;
@@ -74,14 +74,11 @@ function main() {
 
     if ($("#urlinput")[0].value) {
         var crawlUrlList = $("#urlinput")[0].value.split(', ');
-        var urlRegExp = /^.+\..+$/
 
         for (var i = 0; i < crawlUrlList.length; i++) {
-            if (!urlRegExp.test(crawlUrlList[i])) {
                 $("input:button").attr("disabled", false);
                 $('#urlinput').tooltip("show");
-                return;
-            }
+                return; 
         }
     } else {
         $("input:button").attr("disabled", false);

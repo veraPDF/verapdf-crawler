@@ -13,6 +13,7 @@
 
     <script src="assets/js/common.js"></script>
     <script src="assets/js/domains.js"></script>
+    <script src="assets/js/jquery.twbsPagination.min.js"></script>
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -35,6 +36,8 @@
         </nav>
     </header>
     <main class="main">
+
+            
 
         <form class="form-inline d-flex justify-content-between">
             <h4 class="">Tested domains</h4>
@@ -77,7 +80,7 @@
         </table>
 
         <nav>
-            <ul class="pagination pagination-sm justify-content-center" id='pagination-container'>
+            <!-- <ul class="pagination pagination-sm justify-content-center" id='pagination-container'>
                 <li class="page-item" id='start'><a class="page-link" href="#">«</a></li>
                 <li class="page-item" id='previous'><a class="page-link" href="#">Previous</a></li>
                 <li class="page-item active" id='first'><a class="page-link" href="#">1</a></li>
@@ -87,7 +90,8 @@
                 <li class="page-item" id='fifth'><a class="page-link" href="#">5</a></li>
                 <li class="page-item" id='next'><a class="page-link" href="#">Next</a></li>
                 <li class="page-item" id='end'><a class="page-link" href="#">»</a></li>
-            </ul>
+            </ul> -->
+            <ul id="pagination-container" class="pagination pagination-sm justify-content-center"></ul>
         </nav>
     </main>
     <footer class="footer"></footer>

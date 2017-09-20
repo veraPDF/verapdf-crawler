@@ -99,10 +99,10 @@ body.container-fluid {
   width: 258px;
 }
 
-/* .main-form .form-label {
+.main-form .form-label {
   display: inline-block;
   min-width: 250px;
-} */
+}
 .main-form .error-message-container{
   display: inline-block;
   min-width: 250px;
