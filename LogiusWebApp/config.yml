@@ -15,6 +15,23 @@ mysql:
   connectionString: jdbc:mysql://localhost:3306/logius?useSSL=false
   user: root
   password: anton
+database:
+  driverClass: com.mysql.cj.jdbc.Driver
+  user: logius
+  password: logius
+  url: jdbc:mysql://localhost:3306/logius?useSSL=false
+  properties:
+    charSet: UTF-8
+    hibernate.dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+  # the maximum amount of time to wait on an empty pool before throwing an exception
+  maxWaitForConnection: 1s
+  validationQuery: "/* MyApplication Health Check */ SELECT 1"
+  # the minimum number of connections to keep open
+  minSize: 8
+  # the maximum number of connections to keep open
+  maxSize: 32
+  # whether or not idle connections should be validated
+  checkConnectionWhileIdle: false
 heritrix:
   configTemplatePath: /home/anton/Documents/Logius/LogiusWebApp/src/main/resources/sample_configuration.cxml
   url: https://localhost:8443/
