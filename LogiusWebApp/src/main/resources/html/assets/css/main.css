@@ -105,7 +105,7 @@ body.container-fluid {
 }
 .main-form .error-message-container{
   display: inline-block;
-  min-width: 250px;
+  width: 250px;
 }
 
 .main-form .checkbox-input {
@@ -227,6 +227,10 @@ body.container-fluid {
 
 .domains-list td.col-actions {
   width: 60px;
+}
+
+.domains-list td.col-actions.hide {
+  display: none;
 }
 
 .domains-list a, .domains-list a:active, .domains-list a:hover, .domains-list a:focus {

@@ -71,20 +71,12 @@ function main() {
         return;
     }
 
-
-    if ($("#urlinput")[0].value) {
-        var crawlUrlList = $("#urlinput")[0].value.split(', ');
-
-        for (var i = 0; i < crawlUrlList.length; i++) {
-                $("input:button").attr("disabled", false);
-                $('#urlinput').tooltip("show");
-                return; 
-        }
-    } else {
+    if (!$("#urlinput")[0].value) {
         $("input:button").attr("disabled", false);
         $('#urlinput').tooltip("show");
         return;
     }
+    // var crawlUrlList = $("#urlinput")[0].value.split(', ');
 
     var postData = {};
     postData.domains = crawlUrlList;
@@ -107,7 +99,7 @@ function main() {
             window.location.href = "domains.html";
         },
         error: function (result) {
-            reportError(result);
+            reportError(result.responseJSON.message);
             $("input:button").attr("disabled", false);
         }
     });
