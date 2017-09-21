@@ -12,7 +12,8 @@ $(document).ready(function () {
 
     var domainInput = $('#urlinput').tooltip({
         trigger: 'manual',
-        template: '<div class="tooltip error" role="tooltip"><div class="arrow"></div><div class="tooltip-inner"></div></div>',
+        placement: 'right',
+        template: '<div class="tooltip error plasement right" role="tooltip"><div class="arrow"></div><div class="tooltip-inner"></div></div>',
         title: function () {
             return errorDomainMessage;
         }
@@ -20,7 +21,8 @@ $(document).ready(function () {
 
     var emailInput = $('#email_input').tooltip({
         trigger: 'manual',
-        template: '<div class="tooltip error" role="tooltip"><div class="arrow"></div><div class="tooltip-inner"></div></div>',
+        placement: 'right',
+        template: '<div class="tooltip error plasement right" role="tooltip"><div class="arrow"></div><div class="tooltip-inner"></div></div>',
         title: function () {
             return errorMailMessage;
         }
@@ -28,7 +30,8 @@ $(document).ready(function () {
 
     var dateInput = $('#date_input').tooltip({
         trigger: 'manual',
-        template: '<div class="tooltip error" role="tooltip"><div class="arrow"></div><div class="tooltip-inner"></div></div>',
+        placement: 'right',
+        template: '<div class="tooltip error plasement right" role="tooltip"><div class="arrow"></div><div class="tooltip-inner"></div></div>',
         title: function () {
             return errorDateMessage;
         }
@@ -54,13 +57,19 @@ $(document).ready(function () {
 
 function main() {
     $("input:button").attr("disabled", true);
+    $('#date_input').tooltip('hide');
+    $('#email_input').tooltip('hide');
+    $('#urlinput').tooltip("hide");
+
+    var validForm = true;
 
     if ($("#email_input")[0].value) {
         var regexp = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
         if (!regexp.test($("#email_input")[0].value)) {
             $("input:button").attr("disabled", false);
             $('#email_input').tooltip('show');
-            return;
+            validForm = false;
+
         }
     }
 
@@ -68,15 +77,19 @@ function main() {
     if ($("#date_input")[0].value && !dateRegExp.test($("#date_input")[0].value)) {
         $("input:button").attr("disabled", false);
         $('#date_input').tooltip('show');
-        return;
+        validForm = false;
     }
 
     if (!$("#urlinput")[0].value) {
         $("input:button").attr("disabled", false);
         $('#urlinput').tooltip("show");
+        validForm = false;
+    }
+
+    if(!validForm){
         return;
     }
-    // var crawlUrlList = $("#urlinput")[0].value.split(', ');
+    var crawlUrlList = $("#urlinput")[0].value.split(', ');
 
     var postData = {};
     postData.domains = crawlUrlList;
@@ -109,13 +122,6 @@ function reportError(text) {
     var container = $(".error-message-container");
     container.text(text);
     container.css({"color": "red"});
-    // var ul = document.getElementById("crawl_url_list");
-    // var li = document.createElement("li");
-    // var link = document.createElement("p");
-    // link.innerHTML = "<font color=\"red\">* " + text + ".</font>"
-    // li.appendChild(link);
-    // ul.innerHTML = '';
-    // ul.appendChild(li);
 }
 
 function keyListener(e) {

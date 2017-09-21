@@ -60,15 +60,16 @@ $(function () {
 
     function domainInfoLoaded(job) {
         currentDomain = job;
-        currentDomain.isComplete = currentDomain.status === 'finished' || currentDomain.status === 'failed';
+        currentDomain.isComplete = currentDomain.status === 'FINISHED' || currentDomain.status === 'FAILED';
 
-        $('.main').addClass('status-' + currentDomain.status, { children: true });
+        
+        $('.main').addClass('status-' + currentDomain.status.toLowerCase(), { children: true });
 
         $('.domain-name span').text(currentDomain.domain);
 
         $('.job-date').text(currentDomain.isComplete ? 'Tested on ' + currentDomain.startTime + ' - ' + currentDomain.finishTime : 'Test started on ' + currentDomain.startTime);
 
-        $('.status-text').text(currentDomain.status);
+        $('.status-text').text(currentDomain.status.charAt(0).toUpperCase() + currentDomain.status.substr(1).toLowerCase());
 
         if (!currentDomain.isComplete) {
             $('.job-mails').addClass('editable');
@@ -260,7 +261,7 @@ $(function () {
         putData.startTime = currentDomain.startTime;
         putData.finishTime = currentDomain.finishTime;
 
-        putData.status = 'running';
+        putData.status = 'RUNNING';
 
         $.ajax({
             url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
@@ -268,7 +269,7 @@ $(function () {
             data: JSON.stringify(putData),
             headers: { "Content-type": "application/json" },
             success: function (result) {
-                $('.main').removeClass('status-' + currentDomain.status, { children: true });
+                $('.main').removeClass('status-' + currentDomain.status.toLowerCase(), { children: true });
 
                 // domainInfoLoaded(result);
                 domainInfoLoaded(putData);
@@ -286,7 +287,7 @@ $(function () {
         putData.domain = currentDomain.domain;
         putData.startTime = currentDomain.startTime;
         putData.finishTime = currentDomain.finishTime;
-        putData.status = 'paused';
+        putData.status = 'PAUSED';
 
         $.ajax({
             url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
@@ -295,7 +296,7 @@ $(function () {
             data: JSON.stringify(putData),
             headers: { "Content-type": "application/json" },
             success: function (result) {
-                $('.main').removeClass('status-' + currentDomain.status, { children: true });
+                $('.main').removeClass('status-' + currentDomain.status.toLowerCase(), { children: true });
 
                 // domainInfoLoaded(result);   
                 domainInfoLoaded(putData);
