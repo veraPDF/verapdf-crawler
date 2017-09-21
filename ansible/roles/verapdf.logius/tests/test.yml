@@ -1,0 +1,7 @@
+# test file for verapdf.logius
+---
+- hosts: localhost
+  connection: local
+  become: true
+  roles:
+    - ../../

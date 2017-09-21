@@ -1,0 +1,83 @@
+---
+# Development box setup for the logius crawler app and Heritrix.
+# Used by Vagrantfile to set up a local development VM
+# bais of a server roll
+
+# Hostname variables
+#
+# IP Address host machine, MUST be a debian jessie box at present.
+# This is set to the IP address of the VM in the Vagrantfile in the project root.
+ansible_ssh_host: 192.168.10.100
+# Domain of host, used to derive custom sub-domains
+hostdomain: verapdf.dev
+# Custom sub-domain for Logius app GUI
+hostname: "logius.{{ hostdomain }}"
+
+# System variables
+#
+# Set machine timezone
+timezone_zone: Europe/London
+# Install apt dependencies, Java 8 could be added here for Ubuntu Xenial installs
+apt_install:
+  - git
+
+
+# Maven setup variables
+#
+# Maven major version number
+maven_version_major: '3'
+# Maven minor version number
+maven_version_minor: '3'
+# Maven patch version number
+maven_version_patch: '9'
+# SHA256 sum for the Maven redistributable package
+maven_redis_sha256sum: '6e3e9c949ab4695a204f74038717aa7b2689b1be94875899ac1b3fe42800ff82'
+
+# Heretrix setup variables
+#
+# Custom sub-domain for Heritrix GUI if required
+heritrix_host_name: "heritrix.{{ hostdomain }}"
+heritrix_linux_user: "logius"
+heritrix_linux_group: "{{ heritrix_linux_user }}"
+# Set true if Java 8 installation required from Jessie backports
+heritrix_install_java: true
+# Set true if you want to provide external access to the Heritrix GUI via nginx
+heritrix_nginx_access: true
+# Set true to generate self signed SSL certs for a development box
+heritrix_use_self_cert: true
+
+# MySQL config derived from app config
+#
+mysql_root_password: "{{ logius_db_admin_password }}"
+mysql_databases:
+  - name: "{{ logius_db_schema_name }}"
+mysql_users:
+  - name: "{{ logius_db_user_name }}"
+    password: "{{ logius_db_password }}"
+    priv: "{{ logius_db_schema_name }}.*:ALL"
+
+# nginx config
+#
+nginx_vhosts:
+  - name:
+      -  "{{ hostname }}"
+      -  "{{ ansible_ssh_host }}"
+    listen:
+      - 80
+    template: '_proxy'
+    upstream_name: "localhost:{{ logius_web_port }}/"
+    proxy_params:
+      - "proxy_redirect off;"
+      - "proxy_set_header Host $host;"
+      - "proxy_set_header X-Real-IP $remote_addr;"
+      - "proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;"
+      - "proxy_max_temp_file_size 0;"
+      - "client_max_body_size 100m;"
+      - "client_body_buffer_size 90000k;"
+      - "proxy_connect_timeout 9000;"
+      - "proxy_send_timeout 9000;"
+      - "proxy_read_timeout 9000;"
+      - "proxy_buffer_size 4000k;"
+      - "proxy_buffers 4 32000k;"
+      - "proxy_busy_buffers_size 64000k;"
+      - "proxy_temp_file_write_size 64000k;"

@@ -1,0 +1,92 @@
+# tasks file for verapdf.heritrix
+---
+- name: Add backports repo for Java 8 in Debian
+  apt_repository:
+    repo: deb http://ftp.de.debian.org/debian jessie-backports main
+    state: present
+
+- name: Install Open JDK Java 8 from backports
+  apt:
+    name: openjdk-8-jdk
+    state: present
+    default_release: jessie-backports
+    update_cache: yes
+  when: heritrix_install_java
+
+- name: Update alternatives for Open JDK 8
+  alternatives:
+    name: java
+    path: /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+  when: heritrix_install_java
+
+- name: Create heritrix group
+  group:
+    name: "{{ heritrix_linux_group }}"
+    state: present
+
+- name: Create heritrix user
+  user:
+    name: "{{ heritrix_linux_user }}"
+    group: "{{ heritrix_linux_group }}"
+    createhome: no
+    system: yes
+
+- name: Download and unpack the heritrix tar gzip file
+  unarchive:
+    src: "http://builds.archive.org/maven2/org/archive/heritrix/heritrix/{{ heritrix_version }}/heritrix-{{ heritrix_version }}-dist.tar.gz"
+    dest: "{{ heritrix_install_root }}"
+    remote_src: True
+    creates: "{{ heritrix_install_root }}/heritrix-{{ heritrix_version }}"
+
+- name: Generate keystore files for heritrix using Open JDK / Java 8
+  command: keytool -keystore adhoc.keystore -storepass password -keypass password -alias adhoc -genkey -keyalg RSA -dname "CN=Heritrix Ad-Hoc HTTPS Certificate" -validity 3650
+  args:
+    chdir: "{{ heritrix_root }}"
+    creates: "{{ heritrix_root }}/adhoc.keystore"
+  when: heritrix_install_java
+
+- name: Set ownership of heritrix installation
+  file:
+    path: "{{ heritrix_root }}"
+    owner: "{{ heritrix_linux_user }}"
+    group: "{{ heritrix_linux_group }}"
+    mode: 0775
+    recurse: yes
+
+- name: Set executable permission for heritrix appear
+  file:
+    path: "{{ heritrix_executable }}"
+    mode: "u+x"
+
+- name: Check nginx ssl directory exists
+  stat:
+    path: "{{ heritrix_nginx_ssl_path}}"
+  register: nginx_ssl_dir
+
+- name: Create self-signed SSL cert
+  command: openssl req -new -nodes -x509 -subj "/C=GB/ST=North Yorkshire/L=York/O=IT/CN=${ansible_fqdn}" -days 3650 -keyout {{ heritrix_ssl_key_path }} -out {{ heritrix_ssl_cert_path }} -extensions v3_ca
+  args:
+    creates: "{{ heritrix_ssl_cert_path }}"
+  notify: reload nginx
+  when: heritrix_use_self_cert and heritrix_nginx_access and nginx_ssl_dir.stat.exists
+
+- name: Add nginx configuration file to sites-available
+  template:
+    src: "etc/nginx/sites-available/heritrix-nginx.j2"
+    dest: "/etc/nginx/sites-available/{{ heritrix_host_name }}"
+    owner: root
+    group: root
+    mode: 0644
+  register: heritrix_site_available
+  when: heritrix_nginx_access
+
+- name: Create nginx sites-enabled symlink
+  file:
+    path: "/etc/nginx/sites-enabled/{{ heritrix_host_name }}"
+    src: "/etc/nginx/sites-available/{{ heritrix_host_name }}"
+    state: link
+    owner: root
+    group: root
+    mode: 0644
+  when: heritrix_nginx_access
+  notify: reload nginx

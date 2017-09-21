@@ -1,0 +1,7 @@
+# test file for verapdf.heritrix
+---
+- hosts: localhost
+  connection: local
+  become: true
+  roles:
+    - ../../

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+nohup java -jar {{ logius_app_bin }}/web-app-1.0.jar server {{ logius_app_config }}/web-app.yml >/dev/null 2>&1 &
+nohup java -jar {{ logius_app_bin }}/sample-web-app-1.0.jar server {{ logius_app_config }}/sample-web-app.yml >/dev/null 2>&1 &
+nohup java -jar {{ logius_app_bin }}/verapdf-service-1.0.jar server {{ logius_app_config }}/verapdf-service.yml >/dev/null 2>&1 &
