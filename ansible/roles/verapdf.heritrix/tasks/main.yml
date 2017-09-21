@@ -50,7 +50,7 @@
     path: "{{ heritrix_root }}"
     owner: "{{ heritrix_linux_user }}"
     group: "{{ heritrix_linux_group }}"
-    mode: 774
+    mode: 0775
     recurse: yes
 
 - name: Set executable permission for heritrix appear
@@ -88,4 +88,5 @@
     owner: root
     group: root
     mode: 0644
+  when: heritrix_nginx_access
   notify: reload nginx

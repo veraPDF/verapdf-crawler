@@ -10,7 +10,6 @@
     name: "{{ logius_linux_user }}"
     groups:
       - "{{ logius_linux_group }}"
-      - "heritrix"
     createhome: no
     system: yes
 
@@ -51,7 +50,7 @@
     - "config"
     - "resources"
 
-- name: Copy application resources files
+- name: Copy application sample report
   copy:
     src: "{{ logius_git_root }}/LogiusWebApp/src/main/resources/{{ item }}"
     remote_src: true
@@ -60,8 +59,17 @@
     group: "{{ logius_linux_group }}"
     mode: "755"
   with_items:
-    - "sample_configuration.cxml"
     - "sample_report.ods"
+
+- name: Add Web app configuration templates
+  template:
+    src: "var/lib/logius/resources/{{ item }}.j2"
+    dest: "{{ logius_app_resources }}/{{ item }}"
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: 0775
+  with_items:
+    - "sample_configuration.cxml"
 
 - name: Deploy application jars
   copy:
@@ -91,14 +99,22 @@
 
 - name: Add Web app startup script
   template:
-    src: "var/lib/logius/run.sh.j2"
-    dest: "{{ logius_app_home }}/run.sh"
+    src: "var/lib/logius/{{ item }}.sh.j2"
+    dest: "{{ logius_app_home }}/{{ item }}.sh"
     owner: "{{ logius_linux_user }}"
     group: "{{ logius_linux_group }}"
     mode: 0755
+  with_items:
+    - "run"
+    - "run-heritrix"
 
 - name: Create app DB Schema
   mysql_db:
     state: import
     name: "logius"
     target: "{{ logius_git_root }}/LogiusWebApp/src/main/resources/schema.sql"
+
+- name: Remove default nginx site
+  file:
+    path: "/etc/nginx/sites-enabled/default"
+    state: absent
