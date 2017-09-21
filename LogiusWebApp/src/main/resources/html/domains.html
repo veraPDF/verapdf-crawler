@@ -13,6 +13,7 @@
 
     <script src="assets/js/common.js"></script>
     <script src="assets/js/domains.js"></script>
+    <script src="assets/js/jquery.twbsPagination.min.js"></script>
 
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -36,11 +37,13 @@
     </header>
     <main class="main">
 
+            
+
         <form class="form-inline d-flex justify-content-between">
             <h4 class="">Tested domains</h4>
             <div class="input-group input-group-sm domain-filter">
-                <input type="text" class="form-control" placeholder="Search domain" aria-label="Search domain">
-                <span class="input-group-addon material-icons">search</span>
+                <input type="text" class="form-control" placeholder="Search domain" id="serch-domain" aria-label="Search domain">
+                <span id="serch-domain-action" class="input-group-addon material-icons">search</span>
             </div>
         </form>
 
@@ -56,20 +59,32 @@
             </thead>
             <tbody>
                 <tr>
-                    <td><a id="domain" href="domain.html?domain="></a></td>
-                    <td id="start"></td>
-                    <td id="end"></td>
-                    <td id="status"></td>
+                    <td><a class="domain" href="domain.html?domain="></a></td>
+                    <td class="start"></td>
+                    <td class="end"></td>
+                    <td class="status"></td>
                     <td class="col-actions">
-                        <a href="#" class="action d-flex flex-column" id="action1">
-                            <span class="material-icons"></span>
-                            <span class="label"></span>
+                            <a href="#" class="action d-flex flex-column empty-action">
+                                <span class="material-icons"></span>
+                                <span class="label"></span>
+                            </a>
+                        </td>
+                    <td class="col-actions">
+                        <a href="#" class="action d-flex flex-column action-resume">
+                            <span class="material-icons">play_arrow</span>
+                            <span class="label">Resume</span>
                         </a>
                     </td>
                     <td class="col-actions">
-                        <a href="#" class="action d-flex flex-column" id="action2">
-                            <span class="material-icons"></span>
-                            <span class="label"></span>
+                            <a href="#" class="action d-flex flex-column action-pause">
+                                <span class="material-icons">pause</span>
+                                <span class="label">Pause</span>
+                            </a>
+                        </td>
+                    <td class="col-actions">
+                        <a href="#" class="action d-flex flex-column action-restart">
+                            <span class="material-icons">replay</span>
+                            <span class="label">Restart</span>
                         </a>
                     </td>
                 </tr>              
@@ -77,7 +92,7 @@
         </table>
 
         <nav>
-            <ul class="pagination pagination-sm justify-content-center" id='pagination-container'>
+            <!-- <ul class="pagination pagination-sm justify-content-center" id='pagination-container'>
                 <li class="page-item" id='start'><a class="page-link" href="#">«</a></li>
                 <li class="page-item" id='previous'><a class="page-link" href="#">Previous</a></li>
                 <li class="page-item active" id='first'><a class="page-link" href="#">1</a></li>
@@ -87,7 +102,8 @@
                 <li class="page-item" id='fifth'><a class="page-link" href="#">5</a></li>
                 <li class="page-item" id='next'><a class="page-link" href="#">Next</a></li>
                 <li class="page-item" id='end'><a class="page-link" href="#">»</a></li>
-            </ul>
+            </ul> -->
+            <ul id="pagination-container" class="pagination pagination-sm justify-content-center"></ul>
         </nav>
     </main>
     <footer class="footer"></footer>

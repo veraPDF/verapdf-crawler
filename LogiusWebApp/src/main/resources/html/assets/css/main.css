@@ -87,6 +87,7 @@ body.container-fluid {
   /* index.html */
 .main-form {
   font-size: 22px;
+  display: inline-block;
 }
 
 .main-form p {
@@ -102,6 +103,12 @@ body.container-fluid {
 .main-form .form-label {
   display: inline-block;
   min-width: 250px;
+}
+.main-form .error-message-container{
+  display: inline-block;
+  width: 410px;
+  margin-top: 15px;
+  font-size: 16px;
 }
 
 .main-form .checkbox-input {
@@ -139,7 +146,7 @@ body.container-fluid {
 }
 
 .input-button {
-  margin: 15px 15px;/* 0 175px;*/
+  margin: 15px 0 15px 15px;/* 0 175px;*/
   padding: 10px 20px;
   min-width: 60px;
   min-height: 30px;
@@ -153,6 +160,7 @@ body.container-fluid {
   background-color: rgb(255, 255, 255);
   border: 1px solid #1550ad;
   text-align: center;
+  float: right;
 }
 
 .input-button:active {
@@ -184,6 +192,10 @@ body.container-fluid {
   border: 1px solid rgba(21, 80, 173, 0.5);
   text-align: center;
   padding: 3px 10px;
+}
+.tooltip.error.plasement.right .arrow::before {
+  border-right-color: #fd5858;
+  border-top-color: #1550ad;
 }
 
 /* domains.html */
@@ -225,6 +237,10 @@ body.container-fluid {
   width: 60px;
 }
 
+.domains-list td.col-actions.hide {
+  display: none;
+}
+
 .domains-list a, .domains-list a:active, .domains-list a:hover, .domains-list a:focus {
   color: white;
   text-decoration: none;
@@ -264,6 +280,9 @@ a.action .label {
 }
 
 .status-running .action.resume {
+  display: none!important;
+}
+.status-new .action.resume {
   display: none!important;
 }
 
