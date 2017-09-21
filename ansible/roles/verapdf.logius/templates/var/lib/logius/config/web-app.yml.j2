@@ -17,16 +17,35 @@ emailServer:
   user: {{ logius_gmail_user }}
   password: {{ logius_gmail_password }}
   port: {{ logius_gmail_port }}
-# Application database credentials
-credentials:
+# Application database config
+mysql:
   connectionString: {{ logius_db_connection_string }}
   user: {{ logius_db_user_name }}
   password: {{ logius_db_password }}
-resourcePath: {{ logius_app_resources }}
-heritrixUrl: {{ logius_heritrix_connection_type}}://{{ logius_server_name }}:{{ logius_heritrix_port}}/
-heritrixLogin: {{ logius_heritrix_admin_user}}
-heritrixPassword: {{ logius_heritrix_admin_password }}
-verapdfUrl: {{ logius_web_connection_type }}://{{ logius_server_name }}:{{ logius_verapdf_port }}
+database:
+  driverClass: com.mysql.cj.jdbc.Driver
+  user: {{ logius_db_user_name }}
+  password: {{ logius_db_password }}
+  url: {{ logius_db_connection_string }}
+  properties:
+    charSet: UTF-8
+    hibernate.dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+  # the maximum amount of time to wait on an empty pool before throwing an exception
+  maxWaitForConnection: 1s
+  validationQuery: "/* MyApplication Health Check */ SELECT 1"
+  # the minimum number of connections to keep open
+  minSize: 8
+  # the maximum number of connections to keep open
+  maxSize: 32
+  # whether or not idle connections should be validated
+  checkConnectionWhileIdle: false
+heritrix:
+  configTemplatePath: {{ logius_app_resources }}/sample_configuration.cxml
+  url: {{ logius_heritrix_url }}
+  login: {{ logius_heritrix_admin_user}}
+  password: {{ logius_heritrix_admin_password }}
+veraPDFService:
+  url: {{ logius_web_connection_type }}://{{ logius_server_name }}:{{ logius_verapdf_port }}
 logging:
   level: WARN
   loggers:
