@@ -46,6 +46,7 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         if (domainFilter != null) {
             criteriaQuery.where(builder.like(crawlJob.get(CrawlJob_.domain), "%" + domainFilter + "%"));
         }
+        criteriaQuery.orderBy(builder.desc(crawlJob.get(CrawlJob_.startTime)));
 
         Query<CrawlJob> query = this.currentSession().createQuery(criteriaQuery);
         if (start != null) {
