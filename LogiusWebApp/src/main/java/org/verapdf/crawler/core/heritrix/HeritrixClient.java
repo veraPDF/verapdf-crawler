@@ -45,11 +45,14 @@ import java.util.List;
 public class HeritrixClient {
 
     private String configTemplatePath;
-    private final String baseUrl;
+    private final String engineUrl;
+    private final String baseJobUrl;
     private HttpClient httpClient;
 
     public HeritrixClient(HeritrixConfiguration config) throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException, MalformedURLException {
-        baseUrl = config.getUrl();
+        String baseUrl = config.getUrl();
+        this.engineUrl = baseUrl + "engine";
+        this.baseJobUrl = this.engineUrl + "/job/";
         // Configure credential provider
         URL domain = new URL(baseUrl);
         HttpHost targetHost = new HttpHost(domain.getHost(), domain.getPort(), "https");
@@ -67,7 +70,7 @@ public class HeritrixClient {
     }
 
     public boolean testHeritrixAvailability() throws IOException {
-        HttpGet get = new HttpGet(baseUrl + "engine");
+        HttpGet get = new HttpGet(this.engineUrl);
         boolean result = httpClient.execute(get).getStatusLine().getStatusCode() == 200;
         get.releaseConnection();
         return result;
@@ -85,43 +88,31 @@ public class HeritrixClient {
     }
 
     public void unpauseJob(String heritrixJobId) throws IOException {
-        HttpPost post = new HttpPost(baseUrl + "engine/job/" + heritrixJobId);
-        post.setEntity(new StringEntity("action=unpause"));
-
-        httpClient.execute(post);
-        post.releaseConnection();
+        postJobAction(heritrixJobId, "unpause");
     }
 
     public void pauseJob(String heritrixJobId) throws IOException{
-        HttpPost post = new HttpPost(baseUrl + "engine/job/" + heritrixJobId);
-        post.setEntity(new StringEntity("action=pause"));
-
-        httpClient.execute(post);
-        post.releaseConnection();
+        postJobAction(heritrixJobId, "pause");
     }
 
     public void terminateJob(String heritrixJobId) throws IOException{
-        HttpPost post = new HttpPost(baseUrl + "engine/job/" + heritrixJobId);
-        post.setEntity(new StringEntity("action=terminate"));
-
-        httpClient.execute(post);
-        post.releaseConnection();
+        postJobAction(heritrixJobId, "terminate");
     }
 
     public void teardownJob(String heritrixJobId) throws IOException{
-        HttpPost post = new HttpPost(baseUrl + "engine/job/" + heritrixJobId);
-        post.setEntity(new StringEntity("action=teardown"));
+        postJobAction(heritrixJobId, "teardown");
+    }
 
-        httpClient.execute(post);
-        post.releaseConnection();
+    public void launchJob(String heritrixJobId) throws IOException{
+        postJobAction(heritrixJobId, "launch");
+    }
+
+    public void buildJob(String heritrixJobId) throws IOException{
+        postJobAction(heritrixJobId, "build");
     }
 
     public String createJob(String heritrixJobId, String domain) throws IOException{
-        HttpPost post = new HttpPost(baseUrl + "engine/");
-        post.setEntity(new StringEntity("createpath=" + heritrixJobId +"&action=create"));
-
-        httpClient.execute(post);
-        post.releaseConnection();
+        doPost(this.engineUrl, "createpath=" + heritrixJobId +"&action=create");
 
         ArrayList<String> crawlUrls = new ArrayList<>();
         crawlUrls.add("https://" + domain);
@@ -132,22 +123,6 @@ public class HeritrixClient {
         configurationFile.delete();
 
         return heritrixJobId;
-    }
-
-    public void launchJob(String heritrixJobId) throws IOException{
-        HttpPost post = new HttpPost(baseUrl + "engine/job/" + heritrixJobId);
-        post.setEntity(new StringEntity("action=launch"));
-
-        httpClient.execute(post);
-        post.releaseConnection();
-    }
-
-    public void buildJob(String job) throws IOException{
-        HttpPost post = new HttpPost(baseUrl + "engine/job/" + job);
-        post.setEntity(new StringEntity("action=build"));
-
-        httpClient.execute(post);
-        post.releaseConnection();
     }
 
     public String getCurrentJobStatus(String heritrixJobId) throws IOException, ParserConfigurationException, SAXException {
@@ -162,11 +137,12 @@ public class HeritrixClient {
     }
 
     public boolean isJobFinished(String heritrixJobId) throws IOException, ParserConfigurationException, SAXException {
-        return getCurrentJobStatus(heritrixJobId).startsWith("finished") || getCurrentJobStatus(heritrixJobId).startsWith("aborted");
+        String currentJobStatus = getCurrentJobStatus(heritrixJobId);
+        return currentJobStatus.startsWith("finished") || currentJobStatus.startsWith("aborted");
     }
 
     public List<String> getListOfCrawlUrls(String heritrixJobId) throws IOException {
-        HttpGet get = new HttpGet(baseUrl + "engine/job/" + heritrixJobId + "/jobdir/crawler-beans.cxml");
+        HttpGet get = new HttpGet(this.baseJobUrl + heritrixJobId + "/jobdir/crawler-beans.cxml");
         String configXml = getResponseAsString(httpClient.execute(get));
         get.releaseConnection();
         return getListOfCrawlUrlsFromXml(configXml);
@@ -178,6 +154,32 @@ public class HeritrixClient {
         if(result.get(0).equals(""))
             result.remove(0);
         return result;
+    }
+
+    public String getConfig(String jobUrl) throws IOException {
+        String anypath = "anypath/";
+        String jobDirectory = jobUrl.substring(jobUrl.indexOf(anypath) + anypath.length());
+        File file = new File(jobDirectory + "sample_configuration.cxml");
+        if(!file.exists()) {
+            file = new File(jobDirectory + "crawler-beans.cxml");
+        }
+        byte[] encoded = Files.readAllBytes(Paths.get(file.getAbsolutePath()));
+        /*String config = getLogFileByURL(jobUrl + "sample_configuration.cxml");
+        if(config.equals("")) {
+            config = getLogFileByURL(jobUrl + "crawler-beans.cxml");
+        }*/
+        return new String(encoded);
+    }
+
+    private void postJobAction(String heritrixJobId, String action) throws IOException {
+        doPost(this.baseJobUrl + heritrixJobId, "action=" + action);
+    }
+
+    private void doPost(String path, String entity) throws IOException {
+        HttpPost post = new HttpPost(path);
+        post.setEntity(new StringEntity(entity));
+        httpClient.execute(post);
+        post.releaseConnection();
     }
 
     private File createCrawlConfiguration(String heritrixJobId, List<String> crawlUrls) throws IOException {
@@ -203,31 +205,6 @@ public class HeritrixClient {
         content = content.replace("${logiusUrls}", sb.toString());
         Files.write(destination.toPath(), content.getBytes(charset));
         return destination;
-    }
-
-    public String getValidPDFReportUri(String heritrixJobId) throws IOException {
-        HttpGet get = new HttpGet(baseUrl + "engine/job/" + heritrixJobId);
-        String status = getResponseAsString(httpClient.execute(get));
-        get.releaseConnection();
-        String result = getBetweenStrings(status, "<h3>Crawl Log <a href=\"", "?format=paged");
-        result = baseUrl + result;
-        result = result.replace("logs/crawl.log","mirror/Valid_PDF_Report.txt");
-        result = result.replace("//engine", "/engine");
-        return result;
-    }
-
-    public String getConfig(String jobUrl) throws IOException {
-        String jobDirectory = jobUrl.substring(jobUrl.indexOf("anypath/") + 8);
-        File file = new File(jobDirectory + "sample_configuration.cxml");
-        if(!file.exists()) {
-            file = new File(jobDirectory + "crawler-beans.cxml");
-        }
-        byte[] encoded = Files.readAllBytes(Paths.get(file.getAbsolutePath()));
-        /*String config = getLogFileByURL(jobUrl + "sample_configuration.cxml");
-        if(config.equals("")) {
-            config = getLogFileByURL(jobUrl + "crawler-beans.cxml");
-        }*/
-        return new String(encoded);
     }
 
     /*private String getLogFileByURL(String url) throws IOException {
@@ -259,7 +236,7 @@ public class HeritrixClient {
     }
 
     private String getFullStatus(String heritrixJobId) throws IOException {
-        HttpGet get = new HttpGet(baseUrl + "engine/job/" + heritrixJobId);
+        HttpGet get = new HttpGet(this.baseJobUrl + heritrixJobId);
         get.setHeader("Accept","application/xml");
 
         String result = getResponseAsString(httpClient.execute(get));
@@ -268,7 +245,7 @@ public class HeritrixClient {
     }
 
     private void submitConfigFile(String heritrixJobId, File configFile) throws IOException {
-        HttpPut put = new HttpPut(baseUrl + "engine/job/" + heritrixJobId + "/jobdir/crawler-beans.cxml");
+        HttpPut put = new HttpPut(this.baseJobUrl + heritrixJobId + "/jobdir/crawler-beans.cxml");
         FileEntity entity = new FileEntity(configFile);
         put.setEntity(entity);
         httpClient.execute(put);

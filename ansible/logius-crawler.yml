@@ -1,0 +1,21 @@
+---
+
+# Playbook to configure a logius-crawler instance
+# File: ansible/site.yml
+
+
+- hosts: all
+  become: true
+  roles:
+    - { role: tschifftner.hostname }
+    - { role: tersmitten.timezone }
+    - { role: tersmitten.apt }
+
+- hosts: heritrix
+  become: true
+  roles:
+    - { role: robdyke.maven }
+    - { role: geerlingguy.mysql }
+    - { role: HanXHX.nginx }
+    - { role: verapdf.heritrix }
+    - { role: verapdf.logius }

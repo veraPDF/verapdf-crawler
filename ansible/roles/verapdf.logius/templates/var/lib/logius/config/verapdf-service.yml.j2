@@ -1,0 +1,21 @@
+server:
+  applicationConnectors:
+  - type: "{{ logius_web_connection_type }}"
+    port: "{{ logius_verapdf_port }}"
+  adminConnectors:
+  - type: "{{ logius_web_connection_type }}"
+    port: "{{ logius_verapdf_admin_port }}"
+verapdfPath: /home/anton/verapdf/verapdf
+logiusUrl: "{{ logius_web_connection_type }}://{{ logius_server_name }}:{{ logius_web_port }}/api"
+logging:
+  level: WARN
+  loggers:
+    "CustomLogger":
+      additive: false
+      level: INFO
+      appenders:
+      - type: file
+        currentLogFilename: "{{ logius_log_dir }}/verapdfService.log"
+        archive: true
+        archivedLogFilenamePattern: "{{ logius_log_dir }}/verapdfService-%d.log"
+        archivedFileCount: 10

@@ -16,13 +16,17 @@ CREATE TABLE `crawl_jobs` (
   `domain`          VARCHAR(255) NOT NULL,
   `heritrix_job_id` VARCHAR(36)  NOT NULL,
   `job_url`         VARCHAR(255)          DEFAULT NULL,
-  `start_time`      DATETIME     NOT NULL DEFAULT NOW(),
+  `start_time`      DATETIME              DEFAULT NULL,
   `finish_time`     DATETIME              DEFAULT NULL,
   `is_finished`     TINYINT(1)            DEFAULT '0',
   `job_status`      VARCHAR(10)           DEFAULT NULL,
   PRIMARY KEY (`domain`),
   UNIQUE KEY `crawl_jobs_domain_uindex` (`heritrix_job_id`)
 );
+DROP TRIGGER IF EXISTS crawl_jobs_B4_INSERT;
+CREATE TRIGGER crawl_jobs_B4_INSERT BEFORE INSERT ON `crawl_jobs`
+    FOR EACH ROW SET NEW.start_time = IFNULL(NEW.start_time, NOW());
+
 CREATE TABLE `crawl_job_requests_crawl_jobs` (
   `crawl_job_request_id` VARCHAR(36)  NOT NULL,
   `crawl_job_domain`     VARCHAR(255) NOT NULL,
