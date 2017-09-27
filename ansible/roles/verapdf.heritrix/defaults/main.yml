@@ -1,0 +1,41 @@
+# defaults file for verapdf.heritrix
+---
+# Set true to install Java 8 JVM required for Heritrix
+heritrix_install_java: false
+
+# Set true to allow external access to the heritrix admin site.
+# Useful for development, not reccommended for production.
+heritrix_nginx_access: false
+
+# Parent directory for Heritrix installation
+heritrix_install_root: "/opt"
+# Qualified version of Heritrix to install, used to form download URL
+heritrix_version: "3.2.0"
+# Root directory for heritrix installation
+heritrix_root: "{{ heritrix_install_root }}/heritrix-{{ heritrix_version }}"
+# Path to heritrix executable, used for templates
+heritrix_executable: "{{ heritrix_root }}/bin/heritrix"
+
+# Linux user and group to create and install under
+heritrix_linux_user: "heritrix"
+heritrix_linux_group: "{{ heritrix_linux_user }}"
+
+# Port for heritrix app to monitor
+heritrix_port: 8443
+# Name of heritrix admin account
+heritrix_admin_user: "admin"
+# Password heritrix admin account
+heritrix_admin_password: "admin"
+
+# Set true to generate the necessary self certificates for the heritrix
+# apps SSL, good for development but production sites should use a proper
+# certificate.
+heritrix_use_self_cert: false
+# Path to ngnix ssl config, only used if heritrix_nginx_access is true
+heritrix_nginx_ssl_path: /etc/nginx/ssl
+# Paths for the Heritrix certificate and key files,
+# only used if heritrix_nginx_access is true
+heritrix_ssl_cert_path: "{{ heritrix_nginx_ssl_path }}/cert.crt"
+heritrix_ssl_key_path: "{{ heritrix_nginx_ssl_path }}/cert.key"
+# Name for nginx virtualhost, only used if heritrix_nginx_access is true
+heritrix_host_name: "heritrix.verapdf.dev"

@@ -1,4 +1,11 @@
+# Compiled class file
 *.class
+
+# Log file
+*.log
+
+# BlueJ files
+*.ctxt
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
@@ -7,9 +14,23 @@
 *.jar
 *.war
 *.ear
+*.zip
+*.tar.gz
+*.rar
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+# Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
+!/.mvn/wrapper/maven-wrapper.jar
+
+# Ansible artefacts
+ansible/roles/
+ansible/*.retry
+
+# Vagrant directory
+.vagrant*
+
 **/target/**
 **/.idea/**
 *.iml
@@ -21,5 +42,15 @@ hs_err_pid*
 **/bin
 
 # Maven artefacts
+**/target
 **/pom.xml.versionsBackup
 **/dependency-reduced-pom.xml
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.next
+release.properties
+buildNumber.properties
+.mvn/timing.properties
+
+# DEV configs
+**/config-dev.yml
