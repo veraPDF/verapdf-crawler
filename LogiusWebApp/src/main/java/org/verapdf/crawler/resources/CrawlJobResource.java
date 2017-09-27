@@ -9,6 +9,7 @@ import org.verapdf.crawler.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.api.crawling.CrawlJob;
 import org.verapdf.crawler.db.CrawlJobDAO;
 import org.verapdf.crawler.db.CrawlRequestDAO;
+import org.verapdf.crawler.db.ValidationJobDAO;
 import org.verapdf.crawler.tools.DomainUtils;
 
 import javax.validation.constraints.NotNull;
@@ -26,10 +27,12 @@ public class CrawlJobResource {
     private static final Logger logger = LoggerFactory.getLogger(CrawlJobResource.class);
 
     private final CrawlJobDAO crawlJobDao;
+    private final ValidationJobDAO validationJobDAO;
     private final HeritrixClient heritrix;
 
-    public CrawlJobResource(CrawlJobDAO crawlJobDao, HeritrixClient heritrix) {
+    public CrawlJobResource(CrawlJobDAO crawlJobDao, ValidationJobDAO validationJobDAO, HeritrixClient heritrix) {
         this.crawlJobDao = crawlJobDao;
+        this.validationJobDAO = validationJobDAO;
         this.heritrix = heritrix;
     }
 
@@ -90,10 +93,12 @@ public class CrawlJobResource {
 
         if(crawlJob.getStatus() == CrawlJob.Status.RUNNING && update.getStatus() == CrawlJob.Status.PAUSED) {
             heritrix.pauseJob(crawlJob.getHeritrixJobId());
+            validationJobDAO.pause(domain);
             crawlJob.setStatus(CrawlJob.Status.PAUSED);
         }
         if(crawlJob.getStatus() == CrawlJob.Status.PAUSED && update.getStatus() == CrawlJob.Status.RUNNING) {
             heritrix.unpauseJob(crawlJob.getHeritrixJobId());
+            validationJobDAO.unpause(domain);
             crawlJob.setStatus(CrawlJob.Status.RUNNING);
         }
         return crawlJob;

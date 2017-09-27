@@ -21,6 +21,14 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         return get(domain);
     }
 
+    public CrawlJob getByHeritrixJobId(String heritrixJobId) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<CrawlJob> criteriaQuery = builder.createQuery(CrawlJob.class);
+        Root<CrawlJob> crawlJob = criteriaQuery.from(CrawlJob.class);
+        criteriaQuery.where(builder.equal(crawlJob.get(CrawlJob_.heritrixJobId), heritrixJobId));
+        return uniqueResult(criteriaQuery);
+    }
+
     public CrawlJob save(CrawlJob crawlJob) {
         return persist(crawlJob);
     }

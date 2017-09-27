@@ -55,20 +55,15 @@ CREATE TABLE `document_properties` (
     ON UPDATE CASCADE
 );
 CREATE TABLE `pdf_validation_jobs_queue` (
-  `document_url`       VARCHAR(255)                        NOT NULL DEFAULT '',
-  `heritrix_job_id`    VARCHAR(36)                         NOT NULL,
-  `job_directory`      VARCHAR(255)                        NOT NULL,
+  `document_url`       VARCHAR(255)                        NOT NULL,
   `filepath`           VARCHAR(255)                        NOT NULL,
-  `time_last_modified` DATETIME                                     DEFAULT NULL,
-  `validation_status`  ENUM ('not_started', 'in_progress') NOT NULL DEFAULT 'not_started',
-  PRIMARY KEY (`document_url`),
-  CONSTRAINT `pdf_validation_jobs_queue_crawl_jobs_heritrix_job_id_fk` FOREIGN KEY (`heritrix_job_id`) REFERENCES `crawl_jobs` (`heritrix_job_id`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
+  `validation_status`  ENUM ('NOT_STARTED', 'IN_PROGRESS', 'PAUSED') NOT NULL DEFAULT 'NOT_STARTED',
+  PRIMARY KEY (`document_url`)
 );
 DROP TABLE IF EXISTS `validation_errors`;
 CREATE TABLE `validation_errors` (
   `id`            INT(11) NOT NULL AUTO_INCREMENT,
+  `type`          VARCHAR(8) NOT NULL DEFAULT 'GENERIC',
   `specification` VARCHAR(32)      DEFAULT NULL,
   `clause`        VARCHAR(16)      DEFAULT NULL,
   `test_number`   VARCHAR(4)       DEFAULT NULL,
@@ -89,6 +84,12 @@ CREATE TABLE `documents_validation_errors` (
 );
 DROP TABLE IF EXISTS `pdf_properties`;
 CREATE TABLE `pdf_properties` (
+  `property_name` VARCHAR(127) NOT NULL,
+  `property_enabled` TINYINT(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`property_name`)
+);
+DROP TABLE IF EXISTS `pdf_properties_xpath`;
+CREATE TABLE `pdf_properties_xpath` (
   `property_name` VARCHAR(127) NOT NULL,
   `xpath_index`   INT(11)      NOT NULL DEFAULT '0',
   `xpath`         VARCHAR(255) NOT NULL,

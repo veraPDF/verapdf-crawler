@@ -198,8 +198,9 @@ public class HeritrixClient {
         Charset charset = StandardCharsets.UTF_8;
 
         String content = new String(Files.readAllBytes(destination.toPath()), charset);
-        content = content.replace("******", crawlUrls.get(0));
-        content = content.replace("######", sb.toString());
+        content = content.replace("${logiusHeritrixJobId}", heritrixJobId);
+        content = content.replace("${logiusOperatorContactUrl}", crawlUrls.get(0));
+        content = content.replace("${logiusUrls}", sb.toString());
         Files.write(destination.toPath(), content.getBytes(charset));
         return destination;
     }

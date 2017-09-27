@@ -4,7 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.api.validation.ValidationSettings;
+import org.verapdf.crawler.api.validation.settings.ValidationSettings;
 import org.verapdf.crawler.api.validation.VeraPDFServiceStatus;
 import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 

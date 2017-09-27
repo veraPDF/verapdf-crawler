@@ -1,7 +1,6 @@
 package org.verapdf.service;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -9,7 +8,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.verapdf.crawler.api.validation.ValidationSettings;
+import org.verapdf.crawler.api.validation.settings.ValidationSettings;
 
 import java.io.IOException;
 

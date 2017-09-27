@@ -1,4 +1,4 @@
-package org.verapdf.crawler.api.validation;
+package org.verapdf.crawler.api.validation.settings;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

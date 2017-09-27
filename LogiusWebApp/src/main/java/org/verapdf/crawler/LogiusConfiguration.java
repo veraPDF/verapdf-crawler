@@ -2,7 +2,6 @@ package org.verapdf.crawler;
 
 import io.dropwizard.db.DataSourceFactory;
 import org.verapdf.crawler.configurations.HeritrixConfiguration;
-import org.verapdf.crawler.configurations.MySqlConfiguration;
 import org.verapdf.crawler.configurations.EmailServerConfiguration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
@@ -13,7 +12,6 @@ import javax.validation.constraints.NotNull;
 
 public class LogiusConfiguration extends Configuration {
     private EmailServerConfiguration emailServerConfiguration;
-    private MySqlConfiguration mySqlConfiguration;
     private HeritrixConfiguration heritrixConfiguration;
     private VeraPDFServiceConfiguration veraPDFServiceConfiguration;
 
@@ -49,16 +47,6 @@ public class LogiusConfiguration extends Configuration {
     @JsonProperty("emailServer")
     public void setEmailServerConfiguration(EmailServerConfiguration emailServerConfiguration) {
         this.emailServerConfiguration = emailServerConfiguration;
-    }
-
-    @JsonProperty("mysql")
-    public MySqlConfiguration getMySqlConfiguration() {
-        return mySqlConfiguration;
-    }
-
-    @JsonProperty("mysql")
-    public void setMySqlConfiguration(MySqlConfiguration mySqlConfiguration) {
-        this.mySqlConfiguration = mySqlConfiguration;
     }
 
     @JsonProperty("heritrix")

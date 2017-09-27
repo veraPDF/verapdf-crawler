@@ -1,7 +1,5 @@
 package org.verapdf.crawler.resources;
 
-import org.verapdf.crawler.db.document.ReportDocumentDao;
-
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
@@ -10,10 +8,8 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 public class DocumentPropertyResource {
 
-    private final ReportDocumentDao reportDocumentDao;
+    public DocumentPropertyResource() {
 
-    public DocumentPropertyResource(ReportDocumentDao reportDocumentDao) {
-        this.reportDocumentDao = reportDocumentDao;
     }
 
     @GET
@@ -21,6 +17,6 @@ public class DocumentPropertyResource {
     public List<String> getDocumentPropertyValues(@PathParam("propertyName") String propertyName,
                                                   @QueryParam("domain") String domain,
                                                   @QueryParam("propertyValueFilter") String propertyValueFilter) {
-        return reportDocumentDao.getMatchingPropertyValues(domain, propertyName, propertyValueFilter);
+        return null;
     }
 }
