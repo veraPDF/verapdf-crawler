@@ -43,15 +43,17 @@
             </p>
             <p class="form-group">
                 <label class="form-label" for="date_input">Check documents since</label>
-                <input class="form-control" type="text" id="date_input" placeholder="yyyy-MM-dd">
+                <input class="form-control" type="text" id="date_input" placeholder="yyyy-MM-dd" onkeypress="keyListener(event)">
             </p>
             <p class="form-group">
                 <label class="form-label" for="email_input">Send report to e-mail</label>
-                <input class="form-control" type="text" id="email_input">
+                <input class="form-control" type="text" id="email_input" onkeypress="keyListener(event)">
             </p>
-            <p class="form-group">
+            
                 <!-- <input class="form-control checkbox-input" type="checkbox" id="force_start">
                 <label class="form-label check-label" for="force_start">Force re-check</label> -->
+            <p class="form-group">
+                <label class="error-message-container"></label>
                 <input class="submit-btn input-button" type="button" name="button" value="Start">
             </p>
         </form>
