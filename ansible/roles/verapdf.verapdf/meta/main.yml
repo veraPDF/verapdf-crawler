@@ -1,0 +1,17 @@
+# meta file for verapdf.logius
+---
+galaxy_info:
+  author: Carl Wilson
+  company: The veraPDF Consortium
+  description: Installs the veraPDF CLI and GUI applications
+  license: GPL v3
+  min_ansible_version: 1.9.6
+  platforms:
+    - name: Debian
+      versions:
+        - jessie
+  galaxy_tags:
+    - verapdf
+    - pdf/a validation
+dependencies:
+  - verapdf.heritrix

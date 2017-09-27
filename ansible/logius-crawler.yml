@@ -19,3 +19,4 @@
     - { role: HanXHX.nginx }
     - { role: verapdf.heritrix }
     - { role: verapdf.logius }
+    - { role: verapdf.verapdf }

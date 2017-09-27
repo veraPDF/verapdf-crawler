@@ -5,7 +5,7 @@ server:
   adminConnectors:
   - type: "{{ logius_web_connection_type }}"
     port: "{{ logius_verapdf_admin_port }}"
-verapdfPath: /home/anton/verapdf/verapdf
+verapdfPath: {{ logius_verapdf_path }}
 logiusUrl: "{{ logius_web_connection_type }}://{{ logius_server_name }}:{{ logius_web_port }}/api"
 logging:
   level: WARN
