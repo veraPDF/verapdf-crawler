@@ -65,3 +65,5 @@ logius_gmail_address: "{{ logius_gmail_notification_account }}"
 logius_gmail_user: "{{ logius_gmail_notification_account }}"
 logius_gmail_password: Logius2017
 logius_gmail_port: 587
+
+logius_verapdf_path: "{{ verapdf_install_dest }}/verapdf"
