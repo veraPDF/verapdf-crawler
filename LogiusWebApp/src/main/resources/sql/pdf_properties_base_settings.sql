@@ -17,3 +17,10 @@ VALUES
   ('processingTime', 0, '/report/jobs/job/duration'),
   ('veraPDFVersion', 0, '/report/buildInformation/releaseDetails[@id=''gui'']/@version')
 ;
+
+INSERT INTO pdf_properties_namespaces (namespace_prefix, namespace_url)
+VALUES
+  ('x', 'adobe:ns:meta/'),
+  ('rdf', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'),
+  ('pdf', 'http://ns.adobe.com/pdf/1.3/')
+;

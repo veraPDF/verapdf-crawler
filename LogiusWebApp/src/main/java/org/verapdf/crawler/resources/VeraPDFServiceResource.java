@@ -1,9 +1,10 @@
 package org.verapdf.crawler.resources;
 
+import io.dropwizard.hibernate.UnitOfWork;
+import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 import org.verapdf.crawler.api.validation.settings.Namespace;
 import org.verapdf.crawler.api.validation.settings.PdfProperty;
 import org.verapdf.crawler.api.validation.settings.ValidationSettings;
-import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 import org.verapdf.crawler.db.NamespaceDAO;
 import org.verapdf.crawler.db.PdfPropertyDAO;
 
@@ -33,6 +34,7 @@ public class VeraPDFServiceResource {
 
 	@GET
 	@Path("/settings")
+	@UnitOfWork
 	public ValidationSettings getValidationSettings() {
 		ValidationSettings validationSettings = new ValidationSettings();
         validationSettings.setProperties(pdfPropertyDAO.getEnabledPropertiesMap().stream().collect(Collectors.toMap(PdfProperty::getName, PdfProperty::getXpathList)));

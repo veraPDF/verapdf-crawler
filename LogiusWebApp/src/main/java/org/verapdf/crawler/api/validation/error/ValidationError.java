@@ -24,7 +24,7 @@ import javax.persistence.*;
 public class ValidationError {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(name = "id")
     @JsonProperty
     private Integer id;

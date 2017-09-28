@@ -25,6 +25,7 @@ public class ValidationJob {
     @Column(name = "filepath")
     private String filePath;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "validation_status")
     private Status status;
 

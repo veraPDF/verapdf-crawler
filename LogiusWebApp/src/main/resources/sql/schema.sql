@@ -43,7 +43,7 @@ CREATE TABLE `documents` (
   `crawl_job_domain` VARCHAR(255)              NOT NULL,
   `last_modified`    DATETIME     DEFAULT NULL,
   `document_type`    VARCHAR(127) DEFAULT NULL,
-  `document_status`  ENUM ('open', 'not_open') NOT NULL,
+  `document_status`  ENUM ('OPEN', 'NOT_OPEN'),
   PRIMARY KEY (`document_url`),
   CONSTRAINT `documents_crawl_jobs_domain_fk` FOREIGN KEY (`crawl_job_domain`) REFERENCES `crawl_jobs` (`domain`)
     ON DELETE CASCADE
@@ -67,7 +67,7 @@ CREATE TABLE `pdf_validation_jobs_queue` (
 DROP TABLE IF EXISTS `validation_errors`;
 CREATE TABLE `validation_errors` (
   `id`            INT(11) NOT NULL AUTO_INCREMENT,
-  `type`          VARCHAR(8) NOT NULL DEFAULT 'GENERIC',
+  `type`          VARCHAR(32) NOT NULL DEFAULT 'GENERIC',
   `specification` VARCHAR(32)      DEFAULT NULL,
   `clause`        VARCHAR(16)      DEFAULT NULL,
   `test_number`   VARCHAR(4)       DEFAULT NULL,

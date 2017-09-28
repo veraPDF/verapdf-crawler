@@ -12,18 +12,17 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.api.validation.*;
+import org.verapdf.crawler.api.validation.ValidationJob;
+import org.verapdf.crawler.api.validation.VeraPDFServiceStatus;
+import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 import org.verapdf.crawler.api.validation.error.ValidationError;
 import org.verapdf.crawler.configurations.VeraPDFServiceConfiguration;
-import org.verapdf.crawler.db.CrawlJobDAO;
-import org.verapdf.crawler.db.DocumentDAO;
-import org.verapdf.crawler.db.ValidationErrorDAO;
 
 import java.io.IOException;
 
 public class VeraPDFValidator implements PDFValidator {
 
-    private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
+    private static final Logger logger = LoggerFactory.getLogger(VeraPDFValidator.class);
 
     private static final int VALIDATION_TIMEOUT = 5 * 60 * 1000;      // 5 min
     private static final int VALIDATION_CHECK_INTERVAL = 5 * 1000;    // 5 sec

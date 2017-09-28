@@ -11,7 +11,7 @@ public class PdfProperty {
     @Column(name = "property_name")
     private String name;
 
-    @Column(name = "enabled")
+    @Column(name = "property_enabled")
     private boolean enabled;
 
     @ElementCollection

@@ -15,18 +15,8 @@ import java.util.Map;
 public class DomainDocument {
 
     public enum BaseTestResult {
-        OPEN("open"),
-        NOT_OPEN("not_open");
-
-        private String dataBaseValue;
-
-        BaseTestResult(String dataBaseValue) {
-            this.dataBaseValue = dataBaseValue;
-        }
-
-        public String getDataBaseValue() {
-            return dataBaseValue;
-        }
+        OPEN,
+        NOT_OPEN
     }
 
     @Id
@@ -53,6 +43,7 @@ public class DomainDocument {
     @JsonProperty
     private String filePath;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "document_status")
     @JsonProperty
     private BaseTestResult baseTestResult;

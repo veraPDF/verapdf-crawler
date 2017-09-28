@@ -5,8 +5,8 @@ import io.dropwizard.hibernate.UnitOfWorkAwareProxyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
+import org.verapdf.crawler.core.validation.PDFValidator;
 import org.verapdf.crawler.db.*;
-import org.verapdf.crawler.db.document.ReportDocumentDao;
 import org.verapdf.crawler.core.validation.ValidationService;
 import org.verapdf.crawler.core.validation.VeraPDFValidator;
 import org.verapdf.crawler.resources.*;
@@ -16,8 +16,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ResourceManager {
-    private static final String JDBC_DRIVER = "com.mysql.cj.jdbc.Driver";
-    private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
+    private static final Logger logger = LoggerFactory.getLogger(ResourceManager.class);
 
     private final List<Object> resources = new ArrayList<>();
 
@@ -34,7 +33,7 @@ public class ResourceManager {
         // Initializing validators and reporters
         VeraPDFValidator veraPDFValidator = new VeraPDFValidator(config.getVeraPDFServiceConfiguration());
         ValidationService validationService = new UnitOfWorkAwareProxyFactory(hibernate).create(ValidationService.class,
-                new Class[]{ValidationJobDAO.class, ValidationErrorDAO.class, DocumentDAO.class, VeraPDFValidator.class},
+                new Class[]{ValidationJobDAO.class, ValidationErrorDAO.class, DocumentDAO.class, PDFValidator.class},
                 new Object[]{validationJobDAO, validationErrorDAO, documentDAO, veraPDFValidator});
 
         // Initializing resources
@@ -46,7 +45,6 @@ public class ResourceManager {
 
         // Launching validation
         validationService.start();
-        logger.info("Validation service started.");
     }
 
     public List<Object> getResources() {

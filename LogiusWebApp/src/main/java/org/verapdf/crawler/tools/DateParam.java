@@ -13,7 +13,7 @@ import java.util.Date;
  */
 public class DateParam {
 
-	private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
+	private static final Logger logger = LoggerFactory.getLogger(DateParam.class);
 
 	private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 

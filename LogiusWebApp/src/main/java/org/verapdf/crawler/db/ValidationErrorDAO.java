@@ -2,10 +2,7 @@ package org.verapdf.crawler.db;
 
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
-import org.verapdf.crawler.api.validation.*;
-import org.verapdf.crawler.api.validation.error.Rule;
-import org.verapdf.crawler.api.validation.error.RuleViolationError;
-import org.verapdf.crawler.api.validation.error.ValidationError;
+import org.verapdf.crawler.api.validation.error.*;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;

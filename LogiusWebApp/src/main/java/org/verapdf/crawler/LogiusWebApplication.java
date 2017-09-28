@@ -1,27 +1,24 @@
 package org.verapdf.crawler;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.dropwizard.db.DataSourceFactory;
-import io.dropwizard.hibernate.HibernateBundle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.api.crawling.CrawlJob;
-import org.verapdf.crawler.api.crawling.CrawlRequest;
-import org.verapdf.crawler.core.heritrix.HeritrixClient;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
+import io.dropwizard.db.DataSourceFactory;
+import io.dropwizard.hibernate.HibernateBundle;
+import io.dropwizard.hibernate.ScanningHibernateBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.health.HeritrixHealthCheck;
 import org.verapdf.crawler.health.VeraPDFServiceHealthCheck;
 
 public class LogiusWebApplication extends Application<LogiusConfiguration> {
     private static final Logger logger = LoggerFactory.getLogger(LogiusWebApplication.class);
 
-    // TODO: look for entities using reflection?
-    private final HibernateBundle<LogiusConfiguration> hibernate = new HibernateBundle<LogiusConfiguration>(
-            CrawlRequest.class,
-            CrawlJob.class
+    private final HibernateBundle<LogiusConfiguration> hibernate = new ScanningHibernateBundle<LogiusConfiguration>(
+            "org.verapdf.crawler.api"
     ) {
         @Override
         public DataSourceFactory getDataSourceFactory(LogiusConfiguration configuration) {
@@ -59,6 +56,7 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
             environment.healthChecks().register("heritrix", new HeritrixHealthCheck(client));
             environment.healthChecks().register("verapdf",
                     new VeraPDFServiceHealthCheck(configuration.getVeraPDFServiceConfiguration()));
+            logger.info("Logius web application started");
         } catch (Exception e) {
             logger.error("Error on logius web application startup", e);
             e.printStackTrace();

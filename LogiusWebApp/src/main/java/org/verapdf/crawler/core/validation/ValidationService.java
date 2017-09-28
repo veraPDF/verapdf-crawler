@@ -15,7 +15,7 @@ import java.io.*;
 import java.util.List;
 
 public class ValidationService implements Runnable {
-    private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
+    private static final Logger logger = LoggerFactory.getLogger(ValidationService.class);
 
     private final ValidationJobDAO validationJobDAO;
     private final ValidationErrorDAO validationErrorDAO;
@@ -33,7 +33,7 @@ public class ValidationService implements Runnable {
 
     public void start() {
         running = true;
-        new Thread(this).start();
+        new Thread(this, "Thread-ValidationService").start();
     }
 
 //    public Integer getQueueSize() {
@@ -42,6 +42,7 @@ public class ValidationService implements Runnable {
 
     @Override
     public void run() {
+        logger.info("Validation service started");
         while (running) {
             ValidationJob job = null;
             try {
@@ -50,29 +51,29 @@ public class ValidationService implements Runnable {
                     logger.info("Validating " + job.getDocument().getUrl());
                     VeraPDFValidationResult result = validator.validate(job);
                     saveResult(job, result);
-                }
-                else {
-                    try {
-                        Thread.sleep(60 * 1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                    continue;
                 }
             } catch (Exception e) {
                 logger.error("Error in validation runner", e);
             } finally {
                 cleanJob(job);
             }
+
+            try {
+                Thread.sleep(60 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     @UnitOfWork
-    private ValidationJob nextJob() {
+    public ValidationJob nextJob() {
         return validationJobDAO.next();
     }
 
     @UnitOfWork
-    private void saveResult(ValidationJob job, VeraPDFValidationResult result) {
+    public void saveResult(ValidationJob job, VeraPDFValidationResult result) {
         DomainDocument document = job.getDocument();
         document.setBaseTestResult(result.getBaseTestResult());
 
@@ -90,7 +91,7 @@ public class ValidationService implements Runnable {
     }
 
     @UnitOfWork
-    private void cleanJob(ValidationJob job) {
+    public void cleanJob(ValidationJob job) {
         if (job == null) {
             return;
         }

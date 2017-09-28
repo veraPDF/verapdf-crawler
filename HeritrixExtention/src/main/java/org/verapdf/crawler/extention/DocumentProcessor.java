@@ -3,7 +3,6 @@ package org.verapdf.crawler.extention;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -18,7 +17,7 @@ import org.archive.modules.writer.MirrorWriterProcessor;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Map;
 
 public class DocumentProcessor extends MirrorWriterProcessor {
 
@@ -119,7 +118,7 @@ public class DocumentProcessor extends MirrorWriterProcessor {
                 if (response.getStatusLine().getStatusCode() != 200) {
                     System.out.println("Fail to POST document " + documentString + "."
                             + " Response " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase()
-                            + "\n" + IOUtils.toString(response.getEntity().getContent()));
+                            + (response.getEntity() != null ? "\n" + IOUtils.toString(response.getEntity().getContent()) : ""));
                 }
             }
         } catch (IOException e) {
