@@ -1,7 +1,8 @@
 package org.verapdf.crawler.core.validation;
 
-import org.verapdf.crawler.api.validation.ValidationJobData;
+import org.verapdf.crawler.api.validation.ValidationJob;
+import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 
 public interface PDFValidator {
-    void validateAndWriteResult(ValidationJobData data) throws Exception;
+    VeraPDFValidationResult validate(ValidationJob data) throws Exception;
 }

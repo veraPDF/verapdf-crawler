@@ -54,3 +54,5 @@ buildNumber.properties
 
 # DEV configs
 **/config-dev.yml
+**/sample_configuration_dev.cxml
+

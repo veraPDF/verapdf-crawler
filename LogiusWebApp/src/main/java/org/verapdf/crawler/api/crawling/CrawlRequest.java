@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -19,6 +21,8 @@ public class CrawlRequest {
     @JsonProperty
     private String id;
 
+    @NotNull
+    @Size(min=1)
     @Transient
     @JsonProperty
     private List<String> domains;

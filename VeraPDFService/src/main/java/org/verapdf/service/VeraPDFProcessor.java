@@ -3,8 +3,9 @@ package org.verapdf.service;
 import javanet.staxutils.SimpleNamespaceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.api.validation.ValidationError;
-import org.verapdf.crawler.api.validation.ValidationSettings;
+import org.verapdf.crawler.api.validation.error.RuleViolationError;
+import org.verapdf.crawler.api.validation.error.ValidationError;
+import org.verapdf.crawler.api.validation.settings.ValidationSettings;
 import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -28,7 +29,7 @@ import java.util.Map;
  */
 public class VeraPDFProcessor implements Runnable {
 
-	private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
+	private static final Logger logger = LoggerFactory.getLogger(VeraPDFProcessor.class);
 
 	private static final String BASE_PATH = "/report/jobs/job/";
 	private static final String VALIDATION_REPORT_PATH = BASE_PATH + "validationReport/";
@@ -174,7 +175,7 @@ public class VeraPDFProcessor implements Runnable {
 						break;
 					}
 				}
-				result.addValidationError(new ValidationError(specification, clause, testNumber, description));
+				result.addValidationError(new RuleViolationError(specification, clause, testNumber, description));
 			}
 		}
 	}

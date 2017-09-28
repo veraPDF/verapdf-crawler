@@ -4,7 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.api.validation.ValidationSettings;
+import org.verapdf.crawler.api.validation.settings.ValidationSettings;
 import org.verapdf.crawler.api.validation.VeraPDFServiceStatus;
 import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 
@@ -19,7 +19,8 @@ import java.util.concurrent.Executors;
 @Produces(MediaType.APPLICATION_JSON)
 public class ValidationResource {
 
-    private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
+    private static final Logger logger = LoggerFactory.getLogger(ValidationResource.class);
+
     private final ExecutorService service = Executors.newFixedThreadPool(1);
     private final String veraPDFPath;
     private VeraPDFProcessor veraPDFProcessor;

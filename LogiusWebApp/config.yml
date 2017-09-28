@@ -11,10 +11,6 @@ emailServer:
   user: logiuscrawlernotifier@gmail.com	
   password: Logius2017
   port: 587
-mysql:
-  connectionString: jdbc:mysql://localhost:3306/logius?useSSL=false
-  user: root
-  password: anton
 database:
   driverClass: com.mysql.cj.jdbc.Driver
   user: logius
@@ -42,12 +38,12 @@ veraPDFService:
 logging:
   level: WARN
   loggers:
-    "CustomLogger":
+    org.verapdf.crawler:
       additive: false
       level: INFO
-      appenders:
-      - type: file
-        currentLogFilename: /home/anton/Documents/Logius/logs/logius.log
-        archive: true
-        archivedLogFilenamePattern: /home/anton/Documents/Logius/logs/logius-%d.log
-        archivedFileCount: 10
+  appenders:
+  - type: file
+    currentLogFilename: /home/anton/Documents/Logius/logs/logius.log
+    archive: true
+    archivedLogFilenamePattern: /home/anton/Documents/Logius/logs/logius-%d.log
+    archivedFileCount: 10
