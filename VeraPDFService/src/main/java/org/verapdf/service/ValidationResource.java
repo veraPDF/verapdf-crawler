@@ -19,7 +19,8 @@ import java.util.concurrent.Executors;
 @Produces(MediaType.APPLICATION_JSON)
 public class ValidationResource {
 
-    private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
+    private static final Logger logger = LoggerFactory.getLogger(ValidationResource.class);
+
     private final ExecutorService service = Executors.newFixedThreadPool(1);
     private final String veraPDFPath;
     private VeraPDFProcessor veraPDFProcessor;

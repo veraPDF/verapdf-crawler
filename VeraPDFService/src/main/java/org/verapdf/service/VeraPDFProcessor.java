@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class VeraPDFProcessor implements Runnable {
 
-	private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
+	private static final Logger logger = LoggerFactory.getLogger(VeraPDFProcessor.class);
 
 	private static final String BASE_PATH = "/report/jobs/job/";
 	private static final String VALIDATION_REPORT_PATH = BASE_PATH + "validationReport/";
