@@ -30,30 +30,7 @@ $(function () {
     $('[data-toggle="tooltip"]').tooltip();
 
 
-    // Retrieve domain information
-    // var domains = {
-    //     'www.duallab.com': {
-    //         crawlURL: 'www.duallab.com',
-    //         startTime: '25 Aug 2017, 16:36',
-    //         finishTime: '25 Aug 2017, 17:15',
-    //         status: 'finished',
-    //         mailsList: ['example1@report.com', 'example2@report.com']
-    //     },
-    //     'www.vananaarbeter.nl': {
-    //         crawlURL: 'www.vananaarbeter.nl',
-    //         startTime: '25 Aug 2017, 16:36',
-    //         status: 'running',
-    //         mailsList: ['example1@report.com', 'example2@report.com']
-    //     },
-    //     'secure5.svb.nl': {
-    //         crawlURL: 'secure5.svb.nl',
-    //         startTime: '25 Aug 2017, 16:36',
-    //         status: 'paused',
-    //         mailsList: ['example1@report.com', 'example2@report.com']
-    //     }
-    // };
-    // var currentDomainName = getUrlParameter("domain");
-    var currentDomain = {};//domains[currentDomainName];
+    var currentDomain = {};
     function normalizeURL(url){
         return url.replace(':', '%3A');
     }
@@ -116,14 +93,30 @@ $(function () {
     });
 
     function loadSummaryData() {
-        var startDate = $("#summary-date-input")[0].value === "" ? currentDomain.startTime : $("#summary-date-input")[0].value;
+        var url = "api/report/summary?domain=" + currentDomain.domain;
+        var startDate = $("#summary-date-input")[0].value;
+        if (startDate !== "") {
+            url += "&startDate=" + startDate;
+        }
         $.ajax({
-            url: "api/report/summary?domain=" + currentDomain.domain + "&startDate=" + startDate,
+            url: url,
             type: "GET",
             success: function (result) {
-                // domainInfoLoaded(result);
-                // summaryChart.data.datasets[0].data[0] = 343;
-                // summaryChart.update()
+                $('.summary .good-documents .pdf').text(result['openDocuments']['pdf']);
+                $('.summary .good-documents .office').text(result['openDocuments']['office']);
+                $('.summary .bad-documents .pdf').text(result['notOpenDocuments']['pdf']);
+                $('.summary .bad-documents .office').text(result['notOpenDocuments']['office']);
+
+                var openCount = result['openDocuments']['pdf'] + result['openDocuments']['office'];
+                var notOpenCount = result['notOpenDocuments']['pdf'] + result['notOpenDocuments']['office'];
+                var totalCount = openCount + notOpenCount;
+
+                $('.summary .good-documents .percent').text((openCount * 100 / totalCount) + '%');
+                $('.summary .bad-documents .percent').text((notOpenCount * 100 / totalCount) + '%');
+
+                summaryChart.data.datasets[0].data[0] = notOpenCount;
+                summaryChart.data.datasets[0].data[1] = openCount;
+                summaryChart.update()
             },
             error: function (result) {
                 // reportError("Error on job loading");
@@ -212,7 +205,7 @@ $(function () {
                 break;
         }
 
-    })
+    });
 
     $.ajax({
         url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
@@ -326,11 +319,12 @@ $(function () {
 
     // Summary tab components
 
+    // TODO: get min from server and calculate yearRange
     var summaryDatePicker = new Pikaday({
         field: document.getElementById('summary-date-input'),
         firstDay: 1,
         minDate: new Date(2017, 7, 4),
-        maxDate: new Date(2020, 12, 31),
+        maxDate: new Date(),
         yearRange: [2000, 2020],
         showTime: false,
         format: 'DD-MM-YYYY'
@@ -342,7 +336,7 @@ $(function () {
         data: {
             labels: ["To improve", "Compliant"],
             datasets: [{
-                data: [2437, 1445],
+                data: [0, 0],
                 backgroundColor: [
                     '#fd5858',
                     '#43c46f'

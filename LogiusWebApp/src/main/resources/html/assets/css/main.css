@@ -224,17 +224,22 @@ body.container-fluid {
   vertical-align: middle;
 }
 
+.domains-list .col-date {
+  width: 200px;
+}
+
 .domains-list .col-status {
   width: 100px;
 }
 
 .domains-list th.col-actions {
   width: 200px;
-  padding-left: 17px;
 }
 
 .domains-list td.col-actions {
   width: 60px;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .domains-list td.col-actions.hide {
@@ -392,6 +397,13 @@ a.action .label {
 
 .summary .bad-documents {
   background-color: #fd5858;
+}
+
+.summary .percent {
+  font-size: 2rem;
+  float: left;
+  padding-left: 5px;
+  padding-right: 15px;
 }
 
 .documents .col {

@@ -40,8 +40,9 @@ public class ResourceManager {
         resources.add(new CrawlJobResource(crawlJobDAO, validationJobDAO, heritrix));
         resources.add(new CrawlRequestResource(crawlRequestDAO, crawlJobDAO, heritrix));
         resources.add(new DocumentResource(crawlJobDAO, documentDAO, validationJobDAO));
-        resources.add(new DocumentPropertyResource());
+        resources.add(new DocumentPropertyResource(documentDAO));
         resources.add(new VeraPDFServiceResource(pdfPropertyDAO, namespaceDAO));
+        resources.add(new ReportResource(documentDAO));
 
         // Launching validation
         validationService.start();
