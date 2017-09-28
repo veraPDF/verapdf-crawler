@@ -1,5 +1,11 @@
 # verapdf-crawler
 ## TODO: update when switch to database
+
+## Automated installation
+We've provided an automated Ansible installation playbook, you can read the [docs here](./docs/VAGRANT.md). There's also instructions for using VirtualBox and Vagrant alongside Ansible to set up a virtualized instance on your local machine for development and testing.
+
+## Manual installation
+
 ### Pre-requisites
 In order to install Logius crawler you'll need
  * Java 7 and Java 8, which can be downloaded [from Oracle](http://www.oracle.com/technetwork/java/javase/downloads/index.html), or for
@@ -9,16 +15,16 @@ In order to install Logius crawler you'll need
  Note that you should preferably use the latest version of verapdf.
 
 ### Installing Logius web application
-You need to dowload and build modules LogiusWebApp and HeritrixExtention with maven. You should run the following command from the
+You need to download and build modules LogiusWebApp and HeritrixExtention with Maven. You should run the following command from the
 directory that contains both downloaded modules
 
 	mvn clean install
 
 After that you will get two jar files "your_directory/LogiusWebApp/target/LogiusWebApp-1.0-SNAPSHOT.jar" and "your_directory/HeritrixExtention/target/HeritrixExtention.jar". The file "your_directory/HeritrixExtention/target/HeritrixExtention.jar" should be placed in "lib/" directory in your Heritrix installation directory.
 
-### Starting heritrix
-You need to start heritrix application. Firtly you need to ensure that java 7 will be used to run heritrix, and secondly you need to run
-heritrix with necessary arguments:
+### Starting Heritrix
+You need to start Heritrix application. Firstly you need to ensure that Java 7 will be used to run Heritrix, and secondly you need to run
+Heritrix with necessary arguments:
 
 	export JAVA_HOME=your_path_to_java7
 	heritrix_directory/bin/heritrix -a your_login:your_password -p 8443
