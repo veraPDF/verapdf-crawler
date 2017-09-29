@@ -58,35 +58,7 @@ public class ReportResource {
     public PdfPropertyStatistics getDocumentStatistics(@QueryParam("domain") String domain,
                                                        @QueryParam("startDate") DateParam startDate) {
         Date documentsSince = DateParam.getDateFromParam(startDate);
-        /* todo: change to the following structure:
-            {
-                totalCount: 5612,
-                flavourStatistics: [{
-                    flavour: 'PDF/A-1a',
-                    count: 123
-                }, {
-                    flavour: 'PDF/A-2a',
-                    count: 456
-                }, ...
-                ],
-                versionStatistics: [{
-                    version: '1.0',
-                    count: 456
-                }, {
-                    version: '1.1',
-                    count: 123
-                }],
-                topProducerStatistics: [{
-                    producer: 'Producer 9',
-                    count: 456
-                }, {
-                    producer: 'Producer 3',
-                    count: 345
-                }, ...]
-            }
 
-            stats should include all flavours, all versions (order by flavour/version) and top 10 producers (order by doc count desc).
-        */
         Long openPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince);
         Long notOpenPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
         Long total = openPdf + notOpenPdf;
@@ -118,7 +90,14 @@ public class ReportResource {
                                               @QueryParam("flavour") String flavour,
                                               @QueryParam("version") String version,
                                               @QueryParam("producer") String producer) {
-        return null;
+        Date documentsSince = DateParam.getDateFromParam(startDate);
+
+        List<ErrorStatistics.ErrorCount> errorCounts = documentDAO.getErrorsStatistics(
+                domain, documentsSince, flavour, version, producer, ErrorStatistics.TOP_ERRORS_COUNT);
+
+        ErrorStatistics errorStatistics = new ErrorStatistics();
+        errorStatistics.setTopErrorStatistics(errorCounts);
+        return errorStatistics;
     }
 
     @GET

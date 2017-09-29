@@ -6,7 +6,9 @@ import org.hibernate.query.Query;
 import org.verapdf.crawler.api.crawling.CrawlJob_;
 import org.verapdf.crawler.api.document.DomainDocument;
 import org.verapdf.crawler.api.document.DomainDocument_;
+import org.verapdf.crawler.api.report.ErrorStatistics;
 import org.verapdf.crawler.api.report.PdfPropertyStatistics;
+import org.verapdf.crawler.api.validation.error.ValidationError;
 
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
@@ -82,7 +84,6 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         List<Predicate> restrictions = new ArrayList<>();
         restrictions.add(builder.equal(document.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain));
         restrictions.add(builder.equal(properties.key(), propertyName));
-        restrictions.add(builder.notEqual(properties.value(), ""));   // TODO: remove once we don't keep empty property values
         if (startDate != null) {
             restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
         }
@@ -102,10 +103,64 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         return query.list();
     }
 
+    public List<ErrorStatistics.ErrorCount> getErrorsStatistics(String domain, Date startDate, String flavour, String version, String producer, int limit) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<ErrorStatistics.ErrorCount> criteriaQuery = builder.createQuery(ErrorStatistics.ErrorCount.class);
 
+        // FROM document JOIN validationErrors
+        Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
+        Join<DomainDocument, ValidationError> error = document.join(DomainDocument_.validationErrors);
 
-    public Boolean isAllFinishedByDomain(String domain) {
-        //TODO: implement me
-        return false;
+        // SELECT error, count(document) as documentCount
+        Expression<Long> documentCount = builder.count(document);
+        criteriaQuery.select(builder.construct(
+                ErrorStatistics.ErrorCount.class,
+                error,
+                documentCount
+        ));
+
+        // WHERE document.job.domain = <domain>
+        List<Predicate> restrictions = new ArrayList<>();
+        restrictions.add(builder.equal(document.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain));
+
+        if (startDate != null) {
+            // AND document.lastModified >= startDate
+            restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
+        }
+
+        if (flavour != null) {
+            // AND document.properties['flavour'] = <flavour>
+            MapJoin<DomainDocument, String, String> flavourProperty = document.join(DomainDocument_.properties);
+            flavourProperty.on(builder.equal(flavourProperty.key(), PdfPropertyStatistics.FLAVOUR_PROPERTY_NAME));
+            restrictions.add(builder.equal(flavourProperty.value(), flavour));
+        }
+
+        if (version != null) {
+            // AND document.properties['version'] = <version>
+            MapJoin<DomainDocument, String, String> versionProperty = document.join(DomainDocument_.properties);
+            versionProperty.on(builder.equal(versionProperty.key(), PdfPropertyStatistics.VERSION_PROPERTY_NAME));
+            restrictions.add(builder.equal(versionProperty.value(), version));
+        }
+
+        if (producer != null) {
+            // AND document.properties['producer'] = <producer>
+            MapJoin<DomainDocument, String, String> producerProperty = document.join(DomainDocument_.properties);
+            producerProperty.on(builder.equal(producerProperty.key(), PdfPropertyStatistics.PRODUCER_PROPERTY_NAME));
+            restrictions.add(builder.like(producerProperty.value(), "%" + producer + "%"));
+        }
+
+        if (restrictions.size() == 1) {
+            criteriaQuery.where(restrictions.get(0));
+        } else {
+            criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
+        }
+
+        // GROUP BY error
+        criteriaQuery.groupBy(error);
+
+        // ORDER BY documentCount DESC
+        criteriaQuery.orderBy(builder.desc(documentCount));
+
+        return currentSession().createQuery(criteriaQuery).setMaxResults(limit).list();
     }
 }

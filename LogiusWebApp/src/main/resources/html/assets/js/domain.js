@@ -71,7 +71,19 @@ $(function () {
             dataSetIndex: 8
         }
     };
-
+    var ERROR_BACKGROUNDS = [
+        '#fd5858',
+        '#fd9651',
+        '#fdeb72',
+        '#cdfd92',
+        '#9cfdc2',
+        '#a7fafd',
+        '#94a8fd',
+        '#ca94fd',
+        '#fd89e9',
+        '#ff9ca0',
+        '#ffffff'
+    ];
 
     // Global chart settings
     Chart.defaults.global.animation.duration = 0;
@@ -208,7 +220,7 @@ $(function () {
 
     function loadDocumentsData() {
         var url = "/api/report/document-statistics?domain=" + currentDomain.domain;
-        var startDate = $("#summary-date-input")[0].value;
+        var startDate = $("#documents-date-input")[0].value;
         if (startDate !== "") {
             url += "&startDate=" + startDate;
         }
@@ -250,10 +262,6 @@ $(function () {
                 });
                 producersChart.data = producerChartData;
                 producersChart.update();
-
-                // domainInfoLoaded(result);
-                // summaryChart.data.datasets[0].data[0] = 343;
-                // summaryChart.update()
             },
             error: function (result) {
                 // reportError("Error on job loading");
@@ -269,15 +277,57 @@ $(function () {
     });
 
     function loadErrorsData() {
-
-        var startDate = $("#errors-producer-input")[0].value === "" ? currentDomain.startTime : $("errors-producer-input")[0].value;
+        var url = "/api/report/error-statistics?domain=" + currentDomain.domain;
+        var startDate = $("#errors-producer-input")[0].value;
+        if (startDate !== "") {
+            url += "&startDate=" + startDate;
+        }
+        //TODO: read flavour, version and producers
         $.ajax({
-            url: "api/report/error-statistics?domain=" + normalizeURL(currentDomain.domain) + "&startDate=" + startDate,
+            url: url,
             type: "GET",
             success: function (result) {
-                // domainInfoLoaded(result);
-                // summaryChart.data.datasets[0].data[0] = 343;
-                // summaryChart.update()
+                var errorsChartData = {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [],
+                        borderWidth: 0
+                    }]
+                };
+                var errorsListElement = $('.errors-list');
+                errorsListElement.empty();
+                $.each(result['topErrorStatistics'], function(index, errorCount) {
+                    var error = errorCount['error'];
+                    var shortDescription = '';
+                    if (error['type'] === 'ruleViolation') {
+                        var rule = error['rule'];
+                        shortDescription = rule['specification'] + ' ' + rule['clause'] + '-' + rule['testNumber'];
+                    } else {
+                        shortDescription = 'Generic error #' + error['id'];
+                    }
+                    var fullDescription = error['description'];
+                    var documentsCount = errorCount['count'];
+                    var errorColor = ERROR_BACKGROUNDS[index];
+
+                    errorsChartData.labels.push(shortDescription);
+                    errorsChartData.datasets[0].data.push(documentsCount);
+                    errorsChartData.datasets[0].backgroundColor.push(errorColor);
+
+                    errorsListElement.append(
+                        '<div class="error-item d-flex align-items-top">' +
+                        '    <span class="material-icons" style="color: ' + errorColor + '">lens</span>' +
+                        '    <span class="count">' + documentsCount + '</span>' +
+                        '    <div class="error-description">' +
+                        '        <div class="short">' + shortDescription + ':</div>' +
+                        '        <div class="full">' + fullDescription + '</div>' +
+                        '    </div>' +
+                        '</div>'
+                    );
+                });
+
+                errorsChart.data = errorsChartData;
+                errorsChart.update();
             },
             error: function (result) {
                 // reportError("Error on job loading");
@@ -564,26 +614,6 @@ $(function () {
 
     var errorsChartContext = document.getElementById("errors-chart").getContext('2d');
     var errorsChart = new Chart(errorsChartContext, {
-        type: 'pie',
-        data: {
-            labels: ["Error 1: description", "Error 2: description", "Error 3: description", "Error 4: description", "Error 5: description", "Error 6: description", "Error 7: description", "Error 8: description", "Error 9: description", "Error 10: description", "Other"],
-            datasets: [{
-                data: [978, 750, 564, 550, 300, 50, 18, 5, 1, 1, 564],
-                backgroundColor: [
-                    '#fd5858',
-                    '#fd9651',
-                    '#fdeb72',
-                    '#cdfd92',
-                    '#9cfdc2',
-                    '#a7fafd',
-                    '#94a8fd',
-                    '#ca94fd',
-                    '#fd89e9',
-                    '#ff9ca0',
-                    '#ffffff'
-                ],
-                borderWidth: 0
-            }]
-        }
+        type: 'pie'
     });
 });
