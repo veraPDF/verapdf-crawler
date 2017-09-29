@@ -121,8 +121,8 @@ public class VeraPDFProcessor implements Runnable {
 			try {
 				for (String propertyXPath : property.getValue()) {
 					String value = (String) xpath.evaluate(propertyXPath, document, XPathConstants.STRING);
-					result.addProperty(property.getKey(), value);
 					if (value != null && !value.isEmpty()) {
+						result.addProperty(property.getKey(), value);
 						break;
 					}
 				}
