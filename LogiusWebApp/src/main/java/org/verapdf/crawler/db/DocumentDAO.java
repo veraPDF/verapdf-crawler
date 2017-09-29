@@ -96,4 +96,8 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         return query.list();
     }
 
+    public Boolean isAllFinishedByDomain(String domain) {
+        //TODO: implement me
+        return false;
+    }
 }

@@ -4,7 +4,9 @@ import io.dropwizard.hibernate.HibernateBundle;
 import io.dropwizard.hibernate.UnitOfWorkAwareProxyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.configurations.EmailServerConfiguration;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
+import org.verapdf.crawler.core.jobs.CrawlJobService;
 import org.verapdf.crawler.core.validation.PDFValidator;
 import org.verapdf.crawler.db.*;
 import org.verapdf.crawler.core.validation.ValidationService;
@@ -35,6 +37,9 @@ public class ResourceManager {
         ValidationService validationService = new UnitOfWorkAwareProxyFactory(hibernate).create(ValidationService.class,
                 new Class[]{ValidationJobDAO.class, ValidationErrorDAO.class, DocumentDAO.class, PDFValidator.class},
                 new Object[]{validationJobDAO, validationErrorDAO, documentDAO, veraPDFValidator});
+        CrawlJobService crawlJobService = new UnitOfWorkAwareProxyFactory(hibernate).create(CrawlJobService.class,
+                new Class[]{CrawlJobDAO.class, CrawlRequestDAO.class, DocumentDAO.class, HeritrixClient.class, EmailServerConfiguration.class},
+                new Object[]{crawlJobDAO, crawlRequestDAO, documentDAO, heritrix, config.getEmailServerConfiguration()});
 
         // Initializing resources
         resources.add(new CrawlJobResource(crawlJobDAO, validationJobDAO, heritrix));
@@ -46,6 +51,9 @@ public class ResourceManager {
 
         // Launching validation
         validationService.start();
+
+        //Launching crawl job service
+        crawlJobService.start();
     }
 
     public List<Object> getResources() {

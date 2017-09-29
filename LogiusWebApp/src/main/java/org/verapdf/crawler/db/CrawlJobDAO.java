@@ -9,6 +9,7 @@ import org.verapdf.crawler.api.crawling.CrawlJob_;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import java.util.Collections;
 import java.util.List;
 
 public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
@@ -72,6 +73,11 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         Root<CrawlJob> crawlJob = criteriaQuery.from(CrawlJob.class);
         criteriaQuery = criteriaQuery.where(crawlJob.get(CrawlJob_.domain).in(domains));
         return list(criteriaQuery);
+    }
+
+    public List<CrawlJob> findByStatus(CrawlJob.Status status) {
+        // TODO: implement me
+        return Collections.emptyList();
     }
 
 }
