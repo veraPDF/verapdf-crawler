@@ -406,8 +406,16 @@ a.action .label {
   padding-right: 15px;
 }
 
+.documents form {
+  padding-bottom: 15px;
+}
+
 .documents .col {
   height: 400px;
+}
+
+.errors form {
+  padding-bottom: 15px;
 }
 
 .errors .errors-chart {
@@ -437,6 +445,31 @@ a.action .label {
 
 .errors .errors-list {
   margin-left: 320px;
+}
+
+.errors .errors-list .error-item {
+  margin-bottom: 15px;
+}
+
+.errors .errors-list .material-icons {
+  padding-top: 1px;
+}
+
+.errors .errors-list .count {
+  /* min-width: 30px;  TODO: Calculate based on digits count */
+  padding: 0 2px;
+}
+
+.errors .errors-list .error-description {
+  margin-left: 10px;
+}
+
+.errors .errors-list .error-description .short {
+  font-weight: bold;
+}
+
+.errors .errors-list .error-description .full {
+  font-size: 14px;
 }
 
 .links {

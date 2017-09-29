@@ -35,7 +35,7 @@ $(document).ready(function () {
         title: function () {
             return errorDateMessage;
         }
-    })
+    });
 
     var picker = new Pikaday(
         {
@@ -63,41 +63,53 @@ function main() {
 
     var validForm = true;
 
-    if ($("#email_input")[0].value) {
-        var regexp = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-        if (!regexp.test($("#email_input")[0].value)) {
-            $("input:button").attr("disabled", false);
-            $('#email_input').tooltip('show');
-            validForm = false;
-
-        }
-    }
-
-    var dateRegExp = /^\d{4}-\d{2}-\d{2}$/
-    if ($("#date_input")[0].value && !dateRegExp.test($("#date_input")[0].value)) {
-        $("input:button").attr("disabled", false);
-        $('#date_input').tooltip('show');
-        validForm = false;
-    }
-
+    // Read and validate domains
     if (!$("#urlinput")[0].value) {
         $("input:button").attr("disabled", false);
         $('#urlinput').tooltip("show");
         validForm = false;
     }
+    var domainList = $("#urlinput")[0].value.split(', ');
+    var crawlJobs = [];
+    $.each(domainList, function (i, domain) {
+        crawlJobs.push({
+            domain: domain
+        });
+    });
 
+    // Read and validate email
+    var email = $("#email_input")[0].value;
+    if (email) {
+        var regexp = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        if (!regexp.test(email)) {
+            $("input:button").attr("disabled", false);
+            $('#email_input').tooltip('show');
+            validForm = false;
+        }
+    }
+
+    // Read and validate crawl since date
+    var crawlSinceTime = $("#date_input")[0].value;
+    var dateRegExp = /^\d{4}-\d{2}-\d{2}$/;
+    if (crawlSinceTime && !dateRegExp.test(crawlSinceTime)) {
+        $("input:button").attr("disabled", false);
+        $('#date_input').tooltip('show');
+        validForm = false;
+    }
+
+    // If there are validate errors do nothing
     if(!validForm){
         return;
     }
-    var crawlUrlList = $("#urlinput")[0].value.split(', ');
 
+    // Otherwise POST crawl request
     var postData = {};
-    postData.domains = crawlUrlList;
-    if ($("#email_input")[0].value) {
-        postData.emailAddress = $("#email_input")[0].value;
+    postData.crawlJobs = crawlJobs;
+    if (email) {
+        postData.emailAddress = email;
     }
-    if ($("#date_input")[0].value) {
-        postData.crawlSinceTime = $("#date_input")[0].value;
+    if (crawlSinceTime) {
+        postData.crawlSinceTime = crawlSinceTime;
     }
 
     $.ajax({
