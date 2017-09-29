@@ -24,7 +24,6 @@
   command: mvn clean package
   args:
     chdir: "{{ logius_git_root }}"
-    creates: "{{ logius_git_root }}/LogiusWebApp/target/LogiusWebApp-1.0-SNAPSHOT.jar"
 
 - name: Create application install directory
   file:
@@ -107,12 +106,19 @@
   with_items:
     - "run"
     - "run-heritrix"
+    - "run-verapdf-service"
 
 - name: Create app DB Schema
   mysql_db:
     state: import
     name: "logius"
-    target: "{{ logius_git_root }}/LogiusWebApp/src/main/resources/schema.sql"
+    target: "{{ logius_git_root }}/LogiusWebApp/src/main/resources/sql/schema.sql"
+
+- name: Setup default properties
+  mysql_db:
+    state: import
+    name: "logius"
+    target: "{{ logius_git_root }}/LogiusWebApp/src/main/resources/sql/pdf_properties_base_settings.sql"
 
 - name: Remove default nginx site
   file:
