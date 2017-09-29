@@ -108,7 +108,7 @@
             <div class="good-documents">
                 <div class="percent"></div>
                 <div><span class="pdf"></span> PDF/A-1a and PDF/A-2a documents</div>
-                <div><span class="office"></span> 125 ODF documents</div>
+                <div><span class="office"></span> ODF documents</div>
             </div>
             <div class="bad-documents">
                 <div class="percent"></div>
@@ -118,7 +118,11 @@
         </div>
 
         <div class="documents tab-pane fade" id="documents" role="tabpanel">
-            <form class="form-inline d-flex justify-content-end">
+            <form class="form-inline d-flex justify-content-between">
+                <div class="documents-summary">
+                    <span class="total-count"></span> PDF documents found
+                    (<span class="open-count"></span> open, <span class="not-open-count"></span> not open)
+                </div>
                 <input type="text" class="form-control form-control-sm" placeholder="Documents from" id="documents-date-input">
             </form>
             <div class="row">

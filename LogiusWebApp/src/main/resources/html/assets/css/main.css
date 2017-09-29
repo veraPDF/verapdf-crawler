@@ -406,6 +406,10 @@ a.action .label {
   padding-right: 15px;
 }
 
+.documents form {
+  padding-bottom: 15px;
+}
+
 .documents .col {
   height: 400px;
 }

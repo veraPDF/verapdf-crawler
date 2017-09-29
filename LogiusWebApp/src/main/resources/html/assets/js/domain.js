@@ -33,6 +33,44 @@ $(function () {
             dataSetIndex: 7
         }
     };
+    var VERSIONS = {
+        '1.0': {
+            displayName: 'PDF 1.0',
+            dataSetIndex: 0
+        },
+        '1.1': {
+            displayName: 'PDF 1.1',
+            dataSetIndex: 1
+        },
+        '1.2': {
+            displayName: 'PDF 1.2',
+            dataSetIndex: 2
+        },
+        '1.3': {
+            displayName: 'PDF 1.3',
+            dataSetIndex: 3
+        },
+        '1.4': {
+            displayName: 'PDF 1.4',
+            dataSetIndex: 4
+        },
+        '1.5': {
+            displayName: 'PDF 1.5',
+            dataSetIndex: 5
+        },
+        '1.6': {
+            displayName: 'PDF 1.6',
+            dataSetIndex: 6
+        },
+        '1.7': {
+            displayName: 'PDF 1.7',
+            dataSetIndex: 7
+        },
+        '2.0': {
+            displayName: 'PDF 2.0',
+            dataSetIndex: 8
+        }
+    };
 
 
     // Global chart settings
@@ -178,11 +216,41 @@ $(function () {
             url: url,
             type: "GET",
             success: function (result) {
+                // Counts
+                $('.documents .total-count').text(result['totalPdfDocumentsCount']);
+                $('.documents .open-count').text(result['openPdfDocumentsCount']);
+                $('.documents .not-open-count').text(result['notOpenPdfDocumentsCount']);
+
+                // Flavours chart
                 $.each(result['flavourStatistics'], function(index, valueCount) {
                     var dataSetIndex = FLAVOURS[valueCount['value']].dataSetIndex;
                     flavoursChart.data.datasets[0].data[dataSetIndex] = valueCount['count'];
                 });
                 flavoursChart.update();
+
+                // Versions chart
+                $.each(result['versionStatistics'], function(index, valueCount) {
+                    var dataSetIndex = VERSIONS[valueCount['value']].dataSetIndex;
+                    versionsChart.data.datasets[0].data[dataSetIndex] = valueCount['count'];
+                });
+                versionsChart.update();
+
+                // Producers chart
+                var producerChartData = {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: []
+                    }]
+                };
+                $.each(result['topProducerStatistics'], function(index, valueCount) {
+                    producerChartData.labels.push(valueCount['value']);
+                    producerChartData.datasets[0].data.push(valueCount['count']);
+                    producerChartData.datasets[0].backgroundColor.push('white');
+                });
+                producersChart.data = producerChartData;
+                producersChart.update();
+
                 // domainInfoLoaded(result);
                 // summaryChart.data.datasets[0].data[0] = 343;
                 // summaryChart.update()
@@ -433,14 +501,21 @@ $(function () {
     });
 
     var versionsChartContext = document.getElementById("versions-chart").getContext('2d');
+    var versionsChartLabels = [];
+    var versionsChartDataset = {
+        data: [],
+        backgroundColor: []
+    };
+    $.each(VERSIONS, function(serverName, uiDescriptor) {
+        versionsChartLabels.push(uiDescriptor['displayName']);
+        versionsChartDataset.data.push(0);
+        versionsChartDataset.backgroundColor.push('white');
+    });
     var versionsChart = new Chart(versionsChartContext, {
         type: 'bar',
         data: {
-            labels: ['PDF 1.0', 'PDF 1.1', 'PDF 1.2', 'PDF 1.3', 'PDF 1.4', 'PDF 1.5', 'PDF 1.6', 'PDF 1.7', 'PDF 2.0'],
-            datasets: [{
-                data: [0, 26, 324, 780, 34, 123, 412, 753, 0],
-                backgroundColor: ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white']
-            }]
+            labels: versionsChartLabels,
+            datasets: [versionsChartDataset]
         },
         options: {
             title: {
@@ -453,13 +528,6 @@ $(function () {
     var producersChartContext = document.getElementById("producers-chart").getContext('2d');
     var producersChart = new Chart(producersChartContext, {
         type: 'bar',
-        data: {
-            labels: ['Skia/PDF', 'OpenOffice', 'iText', 'Acrobat Distiller', 'Microsoft Word', 'Other'],
-            datasets: [{
-                data: [535, 345, 265, 145, 123, 1234],
-                backgroundColor: ['white', 'white', 'white', 'white', 'white', 'white']
-            }]
-        },
         options: {
             title: {
                 display: true,

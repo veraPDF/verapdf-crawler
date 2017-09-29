@@ -32,7 +32,9 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         List<Predicate> restrictions = new ArrayList<>();
         restrictions.add(builder.equal(document.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain));
         restrictions.add(document.get(DomainDocument_.contentType).in(documentTypes));
-        restrictions.add(builder.equal(document.get(DomainDocument_.baseTestResult), testResult));
+        if (testResult != null) {
+            restrictions.add(builder.equal(document.get(DomainDocument_.baseTestResult), testResult));
+        }
         if (startDate != null) {
             restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
         }
@@ -58,6 +60,10 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
             query.setMaxResults(limit);
         }
         return query.list();
+    }
+
+    public List<PdfPropertyStatistics.ValueCount> getPropertyStatistics(String domain, String propertyName, Date startDate) {
+        return getPropertyStatistics(domain, propertyName, startDate, false, null);
     }
 
     public List<PdfPropertyStatistics.ValueCount> getPropertyStatistics(String domain, String propertyName, Date startDate, boolean orderByCount, Integer limit) {

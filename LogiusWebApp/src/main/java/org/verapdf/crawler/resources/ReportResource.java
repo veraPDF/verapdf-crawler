@@ -87,14 +87,21 @@ public class ReportResource {
 
             stats should include all flavours, all versions (order by flavour/version) and top 10 producers (order by doc count desc).
         */
+        Long openPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince);
+        Long notOpenPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
+        Long total = openPdf + notOpenPdf;
+
         List<PdfPropertyStatistics.ValueCount> flavourStatistics = documentDAO.getPropertyStatistics(
-                domain, PdfPropertyStatistics.FLAVOUR_PROPERTY_NAME, documentsSince, false, null);
+                domain, PdfPropertyStatistics.FLAVOUR_PROPERTY_NAME, documentsSince);
         List<PdfPropertyStatistics.ValueCount> versionStatistics = documentDAO.getPropertyStatistics(
-                domain, PdfPropertyStatistics.VERSION_PROPERTY_NAME, documentsSince, false, null);
+                domain, PdfPropertyStatistics.VERSION_PROPERTY_NAME, documentsSince);
         List<PdfPropertyStatistics.ValueCount> producerStatistics = documentDAO.getPropertyStatistics(
                 domain, PdfPropertyStatistics.PRODUCER_PROPERTY_NAME, documentsSince, true, PdfPropertyStatistics.TOP_PRODUCERS_COUNT);
 
         PdfPropertyStatistics statistics = new PdfPropertyStatistics();
+        statistics.setOpenPdfDocumentsCount(openPdf);
+        statistics.setNotOpenPdfDocumentsCount(notOpenPdf);
+        statistics.setTotalPdfDocumentsCount(total);
         statistics.setFlavourStatistics(flavourStatistics);
         statistics.setVersionStatistics(versionStatistics);
         statistics.setTopProducerStatistics(producerStatistics);
