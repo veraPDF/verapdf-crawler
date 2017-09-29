@@ -2,17 +2,40 @@ package org.verapdf.crawler.api.document;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import org.verapdf.crawler.api.crawling.CrawlJob;
 import org.verapdf.crawler.api.validation.error.ValidationError;
 
 import javax.persistence.*;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Entity
 @Table(name = "documents")
 public class DomainDocument {
+
+    public enum DocumentTypeGroup {
+        PDF(Collections.singletonList("pdf")),
+        OFFICE(Arrays.asList(
+                "odt", "ods", "odp",
+                "doc", "xls", "ppt",
+                "docx", "xlsx", "pptx"
+        ));
+
+        private List<String> types;
+
+        DocumentTypeGroup(List<String> types) {
+            this.types = Collections.unmodifiableList(types);
+        }
+
+        public List<String> getTypes() {
+            return types;
+        }
+
+        @JsonValue
+        public String getValue() {
+            return name().toLowerCase();
+        }
+    }
 
     public enum BaseTestResult {
         OPEN,

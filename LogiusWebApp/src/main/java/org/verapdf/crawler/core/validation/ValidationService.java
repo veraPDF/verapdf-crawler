@@ -36,10 +36,6 @@ public class ValidationService implements Runnable {
         new Thread(this, "Thread-ValidationService").start();
     }
 
-//    public Integer getQueueSize() {
-//        return validationJobDao.getQueueSize();
-//    }
-
     @Override
     public void run() {
         logger.info("Validation service started");
@@ -69,7 +65,11 @@ public class ValidationService implements Runnable {
 
     @UnitOfWork
     public ValidationJob nextJob() {
-        return validationJobDAO.next();
+        ValidationJob job = validationJobDAO.next();
+        if (job != null) {
+            job.setStatus(ValidationJob.Status.IN_PROGRESS);
+        }
+        return job;
     }
 
     @UnitOfWork
@@ -82,6 +82,7 @@ public class ValidationService implements Runnable {
         for (int index = 0; index < validationErrors.size(); index++) {
             validationErrors.set(index, validationErrorDAO.save(validationErrors.get(index)));
         }
+        document.setValidationErrors(validationErrors);
 
         // Link properties
         document.setProperties(result.getProperties());

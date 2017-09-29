@@ -106,12 +106,14 @@
                 <input type="text" class="form-control form-control-sm" placeholder="Documents from" id="summary-date-input">
             </form>
             <div class="good-documents">
-                <div>1320 PDF/A-1a and PDF/A-2a documents</div>
-                <div>125 ODF documents</div>
+                <div class="percent"></div>
+                <div><span class="pdf"></span> PDF/A-1a and PDF/A-2a documents</div>
+                <div><span class="office"></span> 125 ODF documents</div>
             </div>
             <div class="bad-documents">
-                <div>889 PDF documents that do not conform to PDF/A-1a or PDF/A-2a</div>
-                <div>548 documents with an application-based format</div>
+                <div class="percent"></div>
+                <div><span class="pdf"></span> PDF documents that do not conform to PDF/A-1a or PDF/A-2a</div>
+                <div><span class="office"></span> documents with an application-based format</div>
             </div>
         </div>
 
@@ -121,7 +123,7 @@
             </form>
             <div class="row">
                 <div class="col">
-                    <canvas id="flavors-chart"></canvas>
+                    <canvas id="flavours-chart"></canvas>
                 </div>
                 <div class="col">
                     <canvas id="versions-chart"></canvas>
@@ -140,10 +142,10 @@
                 <input type="text" class="form-control form-control-sm" placeholder="Any producer" id="errors-producer-input">
                 <!--div class="btn-group">
                     <button class="btn btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Any PDF/A flavor
+                        Any PDF/A flavour
                     </button>
                     <div class="dropdown-menu">
-                        <a class="dropdown-item" href="#">Any PDF/A flavor</a>
+                        <a class="dropdown-item" href="#">Any PDF/A flavour</a>
                         <a class="dropdown-item" href="#">PDF/A-1a</a>
                         <a class="dropdown-item" href="#">PDF/A-1b</a>
                         <a class="dropdown-item" href="#">PDF/A-2a</a>
@@ -154,8 +156,8 @@
                         <a class="dropdown-item" href="#">PDF/A-3u</a>
                     </div>
                 </div-->
-                <select class="form-control form-control-sm" id="errors-flavor-input">
-                    <option selected>Any PDF/A flavor</option>
+                <select class="form-control form-control-sm" id="errors-flavour-input">
+                    <option selected>Any PDF/A flavour</option>
                     <option value="1a">PDF/A-1a</option>
                     <option value="1b">PDF/A-1b</option>
                     <option value="2a">PDF/A-2a</option>
