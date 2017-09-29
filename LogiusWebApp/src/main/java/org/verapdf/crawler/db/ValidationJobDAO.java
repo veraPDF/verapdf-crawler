@@ -43,6 +43,17 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         bulkUpdateState(domain, ValidationJob.Status.NOT_STARTED);
     }
 
+    public Long count(String domain) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<Long> criteriaQuery = builder.createQuery(Long.class);
+        Root<ValidationJob> job = criteriaQuery.from(ValidationJob.class);
+        criteriaQuery.select(builder.count(job));
+        criteriaQuery.where(
+                builder.equal(job.get(ValidationJob_.document).get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain)
+        );
+        return currentSession().createQuery(criteriaQuery).getSingleResult();
+    }
+
     private void bulkUpdateState(String domain, ValidationJob.Status status) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaUpdate<ValidationJob> criteriaUpdate = builder.createCriteriaUpdate(ValidationJob.class);

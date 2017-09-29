@@ -7,7 +7,6 @@ import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -23,9 +22,9 @@ public class CrawlRequest {
 
     @NotNull
     @Size(min=1)
-    @Transient
+    @ManyToMany(mappedBy = "crawlRequests")
     @JsonProperty
-    private List<String> domains;
+    private List<CrawlJob> crawlJobs;
 
     @Column(name = "is_finished")
     @JsonProperty
@@ -46,7 +45,6 @@ public class CrawlRequest {
 
     public CrawlRequest(String id, String emailAddress, Date crawlSinceTime) {
         this.id = id;
-        this.domains = new ArrayList<>();
         this.emailAddress = emailAddress;
         this.finished = false;
         this.crawlSinceTime = crawlSinceTime;
@@ -56,10 +54,12 @@ public class CrawlRequest {
 
     public void setId(String id) { this.id = id; }
 
-    public List<String> getDomains() { return domains; }
+    public List<CrawlJob> getCrawlJobs() {
+        return crawlJobs;
+    }
 
-    public void setDomains(List<String> domains) {
-        this.domains = domains;
+    public void setCrawlJobs(List<CrawlJob> crawlJobs) {
+        this.crawlJobs = crawlJobs;
     }
 
     public boolean isFinished() {

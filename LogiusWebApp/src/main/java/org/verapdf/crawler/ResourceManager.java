@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.configurations.EmailServerConfiguration;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
-import org.verapdf.crawler.core.jobs.CrawlJobService;
+import org.verapdf.crawler.core.jobs.MonitorCrawlJobStatusService;
 import org.verapdf.crawler.core.validation.PDFValidator;
 import org.verapdf.crawler.db.*;
 import org.verapdf.crawler.core.validation.ValidationService;
@@ -37,9 +37,9 @@ public class ResourceManager {
         ValidationService validationService = new UnitOfWorkAwareProxyFactory(hibernate).create(ValidationService.class,
                 new Class[]{ValidationJobDAO.class, ValidationErrorDAO.class, DocumentDAO.class, PDFValidator.class},
                 new Object[]{validationJobDAO, validationErrorDAO, documentDAO, veraPDFValidator});
-        CrawlJobService crawlJobService = new UnitOfWorkAwareProxyFactory(hibernate).create(CrawlJobService.class,
-                new Class[]{CrawlJobDAO.class, CrawlRequestDAO.class, DocumentDAO.class, HeritrixClient.class, EmailServerConfiguration.class},
-                new Object[]{crawlJobDAO, crawlRequestDAO, documentDAO, heritrix, config.getEmailServerConfiguration()});
+        MonitorCrawlJobStatusService monitorCrawlJobStatusService = new UnitOfWorkAwareProxyFactory(hibernate).create(MonitorCrawlJobStatusService.class,
+                new Class[]{CrawlJobDAO.class, CrawlRequestDAO.class, ValidationJobDAO.class, HeritrixClient.class, EmailServerConfiguration.class},
+                new Object[]{crawlJobDAO, crawlRequestDAO, validationJobDAO, heritrix, config.getEmailServerConfiguration()});
 
         // Initializing resources
         resources.add(new CrawlJobResource(crawlJobDAO, validationJobDAO, heritrix));
@@ -53,7 +53,7 @@ public class ResourceManager {
         validationService.start();
 
         //Launching crawl job service
-        crawlJobService.start();
+        monitorCrawlJobStatusService.start();
     }
 
     public List<Object> getResources() {

@@ -2,6 +2,7 @@ package org.verapdf.crawler.core.email;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.api.crawling.CrawlJob;
 import org.verapdf.crawler.api.crawling.CrawlRequest;
 import org.verapdf.crawler.configurations.EmailServerConfiguration;
 
@@ -53,18 +54,17 @@ public final class SendEmail {
 
     public static void sendFinishNotification(CrawlRequest request, EmailServerConfiguration serverConfiguration) {
         String emailAddress = request.getEmailAddress();
-        List<String> domains = request.getDomains();
-        String domainsString = generatedomainsString(domains);
+        String domainsString = generateDomainsString(request.getCrawlJobs());
         String subject = String.format(SUBJECT, domainsString);
         String body = String.format(EMAIL_BODY, domainsString);
         send(emailAddress, subject, body, serverConfiguration);
     }
 
-    private static String generatedomainsString(List<String> domains) {
+    private static String generateDomainsString(List<CrawlJob> crawlJobs) {
         StringBuilder builder = new StringBuilder();
-        if (domains != null && !domains.isEmpty()) {
-            for (String domain : domains) {
-                builder.append(domain).append(DOMAIN_SEPARATOR);
+        if (crawlJobs != null && !crawlJobs.isEmpty()) {
+            for (CrawlJob crawlJob : crawlJobs) {
+                builder.append(crawlJob.getDomain()).append(DOMAIN_SEPARATOR);
             }
         }
         return builder.substring(0, builder.length() - DOMAIN_SEPARATOR.length());

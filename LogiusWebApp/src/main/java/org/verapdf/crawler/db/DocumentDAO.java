@@ -29,14 +29,14 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
         criteriaQuery.select(builder.count(document));
 
-        List<Predicate> clauses = new ArrayList<>();
-        clauses.add(builder.equal(document.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain));
-        clauses.add(document.get(DomainDocument_.contentType).in(documentTypes));
-        clauses.add(builder.equal(document.get(DomainDocument_.baseTestResult), testResult));
+        List<Predicate> restrictions = new ArrayList<>();
+        restrictions.add(builder.equal(document.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain));
+        restrictions.add(document.get(DomainDocument_.contentType).in(documentTypes));
+        restrictions.add(builder.equal(document.get(DomainDocument_.baseTestResult), testResult));
         if (startDate != null) {
-            clauses.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
+            restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
         }
-        criteriaQuery.where(builder.and(clauses.toArray(new Predicate[clauses.size()])));
+        criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
 
         return currentSession().createQuery(criteriaQuery).getSingleResult();
     }
@@ -73,14 +73,14 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
                 documentCount
         ));
 
-        List<Predicate> clauses = new ArrayList<>();
-        clauses.add(builder.equal(document.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain));
-        clauses.add(builder.equal(properties.key(), propertyName));
-        clauses.add(builder.notEqual(properties.value(), ""));   // TODO: remove once we don't keep empty property values
+        List<Predicate> restrictions = new ArrayList<>();
+        restrictions.add(builder.equal(document.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain));
+        restrictions.add(builder.equal(properties.key(), propertyName));
+        restrictions.add(builder.notEqual(properties.value(), ""));   // TODO: remove once we don't keep empty property values
         if (startDate != null) {
-            clauses.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
+            restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
         }
-        criteriaQuery.where(builder.and(clauses.toArray(new Predicate[clauses.size()])));
+        criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
 
         criteriaQuery.groupBy(properties.value());
 
@@ -95,6 +95,8 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
 
         return query.list();
     }
+
+
 
     public Boolean isAllFinishedByDomain(String domain) {
         //TODO: implement me
