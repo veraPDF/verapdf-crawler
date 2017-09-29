@@ -1,48 +1,81 @@
 package org.verapdf.crawler.api.report;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 
 public class PdfPropertyStatistics {
 
-    private String name;
-    private String value;
-    private Integer count;
+    public static final String FLAVOUR_PROPERTY_NAME = "flavour";
+    public static final String VERSION_PROPERTY_NAME = "pdfVersion";
+    public static final String PRODUCER_PROPERTY_NAME = "producer";
 
-    public PdfPropertyStatistics() { }
+    public static final int TOP_PRODUCERS_COUNT = 10;
 
-    public PdfPropertyStatistics(String name, String value, Integer count) {
-        this.name = name;
-        this.value = value;
-        this.count = count;
+    public static class ValueCount {
+        private String value;
+        private Long count;
+
+        public ValueCount() {
+        }
+
+        public ValueCount(String value, Long count) {
+            this.value = value;
+            this.count = count;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public void setValue(String value) {
+            this.value = value;
+        }
+
+        public Long getCount() {
+            return count;
+        }
+
+        public void setCount(Long count) {
+            this.count = count;
+        }
     }
 
-    @JsonProperty
-    public String getName() {
-        return name;
+    private Long totalPdfDocumentsCount;
+
+    private List<ValueCount> flavourStatistics;
+
+    private List<ValueCount> versionStatistics;
+
+    private List<ValueCount> topProducerStatistics;
+
+    public Long getTotalPdfDocumentsCount() {
+        return totalPdfDocumentsCount;
     }
 
-    @JsonProperty
-    public void setName(String name) {
-        this.name = name;
+    public void setTotalPdfDocumentsCount(Long totalPdfDocumentsCount) {
+        this.totalPdfDocumentsCount = totalPdfDocumentsCount;
     }
 
-    @JsonProperty
-    public String getValue() {
-        return value;
+    public List<ValueCount> getFlavourStatistics() {
+        return flavourStatistics;
     }
 
-    @JsonProperty
-    public void setValue(String value) {
-        this.value = value;
+    public void setFlavourStatistics(List<ValueCount> flavourStatistics) {
+        this.flavourStatistics = flavourStatistics;
     }
 
-    @JsonProperty
-    public Integer getCount() {
-        return count;
+    public List<ValueCount> getVersionStatistics() {
+        return versionStatistics;
     }
 
-    @JsonProperty
-    public void setCount(Integer count) {
-        this.count = count;
+    public void setVersionStatistics(List<ValueCount> versionStatistics) {
+        this.versionStatistics = versionStatistics;
+    }
+
+    public List<ValueCount> getTopProducerStatistics() {
+        return topProducerStatistics;
+    }
+
+    public void setTopProducerStatistics(List<ValueCount> topProducerStatistics) {
+        this.topProducerStatistics = topProducerStatistics;
     }
 }

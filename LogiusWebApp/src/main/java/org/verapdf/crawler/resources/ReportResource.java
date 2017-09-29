@@ -18,6 +18,7 @@ import javax.ws.rs.core.Response;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 @Path("/report")
 public class ReportResource {
@@ -35,12 +36,12 @@ public class ReportResource {
     @UnitOfWork
     public CrawlJobSummary getSummary(@QueryParam("domain") String domain,
                                       @QueryParam("startDate") DateParam startDate) throws IOException, ParserConfigurationException, SAXException {
-        Date parsedDate = DateParam.getDateFromParam(startDate);
+        Date documentsSince = DateParam.getDateFromParam(startDate);
 
-        Long openPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.OPEN, parsedDate);
-        Long notOpenPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, parsedDate);
-        Long openOffice = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OFFICE.getTypes(), DomainDocument.BaseTestResult.OPEN, parsedDate);
-        Long notOpenOffice = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OFFICE.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, parsedDate);
+        Long openPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince);
+        Long notOpenPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
+        Long openOffice = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OFFICE.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince);
+        Long notOpenOffice = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OFFICE.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
 
         CrawlJobSummary summary = new CrawlJobSummary();
         summary.getOpenDocuments().put(DomainDocument.DocumentTypeGroup.PDF, openPdf);
@@ -56,14 +57,15 @@ public class ReportResource {
     @UnitOfWork
     public PdfPropertyStatistics getDocumentStatistics(@QueryParam("domain") String domain,
                                                        @QueryParam("startDate") DateParam startDate) {
+        Date documentsSince = DateParam.getDateFromParam(startDate);
         /* todo: change to the following structure:
             {
                 totalCount: 5612,
-                flavorStatistics: [{
-                    flavor: 'PDF/A-1a',
+                flavourStatistics: [{
+                    flavour: 'PDF/A-1a',
                     count: 123
                 }, {
-                    flavor: 'PDF/A-2a',
+                    flavour: 'PDF/A-2a',
                     count: 456
                 }, ...
                 ],
@@ -83,9 +85,21 @@ public class ReportResource {
                 }, ...]
             }
 
-            stats should include all flavors, all versions (order by flavor/version) and top 10 producers (order by doc count desc).
+            stats should include all flavours, all versions (order by flavour/version) and top 10 producers (order by doc count desc).
         */
-        return null;
+        List<PdfPropertyStatistics.ValueCount> flavourStatistics = documentDAO.getPropertyStatistics(
+                domain, PdfPropertyStatistics.FLAVOUR_PROPERTY_NAME, documentsSince, false, null);
+        List<PdfPropertyStatistics.ValueCount> versionStatistics = documentDAO.getPropertyStatistics(
+                domain, PdfPropertyStatistics.VERSION_PROPERTY_NAME, documentsSince, false, null);
+        List<PdfPropertyStatistics.ValueCount> producerStatistics = documentDAO.getPropertyStatistics(
+                domain, PdfPropertyStatistics.PRODUCER_PROPERTY_NAME, documentsSince, true, PdfPropertyStatistics.TOP_PRODUCERS_COUNT);
+
+        PdfPropertyStatistics statistics = new PdfPropertyStatistics();
+        statistics.setFlavourStatistics(flavourStatistics);
+        statistics.setVersionStatistics(versionStatistics);
+        statistics.setTopProducerStatistics(producerStatistics);
+
+        return statistics;
     }
 
     @GET
@@ -94,7 +108,7 @@ public class ReportResource {
     @UnitOfWork
     public ErrorStatistics getErrorStatistics(@QueryParam("domain") String domain,
                                               @QueryParam("startDate") DateParam startDate,
-                                              @QueryParam("flavor") String flavor,
+                                              @QueryParam("flavour") String flavour,
                                               @QueryParam("version") String version,
                                               @QueryParam("producer") String producer) {
         return null;

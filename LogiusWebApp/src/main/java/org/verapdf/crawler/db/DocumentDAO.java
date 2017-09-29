@@ -6,6 +6,7 @@ import org.hibernate.query.Query;
 import org.verapdf.crawler.api.crawling.CrawlJob_;
 import org.verapdf.crawler.api.document.DomainDocument;
 import org.verapdf.crawler.api.document.DomainDocument_;
+import org.verapdf.crawler.api.report.PdfPropertyStatistics;
 
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
@@ -20,6 +21,24 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
 
     public DomainDocument save(DomainDocument document) {
         return persist(document);
+    }
+
+    public Long count(String domain, List<String> documentTypes, DomainDocument.BaseTestResult testResult, Date startDate) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<Long> criteriaQuery = builder.createQuery(Long.class);
+        Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
+        criteriaQuery.select(builder.count(document));
+
+        List<Predicate> clauses = new ArrayList<>();
+        clauses.add(builder.equal(document.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain));
+        clauses.add(document.get(DomainDocument_.contentType).in(documentTypes));
+        clauses.add(builder.equal(document.get(DomainDocument_.baseTestResult), testResult));
+        if (startDate != null) {
+            clauses.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
+        }
+        criteriaQuery.where(builder.and(clauses.toArray(new Predicate[clauses.size()])));
+
+        return currentSession().createQuery(criteriaQuery).getSingleResult();
     }
 
     public List<String> getDocumentPropertyValues(String propertyName, String domain, String propertyValueFilter, Integer limit) {
@@ -41,23 +60,40 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         return query.list();
     }
 
-    public Long count(String domain, List<String> documentTypes, DomainDocument.BaseTestResult testResult, Date startDate) {
+    public List<PdfPropertyStatistics.ValueCount> getPropertyStatistics(String domain, String propertyName, Date startDate, boolean orderByCount, Integer limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
-        CriteriaQuery<Long> criteriaQuery = builder.createQuery(Long.class);
+        CriteriaQuery<PdfPropertyStatistics.ValueCount> criteriaQuery = builder.createQuery(PdfPropertyStatistics.ValueCount.class);
         Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
-        criteriaQuery.select(builder.count(document));
+        MapJoin<DomainDocument, String, String> properties = document.join(DomainDocument_.properties);
+
+        Expression<Long> documentCount = builder.count(document);
+        criteriaQuery.select(builder.construct(
+                PdfPropertyStatistics.ValueCount.class,
+                properties.value(),
+                documentCount
+        ));
 
         List<Predicate> clauses = new ArrayList<>();
         clauses.add(builder.equal(document.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain));
-        clauses.add(document.get(DomainDocument_.contentType).in(documentTypes));
-        clauses.add(builder.equal(document.get(DomainDocument_.baseTestResult), testResult));
+        clauses.add(builder.equal(properties.key(), propertyName));
+        clauses.add(builder.notEqual(properties.value(), ""));   // TODO: remove once we don't keep empty property values
         if (startDate != null) {
             clauses.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
         }
-
         criteriaQuery.where(builder.and(clauses.toArray(new Predicate[clauses.size()])));
 
-        return currentSession().createQuery(criteriaQuery).getSingleResult();
+        criteriaQuery.groupBy(properties.value());
+
+        if (orderByCount) {
+            criteriaQuery.orderBy(builder.desc(documentCount));
+        }
+
+        Query<PdfPropertyStatistics.ValueCount> query = currentSession().createQuery(criteriaQuery);
+        if (limit != null) {
+            query.setMaxResults(limit);
+        }
+
+        return query.list();
     }
 
 }

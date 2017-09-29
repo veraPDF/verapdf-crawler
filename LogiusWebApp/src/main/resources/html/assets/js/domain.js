@@ -1,4 +1,40 @@
 $(function () {
+    var FLAVOURS = {
+        'PDF/A-1A validation profile': {
+            displayName: 'PDF/A-1A',
+            dataSetIndex: 0
+        },
+        'PDF/A-1B validation profile': {
+            displayName: 'PDF/A-1B',
+            dataSetIndex: 1
+        },
+        'PDF/A-2A validation profile': {
+            displayName: 'PDF/A-2A',
+            dataSetIndex: 2
+        },
+        'PDF/A-2B validation profile': {
+            displayName: 'PDF/A-2B',
+            dataSetIndex: 3
+        },
+        'PDF/A-2U validation profile': {
+            displayName: 'PDF/A-2U',
+            dataSetIndex: 4
+        },
+        'PDF/A-3A validation profile': {
+            displayName: 'PDF/A-3A',
+            dataSetIndex: 5
+        },
+        'PDF/A-3B validation profile': {
+            displayName: 'PDF/A-3B',
+            dataSetIndex: 6
+        },
+        'PDF/A-3U validation profile': {
+            displayName: 'PDF/A-3U',
+            dataSetIndex: 7
+        }
+    };
+
+
     // Global chart settings
     Chart.defaults.global.animation.duration = 0;
     Chart.defaults.global.maintainAspectRatio = false;
@@ -110,9 +146,11 @@ $(function () {
                 var openCount = result['openDocuments']['pdf'] + result['openDocuments']['office'];
                 var notOpenCount = result['notOpenDocuments']['pdf'] + result['notOpenDocuments']['office'];
                 var totalCount = openCount + notOpenCount;
+                var openPercent = openCount * 100 / totalCount;
+                var notOpenPercent = 100 - openPercent;
 
-                $('.summary .good-documents .percent').text((openCount * 100 / totalCount) + '%');
-                $('.summary .bad-documents .percent').text((notOpenCount * 100 / totalCount) + '%');
+                $('.summary .good-documents .percent').text(openPercent + '%');
+                $('.summary .bad-documents .percent').text(notOpenPercent + '%');
 
                 summaryChart.data.datasets[0].data[0] = notOpenCount;
                 summaryChart.data.datasets[0].data[1] = openCount;
@@ -131,11 +169,20 @@ $(function () {
     });
 
     function loadDocumentsData() {
-        var startDate = $("#documents-date-input")[0].value === "" ? currentDomain.startTime : $("documents-date-input")[0].value;
+        var url = "/api/report/document-statistics?domain=" + currentDomain.domain;
+        var startDate = $("#summary-date-input")[0].value;
+        if (startDate !== "") {
+            url += "&startDate=" + startDate;
+        }
         $.ajax({
-            url: "/api/report/document-statistics?domain=" + currentDomain.domain + "&startDate=" + startDate,
+            url: url,
             type: "GET",
             success: function (result) {
+                $.each(result['flavourStatistics'], function(index, valueCount) {
+                    var dataSetIndex = FLAVOURS[valueCount['value']].dataSetIndex;
+                    flavoursChart.data.datasets[0].data[dataSetIndex] = valueCount['count'];
+                });
+                flavoursChart.update();
                 // domainInfoLoaded(result);
                 // summaryChart.data.datasets[0].data[0] = 343;
                 // summaryChart.update()
@@ -358,20 +405,29 @@ $(function () {
         format: 'DD-MM-YYYY'
     });
 
-    var flavorsChartContext = document.getElementById("flavors-chart").getContext('2d');
-    var flavorsChart = new Chart(flavorsChartContext, {
+    var flavoursChartContext = document.getElementById("flavours-chart").getContext('2d');
+    var flavourChartLabels = [];
+    var flavourChartDataset = {
+        data: [],
+        backgroundColor: []
+    };
+    $.each(FLAVOURS, function(serverName, uiDescriptor) {
+        flavourChartLabels.push(uiDescriptor['displayName']);
+        flavourChartDataset.data.push(0);
+        flavourChartDataset.backgroundColor.push('white');
+    });
+    var flavoursChart = new Chart(flavoursChartContext, {
         type: 'bar',
         data: {
-            labels: ['PDF/A-1a', 'PDF/A-1b', 'PDF/A-2a', 'PDF/A-2b', 'PDF/A-2u', 'PDF/A-3a', 'PDF/A-3b', 'PDF/A-3u', 'Other PDF'],
-            datasets: [{
-                data: [523, 26, 780, 313, 231, 23, 0, 0, 1278],
-                backgroundColor: ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white']
-            }]
+            labels: flavourChartLabels,
+            datasets: [
+                flavourChartDataset
+            ]
         },
         options: {
             title: {
                 display: true,
-                text: 'PDF/A flavors'
+                text: 'PDF/A flavours'
             }
         }
     });
