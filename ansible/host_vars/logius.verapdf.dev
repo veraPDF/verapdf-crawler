@@ -39,8 +39,6 @@ maven_redis_sha256sum: '6e3e9c949ab4695a204f74038717aa7b2689b1be94875899ac1b3fe4
 heritrix_host_name: "heritrix.{{ hostdomain }}"
 heritrix_linux_user: "logius"
 heritrix_linux_group: "{{ heritrix_linux_user }}"
-verapdf_linux_group: "{{ heritrix_linux_user }}"
-verapdf_linux_user: "{{ heritrix_linux_user }}"
 # Set true if Java 8 installation required from Jessie backports
 heritrix_install_java: true
 # Set true if you want to provide external access to the Heritrix GUI via nginx
@@ -57,6 +55,15 @@ mysql_users:
   - name: "{{ logius_db_user_name }}"
     password: "{{ logius_db_password }}"
     priv: "{{ logius_db_schema_name }}.*:ALL"
+
+# Verapdf setup variables
+verapdf_linux_group: "{{ heritrix_linux_user }}"
+verapdf_linux_user: "{{ heritrix_linux_user }}"
+
+verapdf_features:
+   - "INFORMATION_DICTIONARY"
+   - "LOW_LEVEL_INFO"
+   - "METADATA"
 
 # nginx config
 #

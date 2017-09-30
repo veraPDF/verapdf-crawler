@@ -18,10 +18,6 @@ emailServer:
   password: {{ logius_gmail_password }}
   port: {{ logius_gmail_port }}
 # Application database config
-mysql:
-  connectionString: {{ logius_db_connection_string }}
-  user: {{ logius_db_user_name }}
-  password: {{ logius_db_password }}
 database:
   driverClass: com.mysql.cj.jdbc.Driver
   user: {{ logius_db_user_name }}
@@ -49,7 +45,7 @@ veraPDFService:
 logging:
   level: WARN
   loggers:
-    "CustomLogger":
+    org.verapdf.crawler:
       additive: false
       level: INFO
       appenders:

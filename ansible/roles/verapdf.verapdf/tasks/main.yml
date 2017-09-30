@@ -18,7 +18,7 @@
     src: "{{ verapdf_download_url }}"
     dest: "{{ verapdf_tmp_root }}"
     remote_src: True
-    creates: "{{ verapdf_install_dest }}"
+    creates: "{{ verapdf_tmp_installer_dir }}"
 
 - name: Add the autoinstall XML file from a template
   template:
@@ -28,10 +28,18 @@
     group: "{{ verapdf_linux_group }}"
     mode: 0775
 
-- name: Run verapdf installer
+- name: Run veraPDF installer
   command: "java -jar {{ verapdf_installer_jar }} {{ verapdf_tmp_installer_dir }}/verapdf-install.xml"
 
-- name: Set ownership of heritrix installation
+- name: Overwrite features congiguration
+  template:
+    src: "verapdf/config/features.xml.j2"
+    dest: "{{ verapdf_install_dest }}/config/features.xml"
+    owner: "{{ verapdf_linux_user }}"
+    group: "{{ verapdf_linux_group }}"
+    mode: 0775
+
+- name: Set ownership of veraPDF installation
   file:
     path: "{{ verapdf_install_dest }}"
     owner: "{{ verapdf_linux_user }}"
