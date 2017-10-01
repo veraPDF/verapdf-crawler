@@ -43,7 +43,7 @@
     state: directory
     owner: "{{ logius_linux_user }}"
     group: "{{ logius_linux_group }}"
-    mode: "744"
+    mode: "755"
   with_items:
     - "bin"
     - "config"
@@ -59,15 +59,6 @@
     mode: "755"
   with_items:
     - "sample_report.ods"
-
-- name: Add Web app configuration templates
-  template:
-    src: "var/lib/logius/resources/{{ item }}.j2"
-    dest: "{{ logius_app_resources }}/{{ item }}"
-    owner: "{{ logius_linux_user }}"
-    group: "{{ logius_linux_group }}"
-    mode: 0775
-  with_items:
     - "sample_configuration.cxml"
 
 - name: Deploy application jars

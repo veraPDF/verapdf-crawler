@@ -33,6 +33,7 @@ heritrix:
   url: https://localhost:8443/
   login: admin
   password: logius
+  logiusAppUrl: http://localhost:9000
 veraPDFService:
   url: http://localhost:8100
 logging:

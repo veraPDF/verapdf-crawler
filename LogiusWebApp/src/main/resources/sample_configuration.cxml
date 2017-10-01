@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+                                                                                                                                                                                                                                                                                       v<?xml version="1.0" encoding="UTF-8"?>
 <!--
   HERITRIX 3 CRAWL JOB CONFIGURATION FILE
 
@@ -352,7 +352,7 @@
                 <entry key="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" value="xlsx"/>
             </map>
         </property>
-        <property name="logiusUrl" value="http://localhost:9000"/>
+        <property name="logiusUrl" value="${logiusAppUrl}"/>
         <!-- <property name="compress" value="true" /> -->
         <!-- <property name="prefix" value="IAH" /> -->
         <!-- <property name="suffix" value="${HOSTNAME}" /> -->

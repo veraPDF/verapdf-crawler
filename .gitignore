@@ -25,7 +25,7 @@ hs_err_pid*
 !/.mvn/wrapper/maven-wrapper.jar
 
 # Ansible artefacts
-ansible/roles/
+# ansible/roles/
 ansible/*.retry
 
 # Vagrant directory
