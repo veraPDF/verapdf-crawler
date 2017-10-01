@@ -41,6 +41,10 @@ public class PdfPropertyStatistics {
 
     private Long totalPdfDocumentsCount;
 
+    private Long openPdfDocumentsCount;
+
+    private Long notOpenPdfDocumentsCount;
+
     private List<ValueCount> flavourStatistics;
 
     private List<ValueCount> versionStatistics;
@@ -53,6 +57,22 @@ public class PdfPropertyStatistics {
 
     public void setTotalPdfDocumentsCount(Long totalPdfDocumentsCount) {
         this.totalPdfDocumentsCount = totalPdfDocumentsCount;
+    }
+
+    public Long getOpenPdfDocumentsCount() {
+        return openPdfDocumentsCount;
+    }
+
+    public void setOpenPdfDocumentsCount(Long openPdfDocumentsCount) {
+        this.openPdfDocumentsCount = openPdfDocumentsCount;
+    }
+
+    public Long getNotOpenPdfDocumentsCount() {
+        return notOpenPdfDocumentsCount;
+    }
+
+    public void setNotOpenPdfDocumentsCount(Long notOpenPdfDocumentsCount) {
+        this.notOpenPdfDocumentsCount = notOpenPdfDocumentsCount;
     }
 
     public List<ValueCount> getFlavourStatistics() {

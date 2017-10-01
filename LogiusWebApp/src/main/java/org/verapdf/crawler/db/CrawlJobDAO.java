@@ -8,7 +8,9 @@ import org.verapdf.crawler.api.crawling.CrawlJob_;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
@@ -25,7 +27,9 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<CrawlJob> criteriaQuery = builder.createQuery(CrawlJob.class);
         Root<CrawlJob> crawlJob = criteriaQuery.from(CrawlJob.class);
+
         criteriaQuery.where(builder.equal(crawlJob.get(CrawlJob_.heritrixJobId), heritrixJobId));
+
         return uniqueResult(criteriaQuery);
     }
 
@@ -70,8 +74,32 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<CrawlJob> criteriaQuery = builder.createQuery(CrawlJob.class);
         Root<CrawlJob> crawlJob = criteriaQuery.from(CrawlJob.class);
-        criteriaQuery = criteriaQuery.where(crawlJob.get(CrawlJob_.domain).in(domains));
+
+        criteriaQuery.where(crawlJob.get(CrawlJob_.domain).in(domains));
+
         return list(criteriaQuery);
+    }
+
+    public List<CrawlJob> findByStatus(CrawlJob.Status status, String afterDomain, int limit) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<CrawlJob> criteriaQuery = builder.createQuery(CrawlJob.class);
+        Root<CrawlJob> job = criteriaQuery.from(CrawlJob.class);
+
+        List<Predicate> restrictions = new ArrayList<>();
+        restrictions.add(builder.equal(job.get(CrawlJob_.status), status));
+        if (afterDomain != null) {
+            restrictions.add(builder.greaterThan(job.get(CrawlJob_.domain), afterDomain));
+        }
+
+        if (restrictions.size() == 1) {
+            criteriaQuery.where(restrictions.get(0));
+        } else {
+            criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
+        }
+
+        criteriaQuery.orderBy(builder.asc(job.get(CrawlJob_.domain)));
+
+        return currentSession().createQuery(criteriaQuery).setMaxResults(limit).list();
     }
 
 }

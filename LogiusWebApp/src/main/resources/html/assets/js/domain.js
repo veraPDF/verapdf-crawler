@@ -33,7 +33,57 @@ $(function () {
             dataSetIndex: 7
         }
     };
-
+    var VERSIONS = {
+        '1.0': {
+            displayName: 'PDF 1.0',
+            dataSetIndex: 0
+        },
+        '1.1': {
+            displayName: 'PDF 1.1',
+            dataSetIndex: 1
+        },
+        '1.2': {
+            displayName: 'PDF 1.2',
+            dataSetIndex: 2
+        },
+        '1.3': {
+            displayName: 'PDF 1.3',
+            dataSetIndex: 3
+        },
+        '1.4': {
+            displayName: 'PDF 1.4',
+            dataSetIndex: 4
+        },
+        '1.5': {
+            displayName: 'PDF 1.5',
+            dataSetIndex: 5
+        },
+        '1.6': {
+            displayName: 'PDF 1.6',
+            dataSetIndex: 6
+        },
+        '1.7': {
+            displayName: 'PDF 1.7',
+            dataSetIndex: 7
+        },
+        '2.0': {
+            displayName: 'PDF 2.0',
+            dataSetIndex: 8
+        }
+    };
+    var ERROR_BACKGROUNDS = [
+        '#fd5858',
+        '#fd9651',
+        '#fdeb72',
+        '#cdfd92',
+        '#9cfdc2',
+        '#a7fafd',
+        '#94a8fd',
+        '#ca94fd',
+        '#fd89e9',
+        '#ff9ca0',
+        '#ffffff'
+    ];
 
     // Global chart settings
     Chart.defaults.global.animation.duration = 0;
@@ -170,7 +220,7 @@ $(function () {
 
     function loadDocumentsData() {
         var url = "/api/report/document-statistics?domain=" + currentDomain.domain;
-        var startDate = $("#summary-date-input")[0].value;
+        var startDate = $("#documents-date-input")[0].value;
         if (startDate !== "") {
             url += "&startDate=" + startDate;
         }
@@ -178,14 +228,40 @@ $(function () {
             url: url,
             type: "GET",
             success: function (result) {
+                // Counts
+                $('.documents .total-count').text(result['totalPdfDocumentsCount']);
+                $('.documents .open-count').text(result['openPdfDocumentsCount']);
+                $('.documents .not-open-count').text(result['notOpenPdfDocumentsCount']);
+
+                // Flavours chart
                 $.each(result['flavourStatistics'], function(index, valueCount) {
                     var dataSetIndex = FLAVOURS[valueCount['value']].dataSetIndex;
                     flavoursChart.data.datasets[0].data[dataSetIndex] = valueCount['count'];
                 });
                 flavoursChart.update();
-                // domainInfoLoaded(result);
-                // summaryChart.data.datasets[0].data[0] = 343;
-                // summaryChart.update()
+
+                // Versions chart
+                $.each(result['versionStatistics'], function(index, valueCount) {
+                    var dataSetIndex = VERSIONS[valueCount['value']].dataSetIndex;
+                    versionsChart.data.datasets[0].data[dataSetIndex] = valueCount['count'];
+                });
+                versionsChart.update();
+
+                // Producers chart
+                var producerChartData = {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: []
+                    }]
+                };
+                $.each(result['topProducerStatistics'], function(index, valueCount) {
+                    producerChartData.labels.push(valueCount['value']);
+                    producerChartData.datasets[0].data.push(valueCount['count']);
+                    producerChartData.datasets[0].backgroundColor.push('white');
+                });
+                producersChart.data = producerChartData;
+                producersChart.update();
             },
             error: function (result) {
                 // reportError("Error on job loading");
@@ -201,15 +277,57 @@ $(function () {
     });
 
     function loadErrorsData() {
-
-        var startDate = $("#errors-producer-input")[0].value === "" ? currentDomain.startTime : $("errors-producer-input")[0].value;
+        var url = "/api/report/error-statistics?domain=" + currentDomain.domain;
+        var startDate = $("#errors-producer-input")[0].value;
+        if (startDate !== "") {
+            url += "&startDate=" + startDate;
+        }
+        //TODO: read flavour, version and producers
         $.ajax({
-            url: "api/report/error-statistics?domain=" + normalizeURL(currentDomain.domain) + "&startDate=" + startDate,
+            url: url,
             type: "GET",
             success: function (result) {
-                // domainInfoLoaded(result);
-                // summaryChart.data.datasets[0].data[0] = 343;
-                // summaryChart.update()
+                var errorsChartData = {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [],
+                        borderWidth: 0
+                    }]
+                };
+                var errorsListElement = $('.errors-list');
+                errorsListElement.empty();
+                $.each(result['topErrorStatistics'], function(index, errorCount) {
+                    var error = errorCount['error'];
+                    var shortDescription = '';
+                    if (error['type'] === 'ruleViolation') {
+                        var rule = error['rule'];
+                        shortDescription = rule['specification'] + ' ' + rule['clause'] + '-' + rule['testNumber'];
+                    } else {
+                        shortDescription = 'Generic error #' + error['id'];
+                    }
+                    var fullDescription = error['description'];
+                    var documentsCount = errorCount['count'];
+                    var errorColor = ERROR_BACKGROUNDS[index];
+
+                    errorsChartData.labels.push(shortDescription);
+                    errorsChartData.datasets[0].data.push(documentsCount);
+                    errorsChartData.datasets[0].backgroundColor.push(errorColor);
+
+                    errorsListElement.append(
+                        '<div class="error-item d-flex align-items-top">' +
+                        '    <span class="material-icons" style="color: ' + errorColor + '">lens</span>' +
+                        '    <span class="count">' + documentsCount + '</span>' +
+                        '    <div class="error-description">' +
+                        '        <div class="short">' + shortDescription + ':</div>' +
+                        '        <div class="full">' + fullDescription + '</div>' +
+                        '    </div>' +
+                        '</div>'
+                    );
+                });
+
+                errorsChart.data = errorsChartData;
+                errorsChart.update();
             },
             error: function (result) {
                 // reportError("Error on job loading");
@@ -433,14 +551,21 @@ $(function () {
     });
 
     var versionsChartContext = document.getElementById("versions-chart").getContext('2d');
+    var versionsChartLabels = [];
+    var versionsChartDataset = {
+        data: [],
+        backgroundColor: []
+    };
+    $.each(VERSIONS, function(serverName, uiDescriptor) {
+        versionsChartLabels.push(uiDescriptor['displayName']);
+        versionsChartDataset.data.push(0);
+        versionsChartDataset.backgroundColor.push('white');
+    });
     var versionsChart = new Chart(versionsChartContext, {
         type: 'bar',
         data: {
-            labels: ['PDF 1.0', 'PDF 1.1', 'PDF 1.2', 'PDF 1.3', 'PDF 1.4', 'PDF 1.5', 'PDF 1.6', 'PDF 1.7', 'PDF 2.0'],
-            datasets: [{
-                data: [0, 26, 324, 780, 34, 123, 412, 753, 0],
-                backgroundColor: ['white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white', 'white']
-            }]
+            labels: versionsChartLabels,
+            datasets: [versionsChartDataset]
         },
         options: {
             title: {
@@ -453,13 +578,6 @@ $(function () {
     var producersChartContext = document.getElementById("producers-chart").getContext('2d');
     var producersChart = new Chart(producersChartContext, {
         type: 'bar',
-        data: {
-            labels: ['Skia/PDF', 'OpenOffice', 'iText', 'Acrobat Distiller', 'Microsoft Word', 'Other'],
-            datasets: [{
-                data: [535, 345, 265, 145, 123, 1234],
-                backgroundColor: ['white', 'white', 'white', 'white', 'white', 'white']
-            }]
-        },
         options: {
             title: {
                 display: true,
@@ -496,26 +614,6 @@ $(function () {
 
     var errorsChartContext = document.getElementById("errors-chart").getContext('2d');
     var errorsChart = new Chart(errorsChartContext, {
-        type: 'pie',
-        data: {
-            labels: ["Error 1: description", "Error 2: description", "Error 3: description", "Error 4: description", "Error 5: description", "Error 6: description", "Error 7: description", "Error 8: description", "Error 9: description", "Error 10: description", "Other"],
-            datasets: [{
-                data: [978, 750, 564, 550, 300, 50, 18, 5, 1, 1, 564],
-                backgroundColor: [
-                    '#fd5858',
-                    '#fd9651',
-                    '#fdeb72',
-                    '#cdfd92',
-                    '#9cfdc2',
-                    '#a7fafd',
-                    '#94a8fd',
-                    '#ca94fd',
-                    '#fd89e9',
-                    '#ff9ca0',
-                    '#ffffff'
-                ],
-                borderWidth: 0
-            }]
-        }
+        type: 'pie'
     });
 });

@@ -38,7 +38,9 @@ public class CrawlRequestResource {
     @UnitOfWork
     public CrawlRequest createCrawlRequest(@NotNull @Valid CrawlRequest crawlRequest) {
         // Validate and pre-process input
-        List<String> domains = crawlRequest.getDomains().stream().map(DomainUtils::trimUrl).collect(Collectors.toList());
+        List<String> domains = crawlRequest.getCrawlJobs().stream()
+                .map(CrawlJob::getDomain)
+                .map(DomainUtils::trimUrl).collect(Collectors.toList());
 
         // Save request
         crawlRequest = crawlRequestDao.save(crawlRequest);

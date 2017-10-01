@@ -47,12 +47,14 @@ public class HeritrixClient {
     private String configTemplatePath;
     private final String engineUrl;
     private final String baseJobUrl;
+    private final String logiusAppUrl;
     private HttpClient httpClient;
 
     public HeritrixClient(HeritrixConfiguration config) throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException, MalformedURLException {
         String baseUrl = config.getUrl();
         this.engineUrl = baseUrl + "engine";
         this.baseJobUrl = this.engineUrl + "/job/";
+        this.logiusAppUrl = config.getLogiusAppUrl();
         // Configure credential provider
         URL domain = new URL(baseUrl);
         HttpHost targetHost = new HttpHost(domain.getHost(), domain.getPort(), "https");
@@ -132,8 +134,8 @@ public class HeritrixClient {
         InputSource is = new InputSource();
         is.setCharacterStream(new StringReader(status));
         Document doc = db.parse(is);
-        NodeList nodes = doc.getElementsByTagName("statusDescription");
-        return nodes.item(0).getTextContent().split(":")[1].toLowerCase();
+        NodeList nodes = doc.getElementsByTagName("statusDescription"); // TODO: check either crawlControllerState or crawlExitStatus
+        return nodes.item(0).getTextContent().split(": ")[1].toLowerCase();
     }
 
     public boolean isJobFinished(String heritrixJobId) throws IOException, ParserConfigurationException, SAXException {
@@ -203,6 +205,7 @@ public class HeritrixClient {
         content = content.replace("${logiusHeritrixJobId}", heritrixJobId);
         content = content.replace("${logiusOperatorContactUrl}", crawlUrls.get(0));
         content = content.replace("${logiusUrls}", sb.toString());
+        content = content.replace("${logiusAppUrl}", logiusAppUrl);
         Files.write(destination.toPath(), content.getBytes(charset));
         return destination;
     }

@@ -2,6 +2,8 @@ package org.verapdf.crawler.core.email;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.api.crawling.CrawlJob;
+import org.verapdf.crawler.api.crawling.CrawlRequest;
 import org.verapdf.crawler.configurations.EmailServerConfiguration;
 
 import javax.mail.Message;
@@ -10,17 +12,21 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import java.util.List;
 import java.util.Properties;
 
 public final class SendEmail {
 
     private static final Logger logger = LoggerFactory.getLogger(SendEmail.class);
 
+    private static final String SUBJECT = "Crawling finished for %s";
+    private static final String EMAIL_BODY = "Crawler finished verification of documents on the domain(s): %s";
+    private static final String DOMAIN_SEPARATOR = ", ";
+
     private SendEmail() {
     }
 
     public static void send(String targetEmail, String subject, String text, EmailServerConfiguration emailServerConfiguration) {
-
         Properties properties = new Properties();
         properties.setProperty("mail.smtp.starttls.enable", "true");
         properties.setProperty("mail.smtp.port", emailServerConfiguration.getPort());
@@ -44,5 +50,23 @@ public final class SendEmail {
         }catch (MessagingException mex) {
             logger.error("Email sending error at address " + targetEmail, mex);
         }
+    }
+
+    public static void sendFinishNotification(CrawlRequest request, EmailServerConfiguration serverConfiguration) {
+        String emailAddress = request.getEmailAddress();
+        String domainsString = generateDomainsString(request.getCrawlJobs());
+        String subject = String.format(SUBJECT, domainsString);
+        String body = String.format(EMAIL_BODY, domainsString);
+        send(emailAddress, subject, body, serverConfiguration);
+    }
+
+    private static String generateDomainsString(List<CrawlJob> crawlJobs) {
+        StringBuilder builder = new StringBuilder();
+        if (crawlJobs != null && !crawlJobs.isEmpty()) {
+            for (CrawlJob crawlJob : crawlJobs) {
+                builder.append(crawlJob.getDomain()).append(DOMAIN_SEPARATOR);
+            }
+        }
+        return builder.substring(0, builder.length() - DOMAIN_SEPARATOR.length());
     }
 }
