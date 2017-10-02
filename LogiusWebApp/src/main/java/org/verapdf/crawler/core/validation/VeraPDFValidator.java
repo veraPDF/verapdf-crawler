@@ -27,6 +27,7 @@ public class VeraPDFValidator implements PDFValidator {
     private static final int VALIDATION_TIMEOUT = 5 * 60 * 1000;      // 5 min
     private static final int VALIDATION_CHECK_INTERVAL = 5 * 1000;    // 5 sec
     private static final int MAX_VALIDATION_RETRIES = 2;
+    private static final int MAX_CONNECTION_RETRIES = 5;
 
     private final String verapdfUrl;
     private final ObjectMapper mapper;
@@ -47,7 +48,7 @@ public class VeraPDFValidator implements PDFValidator {
                 logger.info("Could not reach validation service, retry in one minute");
                 Thread.sleep(60 * 1000);
                 result = validate(localFilename);
-                if (i++ > 5) {
+                if (++i > MAX_CONNECTION_RETRIES) {
                     throw new Exception("VeraPDF service can not be reached");
                 }
             }
