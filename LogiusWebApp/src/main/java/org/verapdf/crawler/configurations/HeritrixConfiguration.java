@@ -16,6 +16,8 @@ public class HeritrixConfiguration {
 	private String password;
 	@NotEmpty
 	private String configTemplatePath;
+	@NotEmpty
+	private String logiusAppUrl;
 
 	public HeritrixConfiguration() {
 	}
@@ -59,4 +61,14 @@ public class HeritrixConfiguration {
 	public void setConfigTemplatePath(String configTemplatePath) {
 		this.configTemplatePath = configTemplatePath;
 	}
+
+    @JsonProperty
+    public String getLogiusAppUrl() {
+        return logiusAppUrl;
+    }
+
+    @JsonProperty
+    public void setLogiusAppUrl(String logiusAppUrl) {
+        this.logiusAppUrl = logiusAppUrl;
+    }
 }

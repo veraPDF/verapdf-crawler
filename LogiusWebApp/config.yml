@@ -15,7 +15,7 @@ database:
   driverClass: com.mysql.cj.jdbc.Driver
   user: logius
   password: logius
-  url: jdbc:mysql://localhost:3306/logius?useSSL=false
+  url: jdbc:mysql://localhost:3306/logius?useSSL=false&autoReconnect=true
   properties:
     charSet: UTF-8
     hibernate.dialect: org.hibernate.dialect.MySQL5InnoDBDialect
@@ -33,13 +33,13 @@ heritrix:
   url: https://localhost:8443/
   login: admin
   password: logius
+  logiusAppUrl: http://localhost:9000
 veraPDFService:
   url: http://localhost:8100
 logging:
   level: WARN
   loggers:
     org.verapdf.crawler:
-      additive: false
       level: INFO
   appenders:
   - type: file
