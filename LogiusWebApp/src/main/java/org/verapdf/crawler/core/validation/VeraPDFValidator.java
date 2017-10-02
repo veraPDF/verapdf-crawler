@@ -27,27 +27,30 @@ public class VeraPDFValidator implements PDFValidator {
     private static final int VALIDATION_TIMEOUT = 5 * 60 * 1000;      // 5 min
     private static final int VALIDATION_CHECK_INTERVAL = 5 * 1000;    // 5 sec
     private static final int MAX_VALIDATION_RETRIES = 2;
+    private static final int MAX_CONNECTION_RETRIES = 5;
 
     private final String verapdfUrl;
-    private final CloseableHttpClient httpClient;
     private final ObjectMapper mapper;
 
     public VeraPDFValidator(VeraPDFServiceConfiguration configuration) {
         this.verapdfUrl = configuration.getUrl();
-        this.httpClient = HttpClients.createDefault();
         this.mapper = new ObjectMapper();
     }
 
     @Override
-    public VeraPDFValidationResult validate(ValidationJob job) throws Exception {
+    public VeraPDFValidationResult validate(ValidationJob job) {
         VeraPDFValidationResult result;
         try {
             String localFilename = job.getFilePath();
+            int i = 0;
             result = validate(localFilename);
             while (result == null) {
                 logger.info("Could not reach validation service, retry in one minute");
                 Thread.sleep(60 * 1000);
                 result = validate(localFilename);
+                if (++i > MAX_CONNECTION_RETRIES) {
+                    throw new Exception("VeraPDF service can not be reached");
+                }
             }
         }
         catch (Throwable e) {
@@ -116,7 +119,7 @@ public class VeraPDFValidator implements PDFValidator {
         HttpPost request = new HttpPost(verapdfUrl);
         request.setEntity(new StringEntity(filename));
 
-        try (CloseableHttpResponse response = httpClient.execute(request)) {
+        try (CloseableHttpResponse response = HttpClients.createDefault().execute(request)) {
             switch (response.getStatusLine().getStatusCode()) {
                 case HttpStatus.SC_ACCEPTED:
                     logger.info("Validation request have been sent");
@@ -133,14 +136,14 @@ public class VeraPDFValidator implements PDFValidator {
 
     private VeraPDFServiceStatus getValidationStatus() throws IOException {
         HttpGet request = new HttpGet(verapdfUrl);
-        try (CloseableHttpResponse response = httpClient.execute(request)) {
+        try (CloseableHttpResponse response = HttpClients.createDefault().execute(request)) {
             return mapper.readValue(response.getEntity().getContent(), VeraPDFServiceStatus.class);
         }
     }
 
     private void terminateValidation() {
         HttpDelete request = new HttpDelete(verapdfUrl);
-        try (CloseableHttpResponse response = httpClient.execute(request)) {
+        try (CloseableHttpResponse response = HttpClients.createDefault().execute(request)) {
             EntityUtils.consume(response.getEntity());
         } catch (IOException e) {
             logger.error("Failed to terminate validation job", e);
