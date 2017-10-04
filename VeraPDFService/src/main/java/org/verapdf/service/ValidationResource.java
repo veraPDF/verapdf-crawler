@@ -26,6 +26,7 @@ public class ValidationResource {
     private VeraPDFProcessor veraPDFProcessor;
     private ValidationSettings validationSettings;
     private VeraPDFValidationResult validationResult;
+    private boolean isAborted = false;
 
     ValidationResource(String veraPDFPath, ValidationSettings validationSettings) throws IOException {
         this.validationSettings = validationSettings;
@@ -48,6 +49,7 @@ public class ValidationResource {
                 return Response.status(HttpStatus.SC_LOCKED).build();
             }
         }
+        isAborted = false;
         validate(filename);
         return Response.accepted().build();
     }
@@ -69,6 +71,7 @@ public class ValidationResource {
             this.veraPDFProcessor = null;
         }
         validationResult = null;
+        isAborted = true;
     }
 
     private void validate(String filename) {
@@ -85,8 +88,10 @@ public class ValidationResource {
     private VeraPDFServiceStatus.ProcessorStatus evaluateStatus() {
         if (this.veraPDFProcessor != null) {
             return VeraPDFServiceStatus.ProcessorStatus.ACTIVE;
+        } else if (validationResult != null) {
+            return VeraPDFServiceStatus.ProcessorStatus.FINISHED;
         } else {
-            return validationResult == null ? VeraPDFServiceStatus.ProcessorStatus.IDLE : VeraPDFServiceStatus.ProcessorStatus.FINISHED;
+            return isAborted ? VeraPDFServiceStatus.ProcessorStatus.ABORTED : VeraPDFServiceStatus.ProcessorStatus.IDLE;
         }
     }
 }

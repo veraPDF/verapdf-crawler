@@ -4,5 +4,9 @@ import org.verapdf.crawler.api.validation.ValidationJob;
 import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 
 public interface PDFValidator {
-    VeraPDFValidationResult validate(ValidationJob data) throws Exception;
+    boolean startValidation(ValidationJob job);
+
+    VeraPDFValidationResult getValidationResult(ValidationJob job) throws Throwable;
+
+    void terminateValidation();
 }

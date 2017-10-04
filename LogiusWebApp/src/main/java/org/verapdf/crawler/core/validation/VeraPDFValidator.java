@@ -2,12 +2,14 @@ package org.verapdf.crawler.core.validation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
@@ -19,53 +21,44 @@ import org.verapdf.crawler.api.validation.error.ValidationError;
 import org.verapdf.crawler.configurations.VeraPDFServiceConfiguration;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.function.Function;
 
 public class VeraPDFValidator implements PDFValidator {
 
     private static final Logger logger = LoggerFactory.getLogger(VeraPDFValidator.class);
 
+    private static final int CONNECTION_INTERVAL = 60 * 1000;
     private static final int VALIDATION_TIMEOUT = 5 * 60 * 1000;      // 5 min
     private static final int VALIDATION_CHECK_INTERVAL = 5 * 1000;    // 5 sec
     private static final int MAX_VALIDATION_RETRIES = 2;
+    private static final int MAX_CONNECTION_RETRIES = 5;
 
     private final String verapdfUrl;
-    private final CloseableHttpClient httpClient;
     private final ObjectMapper mapper;
 
     public VeraPDFValidator(VeraPDFServiceConfiguration configuration) {
         this.verapdfUrl = configuration.getUrl();
-        this.httpClient = HttpClients.createDefault();
         this.mapper = new ObjectMapper();
     }
 
     @Override
-    public VeraPDFValidationResult validate(ValidationJob job) throws Exception {
-        VeraPDFValidationResult result;
-        try {
-            String localFilename = job.getFilePath();
-            result = validate(localFilename);
-            while (result == null) {
-                logger.info("Could not reach validation service, retry in one minute");
-                Thread.sleep(60 * 1000);
-                result = validate(localFilename);
-            }
-        }
-        catch (Throwable e) {
-            logger.error("Error in validation service",e);
-            result = new VeraPDFValidationResult();
-            result.addValidationError(new ValidationError(e.getMessage()));
-        }
-        return result;
+    public boolean startValidation(ValidationJob job) {
+        String localFilename = job.getFilePath();
+        logger.info("Sending file " + localFilename + " to validator");
+        return sendValidationRequest(localFilename);
     }
 
-    private VeraPDFValidationResult validate(String filename) throws Exception {
-        logger.info("Sending file " + filename + " to validator");
+    public VeraPDFValidationResult getValidationResult(ValidationJob job) throws Throwable {
         try {
-            sendValidationRequest(filename);
-
             int validationRetries = 0;
+            String filename = job.getFilePath();
             for (int i = 0; i < VALIDATION_TIMEOUT; ) {
                 VeraPDFServiceStatus status = getValidationStatus();
+                if (status == null) {
+                    Thread.sleep(VALIDATION_CHECK_INTERVAL);
+                    i += VALIDATION_CHECK_INTERVAL;
+                }
 
                 switch (status.getProcessorStatus()) {
                     case FINISHED:
@@ -78,6 +71,9 @@ public class VeraPDFValidator implements PDFValidator {
                         i += VALIDATION_CHECK_INTERVAL;
                         break;
 
+                    case ABORTED:
+                        throw new Exception("Document " + filename + " has been aborted");
+
                     default:
                         logger.info("Something went wrong and validation was not finished");
                         validationRetries++;
@@ -85,16 +81,13 @@ public class VeraPDFValidator implements PDFValidator {
                             throw new Exception("Failed to process document " + filename);
                         }
                         terminateValidation();
-                        sendValidationRequest(filename);
+                        if (!sendValidationRequest(filename)) {
+                            throw new Exception("Failed to process document " + filename);
+                        }
                         i = 0; // Reset timeout cycle
                 }
             }
-
             throw new Exception("Document " + filename + " was not validated in time (" + VALIDATION_TIMEOUT + " minutes)");
-
-        } catch (IOException e) {
-            logger.error("Error in validation service", e);
-            return null;
         } finally {
             // Cleanup validation service, if there is nothing to cleanup VeraPDF service will just ignore this.
             terminateValidation();
@@ -112,35 +105,49 @@ public class VeraPDFValidator implements PDFValidator {
         logger.info("Validation settings have been sent");
     }*/
 
-    private void sendValidationRequest(String filename) throws IOException {
+    private boolean sendValidationRequest(String filename) {
         HttpPost request = new HttpPost(verapdfUrl);
-        request.setEntity(new StringEntity(filename));
+        try {
+            request.setEntity(new StringEntity(filename));
+        } catch (UnsupportedEncodingException e) {
+            logger.error("Fail to construct send validation request body", e);
+            // TODO: send email to admin
+            return true;
+        }
 
-        try (CloseableHttpResponse response = httpClient.execute(request)) {
+        try (CloseableHttpResponse response = HttpClients.createDefault().execute(request)) {
             switch (response.getStatusLine().getStatusCode()) {
                 case HttpStatus.SC_ACCEPTED:
                     logger.info("Validation request have been sent");
-                    break;
+                    return true;
                 case HttpStatus.SC_LOCKED:
                     logger.warn("Another validation job is already in progress.");
-                    break;
+                    // TODO: send email to admin
+                    return true;
                 default:
                     logger.warn("Unexpected response " + response.getStatusLine().getStatusCode() + ": "
                                                        + EntityUtils.toString(response.getEntity()));
+                    return false;
             }
+        } catch (IOException e) {
+            logger.error("Fail to post file to VeraPDFValidationService", e);
+            return false;
         }
     }
 
-    private VeraPDFServiceStatus getValidationStatus() throws IOException {
+    private VeraPDFServiceStatus getValidationStatus() {
         HttpGet request = new HttpGet(verapdfUrl);
-        try (CloseableHttpResponse response = httpClient.execute(request)) {
+        try (CloseableHttpResponse response = HttpClients.createDefault().execute(request)) {
             return mapper.readValue(response.getEntity().getContent(), VeraPDFServiceStatus.class);
+        } catch (IOException e) {
+            logger.error("Failed to get validation result", e);
+            return null;
         }
     }
 
-    private void terminateValidation() {
+    public void terminateValidation() {
         HttpDelete request = new HttpDelete(verapdfUrl);
-        try (CloseableHttpResponse response = httpClient.execute(request)) {
+        try (CloseableHttpResponse response = HttpClients.createDefault().execute(request)) {
             EntityUtils.consume(response.getEntity());
         } catch (IOException e) {
             logger.error("Failed to terminate validation job", e);

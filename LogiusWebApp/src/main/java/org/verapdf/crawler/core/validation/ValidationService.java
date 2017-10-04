@@ -22,6 +22,7 @@ public class ValidationService implements Runnable {
     private final DocumentDAO documentDAO;
     private final PDFValidator validator;
     private boolean running;
+    private boolean isAborted = false;
 
     public ValidationService(ValidationJobDAO validationJobDAO, ValidationErrorDAO validationErrorDAO, DocumentDAO documentDAO, PDFValidator validator) {
         running = false;
@@ -36,31 +37,47 @@ public class ValidationService implements Runnable {
         new Thread(this, "Thread-ValidationService").start();
     }
 
+    public void abort() {
+        isAborted = true;
+        validator.terminateValidation();
+    }
+
     @Override
     public void run() {
         logger.info("Validation service started");
+        ValidationJob job = currentJob();
+        if (job != null) {
+            processStartedJob(job);
+        }
         while (running) {
-            ValidationJob job = null;
-            try {
-                job = nextJob();
-                if(job != null) {
-                    logger.info("Validating " + job.getDocument().getUrl());
-                    VeraPDFValidationResult result = validator.validate(job);
-                    saveResult(job, result);
-                    continue;
+            job = nextJob();
+            if (job != null) {
+                logger.info("Validating " + job.getDocument().getUrl());
+                // TODO: refactor. currently if job has not been started here, then it will stay in queue as IN_PROGRESS
+                if (validator.startValidation(job)) {
+                    processStartedJob(job);
                 }
-            } catch (Exception e) {
-                logger.error("Error in validation runner", e);
-            } finally {
-                cleanJob(job);
+                continue;
             }
-
             try {
                 Thread.sleep(60 * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void processStartedJob(ValidationJob job) {
+        VeraPDFValidationResult result;
+        try {
+            result = validator.getValidationResult(job);
+        } catch (Throwable e) {
+            logger.error("Error in validation service",e);
+            result = new VeraPDFValidationResult();
+            result.addValidationError(new ValidationError(e.getMessage()));
+        }
+        saveResult(job, result);
+        cleanJob(job);
     }
 
     @UnitOfWork
@@ -73,22 +90,29 @@ public class ValidationService implements Runnable {
     }
 
     @UnitOfWork
+    public ValidationJob currentJob() {
+        return validationJobDAO.current();
+    }
+
+    @UnitOfWork
     public void saveResult(ValidationJob job, VeraPDFValidationResult result) {
-        DomainDocument document = job.getDocument();
-        document.setBaseTestResult(result.getBaseTestResult());
+        if (!isAborted) {
+            DomainDocument document = job.getDocument();
+            document.setBaseTestResult(result.getBaseTestResult());
 
-        // Save errors where needed
-        List<ValidationError> validationErrors = result.getValidationErrors();
-        for (int index = 0; index < validationErrors.size(); index++) {
-            validationErrors.set(index, validationErrorDAO.save(validationErrors.get(index)));
+            // Save errors where needed
+            List<ValidationError> validationErrors = result.getValidationErrors();
+            for (int index = 0; index < validationErrors.size(); index++) {
+                validationErrors.set(index, validationErrorDAO.save(validationErrors.get(index)));
+            }
+            document.setValidationErrors(validationErrors);
+
+            // Link properties
+            document.setProperties(result.getProperties());
+
+            // And update document (note that document was detached from hibernate context, thus we need to save explicitly)
+            documentDAO.save(document);
         }
-        document.setValidationErrors(validationErrors);
-
-        // Link properties
-        document.setProperties(result.getProperties());
-
-        // And update document (note that document was detached from hibernate context, thus we need to save explicitly)
-        documentDAO.save(document);
     }
 
     @UnitOfWork
