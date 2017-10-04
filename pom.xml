@@ -13,6 +13,7 @@
         <module>SampleWebApp</module>
         <module>HeritrixExtention</module>
         <module>VeraPDFService</module>
+        <module>Common</module>
     </modules>
 
     <properties>
