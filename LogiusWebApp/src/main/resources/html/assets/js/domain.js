@@ -173,7 +173,7 @@ $(function () {
     }
 
     $("#summary-date-input").on("keydown", function (e) {
-        if (e.keyCode == 13) {
+        if (e.keyCode === 13) {
             loadSummaryData();
         }
     });
@@ -196,8 +196,8 @@ $(function () {
                 var openCount = result['openDocuments']['pdf'] + result['openDocuments']['office'];
                 var notOpenCount = result['notOpenDocuments']['pdf'] + result['notOpenDocuments']['office'];
                 var totalCount = openCount + notOpenCount;
-                var openPercent = openCount * 100 / totalCount;
-                var notOpenPercent = 100 - openPercent;
+                var openPercent = totalCount === 0 ? 0 : openCount * 100 / totalCount;
+                var notOpenPercent = totalCount === 0 ? 0 : 100 - openPercent;
 
                 $('.summary .good-documents .percent').text(openPercent + '%');
                 $('.summary .bad-documents .percent').text(notOpenPercent + '%');
@@ -213,7 +213,7 @@ $(function () {
     }
 
     $("#documents-date-input").on("keydown", function (e) {
-        if (e.keyCode == 13) {
+        if (e.keyCode === 13) {
             loadDocumentsData();
         }
     });
@@ -271,7 +271,7 @@ $(function () {
     }
 
     $("#errors-producer-input").on("keydown", function (e) {
-        if (e.keyCode == 13) {
+        if (e.keyCode === 13) {
             loadErrorsData();
         }
     });
