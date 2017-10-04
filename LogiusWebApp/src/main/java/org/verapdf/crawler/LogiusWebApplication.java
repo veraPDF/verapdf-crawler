@@ -37,9 +37,7 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
 
     @Override
     public void initialize(Bootstrap<LogiusConfiguration> bootstrap) {
-        bootstrap.addBundle(new AssetsBundle("/html", "/", "index.html", "main"));
-        bootstrap.addBundle(new AssetsBundle("/html", "/jobinfo", "info.html", "status"));
-        bootstrap.addBundle(new AssetsBundle("/html", "/email", "email.html", "email"));
+        bootstrap.addBundle(new AssetsBundle("/html", "/", "index.html"));
         bootstrap.addBundle(hibernate);
     }
 
