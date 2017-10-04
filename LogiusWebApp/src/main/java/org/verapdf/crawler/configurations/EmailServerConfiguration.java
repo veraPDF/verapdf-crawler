@@ -14,7 +14,7 @@ public class EmailServerConfiguration {
     @NotEmpty
     private String password;
     @NotEmpty
-    private String port;
+    private int port;
 
     public EmailServerConfiguration() {
     }
@@ -60,12 +60,12 @@ public class EmailServerConfiguration {
     }
 
     @JsonProperty
-    public String getPort() {
+    public int getPort() {
         return port;
     }
 
     @JsonProperty
-    public void setPort(String port) {
+    public void setPort(int port) {
         this.port = port;
     }
 }

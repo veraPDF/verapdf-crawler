@@ -71,14 +71,14 @@ public class MonitorCrawlJobStatusService implements Runnable {
     @UnitOfWork
     public String checkJobsBatch(String lastDomain) {
         List<CrawlJob> runningJobs = crawlJobDAO.findByStatus(CrawlJob.Status.RUNNING, lastDomain, BATCH_SIZE);
-        if (runningJobs == null || runningJobs.size() == 0) {
-            return null;
+		boolean containsRunningJobs = runningJobs != null && !runningJobs.isEmpty();
+		if (containsRunningJobs) {
+			runningJobs.forEach(this::checkJob);
         }
 
-        runningJobs.forEach(this::checkJob);
         checkCrawlRequests();
 
-        return runningJobs.get(runningJobs.size() - 1).getDomain();
+        return containsRunningJobs ? runningJobs.get(runningJobs.size() - 1).getDomain() : null;
     }
 
     private boolean checkJob(CrawlJob job) {
