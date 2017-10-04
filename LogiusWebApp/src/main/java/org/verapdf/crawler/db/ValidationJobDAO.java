@@ -22,11 +22,19 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
     }
 
     public ValidationJob next() {
+        return getValidationJobWithStatus(ValidationJob.Status.NOT_STARTED);
+    }
+
+    public ValidationJob current() {
+        return getValidationJobWithStatus(ValidationJob.Status.IN_PROGRESS);
+    }
+
+    private ValidationJob getValidationJobWithStatus(ValidationJob.Status status) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<ValidationJob> criteriaQuery = builder.createQuery(ValidationJob.class);
         Root<ValidationJob> jobRoot = criteriaQuery.from(ValidationJob.class);
         criteriaQuery.where(
-                builder.equal(jobRoot.get(ValidationJob_.status), ValidationJob.Status.NOT_STARTED)
+                builder.equal(jobRoot.get(ValidationJob_.status), status)
         );
         return currentSession().createQuery(criteriaQuery).setMaxResults(1).uniqueResult();
     }

@@ -7,7 +7,8 @@ public class VeraPDFServiceStatus {
     public enum ProcessorStatus {
         IDLE,
         ACTIVE,
-        FINISHED
+        FINISHED,
+        ABORTED
     }
 
     private final ProcessorStatus processorStatus;
