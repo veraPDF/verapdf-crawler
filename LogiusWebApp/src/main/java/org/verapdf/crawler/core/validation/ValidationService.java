@@ -80,7 +80,7 @@ public class ValidationService implements Runnable {
 
                 Thread.sleep(60 * 1000);
             }
-        } catch (RetryFailedException | ValidationDeadlockException | InterruptedException e) {
+        } catch (Throwable e) {
             logger.error("Fatal error in validator, stopping validation service.", e);
             this.stopReason = e.getMessage();
         } finally {

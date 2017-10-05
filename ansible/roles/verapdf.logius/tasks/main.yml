@@ -104,12 +104,14 @@
     state: import
     name: "logius"
     target: "{{ logius_git_root }}/LogiusWebApp/src/main/resources/sql/schema.sql"
+  when: logius_db_create_schema
 
 - name: Setup default properties
   mysql_db:
     state: import
     name: "logius"
     target: "{{ logius_git_root }}/LogiusWebApp/src/main/resources/sql/pdf_properties_base_settings.sql"
+  when: logius_db_create_schema
 
 - name: Remove default nginx site
   file:
