@@ -12,7 +12,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.common.GracefulHttpClient;
-import org.verapdf.common.RetryFailedException;
 import org.verapdf.crawler.api.validation.settings.ValidationSettings;
 
 import java.io.InputStream;
@@ -55,12 +54,9 @@ public class VerapdfServiceApp extends Application<VeraPDFServiceConfiguration> 
                 if (response.getStatusLine().getStatusCode() == 200) {
                     return mapper.readValue(responseBody, ValidationSettings.class);
                 } else {
-                    logger.error("Fail to get settings from main Logius web application. Response:\n" + IOUtils.toString(responseBody));
+                    throw new Exception("Fail to get settings from main Logius web application. Response:\n" + IOUtils.toString(responseBody));
                 }
             }
-        } catch (RetryFailedException e) {
-            logger.error("Fail to get settings from main Logius web application in " + e.getTimeSpent() + "ms", e);
         }
-        throw new Exception("Fail to get settings from main Logius web application");
     }
 }

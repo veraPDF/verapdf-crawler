@@ -123,9 +123,6 @@ public class DocumentProcessor extends MirrorWriterProcessor {
                                 + (response.getEntity() != null ? "\n" + IOUtils.toString(response.getEntity().getContent()) : ""));
                     }
                 }
-            } catch (RetryFailedException e){
-                System.out.println("Fail to POST document " + documentString + " with " + e.getAttempts() + " attempts.");
-                e.printStackTrace();
             }
         } catch (IOException e) {
             System.out.println("Fail to process " + crawlURI.getURI());

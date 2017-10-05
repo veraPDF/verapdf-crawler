@@ -47,7 +47,7 @@ public class GracefulHttpClient extends CloseableHttpClient {
             } catch (IOException e) {
                 if (attempt++ >= maxRetries) {
                     long timeSpent = System.currentTimeMillis() - start;
-                    throw new RetryFailedException(e, attempt, timeSpent);
+                    throw new RetryFailedException(request, e, attempt, timeSpent);
                 }
 
                 if (retryInterval > 0) {
