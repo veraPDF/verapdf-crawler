@@ -1,11 +1,10 @@
 package org.verapdf.common;
 
 import org.apache.http.HttpRequest;
-import org.apache.http.client.ClientProtocolException;
 
 import java.io.IOException;
 
-public class RetryFailedException extends ClientProtocolException {
+public class RetryFailedException extends RuntimeException {
 
     private int attempts;
 
