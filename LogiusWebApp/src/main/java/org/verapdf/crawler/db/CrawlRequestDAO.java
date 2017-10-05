@@ -34,7 +34,10 @@ public class CrawlRequestDAO extends AbstractDAO<CrawlRequest> {
                 builder.equal(job.get(CrawlJob_.finished), false)
         ));
 
-        criteriaQuery.where(request.get(CrawlRequest_.id).in(subquery).not());
+        criteriaQuery.where(builder.and(
+                request.get(CrawlRequest_.id).in(subquery).not(),
+                builder.equal(request.get(CrawlRequest_.finished), false)
+        ));
         return currentSession().createQuery(criteriaQuery).list();
     }
 }

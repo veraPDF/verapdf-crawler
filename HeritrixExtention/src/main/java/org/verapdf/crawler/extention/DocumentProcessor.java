@@ -13,6 +13,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.archive.modules.CrawlURI;
 import org.archive.modules.writer.MirrorWriterProcessor;
+import org.verapdf.common.GracefulHttpClient;
+import org.verapdf.common.RetryFailedException;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -21,9 +23,10 @@ import java.util.Map;
 
 public class DocumentProcessor extends MirrorWriterProcessor {
 
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
+    private static final int MAX_RETRIES = 120;
+    private static final long RETRY_INTERVAL = 30 * 1000;
 
-    private CloseableHttpClient httpClient;
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
 
     private ObjectMapper mapper;
 
@@ -60,8 +63,6 @@ public class DocumentProcessor extends MirrorWriterProcessor {
     public DocumentProcessor() {
         mapper = new ObjectMapper();
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
-        httpClient = HttpClients.createDefault();
     }
 
     @Override
@@ -114,11 +115,13 @@ public class DocumentProcessor extends MirrorWriterProcessor {
             StringEntity payload = new StringEntity(documentString, ContentType.APPLICATION_JSON);
             request.setEntity(payload);
 
-            try (CloseableHttpResponse response = httpClient.execute(request)) {
-                if (response.getStatusLine().getStatusCode() != 200) {
-                    System.out.println("Fail to POST document " + documentString + "."
-                            + " Response " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase()
-                            + (response.getEntity() != null ? "\n" + IOUtils.toString(response.getEntity().getContent()) : ""));
+            try (CloseableHttpClient httpClient = new GracefulHttpClient(MAX_RETRIES, RETRY_INTERVAL)) {
+                try (CloseableHttpResponse response = httpClient.execute(request)){
+                    if (response.getStatusLine().getStatusCode() != 200) {
+                        System.out.println("Fail to POST document " + documentString + "."
+                                + " Response " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase()
+                                + (response.getEntity() != null ? "\n" + IOUtils.toString(response.getEntity().getContent()) : ""));
+                    }
                 }
             }
         } catch (IOException e) {

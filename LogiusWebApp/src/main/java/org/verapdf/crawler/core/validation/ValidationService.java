@@ -3,6 +3,7 @@ package org.verapdf.crawler.core.validation;
 import io.dropwizard.hibernate.UnitOfWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.common.RetryFailedException;
 import org.verapdf.crawler.api.document.DomainDocument;
 import org.verapdf.crawler.api.validation.ValidationJob;
 import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
@@ -22,6 +23,8 @@ public class ValidationService implements Runnable {
     private final DocumentDAO documentDAO;
     private final PDFValidator validator;
     private boolean running;
+    private boolean isAborted = false;
+    private String stopReason;
 
     public ValidationService(ValidationJobDAO validationJobDAO, ValidationErrorDAO validationErrorDAO, DocumentDAO documentDAO, PDFValidator validator) {
         running = false;
@@ -31,36 +34,69 @@ public class ValidationService implements Runnable {
         this.validator = validator;
     }
 
+    public boolean isRunning() {
+        return running;
+    }
+
+    public String getStopReason() {
+        return stopReason;
+    }
+
     public void start() {
         running = true;
+        stopReason = null;
         new Thread(this, "Thread-ValidationService").start();
+    }
+
+    public void abort() throws IOException {
+        isAborted = true;
+        validator.terminateValidation();
     }
 
     @Override
     public void run() {
         logger.info("Validation service started");
-        while (running) {
-            ValidationJob job = null;
-            try {
-                job = nextJob();
-                if(job != null) {
-                    logger.info("Validating " + job.getDocument().getUrl());
-                    VeraPDFValidationResult result = validator.validate(job);
-                    saveResult(job, result);
-                    continue;
+        try {
+            ValidationJob job = currentJob();
+            if (job != null) {
+                try {
+                    processStartedJob(job);
+                } catch (IOException e) {
+                    saveErrorResult(job, e);
                 }
-            } catch (Exception e) {
-                logger.error("Error in validation runner", e);
-            } finally {
-                cleanJob(job);
             }
 
-            try {
+            while (running) {
+                job = nextJob();
+                if (job != null) {
+                    logger.info("Validating " + job.getDocument().getUrl());
+                    try {
+                        validator.startValidation(job);
+                        processStartedJob(job);
+                    } catch (IOException e) {
+                        saveErrorResult(job, e);
+                    }
+                    continue;
+                }
+
                 Thread.sleep(60 * 1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
+        } catch (RetryFailedException | ValidationDeadlockException | InterruptedException e) {
+            logger.error("Fatal error in validator, stopping validation service.", e);
+            this.stopReason = e.getMessage();
+        } finally {
+            running = false;
         }
+    }
+
+    private void processStartedJob(ValidationJob job) throws IOException, ValidationDeadlockException, InterruptedException {
+        VeraPDFValidationResult result = validator.getValidationResult(job);
+        saveResult(job, result);
+    }
+
+    private void saveErrorResult(ValidationJob job, Throwable e) {
+        VeraPDFValidationResult result = new VeraPDFValidationResult(e.getMessage());
+        saveResult(job, result);
     }
 
     @UnitOfWork
@@ -73,22 +109,33 @@ public class ValidationService implements Runnable {
     }
 
     @UnitOfWork
+    public ValidationJob currentJob() {
+        return validationJobDAO.current();
+    }
+
+    @UnitOfWork
     public void saveResult(ValidationJob job, VeraPDFValidationResult result) {
-        DomainDocument document = job.getDocument();
-        document.setBaseTestResult(result.getBaseTestResult());
+        try {
+            if (!isAborted) {
+                DomainDocument document = job.getDocument();
+                document.setBaseTestResult(result.getBaseTestResult());
 
-        // Save errors where needed
-        List<ValidationError> validationErrors = result.getValidationErrors();
-        for (int index = 0; index < validationErrors.size(); index++) {
-            validationErrors.set(index, validationErrorDAO.save(validationErrors.get(index)));
+                // Save errors where needed
+                List<ValidationError> validationErrors = result.getValidationErrors();
+                for (int index = 0; index < validationErrors.size(); index++) {
+                    validationErrors.set(index, validationErrorDAO.save(validationErrors.get(index)));
+                }
+                document.setValidationErrors(validationErrors);
+
+                // Link properties
+                document.setProperties(result.getProperties());
+
+                // And update document (note that document was detached from hibernate context, thus we need to save explicitly)
+                documentDAO.save(document);
+            }
+        } finally {
+            cleanJob(job);
         }
-        document.setValidationErrors(validationErrors);
-
-        // Link properties
-        document.setProperties(result.getProperties());
-
-        // And update document (note that document was detached from hibernate context, thus we need to save explicitly)
-        documentDAO.save(document);
     }
 
     @UnitOfWork

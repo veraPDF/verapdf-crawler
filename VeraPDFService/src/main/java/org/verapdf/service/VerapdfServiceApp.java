@@ -9,9 +9,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.common.GracefulHttpClient;
 import org.verapdf.crawler.api.validation.settings.ValidationSettings;
 
 import java.io.InputStream;
@@ -48,24 +48,15 @@ public class VerapdfServiceApp extends Application<VeraPDFServiceConfiguration> 
     }
 
     private ValidationSettings loadValidationSettings(String logiusUrl, ObjectMapper mapper) throws Exception {
-        int attempts = 0;
-
-        CloseableHttpClient client = HttpClients.createDefault();
-        while (attempts < LOAD_SETTINGS_MAX_ATTEMPTS) {
-            try (CloseableHttpResponse response = client.execute(new HttpGet(logiusUrl + "/verapdf-service/settings"))) {
+        try (CloseableHttpClient httpClient = new GracefulHttpClient(LOAD_SETTINGS_MAX_ATTEMPTS, LOAD_SETTINGS_ATTEMPT_INTERVAL)) {
+            try (CloseableHttpResponse response = httpClient.execute(new HttpGet(logiusUrl + "/verapdf-service/settings"))) {
                 InputStream responseBody = response.getEntity().getContent();
                 if (response.getStatusLine().getStatusCode() == 200) {
                     return mapper.readValue(responseBody, ValidationSettings.class);
                 } else {
-                    logger.error("Fail to get settings from main Logius web application. Response:\n" + IOUtils.toString(responseBody));
+                    throw new Exception("Fail to get settings from main Logius web application. Response:\n" + IOUtils.toString(responseBody));
                 }
-            } catch (Exception e) {
-                logger.error("Fail to get settings from main Logius web application.", e);
             }
-
-            attempts++;
-            Thread.sleep(LOAD_SETTINGS_ATTEMPT_INTERVAL);
         }
-        throw new Exception("Fail to get settings from main Logius web application");
     }
 }

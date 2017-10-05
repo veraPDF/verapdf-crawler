@@ -12,6 +12,12 @@
     <artifactId>LogiusWebApp</artifactId>
 
     <dependencies>
+        <dependency>
+            <groupId>com.verapdf.crawler</groupId>
+            <artifactId>Common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Sql dependencies -->
         <dependency>
             <groupId>mysql</groupId>
@@ -28,13 +34,16 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpmime</artifactId>
-            <version>4.3.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
             <version>4.4</version>
         </dependency>
+
+        <!--EMAIL-->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-email</artifactId>
+            <version>1.5</version>
+        </dependency>
+
         <!-- Dropwizard -->
         <dependency>
             <groupId>io.dropwizard</groupId>

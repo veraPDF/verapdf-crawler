@@ -15,6 +15,10 @@ public class VeraPDFValidationResult {
     public VeraPDFValidationResult() {
     }
 
+    public VeraPDFValidationResult(String validationErrorMessage) {
+        this.validationErrors.add(new ValidationError(validationErrorMessage));
+    }
+
     @JsonProperty
     public List<ValidationError> getValidationErrors() {
         return validationErrors;
