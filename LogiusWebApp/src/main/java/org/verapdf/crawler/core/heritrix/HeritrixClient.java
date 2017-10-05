@@ -135,7 +135,11 @@ public class HeritrixClient {
         is.setCharacterStream(new StringReader(status));
         Document doc = db.parse(is);
         NodeList nodes = doc.getElementsByTagName("statusDescription"); // TODO: check either crawlControllerState or crawlExitStatus
-        return nodes.item(0).getTextContent().split(": ")[1].toLowerCase();
+        String statusDescription = nodes.item(0).getTextContent();
+        if (statusDescription.contains(":")) {
+            statusDescription = statusDescription.split(": ")[1];
+        }
+        return statusDescription.toLowerCase();
     }
 
     public boolean isJobFinished(String heritrixJobId) throws IOException, ParserConfigurationException, SAXException {
