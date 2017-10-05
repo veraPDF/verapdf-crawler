@@ -35,6 +35,8 @@ logius_db_host: localhost
 logius_db_port: 3306
 # Derived connection string
 logius_db_connection_string: "jdbc:mysql://{{ logius_db_host }}:{{ logius_db_port }}/{{ logius_db_schema_name }}?useSSL=false&autoReconnect=true"
+# If need to run create schema scripts. Note that re-running them will purge the data
+logius_db_create_schema: true
 # Connection type (http | https)
 logius_web_connection_type: http
 # Web application port
