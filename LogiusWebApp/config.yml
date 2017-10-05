@@ -27,7 +27,9 @@ database:
   # the maximum number of connections to keep open
   maxSize: 32
   # whether or not idle connections should be validated
-  checkConnectionWhileIdle: false
+  checkConnectionWhileIdle: true
+  checkConnectionOnReturn: true
+  checkConnectionOnBorrow: true
 heritrix:
   configTemplatePath: /home/anton/Documents/Logius/LogiusWebApp/src/main/resources/sample_configuration.cxml
   url: https://localhost:8443/
