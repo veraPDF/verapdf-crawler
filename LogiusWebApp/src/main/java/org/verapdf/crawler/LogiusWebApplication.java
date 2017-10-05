@@ -1,5 +1,6 @@
 package org.verapdf.crawler;
 
+import com.codahale.metrics.health.HealthCheck;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
@@ -13,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.health.HeritrixHealthCheck;
 import org.verapdf.crawler.health.VeraPDFServiceHealthCheck;
+
+import java.util.Map;
 
 public class LogiusWebApplication extends Application<LogiusConfiguration> {
     private static final Logger logger = LoggerFactory.getLogger(LogiusWebApplication.class);
@@ -51,9 +54,10 @@ public class LogiusWebApplication extends Application<LogiusConfiguration> {
             for (Object resource : resourceManager.getResources()) {
                 environment.jersey().register(resource);
             }
-            environment.healthChecks().register("heritrix", new HeritrixHealthCheck(client));
-            environment.healthChecks().register("verapdf",
-                    new VeraPDFServiceHealthCheck(configuration.getVeraPDFServiceConfiguration()));
+            for (Map.Entry<String, HealthCheck> healthCheckEntry : resourceManager.getHealthChecks().entrySet()) {
+                environment.healthChecks().register(healthCheckEntry.getKey(), healthCheckEntry.getValue());
+            }
+
             logger.info("Logius web application started");
         } catch (Exception e) {
             logger.error("Error on logius web application startup", e);

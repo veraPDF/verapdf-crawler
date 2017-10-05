@@ -40,6 +40,10 @@ public class MonitorCrawlJobStatusService implements Runnable {
 		this.emailServerConfiguration = emailServerConfiguration;
 	}
 
+	public boolean isRunning() {
+		return running;
+	}
+
 	public void start() {
 		running = true;
 		new Thread(this, "Thread-MonitorCrawlJobStatusService").start();

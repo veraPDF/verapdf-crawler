@@ -1,26 +1,31 @@
 package org.verapdf.crawler;
 
+import com.codahale.metrics.health.HealthCheck;
 import io.dropwizard.hibernate.HibernateBundle;
 import io.dropwizard.hibernate.UnitOfWorkAwareProxyFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.configurations.EmailServerConfiguration;
+import org.verapdf.crawler.configurations.VeraPDFServiceConfiguration;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.core.jobs.MonitorCrawlJobStatusService;
 import org.verapdf.crawler.core.validation.PDFValidator;
 import org.verapdf.crawler.db.*;
 import org.verapdf.crawler.core.validation.ValidationService;
 import org.verapdf.crawler.core.validation.VeraPDFValidator;
+import org.verapdf.crawler.health.HeritrixHealthCheck;
+import org.verapdf.crawler.health.MonitorCrawlJobStatusServiceHealthCheck;
+import org.verapdf.crawler.health.ValidationServiceHealthCheck;
+import org.verapdf.crawler.health.VeraPDFServiceHealthCheck;
 import org.verapdf.crawler.resources.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class ResourceManager {
     private static final Logger logger = LoggerFactory.getLogger(ResourceManager.class);
 
     private final List<Object> resources = new ArrayList<>();
+    private final Map<String, HealthCheck> healthChecks = new HashMap<>();
 
     public ResourceManager(LogiusConfiguration config, HeritrixClient heritrix, HibernateBundle<LogiusConfiguration> hibernate) {
         // Initializing all DAO objects
@@ -32,8 +37,10 @@ public class ResourceManager {
         PdfPropertyDAO pdfPropertyDAO = new PdfPropertyDAO(hibernate.getSessionFactory());
         NamespaceDAO namespaceDAO = new NamespaceDAO(hibernate.getSessionFactory());
 
+        VeraPDFServiceConfiguration veraPDFServiceConfiguration = config.getVeraPDFServiceConfiguration();
+
         // Initializing validators and reporters
-        VeraPDFValidator veraPDFValidator = new VeraPDFValidator(config.getVeraPDFServiceConfiguration());
+        VeraPDFValidator veraPDFValidator = new VeraPDFValidator(veraPDFServiceConfiguration);
         ValidationService validationService = new UnitOfWorkAwareProxyFactory(hibernate).create(ValidationService.class,
                 new Class[]{ValidationJobDAO.class, ValidationErrorDAO.class, DocumentDAO.class, PDFValidator.class},
                 new Object[]{validationJobDAO, validationErrorDAO, documentDAO, veraPDFValidator});
@@ -49,11 +56,21 @@ public class ResourceManager {
         resources.add(new VeraPDFServiceResource(pdfPropertyDAO, namespaceDAO));
         resources.add(new ReportResource(documentDAO));
 
-        // Launching validation
-        validationService.start();
+        // Initializing health checks
+        healthChecks.put("heritrix", new HeritrixHealthCheck(heritrix));
+        healthChecks.put("verapdf",
+                new VeraPDFServiceHealthCheck(veraPDFServiceConfiguration));
+        healthChecks.put("validationService", new ValidationServiceHealthCheck(validationService));
+        healthChecks.put("monitorCrawlJobStatusService",
+                new MonitorCrawlJobStatusServiceHealthCheck(monitorCrawlJobStatusService));
 
-        //Launching crawl job service
+        // Launching services
+        validationService.start();
         monitorCrawlJobStatusService.start();
+    }
+
+    public Map<String, HealthCheck> getHealthChecks() {
+        return Collections.unmodifiableMap(this.healthChecks);
     }
 
     public List<Object> getResources() {
