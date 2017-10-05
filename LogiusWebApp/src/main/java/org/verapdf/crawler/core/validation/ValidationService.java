@@ -98,8 +98,9 @@ public class ValidationService implements Runnable {
         saveResult(job, result);
     }
 
+    @SuppressWarnings("WeakerAccess") // @UnitOfWork works only with public methods
     @UnitOfWork
-    private ValidationJob nextJob() {
+    public ValidationJob nextJob() {
         ValidationJob job = validationJobDAO.next();
         if (job != null) {
             job.setStatus(ValidationJob.Status.IN_PROGRESS);
@@ -107,13 +108,15 @@ public class ValidationService implements Runnable {
         return job;
     }
 
+    @SuppressWarnings("WeakerAccess")
     @UnitOfWork
-    private ValidationJob currentJob() {
+    public ValidationJob currentJob() {
         return validationJobDAO.current();
     }
 
+    @SuppressWarnings("WeakerAccess")
     @UnitOfWork
-    private void saveResult(ValidationJob job, VeraPDFValidationResult result) {
+    public void saveResult(ValidationJob job, VeraPDFValidationResult result) {
         try {
             if (!isAborted) {
                 DomainDocument document = job.getDocument();
@@ -137,8 +140,9 @@ public class ValidationService implements Runnable {
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     @UnitOfWork
-    private void cleanJob(ValidationJob job) {
+    public void cleanJob(ValidationJob job) {
         if (job == null) {
             return;
         }
