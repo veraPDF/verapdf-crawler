@@ -22,12 +22,11 @@ public class ValidationService implements Runnable {
     private final ValidationErrorDAO validationErrorDAO;
     private final DocumentDAO documentDAO;
     private final PDFValidator validator;
-    private boolean running;
+    private boolean running = false;
     private boolean isAborted = false;
     private String stopReason;
 
     public ValidationService(ValidationJobDAO validationJobDAO, ValidationErrorDAO validationErrorDAO, DocumentDAO documentDAO, PDFValidator validator) {
-        running = false;
         this.validationJobDAO = validationJobDAO;
         this.validationErrorDAO = validationErrorDAO;
         this.documentDAO = documentDAO;
@@ -100,7 +99,7 @@ public class ValidationService implements Runnable {
     }
 
     @UnitOfWork
-    public ValidationJob nextJob() {
+    private ValidationJob nextJob() {
         ValidationJob job = validationJobDAO.next();
         if (job != null) {
             job.setStatus(ValidationJob.Status.IN_PROGRESS);
@@ -109,12 +108,12 @@ public class ValidationService implements Runnable {
     }
 
     @UnitOfWork
-    public ValidationJob currentJob() {
+    private ValidationJob currentJob() {
         return validationJobDAO.current();
     }
 
     @UnitOfWork
-    public void saveResult(ValidationJob job, VeraPDFValidationResult result) {
+    private void saveResult(ValidationJob job, VeraPDFValidationResult result) {
         try {
             if (!isAborted) {
                 DomainDocument document = job.getDocument();
@@ -139,7 +138,7 @@ public class ValidationService implements Runnable {
     }
 
     @UnitOfWork
-    public void cleanJob(ValidationJob job) {
+    private void cleanJob(ValidationJob job) {
         if (job == null) {
             return;
         }
