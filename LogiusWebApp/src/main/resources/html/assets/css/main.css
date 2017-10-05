@@ -475,3 +475,16 @@ a.action .label {
 .links {
   padding-top: 20px;
 }
+
+.about a {
+  text-decoration: underline;
+}
+
+.about ul {
+  margin-left: 40px;
+}
+
+.important-notice {
+  border: 1px solid white;
+  padding: 10px;
+}

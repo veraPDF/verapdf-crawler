@@ -196,9 +196,8 @@ $(function () {
                 var openCount = result['openDocuments']['pdf'] + result['openDocuments']['office'];
                 var notOpenCount = result['notOpenDocuments']['pdf'] + result['notOpenDocuments']['office'];
                 var totalCount = openCount + notOpenCount;
-                var openPercent = totalCount === 0 ? 0 : openCount * 100 / totalCount;
+                var openPercent = totalCount === 0 ? 0 : Math.round(openCount * 100 / totalCount);
                 var notOpenPercent = totalCount === 0 ? 0 : 100 - openPercent;
-
 
                 $('.summary .good-documents .percent').text(openPercent + '%');
                 $('.summary .bad-documents .percent').text(notOpenPercent + '%');
