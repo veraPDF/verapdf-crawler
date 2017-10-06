@@ -18,7 +18,7 @@ import java.io.InterruptedIOException;
  */
 public class GracefulHttpClient extends CloseableHttpClient {
 
-    private CloseableHttpClient httpClient = HttpClients.createDefault();
+    private CloseableHttpClient httpClient;
 
     /**
      * Maximum number of allowed retries if the server responds with a HTTP code
@@ -33,6 +33,11 @@ public class GracefulHttpClient extends CloseableHttpClient {
     private final long retryInterval;
 
     public GracefulHttpClient(int maxRetries, long retryInterval) {
+        this(HttpClients.createDefault(), maxRetries, retryInterval);
+    }
+
+    public GracefulHttpClient(CloseableHttpClient httpClient, int maxRetries, long retryInterval) {
+        this.httpClient = httpClient;
         this.maxRetries = maxRetries;
         this.retryInterval = retryInterval;
     }

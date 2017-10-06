@@ -11,6 +11,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.CriteriaUpdate;
 import javax.persistence.criteria.Root;
+import java.util.List;
 
 public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
     public ValidationJobDAO(SessionFactory sessionFactory) {
@@ -60,6 +61,17 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
                 builder.equal(job.get(ValidationJob_.document).get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain)
         );
         return currentSession().createQuery(criteriaQuery).getSingleResult();
+    }
+
+    public List<String> documents(String domain) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<String> criteriaQuery = builder.createQuery(String.class);
+        Root<ValidationJob> job = criteriaQuery.from(ValidationJob.class);
+        criteriaQuery.select(job.get(ValidationJob_.id));
+        criteriaQuery.where(
+                builder.equal(job.get(ValidationJob_.document).get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain)
+        );
+        return currentSession().createQuery(criteriaQuery).getResultList();
     }
 
     private void bulkUpdateState(String domain, ValidationJob.Status status) {

@@ -1,18 +1,12 @@
 package org.verapdf.crawler.health;
 
 import com.codahale.metrics.health.HealthCheck;
-import io.dropwizard.lifecycle.Managed;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.verapdf.crawler.configurations.VeraPDFServiceConfiguration;
-
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 public class VeraPDFServiceHealthCheck extends HealthCheck {
     private final String verapdfServiceUrl;
