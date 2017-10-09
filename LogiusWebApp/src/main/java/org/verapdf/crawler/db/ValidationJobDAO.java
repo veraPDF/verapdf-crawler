@@ -2,6 +2,7 @@ package org.verapdf.crawler.db;
 
 import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
 import org.verapdf.crawler.api.crawling.CrawlJob_;
 import org.verapdf.crawler.api.document.DomainDocument_;
 import org.verapdf.crawler.api.validation.ValidationJob;
@@ -63,7 +64,7 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         return currentSession().createQuery(criteriaQuery).getSingleResult();
     }
 
-    public List<String> documents(String domain) {
+    public List<String> getDocuments(String domain, int limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<String> criteriaQuery = builder.createQuery(String.class);
         Root<ValidationJob> job = criteriaQuery.from(ValidationJob.class);
@@ -71,7 +72,12 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         criteriaQuery.where(
                 builder.equal(job.get(ValidationJob_.document).get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain)
         );
-        return currentSession().createQuery(criteriaQuery).getResultList();
+        Query<String> query = currentSession().createQuery(criteriaQuery);
+        if (limit < 0) {
+            return query.getResultList();
+        } else {
+            return query.setMaxResults(limit).getResultList();
+        }
     }
 
     private void bulkUpdateState(String domain, ValidationJob.Status status) {
