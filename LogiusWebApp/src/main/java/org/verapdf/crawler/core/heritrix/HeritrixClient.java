@@ -151,6 +151,7 @@ public class HeritrixClient {
             if (currentJobStatus.contains(":")) {
                 currentJobStatus = currentJobStatus.split(": ")[1];
             }
+            currentJobStatus = currentJobStatus.trim().toLowerCase();
             return currentJobStatus.startsWith("finished") || currentJobStatus.startsWith("aborted");
         }
     }

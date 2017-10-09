@@ -53,7 +53,7 @@ public class ResourceManager {
         resources.add(new CrawlRequestResource(crawlRequestDAO, crawlJobDAO, heritrix));
         resources.add(new DocumentResource(crawlJobDAO, documentDAO, validationJobDAO));
         resources.add(new DocumentPropertyResource(documentDAO));
-        resources.add(new VeraPDFServiceResource(pdfPropertyDAO, namespaceDAO));
+        resources.add(new ValidationServiceResource(pdfPropertyDAO, namespaceDAO, validationJobDAO));
         resources.add(new ReportResource(documentDAO));
 
         // Initializing health checks
