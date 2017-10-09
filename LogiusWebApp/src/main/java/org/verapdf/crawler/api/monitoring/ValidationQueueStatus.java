@@ -12,14 +12,14 @@ public class ValidationQueueStatus {
 	@JsonProperty
 	private Long count;
 	@JsonProperty
-	private List<String> documents;
+	private List<String> topDocuments;
 
 	public ValidationQueueStatus() {
 	}
 
-	public ValidationQueueStatus(Long count, List<String> documents) {
+	public ValidationQueueStatus(Long count, List<String> topDocuments) {
 		this.count = count;
-		this.documents = documents;
+		this.topDocuments = topDocuments;
 	}
 
 	public Long getCount() {
@@ -30,11 +30,11 @@ public class ValidationQueueStatus {
 		this.count = count;
 	}
 
-	public List<String> getDocuments() {
-		return documents;
+	public List<String> getTopDocuments() {
+		return topDocuments;
 	}
 
-	public void setDocuments(List<String> documents) {
-		this.documents = documents;
+	public void setTopDocuments(List<String> documents) {
+		this.topDocuments = documents;
 	}
 }
