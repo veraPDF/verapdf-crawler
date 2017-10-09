@@ -3,7 +3,6 @@ package org.verapdf.crawler.core.validation;
 import io.dropwizard.hibernate.UnitOfWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.common.RetryFailedException;
 import org.verapdf.crawler.api.document.DomainDocument;
 import org.verapdf.crawler.api.validation.ValidationJob;
 import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
@@ -120,7 +119,7 @@ public class ValidationService implements Runnable {
         try {
             if (!isAborted) {
                 DomainDocument document = job.getDocument();
-                document.setBaseTestResult(result.getBaseTestResult());
+                document.setBaseTestResult(result.getTestResult());
 
                 // Save errors where needed
                 List<ValidationError> validationErrors = result.getValidationErrors();
