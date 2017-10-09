@@ -5,17 +5,22 @@ import io.dropwizard.jersey.params.IntParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.api.crawling.CrawlRequest;
+import org.verapdf.crawler.api.monitoring.CrawlJobStatus;
+import org.verapdf.crawler.api.monitoring.HeritrixCrawlJobStatus;
+import org.verapdf.crawler.api.monitoring.ValidationQueueStatus;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.api.crawling.CrawlJob;
 import org.verapdf.crawler.db.CrawlJobDAO;
-import org.verapdf.crawler.db.CrawlRequestDAO;
 import org.verapdf.crawler.db.ValidationJobDAO;
 import org.verapdf.crawler.tools.DomainUtils;
+import org.xml.sax.SAXException;
 
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.util.List;
 import java.util.ListIterator;
@@ -25,6 +30,8 @@ import java.util.ListIterator;
 public class CrawlJobResource {
 
     private static final Logger logger = LoggerFactory.getLogger(CrawlJobResource.class);
+
+    private static final int GET_STATUS_MAX_DOCUMENT_COUNT = 10;
 
     private final CrawlJobDAO crawlJobDao;
     private final ValidationJobDAO validationJobDAO;
@@ -112,18 +119,32 @@ public class CrawlJobResource {
         return crawlJob.getCrawlRequests();
     }
 
+    @GET
+    @Path("/{domain}/status")
+    @UnitOfWork
+    public CrawlJobStatus getHeritrixStatus(@PathParam("domain") String domain) {
+        CrawlJob crawlJob = getCrawlJob(domain);
+        HeritrixCrawlJobStatus heritrixStatus = null;
+        try {
+            heritrixStatus = heritrix.getHeritrixStatus(crawlJob.getHeritrixJobId());
+        } catch (IOException | XPathExpressionException | SAXException | ParserConfigurationException e) {
+            logger.error("Error during obtaining heritrix status", e);
+        }
+
+        String crawlJobDomain = crawlJob.getDomain();
+        Long count = validationJobDAO.count(crawlJobDomain);
+        List<String> topDocuments = validationJobDAO.getDocuments(crawlJobDomain, GET_STATUS_MAX_DOCUMENT_COUNT);
+
+        return new CrawlJobStatus(crawlJob, heritrixStatus, new ValidationQueueStatus(count, topDocuments));
+    }
+
     @DELETE
     @Path("/{domain}/requests")
     @UnitOfWork
     public List<CrawlRequest> unlinkCrawlRequests(@PathParam("domain") String domain, @QueryParam("email") @NotNull String email) {
         CrawlJob crawlJob = getCrawlJob(domain);
 
-        ListIterator<CrawlRequest> crawlRequests = crawlJob.getCrawlRequests().listIterator();
-        while(crawlRequests.hasNext()){
-            if(email.equals(crawlRequests.next().getEmailAddress())){
-                crawlRequests.remove();
-            }
-        }
+        crawlJob.getCrawlRequests().removeIf(request -> email.equals(request.getEmailAddress()));
 
 //        if (crawlJob.getCrawlRequests().size() == 0) {
 //            // todo: clarify if possible/required to terminate CrawlJob if no associated CrawlRequests left
