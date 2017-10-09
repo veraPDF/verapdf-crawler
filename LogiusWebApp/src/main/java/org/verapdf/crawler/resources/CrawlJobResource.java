@@ -46,13 +46,14 @@ public class CrawlJobResource {
     @GET
     @UnitOfWork
     public Response getJobList(@QueryParam("domainFilter") String domainFilter,
+                               @QueryParam("finished") Boolean finished,
                                @QueryParam("start") IntParam startParam,
                                @QueryParam("limit") IntParam limitParam) {
         Integer start = startParam != null ? startParam.get() : null;
         Integer limit = limitParam != null ? limitParam.get() : null;
 
         long totalCount = crawlJobDao.count(domainFilter);
-        List<CrawlJob> crawlJobs = crawlJobDao.find(domainFilter, start, limit);
+        List<CrawlJob> crawlJobs = crawlJobDao.find(domainFilter, finished, start, limit);
         return Response.ok(crawlJobs).header("X-Total-Count", totalCount).build();
     }
 
@@ -122,7 +123,7 @@ public class CrawlJobResource {
     @GET
     @Path("/{domain}/status")
     @UnitOfWork
-    public CrawlJobStatus getHeritrixStatus(@PathParam("domain") String domain) {
+    public CrawlJobStatus getFullJobStatus(@PathParam("domain") String domain) {
         CrawlJob crawlJob = getCrawlJob(domain);
         HeritrixCrawlJobStatus heritrixStatus = null;
         try {

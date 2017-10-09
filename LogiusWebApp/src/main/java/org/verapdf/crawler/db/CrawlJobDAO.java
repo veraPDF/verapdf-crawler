@@ -11,6 +11,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
@@ -50,13 +51,16 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         return this.currentSession().createQuery(query).getSingleResult();
     }
 
-    public List<CrawlJob> find(String domainFilter, Integer start, Integer limit) {
+    public List<CrawlJob> find(String domainFilter, Boolean finished, Integer start, Integer limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<CrawlJob> criteriaQuery = builder.createQuery(CrawlJob.class);
         Root<CrawlJob> crawlJob = criteriaQuery.from(CrawlJob.class);
 
         if (domainFilter != null) {
             criteriaQuery.where(builder.like(crawlJob.get(CrawlJob_.domain), "%" + domainFilter + "%"));
+        }
+        if (finished != null) {
+            criteriaQuery.where(builder.equal(crawlJob.get(CrawlJob_.finished), finished));
         }
         criteriaQuery.orderBy(builder.desc(crawlJob.get(CrawlJob_.startTime)));
 

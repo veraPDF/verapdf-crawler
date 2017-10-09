@@ -49,7 +49,7 @@ public class VerapdfServiceApp extends Application<VeraPDFServiceConfiguration> 
 
     private ValidationSettings loadValidationSettings(String logiusUrl, ObjectMapper mapper) throws Exception {
         try (CloseableHttpClient httpClient = new GracefulHttpClient(LOAD_SETTINGS_MAX_ATTEMPTS, LOAD_SETTINGS_ATTEMPT_INTERVAL)) {
-            try (CloseableHttpResponse response = httpClient.execute(new HttpGet(logiusUrl + "/verapdf-service/settings"))) {
+            try (CloseableHttpResponse response = httpClient.execute(new HttpGet(logiusUrl + "/validation-service/settings"))) {
                 InputStream responseBody = response.getEntity().getContent();
                 if (response.getStatusLine().getStatusCode() == 200) {
                     return mapper.readValue(responseBody, ValidationSettings.class);
