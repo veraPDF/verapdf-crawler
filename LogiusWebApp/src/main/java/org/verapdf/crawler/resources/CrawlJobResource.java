@@ -96,16 +96,21 @@ public class CrawlJobResource {
     @PUT
     @Path("/{domain}")
     @UnitOfWork
-    public CrawlJob updateCrawlJob(@PathParam("domain") String domain, @NotNull CrawlJob update) throws IOException {
+    public CrawlJob updateCrawlJob(@PathParam("domain") String domain, @NotNull CrawlJob update) throws IOException, XPathExpressionException, SAXException, ParserConfigurationException {
         CrawlJob crawlJob = this.getCrawlJob(domain);
 
+        String heritrixJobId = crawlJob.getHeritrixJobId();
         if(crawlJob.getStatus() == CrawlJob.Status.RUNNING && update.getStatus() == CrawlJob.Status.PAUSED) {
-            heritrix.pauseJob(crawlJob.getHeritrixJobId());
+            if (!heritrix.isJobFinished(heritrixJobId)) {
+                heritrix.pauseJob(heritrixJobId);
+            }
             validationJobDAO.pause(domain);
             crawlJob.setStatus(CrawlJob.Status.PAUSED);
         }
         if(crawlJob.getStatus() == CrawlJob.Status.PAUSED && update.getStatus() == CrawlJob.Status.RUNNING) {
-            heritrix.unpauseJob(crawlJob.getHeritrixJobId());
+            if (!heritrix.isJobFinished(heritrixJobId)) {
+                heritrix.unpauseJob(heritrixJobId);
+            }
             validationJobDAO.unpause(domain);
             crawlJob.setStatus(CrawlJob.Status.RUNNING);
         }

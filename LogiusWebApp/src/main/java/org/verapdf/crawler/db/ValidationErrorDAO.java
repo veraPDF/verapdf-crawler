@@ -11,11 +11,17 @@ import javax.persistence.criteria.Root;
 
 public class ValidationErrorDAO extends AbstractDAO<ValidationError> {
 
+    private static final int MAX_DESCRIPTION_LENGTH = 2048;
+
     public ValidationErrorDAO(SessionFactory sessionFactory) {
         super(sessionFactory);
     }
 
     public ValidationError save(ValidationError error) {
+        String description = error.getDescription();
+        if (description.length() > MAX_DESCRIPTION_LENGTH) {
+            error.setDescription(description.substring(0, MAX_DESCRIPTION_LENGTH));
+        }
         if (error instanceof RuleViolationError) {
             return save((RuleViolationError) error);
         } else {
