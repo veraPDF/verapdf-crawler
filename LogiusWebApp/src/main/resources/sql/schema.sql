@@ -71,7 +71,7 @@ CREATE TABLE `validation_errors` (
   `specification` VARCHAR(32)      DEFAULT NULL,
   `clause`        VARCHAR(16)      DEFAULT NULL,
   `test_number`   VARCHAR(4)       DEFAULT NULL,
-  `description`   VARCHAR(512)     DEFAULT NULL,
+  `description`   VARCHAR(2048)     DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `validation_errors_specification_clause_test_number_pk` (`specification`, `clause`, `test_number`)
 );

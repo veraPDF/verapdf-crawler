@@ -12,8 +12,11 @@ import org.verapdf.crawler.db.ValidationJobDAO;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 
 @Path("/documents")
+@Produces(MediaType.APPLICATION_JSON)
 public class DocumentResource {
 
     private static final Logger logger = LoggerFactory.getLogger(DocumentResource.class);
@@ -57,7 +60,7 @@ public class DocumentResource {
                 logger.warn("Unknown document type " + document.getContentType() + ". Document " + document.getUrl() + " won't be tested.");
         }
 
-        return null;
+        return document;
     }
 
     private void validatePdfFile(DomainDocument document) {
