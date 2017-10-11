@@ -488,3 +488,32 @@ a.action .label {
   border: 1px solid white;
   padding: 10px;
 }
+
+/* Status page */
+.health-checks {
+  margin-bottom: 30px;
+}
+
+.health-checks h4 {
+  margin-bottom: 20px;
+}
+
+.health-checks div {
+  display: flex;
+}
+
+.health-checks .check-name {
+  flex: 0 0 250px;
+}
+
+.health-checks .check-status {
+  flex: 0 0 100px;
+}
+
+.health-checks .healthy .check-status {
+  color: #43c46f;
+}
+
+.health-checks .unhealthy .check-status {
+  color: #fd5858;
+}
