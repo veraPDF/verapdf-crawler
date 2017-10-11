@@ -3,6 +3,7 @@ package org.verapdf.service;
 import javanet.staxutils.SimpleNamespaceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.api.document.DomainDocument;
 import org.verapdf.crawler.api.validation.error.RuleViolationError;
 import org.verapdf.crawler.api.validation.error.ValidationError;
 import org.verapdf.crawler.api.validation.settings.ValidationSettings;
@@ -21,6 +22,7 @@ import javax.xml.xpath.XPathFactory;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +35,8 @@ public class VeraPDFProcessor implements Runnable {
 
 	private static final String BASE_PATH = "/report/jobs/job/";
 	private static final String VALIDATION_REPORT_PATH = BASE_PATH + "validationReport/";
+	private static final String FLAVOUR_PART_PROPERTY_NAME = "flavourPart";
+	private static final String FLAVOUR_CONFORMANCE_PROPERTY_NAME = "flavourConformance";
 
 	private final String verapdfPath;
 	private final String filePath;
@@ -77,9 +81,7 @@ public class VeraPDFProcessor implements Runnable {
 				addNameSpaces(nsc);
 				xpath.setNamespaceContext(nsc);
 				result = generateBaseResult(document, xpath);
-				if (this.settings != null) {
-					addProperties(result, document, xpath);
-				}
+				evaluateProperties(result, document, xpath);
 			} else {
 				result = generateProblemResult("Some problem in report generation");
 			}
@@ -102,34 +104,54 @@ public class VeraPDFProcessor implements Runnable {
 	}
 
 	private void addNameSpaces(SimpleNamespaceContext nsc) {
-		if (this.settings != null) {
-			Map<String, String> namespaces = this.settings.getNamespaces();
-			if (namespaces != null) {
-				for (Map.Entry<String, String> entry : namespaces.entrySet()) {
-					nsc.setPrefix(entry.getKey(), entry.getValue());
-				}
+		Map<String, String> namespaces = this.settings.getNamespaces();
+		for (Map.Entry<String, String> entry : namespaces.entrySet()) {
+			nsc.setPrefix(entry.getKey(), entry.getValue());
+		}
+	}
+
+	private void evaluateProperties(VeraPDFValidationResult result, Document document, XPath xpath) {
+		Map<String, List<String>> properties = new HashMap<>(this.settings.getProperties());
+		List<String> partXPaths = properties.get(FLAVOUR_PART_PROPERTY_NAME);
+		String part = getProperty(partXPaths, document, xpath);
+		// if document is valid, then we have already placed OPEN result, but we need to remove it
+		// in case, when flavour part is not 1 or 2
+		try {
+			int partInt = Integer.parseInt(part);
+			if (partInt != 1 && partInt != 2) {
+				result.setTestResult(DomainDocument.BaseTestResult.NOT_OPEN);
+			}
+		} catch (NumberFormatException e) {
+			result.setTestResult(DomainDocument.BaseTestResult.NOT_OPEN);
+		}
+		List<String> conformanceXPaths = properties.get(FLAVOUR_CONFORMANCE_PROPERTY_NAME);
+		String conformance = getProperty(conformanceXPaths, document, xpath).toUpperCase();
+		String flavour = part + conformance;
+		if (!flavour.isEmpty()) {
+			result.addProperty("flavour", flavour);
+		}
+		properties.remove(FLAVOUR_PART_PROPERTY_NAME);
+		properties.remove(FLAVOUR_CONFORMANCE_PROPERTY_NAME);
+		for (Map.Entry<String, List<String>> property : properties.entrySet()) {
+			String propertyValue = getProperty(property.getValue(), document, xpath);
+			if (!propertyValue.isEmpty()) {
+				result.addProperty(property.getKey(), propertyValue);
 			}
 		}
 	}
 
-	private void addProperties(VeraPDFValidationResult result, Document document, XPath xpath) {
-		Map<String, List<String>> properties = this.settings.getProperties();
-		if (properties == null) {
-			return;
-		}
-		for (Map.Entry<String, List<String>> property : properties.entrySet()) {
-			try {
-				for (String propertyXPath : property.getValue()) {
-					String value = (String) xpath.evaluate(propertyXPath, document, XPathConstants.STRING);
-					if (value != null && !value.isEmpty()) {
-						result.addProperty(property.getKey(), value);
-						break;
-					}
+	private String getProperty(List<String> xpaths, Document document, XPath xpath) {
+		try {
+			for (String propertyXPath : xpaths) {
+				String value = (String) xpath.evaluate(propertyXPath, document, XPathConstants.STRING);
+				if (value != null && !value.isEmpty()) {
+					return value;
 				}
-			} catch (Throwable e) {
-				logger.info("Some problem in obtaining property", e);
 			}
+		} catch (Throwable e) {
+			logger.info("Some problem in obtaining property", e);
 		}
+		return "";
 	}
 
 	private VeraPDFValidationResult generateBaseResult(Document document, XPath xpath) throws XPathExpressionException {
@@ -147,8 +169,10 @@ public class VeraPDFProcessor implements Runnable {
 				document,
 				XPathConstants.STRING);
 		boolean isCompliant = Boolean.parseBoolean(isCompliantString);
-		result.setValid(isCompliant);
-		if (!isCompliant) {
+		if (isCompliant) {
+			// set temporary OPEN result. will have to check document on flavour part 3
+			result.setTestResult(DomainDocument.BaseTestResult.OPEN);
+		} else {
 			addValidationErrors(result, document, xpath);
 		}
 		return result;

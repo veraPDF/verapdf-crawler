@@ -1,6 +1,5 @@
 package org.verapdf.crawler.api.validation;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.verapdf.crawler.api.document.DomainDocument;
 import org.verapdf.crawler.api.validation.error.ValidationError;
@@ -8,7 +7,7 @@ import org.verapdf.crawler.api.validation.error.ValidationError;
 import java.util.*;
 
 public class VeraPDFValidationResult {
-    private boolean isValid = false;
+    private DomainDocument.BaseTestResult testResult = DomainDocument.BaseTestResult.NOT_OPEN;
     private List<ValidationError> validationErrors = new ArrayList<>();
     private Map<String, String> properties = new HashMap<>();
 
@@ -34,13 +33,13 @@ public class VeraPDFValidationResult {
     }
 
     @JsonProperty
-    public boolean isValid() {
-        return isValid;
+    public DomainDocument.BaseTestResult getTestResult() {
+        return testResult;
     }
 
     @JsonProperty
-    public void setValid(boolean isValid) {
-        this.isValid = isValid;
+    public void setTestResult(DomainDocument.BaseTestResult testResult) {
+        this.testResult = testResult;
     }
 
     @JsonProperty
@@ -55,10 +54,5 @@ public class VeraPDFValidationResult {
 
     public void addProperty(String name, String value) {
         properties.put(name, value);
-    }
-
-    @JsonIgnore
-    public DomainDocument.BaseTestResult getBaseTestResult() {
-        return this.isValid() ? DomainDocument.BaseTestResult.OPEN : DomainDocument.BaseTestResult.NOT_OPEN;
     }
 }
