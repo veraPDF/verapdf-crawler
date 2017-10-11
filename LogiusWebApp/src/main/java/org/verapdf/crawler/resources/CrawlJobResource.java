@@ -8,6 +8,7 @@ import org.verapdf.crawler.api.crawling.CrawlRequest;
 import org.verapdf.crawler.api.monitoring.CrawlJobStatus;
 import org.verapdf.crawler.api.monitoring.HeritrixCrawlJobStatus;
 import org.verapdf.crawler.api.monitoring.ValidationQueueStatus;
+import org.verapdf.crawler.api.validation.ValidationJob;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.api.crawling.CrawlJob;
 import org.verapdf.crawler.db.CrawlJobDAO;
@@ -52,7 +53,7 @@ public class CrawlJobResource {
         Integer start = startParam != null ? startParam.get() : null;
         Integer limit = limitParam != null ? limitParam.get() : null;
 
-        long totalCount = crawlJobDao.count(domainFilter);
+        long totalCount = crawlJobDao.count(domainFilter, finished);
         List<CrawlJob> crawlJobs = crawlJobDao.find(domainFilter, finished, start, limit);
         return Response.ok(crawlJobs).header("X-Total-Count", totalCount).build();
     }
@@ -139,7 +140,7 @@ public class CrawlJobResource {
 
         String crawlJobDomain = crawlJob.getDomain();
         Long count = validationJobDAO.count(crawlJobDomain);
-        List<String> topDocuments = validationJobDAO.getDocuments(crawlJobDomain, GET_STATUS_MAX_DOCUMENT_COUNT);
+        List<ValidationJob> topDocuments = validationJobDAO.getDocuments(crawlJobDomain, GET_STATUS_MAX_DOCUMENT_COUNT);
 
         return new CrawlJobStatus(crawlJob, heritrixStatus, new ValidationQueueStatus(count, topDocuments));
     }

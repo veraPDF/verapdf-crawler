@@ -64,6 +64,7 @@ public class ResourceManager {
         resources.add(new ValidationServiceResource(pdfPropertyDAO, namespaceDAO, validationJobDAO));
         resources.add(new ReportResource(documentDAO));
         resources.add(new HealthResource(adminPort));
+        resources.add(new HeritrixResource(heritrix));
 
         // Initializing health checks
         healthChecks.put("heritrix", new HeritrixHealthCheck(heritrix));

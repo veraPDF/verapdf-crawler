@@ -1,26 +1,44 @@
 $(function () {
-    var URL = "/api/crawl-jobs";
-    var row = $(".active-domains-list").children('tbody').children('tr').clone();
-    var totalPagesAmount = 1;
+    var refreshInterval = 1000;
+    var loadActiveDomainsListTimeout;
+    var loadHealthChecksTimeout;
+    var loadValidationQueueTimeout;
+
+    var currentPage = 1;
     var limit = 10;
-    var filter = "";
     var paginationOpts = {
-        totalPages: 1,
+        totalPages: 0,
         visiblePages: 5,
         initiateStartPageClick: false,
         onPageClick: function (event, page) {
-            loadAllJobs(limit, (page - 1) * limit, filter);
+            currentPage = page;
+            loadActiveJobs();
         }
     };
+    var invalidatePagination = true;
+
+    var heritrixEngineUrl = '';
+
+    var activeDomainsListContainer = $('.active-domains-list');
+    var domainFilterElement = $('.domain-filter');
+    var domainFilterInput = domainFilterElement.find('input');
+    var paginationContainer = $('#pagination-container');
+    var validationQueueContainer = $('.validation-queue');
 
     // Health checks
     function loadHealthChecks() {
+        if (loadHealthChecksTimeout) {
+            clearTimeout(loadHealthChecksTimeout);
+        }
         $.get('/api/healthcheck').done(renderHealthChecks);
     }
     
     function renderHealthChecks(healthchecks) {
         var container = $('.health-checks');
-        var template = container.find('.template');
+        var loaded = container.find('.loaded');
+        loaded.find('>:not(.template)').remove();
+
+        var template = loaded.find('.template');
         $.each(healthchecks, function(name, healthcheck) {
             var element = template.clone();
             element.removeClass('template');
@@ -34,114 +52,118 @@ $(function () {
                 element.find('.check-status').text('unhealthy');
                 element.find('.check-message').text(healthcheck.message);
             }
-            container.append(element);
+            loaded.append(element);
         });
         container.find('.loading').hide();
+        loaded.show();
+
+        loadHealthChecksTimeout = setTimeout(loadHealthChecks, refreshInterval);
     }
-    loadHealthChecks();
-    
+
+    // Heritrix settings (engine URL)
+    function loadHeritrixSettings(callback) {
+        $.get('/api/heritrix').done(function(heritrix) {
+            heritrixEngineUrl = heritrix.engineUrl;
+            callback();
+        });
+    }
 
     // Active jobs
+    function loadActiveJobs() {
+        if (loadActiveDomainsListTimeout) {
+            clearTimeout(loadActiveDomainsListTimeout);
+        }
+
+        var start = (currentPage - 1) * limit;
+
+        var filter = '';
+        if (domainFilterInput.val() && domainFilterInput.val().trim().length > 0) {
+            filter = '&domainFilter=' + domainFilterInput.val();
+        }
+
+        $.get('/api/crawl-jobs?limit=' + limit + '&start=' + start + '&finished=false' + filter).done(renderActiveJobs);
+    }
+
+    function renderActiveJobs(jobs, textStatus, request) {
+        activeDomainsListContainer.find('.loading').hide();
+        activeDomainsListContainer.find('.loaded').show();
+
+        // First check and display total count
+        var totalCount = request.getResponseHeader('X-Total-Count') * 1;  // * 1 will convert string to number
+        activeDomainsListContainer.find('.active-jobs-count').text(totalCount);
+        if (totalCount === 0) {
+            activeDomainsListContainer.find('.domain-filter').hide();
+            activeDomainsListContainer.find('table').hide();
+            activeDomainsListContainer.find('nav').hide();
+
+        } else {
+            // If we have active jobs display related elements
+            activeDomainsListContainer.find('.domain-filter').show();
+            activeDomainsListContainer.find('table').show();
+            activeDomainsListContainer.find('nav').show();
+
+            // Fill the table
+            var tbody = activeDomainsListContainer.find('tbody');
+            tbody.find('tr:not(.template)').remove();
+
+            var template = tbody.find('.template');
+            if (Array.isArray(jobs)) {
+                jobs.forEach(function (item) {
+                    var row = createCrawlJobRow(item, template);
+                    tbody.append(row);
+                });
+            }
+
+            // Update pagination if needed (when total page count changes)
+            var totalPagesAmount = totalCount > limit ? Math.ceil(totalCount / limit) : 1;
+            if (totalPagesAmount !== paginationOpts.totalPages || invalidatePagination) {
+                paginationOpts.totalPages = totalPagesAmount;
+
+                paginationContainer.twbsPagination('destroy');
+
+                if (totalPagesAmount > 1) {
+                    domainFilterElement.show();
+                    paginationContainer.show();
+                    paginationContainer.twbsPagination(paginationOpts);
+                    invalidatePagination = false;
+                } else {
+                    domainFilterElement.hide();
+                    paginationContainer.hide();
+                }
+            }
+        }
+
+        // Schedule refresh
+        loadActiveDomainsListTimeout = setTimeout(loadActiveJobs, refreshInterval);
+    }
+
+    function createCrawlJobRow(item, template) {
+        var element = template.clone().removeClass('template');
+        element.find('.domain a').text(item.domain).attr('href', 'domain-status.html?domain=' + item.domain);
+        element.find('.heritrix-id a').text(item.heritrixJobId).attr('href', heritrixEngineUrl + '/job/' + item.heritrixJobId);
+        element.find('.start').text(item.startTime);
+
+        $(element).find('.status').text(item.status);
+        switch (item.status) {
+            case 'RUNNING':
+                $(element).find('.action-resume').parent().hide();
+                break;
+            case 'PAUSED':
+                $(element).find('.action-pause').parent().hide();
+                break;
+            default:
+                $(element).find('.action-pause').parent().remove();
+                $(element).find('.action-resume').parent().remove();
+                $(element).find('.action-restart').parent().attr('colspan', 2);
+        }
+        return element;
+    }
+
     function normalizeURL(url) {
         return url.replace(':', '%3A');
     }
-    function loadAllJobs(limit, start, domainFilter, redrawPagintion) {
-        var filter = "";
-        if (domainFilter) {
-            filter = '&domainFilter=' + domainFilter;
-        }
-        $.ajax({
-            url: URL + '?limit=' + limit + '&start=' + start + filter,
-            type: "GET",
-            success: function (result, textStatus, request) {
-                $(".active-domains-list").children('tbody').empty();
-                if (Array.isArray(result)) {
-                    result.forEach(function (item, i, arr) {
-                        appendCrawlJob(item.domain, item.startTime, item.finishTime, item.status, row[0]);
-                    });
-                }
-                totalPagesAmount = Math.ceil(request.getResponseHeader('X-Total-Count') / limit);
-                if (totalPagesAmount > 0) {
-                    paginationOpts.totalPages = totalPagesAmount;
-                } else {
-                    paginationOpts.totalPages = 1;
-                }
-                if (redrawPagintion) {
-                    $('#pagination-container').twbsPagination('destroy');
-                    $('#pagination-container').twbsPagination(paginationOpts);
-                }
-            },
-            error: function (result) {
-            }
-        });
-    }
 
-    function appendCrawlJob(url, start, end, status, row) {
-        var row1 = $(row).clone();
-        row1.find('.domain').text(url);
-        row1.find('.domain').attr("href", "domain.html?domain=" + url);
-        row1.children('.start').text(start);
-        if (status === 'NEW') {
-            row1.children('.end').text('');
-            $(row1).children('.status').text('New');
-            $(row1).find('.empty-action').parent().addClass('hide');
-            $(row1).find('.action-pause').parent().removeClass('hide');
-            $(row1).find('.action-resume').parent().addClass('hide');
-            $(row1).find('.action-restart').parent().removeClass('hide');
-
-        }
-        if (status === 'RUNNING') {
-            row1.children('.end').text('');
-            $(row1).children('.status').text('Running');
-            $(row1).find('.empty-action').parent().addClass('hide');
-            $(row1).find('.action-pause').parent().removeClass('hide');
-            $(row1).find('.action-resume').parent().addClass('hide');
-            $(row1).find('.action-restart').parent().removeClass('hide');
-
-        } else if (status === 'PAUSED') {
-            row1.children('.end').text('');
-            $(row1).children('.status').text('Paused');
-            $(row1).find('.empty-action').parent().addClass('hide');
-            $(row1).find('.action-pause').parent().addClass('hide');
-            $(row1).find('.action-resume').parent().removeClass('hide');
-            $(row1).find('.action-restart').parent().removeClass('hide');
-
-        } else if (status === 'FAILED') {
-            row1.children('.end').text(end);
-            $(row1).children('.status').text('Failed');
-            $(row1).find('.empty-action').parent().removeClass('hide');
-            $(row1).find('.action-pause').parent().addClass('hide');
-            $(row1).find('.action-resume').parent().addClass('hide');
-            $(row1).find('.action-restart').parent().removeClass('hide');
-        } else if (status === 'FINISHED') {
-            row1.children('.end').text(end);
-            $(row1).children('.status').text('Finished');
-            $(row1).find('.empty-action').parent().removeClass('hide');
-            $(row1).find('.action-pause').parent().addClass('hide');
-            $(row1).find('.action-resume').parent().addClass('hide');
-            $(row1).find('.action-restart').parent().removeClass('hide');
-        }
-
-        $(".active-domains-list").children('tbody').append(row1);
-
-    }
-
-
-    // function reportError(text) {
-    //     var ul = document.getElementById("crawl_url_list");
-    //     var li = document.createElement("li");
-    //     var link = document.createElement("p");
-    //     link.innerHTML = "<font color=\"red\">* " + text + ".</font>"
-    //     li.appendChild(link);
-    //     ul.innerHTML = '';
-    //     ul.appendChild(li);
-    // }
-
-
-    // $('#pagination-container').twbsPagination(paginationOpts);
-
-
-    $(".active-domains-list").on("click", '.action-resume', function (e) {
+    activeDomainsListContainer.on("click", '.action-resume', function (e) {
         var link = $(this);
         var currRow = $(this).parent().parent();
         var putData = {};
@@ -156,16 +178,16 @@ $(function () {
             data: JSON.stringify(putData),
             headers: { "Content-type": "application/json" },
             success: function (result) {
-                currRow.find('.action-pause').parent().removeClass('hide');
-                currRow.find('.action-resume').parent().addClass('hide');
-                currRow.children('.status').text('Running');
+                currRow.find('.action-pause').parent().show();
+                currRow.find('.action-resume').parent().hide();
+                currRow.children('.status').text(result.status);
             },
             error: function (result) { }
         });
 
     });
 
-    $(".active-domains-list").on("click", '.action-pause', function (e) {
+    activeDomainsListContainer.on("click", '.action-pause', function (e) {
         var link = $(this);
         var currRow = $(this).parent().parent();
         var putData = {};
@@ -180,16 +202,16 @@ $(function () {
             data: JSON.stringify(putData),
             headers: { "Content-type": "application/json" },
             success: function (result) {
-                currRow.find('.action-pause').parent().addClass('hide');
-                currRow.find('.action-resume').parent().removeClass('hide');
-                currRow.children('.status').text('Paused');
+                currRow.find('.action-pause').parent().hide();
+                currRow.find('.action-resume').parent().show();
+                currRow.children('.status').text(result.status);
             },
             error: function (result) { }
         });
 
     });
 
-    $(".active-domains-list").on("click", '.action-restart', function (e) {
+    activeDomainsListContainer.on("click", '.action-restart', function (e) {
         $.ajax({
             url: URL + "/" + normalizeURL($($(this).parent().siblings()[0]).children().text()),
             type: "POST",
@@ -198,20 +220,59 @@ $(function () {
         });
     });
 
-    $("#serch-domain-action").on("click", function (e) {
-        if ($("#serch-domain")[0].value) {
-            filter = $("#serch-domain")[0].value;
-            loadAllJobs(limit, 0, $("#serch-domain")[0].value, true);
-        }
+    domainFilterElement.find('span').on("click", function (e) {
+        currentPage = 1;
+        invalidatePagination = true;
+        loadActiveJobs();
     });
 
-    $("#serch-domain").keypress(function (e) {
-        if (e.keyCode === 13 && $("#serch-domain")[0].value) {
+    domainFilterInput.keypress(function (e) {
+        if (e.keyCode === 13) {
             event.preventDefault();
-            filter = $("#serch-domain")[0].value;
-            loadAllJobs(limit, 0, $("#serch-domain")[0].value, true);
+            domainFilterElement.find('span').click();
         }
     });
 
-    loadAllJobs(limit, 0, '', true);
+    // Validation queue
+    function loadValidationQueueStatus() {
+        if (loadValidationQueueTimeout) {
+            clearTimeout(loadValidationQueueTimeout);
+        }
+        $.get('/api/validation-service/queue-status').done(renderValidationQueueStatus);
+    }
+
+    function renderValidationQueueStatus(queueStatus) {
+        validationQueueContainer.find('.loading').hide();
+        validationQueueContainer.find('.loaded').show();
+
+        validationQueueContainer.find('.validation-queue-size').text(queueStatus.count);
+
+        if (queueStatus.count > 0) {
+            var tbody = validationQueueContainer.find('tbody');
+            tbody.find('tr:not(.template)').remove();
+
+            var template = tbody.find('.template');
+            $.each(queueStatus.topDocuments, function(index, validationJob) {
+                var element = template.clone().removeClass('template');
+                element.find('.url').text(validationJob.id);
+                if (validationJob.status === 'IN_PROGRESS') {
+                    element.addClass('in-progress');
+                }
+                tbody.append(element);
+            });
+
+            validationQueueContainer.find('table').show();
+        } else {
+            validationQueueContainer.find('table').hide();
+        }
+
+        loadValidationQueueTimeout = setTimeout(loadValidationQueueStatus, refreshInterval);
+    }
+
+    // Start load
+    loadHealthChecks();
+    loadHeritrixSettings(function() {
+        loadActiveJobs();
+    });
+    loadValidationQueueStatus();
 });

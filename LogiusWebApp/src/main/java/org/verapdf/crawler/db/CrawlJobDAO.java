@@ -38,7 +38,7 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         return persist(crawlJob);
     }
 
-    public long count(String domainFilter) {
+    public long count(String domainFilter, Boolean finished) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<Long> query = builder.createQuery(Long.class);
         Root<CrawlJob> crawlJob = query.from(CrawlJob.class);
@@ -46,6 +46,9 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
 
         if (domainFilter != null) {
             query = query.where(builder.like(crawlJob.get(CrawlJob_.domain), "%" + domainFilter + "%"));
+        }
+        if (finished != null) {
+            query.where(builder.equal(crawlJob.get(CrawlJob_.finished), finished));
         }
 
         return this.currentSession().createQuery(query).getSingleResult();
