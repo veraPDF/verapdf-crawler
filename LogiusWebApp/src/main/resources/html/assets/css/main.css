@@ -561,3 +561,43 @@ a.action .label {
 .validation-queue .in-progress {
   color: #43c46f;
 }
+
+/* Domain status page */
+.status-loaded {
+  display: none;
+}
+
+.job-requests td, .job-requests th {
+  border-top: none;
+  vertical-align: middle;
+}
+
+.job-requests .col-id {
+  width: 350px;
+}
+
+.job-requests .col-status {
+  width: 100px;
+}
+
+.heritrix {
+  margin: 40px 0;
+}
+
+.heritrix .title {
+  display: flex;
+  justify-content: space-between;
+}
+
+.heritrix .crawled-urls {
+  margin-bottom: 20px;
+}
+
+.heritrix td, .heritrix th {
+  border-top: none;
+  vertical-align: middle;
+}
+
+.heritrix td {
+  font-size: 14px;
+}

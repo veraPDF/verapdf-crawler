@@ -136,7 +136,7 @@ $(function () {
 
         $('.job-date').text(currentDomain.isComplete ? 'Tested on ' + currentDomain.startTime + ' - ' + currentDomain.finishTime : 'Test started on ' + currentDomain.startTime);
 
-        $('.status-text').text(currentDomain.status.charAt(0).toUpperCase() + currentDomain.status.substr(1).toLowerCase());
+        $('.status-text').text(currentDomain.status).attr('href', 'domain-status.html?domain=' + currentDomain.domain);
 
         if (!currentDomain.isComplete) {
             $('.job-mails').addClass('editable');
