@@ -2,6 +2,7 @@ package org.verapdf.crawler.resources;
 
 import io.dropwizard.hibernate.UnitOfWork;
 import org.verapdf.crawler.api.monitoring.ValidationQueueStatus;
+import org.verapdf.crawler.api.validation.ValidationJob;
 import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 import org.verapdf.crawler.api.validation.settings.Namespace;
 import org.verapdf.crawler.api.validation.settings.PdfProperty;
@@ -29,12 +30,12 @@ public class ValidationServiceResource {
 
 	private final PdfPropertyDAO pdfPropertyDAO;
     private final NamespaceDAO namespaceDAO;
-    private final ValidationJobDAO documentsQueueDAO;
+    private final ValidationJobDAO validationJobDAO;
 
-	public ValidationServiceResource(PdfPropertyDAO pdfPropertyDAO, NamespaceDAO namespaceDAO, ValidationJobDAO documentsQueueDAO) {
+	public ValidationServiceResource(PdfPropertyDAO pdfPropertyDAO, NamespaceDAO namespaceDAO, ValidationJobDAO validationJobDAO) {
 		this.pdfPropertyDAO = pdfPropertyDAO;
         this.namespaceDAO = namespaceDAO;
-        this.documentsQueueDAO = documentsQueueDAO;
+        this.validationJobDAO = validationJobDAO;
 	}
 
 	@GET
@@ -51,8 +52,8 @@ public class ValidationServiceResource {
 	@Path("/queue-status")
 	@UnitOfWork
 	public ValidationQueueStatus getQueueStatus() {
-		Long count = documentsQueueDAO.count(null);
-		List<String> documents = documentsQueueDAO.getDocuments(null, null);
+		Long count = validationJobDAO.count(null);
+		List<ValidationJob> documents = validationJobDAO.getDocuments(null, 10);
 		return new ValidationQueueStatus(count, documents);
 	}
 

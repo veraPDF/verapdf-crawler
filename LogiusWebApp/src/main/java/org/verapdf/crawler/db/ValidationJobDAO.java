@@ -66,21 +66,29 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         return currentSession().createQuery(criteriaQuery).getSingleResult();
     }
 
-    public List<String> getDocuments(String domain, Integer limit) {
+    public List<ValidationJob> getDocuments(String domain, Integer limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
-        CriteriaQuery<String> criteriaQuery = builder.createQuery(String.class);
+        CriteriaQuery<ValidationJob> criteriaQuery = builder.createQuery(ValidationJob.class);
         Root<ValidationJob> job = criteriaQuery.from(ValidationJob.class);
-        criteriaQuery.select(job.get(ValidationJob_.id));
+        criteriaQuery.select(builder.construct(
+                ValidationJob.class,
+                job.get(ValidationJob_.id),
+                job.get(ValidationJob_.status)
+        ));
         if (domain != null) {
             criteriaQuery.where(
                     builder.equal(job.get(ValidationJob_.document).get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain)
             );
         }
-        Query<String> query = currentSession().createQuery(criteriaQuery);
+        criteriaQuery.orderBy(
+                builder.desc(job.get(ValidationJob_.status)),
+                builder.asc(job.get(ValidationJob_.id))
+        );
+        Query<ValidationJob> query = currentSession().createQuery(criteriaQuery);
         if (limit != null) {
             query.setMaxResults(limit);
         }
-        return query.getResultList();
+        return list(query);
     }
 
     private void bulkUpdateState(String domain, ValidationJob.Status status) {

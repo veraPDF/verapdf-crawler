@@ -82,6 +82,10 @@ public class HeritrixClient {
         this.configTemplatePath = config.getConfigTemplatePath();
     }
 
+    public String getEngineUrl() {
+        return engineUrl;
+    }
+
     public boolean testHeritrixAvailability() throws IOException {
         HttpGet get = new HttpGet(this.engineUrl);
         try (CloseableHttpClient httpClient = buildHttpClient(GET_MAX_CONNECTION_RETRIES, GET_CONNECTION_INTERVAL)) {

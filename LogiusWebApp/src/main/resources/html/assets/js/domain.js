@@ -1,36 +1,40 @@
 $(function () {
     var FLAVOURS = {
-        'PDF/A-1A validation profile': {
+        '1A': {
             displayName: 'PDF/A-1A',
             dataSetIndex: 0
         },
-        'PDF/A-1B validation profile': {
+        '1B': {
             displayName: 'PDF/A-1B',
             dataSetIndex: 1
         },
-        'PDF/A-2A validation profile': {
+        '2A': {
             displayName: 'PDF/A-2A',
             dataSetIndex: 2
         },
-        'PDF/A-2B validation profile': {
+        '2B': {
             displayName: 'PDF/A-2B',
             dataSetIndex: 3
         },
-        'PDF/A-2U validation profile': {
+        '2U': {
             displayName: 'PDF/A-2U',
             dataSetIndex: 4
         },
-        'PDF/A-3A validation profile': {
+        '3A': {
             displayName: 'PDF/A-3A',
             dataSetIndex: 5
         },
-        'PDF/A-3B validation profile': {
+        '3B': {
             displayName: 'PDF/A-3B',
             dataSetIndex: 6
         },
-        'PDF/A-3U validation profile': {
+        '3U': {
             displayName: 'PDF/A-3U',
             dataSetIndex: 7
+        },
+        'None': {
+            displayName: 'None',
+            dataSetIndex: 8
         }
     };
     var VERSIONS = {
@@ -234,10 +238,14 @@ $(function () {
                 $('.documents .not-open-count').text(result['notOpenPdfDocumentsCount']);
 
                 // Flavours chart
+                var flavouredDocuments = 0;
                 $.each(result['flavourStatistics'], function(index, valueCount) {
                     var dataSetIndex = FLAVOURS[valueCount['value']].dataSetIndex;
                     flavoursChart.data.datasets[0].data[dataSetIndex] = valueCount['count'];
+                    flavouredDocuments += valueCount['count'];
                 });
+                var noneDataSetIndex = FLAVOURS['None'].dataSetIndex;
+                flavoursChart.data.datasets[0].data[noneDataSetIndex] = result['totalPdfDocumentsCount'] - flavouredDocuments;
                 flavoursChart.update();
 
                 // Versions chart

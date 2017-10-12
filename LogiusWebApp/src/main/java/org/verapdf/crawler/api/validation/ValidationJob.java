@@ -39,6 +39,11 @@ public class ValidationJob {
         this.status = Status.NOT_STARTED;
     }
 
+    public ValidationJob(String id, Status status) {
+        this.id = id;
+        this.status = status;
+    }
+
     public String getId() {
         return id;
     }

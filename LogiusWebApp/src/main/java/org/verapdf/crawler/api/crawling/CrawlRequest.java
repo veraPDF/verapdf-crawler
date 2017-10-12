@@ -21,7 +21,6 @@ public class CrawlRequest {
     private String id;
 
     @NotNull
-    @Size(min=1)
     @ManyToMany(mappedBy = "crawlRequests")
     @JsonProperty
     private List<CrawlJob> crawlJobs;
