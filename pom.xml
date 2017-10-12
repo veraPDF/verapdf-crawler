@@ -13,12 +13,15 @@
         <module>SampleWebApp</module>
         <module>HeritrixExtention</module>
         <module>VeraPDFService</module>
+        <module>Common</module>
     </modules>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <dropwizard.version>1.0.5</dropwizard.version>
+        <dropwizard.version>1.2.0-rc5</dropwizard.version>
+        <hibernate.version>5.2.1.Final</hibernate.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <spring.version>4.0.4.RELEASE</spring.version>

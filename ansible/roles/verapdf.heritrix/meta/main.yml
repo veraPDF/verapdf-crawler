@@ -1,0 +1,16 @@
+# meta file for verapdf.heritrix
+---
+galaxy_info:
+  author: Carl Wilson
+  company: The Open Preservation Foundation
+  description: Installs heritrix and a few dependencies with some basic SSL options
+  license: GPL v3
+  min_ansible_version: 1.9.6
+  platforms:
+    - name: Debian
+      versions:
+        - jessie
+  galaxy_tags:
+    - web archiving
+    - web harvesting
+dependencies: []

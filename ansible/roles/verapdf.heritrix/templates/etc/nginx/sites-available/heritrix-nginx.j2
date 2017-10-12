@@ -1,0 +1,60 @@
+#
+# Ansible managed
+#
+
+#
+# HTTP
+#
+
+server {
+    listen 80;
+    server_name {{ heritrix_host_name }};
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443;
+    server_name {{ heritrix_host_name }};
+    index index.html index.htm;
+
+    ssl_certificate           {{ heritrix_ssl_cert_path }};
+    ssl_certificate_key       {{ heritrix_ssl_key_path }};
+
+    ssl on;
+    ssl_session_cache  builtin:1000  shared:SSL:10m;
+    ssl_protocols  TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers HIGH:!aNULL:!eNULL:!EXPORT:!CAMELLIA:!DES:!MD5:!PSK:!RC4;
+    ssl_prefer_server_ciphers on;
+
+    access_log            /var/log/nginx/heritrix.access.log;
+    error_log             /var/log/nginx/heritrix.error.log;
+
+    # --> Custom headers
+    add_header X-Frame-Options "DENY";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Content-Type-Options "nosniff";
+    # <-- Custom headers
+
+    location / {
+        include /etc/nginx/proxy_params;
+        proxy_pass https://localhost:{{ heritrix_port }}/;
+        proxy_redirect http://localhost:{{ heritrix_port }}/ https://{{ heritrix_host_name }};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_max_temp_file_size 0;
+        client_max_body_size 100m;
+        client_body_buffer_size 90000k;
+        proxy_connect_timeout 9000;
+        proxy_send_timeout 9000;
+            proxy_read_timeout 9000;
+            proxy_buffer_size 4000k;
+            proxy_buffers 4 32000k;
+            proxy_busy_buffers_size 64000k;
+            proxy_temp_file_write_size 64000k;
+        }
+
+}
+
+# vim:filetype=nginx

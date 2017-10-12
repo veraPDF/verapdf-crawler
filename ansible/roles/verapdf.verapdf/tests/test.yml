@@ -1,0 +1,7 @@
+# test file for verapdf.verapdf
+---
+- hosts: localhost
+  connection: local
+  become: true
+  roles:
+    - ../../

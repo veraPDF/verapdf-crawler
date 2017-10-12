@@ -11,12 +11,6 @@
 
     <artifactId>SampleWebApp</artifactId>
 
-    <properties>
-        <dropwizard.version>1.0.5</dropwizard.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>io.dropwizard</groupId>
@@ -27,6 +21,11 @@
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-assets</artifactId>
             <version>${dropwizard.version}</version>
+        </dependency>
+        <dependency>
+          <groupId>org.verapdf</groupId>
+          <artifactId>validation-model</artifactId>
+          <version>1.8.1</version>
         </dependency>
     </dependencies>
 
@@ -59,7 +58,7 @@
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.verapdf.crawler.app.Sample</mainClass>
+                                    <mainClass>org.verapdf.crawler.core.Sample</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

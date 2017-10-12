@@ -11,23 +11,41 @@ emailServer:
   user: logiuscrawlernotifier@gmail.com	
   password: Logius2017
   port: 587
-credentials:
-  connectionString: jdbc:mysql://localhost:3306/logius?useSSL=false
-  user: root
-  password: anton
-resourcePath: /home/anton/Documents/Logius/LogiusWebApp/src/main/resources/
-heritrixLogin: admin
-heritrixPassword: logius
-verapdfUrl: http://localhost:8100
+database:
+  driverClass: com.mysql.cj.jdbc.Driver
+  user: logius
+  password: logius
+  url: jdbc:mysql://localhost:3306/logius?useSSL=false&autoReconnect=true
+  properties:
+    charSet: UTF-8
+    hibernate.dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+  # the maximum amount of time to wait on an empty pool before throwing an exception
+  maxWaitForConnection: 1s
+  validationQuery: "/* MyApplication Health Check */ SELECT 1"
+  # the minimum number of connections to keep open
+  minSize: 8
+  # the maximum number of connections to keep open
+  maxSize: 32
+  # whether or not idle connections should be validated
+  checkConnectionWhileIdle: true
+  checkConnectionOnReturn: true
+  checkConnectionOnBorrow: true
+heritrix:
+  configTemplatePath: /home/anton/Documents/Logius/LogiusWebApp/src/main/resources/sample_configuration.cxml
+  url: https://localhost:8443/
+  login: admin
+  password: logius
+  logiusAppUrl: http://localhost:9000
+veraPDFService:
+  url: http://localhost:8100
 logging:
   level: WARN
   loggers:
-    "CustomLogger":
-      additive: false
+    org.verapdf.crawler:
       level: INFO
-      appenders:
-      - type: file
-        currentLogFilename: /home/anton/Documents/Logius/logs/logius.log
-        archive: true
-        archivedLogFilenamePattern: /home/anton/Documents/Logius/logs/logius-%d.log
-        archivedFileCount: 10
+  appenders:
+  - type: file
+    currentLogFilename: /home/anton/Documents/Logius/logs/logius.log
+    archive: true
+    archivedLogFilenamePattern: /home/anton/Documents/Logius/logs/logius-%d.log
+    archivedFileCount: 10

@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!--
   HERITRIX 3 CRAWL JOB CONFIGURATION FILE
 
@@ -37,7 +36,7 @@
                 # This Properties map is specified in the Java 'property list' text format
                 # http://java.sun.com/javase/6/docs/org.verapdf.crawler.api/java/util/Properties.html#load%28java.io.Reader%29
 
-                metadata.operatorContactUrl=******
+                metadata.operatorContactUrl=${logiusOperatorContactUrl}
                 metadata.jobName=basic
                 metadata.description=Basic crawl starting with useful defaults
 
@@ -54,7 +53,7 @@
                 <prop key="seeds.textSource.value">
 
                     # URLS HERE
-                    ######
+                    ${logiusUrls}
 
                 </prop>
             </props>
@@ -334,26 +333,25 @@
 
     <!-- DISPOSITION CHAIN -->
     <!-- first, processors are declared as top-level named beans  -->
-    <bean id="warcWriter" class="org.verapdf.crawler.extentionModules.PDFProcessor">
-        <property name="shouldProcessRule">
-            <bean class="org.archive.modules.deciderules.DecideRuleSequence">
-                <property name="rules">
-                    <list>
-                        <bean class="org.archive.modules.deciderules.RejectDecideRule">
-                        </bean>
-                        <bean class="org.archive.modules.deciderules.ContentTypeMatchesRegexDecideRule">
-                            <property name="decision" value="ACCEPT" />
-                            <property name="regex" value="^application/pdf.*"/>
-                        </bean>
-			<bean class="org.archive.modules.deciderules.MatchesRegexDecideRule">
-			    <property name="decision" value="ACCEPT"/>
-			    <property name="regex" value=".*\.pdf"/>
-			</bean>
-                    </list>
-                </property>
-            </bean>
+    <bean id="logiusProcessor" class="org.verapdf.crawler.extention.DocumentProcessor">
+        <property name="jobId" value="${logiusHeritrixJobId}"/>
+        <!-- key is ContentType, value is extension and also the type of document in Logius DB -->
+        <property name="supportedContentTypes">
+            <map>
+                <!-- key is ContentType, value is extension and also the type of document in Logius DB -->
+                <entry key="application/pdf" value="pdf"/>
+                <entry key="pplication/vnd.oasis.opendocument.text" value="odt"/>
+                <entry key="application/vnd.oasis.opendocument.spreadsheet" value="ods"/>
+                <entry key="application/vnd.oasis.opendocument.presentation" value="odp"/>
+                <entry key="application/msword" value="doc"/>
+                <entry key="application/vnd.openxmlformats-officedocument.wordprocessingml.document" value="docx"/>
+                <entry key="application/vnd.ms-powerpoint" value="ppt"/>
+                <entry key="application/vnd.openxmlformats-officedocument.presentationml.presentation" value="pptx"/>
+                <entry key="application/vnd.ms-excel" value="xls"/>
+                <entry key="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" value="xlsx"/>
+            </map>
         </property>
-        <property name="logiusUrl" value="http://localhost:9000/"/>
+        <property name="logiusUrl" value="${logiusAppUrl}"/>
         <!-- <property name="compress" value="true" /> -->
         <!-- <property name="prefix" value="IAH" /> -->
         <!-- <property name="suffix" value="${HOSTNAME}" /> -->
@@ -375,27 +373,6 @@
         <!-- <property name="writeRevisitForNotModified" value="true" /> -->
         <!-- <property name="startNewFilesOnCheckpoint" value="true" /> -->
     </bean>
-    <bean id="odfProcessor" class="org.verapdf.crawler.extentionModules.ODFProcessor">
-        <property name="shouldProcessRule">
-            <bean class="org.archive.modules.deciderules.DecideRuleSequence">
-                <property name="rules">
-                    <list>
-                        <bean class="org.archive.modules.deciderules.AcceptDecideRule">
-                        </bean>
-                        <bean class="org.archive.modules.deciderules.ContentTypeMatchesRegexDecideRule">
-                            <property name="decision" value="REJECT" />
-                            <property name="regex" value="^application/pdf.*"/>
-                        </bean>
-                        <bean class="org.archive.modules.deciderules.MatchesRegexDecideRule">
-                            <property name="decision" value="REJECT"/>
-                            <property name="regex" value=".*\.pdf"/>
-                        </bean>
-                    </list>
-                </property>
-            </bean>
-        </property>
-	<property name="logiusUrl" value="http://localhost:9000/"/>
-    </bean>
     <bean id="candidates" class="org.archive.crawler.postprocessor.CandidatesProcessor">
         <!-- <property name="seedsRedirectNewSeeds" value="true" /> -->
         <!-- <property name="processErrorOutlinks" value="false" /> -->
@@ -415,8 +392,7 @@
         <property name="processors">
             <list>
                 <!-- write to aggregate archival files... -->
-                <ref bean="warcWriter"/>
-                <ref bean="odfProcessor"/>
+                <ref bean="logiusProcessor"/>
                 <!-- ...send each outlink candidate URI to CandidateChain,
                      and enqueue those ACCEPTed to the frontier... -->
                 <ref bean="candidates"/>

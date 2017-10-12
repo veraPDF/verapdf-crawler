@@ -1,9 +1,13 @@
 package org.verapdf.service;
 
+import javanet.staxutils.SimpleNamespaceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.domain.validation.ValidationError;
-import org.verapdf.crawler.domain.validation.VeraPDFValidationResult;
+import org.verapdf.crawler.api.document.DomainDocument;
+import org.verapdf.crawler.api.validation.error.RuleViolationError;
+import org.verapdf.crawler.api.validation.error.ValidationError;
+import org.verapdf.crawler.api.validation.settings.ValidationSettings;
+import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -18,29 +22,34 @@ import javax.xml.xpath.XPathFactory;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Maksim Bezrukov
  */
 public class VeraPDFProcessor implements Runnable {
 
-	private static final Logger logger = LoggerFactory.getLogger("CustomLogger");
+	private static final Logger logger = LoggerFactory.getLogger(VeraPDFProcessor.class);
 
 	private static final String BASE_PATH = "/report/jobs/job/";
 	private static final String VALIDATION_REPORT_PATH = BASE_PATH + "validationReport/";
+	private static final String FLAVOUR_PART_PROPERTY_NAME = "flavourPart";
+	private static final String FLAVOUR_CONFORMANCE_PROPERTY_NAME = "flavourConformance";
 
 	private final String verapdfPath;
 	private final String filePath;
 	private Process process;
 	private ValidationResource resource;
 	private boolean stopped = false;
+	private final ValidationSettings settings;
 
-	VeraPDFProcessor(String verapdfPath, String filePath, ValidationResource resource) {
+	VeraPDFProcessor(String verapdfPath, String filePath, ValidationResource resource, ValidationSettings settings) {
 		this.verapdfPath = verapdfPath;
 		this.filePath = filePath;
 		this.resource = resource;
+		this.settings = settings;
 	}
 
 	private File getVeraPDFReport(String filename) throws IOException, InterruptedException {
@@ -48,10 +57,6 @@ public class VeraPDFProcessor implements Runnable {
 		ProcessBuilder pb = new ProcessBuilder().inheritIO();
 		Path outputPath = Files.createTempFile("veraPDFReport", ".xml");
 		File file = outputPath.toFile();
-		if (!file.createNewFile()) {
-			return null;
-		}
-		file.deleteOnExit();
 		pb.redirectOutput(file);
 		pb.command(cmd);
 		this.process = pb.start();
@@ -61,34 +66,33 @@ public class VeraPDFProcessor implements Runnable {
 
 	@Override
 	public void run() {
-		VeraPDFValidationResult result = null;
+		VeraPDFValidationResult result;
 		File report = null;
 		try {
 			report = getVeraPDFReport(this.filePath);
-			if (report != null) {
+			if (report != null && !stopped) {
 				DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 				dbf.setNamespaceAware(true);
 				DocumentBuilder db = dbf.newDocumentBuilder();
 				Document document = db.parse(report);
 				XPathFactory xpf = XPathFactory.newInstance();
 				XPath xpath = xpf.newXPath();
-				// Uncomment this for specifying namespaces if it will be necessary
-//		SimpleNamespaceContext nsc = new SimpleNamespaceContext();
-//		nsc.setPrefix(SchematronGenerator.SCH_PREFIX, SchematronGenerator.SCH_NAMESPACE);
-//		xpath.setNamespaceContext(nsc);
+				SimpleNamespaceContext nsc = new SimpleNamespaceContext();
+				addNameSpaces(nsc);
+				xpath.setNamespaceContext(nsc);
 				result = generateBaseResult(document, xpath);
-				// TODO: add properties evaluating here
+				evaluateProperties(result, document, xpath);
 			} else {
 				result = generateProblemResult("Some problem in report generation");
 			}
 		} catch (InterruptedException e) {
-			String message = "Process has been interrupted: " + e.getMessage();
-			logger.info(message);
-			result = generateProblemResult(message);
+			String message = "Process has been interrupted";
+			logger.info(message, e);
+			result = generateProblemResult(message, e);
 		} catch (Throwable e) {
-			String message = "Some problem in generating result: " + e.getMessage();
-			logger.info(message);
-			result = generateProblemResult(message);
+			String message = "Some problem in generating result";
+			logger.info(message, e);
+			result = generateProblemResult(message, e);
 		} finally {
 			if (report != null && !report.delete()) {
 				logger.info("Report has not been deleted manually");
@@ -99,29 +103,82 @@ public class VeraPDFProcessor implements Runnable {
 		}
 	}
 
+	private void addNameSpaces(SimpleNamespaceContext nsc) {
+		Map<String, String> namespaces = this.settings.getNamespaces();
+		for (Map.Entry<String, String> entry : namespaces.entrySet()) {
+			nsc.setPrefix(entry.getKey(), entry.getValue());
+		}
+	}
+
+	private void evaluateProperties(VeraPDFValidationResult result, Document document, XPath xpath) {
+		Map<String, List<String>> properties = new HashMap<>(this.settings.getProperties());
+		List<String> partXPaths = properties.get(FLAVOUR_PART_PROPERTY_NAME);
+		String part = getProperty(partXPaths, document, xpath);
+		// if document is valid, then we have already placed OPEN result, but we need to remove it
+		// in case, when flavour part is not 1 or 2
+		try {
+			int partInt = Integer.parseInt(part);
+			if (partInt != 1 && partInt != 2) {
+				result.setTestResult(DomainDocument.BaseTestResult.NOT_OPEN);
+			}
+		} catch (NumberFormatException e) {
+			result.setTestResult(DomainDocument.BaseTestResult.NOT_OPEN);
+		}
+		List<String> conformanceXPaths = properties.get(FLAVOUR_CONFORMANCE_PROPERTY_NAME);
+		String conformance = getProperty(conformanceXPaths, document, xpath).toUpperCase();
+		String flavour = part + conformance;
+		if (!flavour.isEmpty()) {
+			result.addProperty("flavour", flavour);
+		}
+		properties.remove(FLAVOUR_PART_PROPERTY_NAME);
+		properties.remove(FLAVOUR_CONFORMANCE_PROPERTY_NAME);
+		for (Map.Entry<String, List<String>> property : properties.entrySet()) {
+			String propertyValue = getProperty(property.getValue(), document, xpath);
+			if (!propertyValue.isEmpty()) {
+				result.addProperty(property.getKey(), propertyValue);
+			}
+		}
+	}
+
+	private String getProperty(List<String> xpaths, Document document, XPath xpath) {
+		try {
+			for (String propertyXPath : xpaths) {
+				String value = (String) xpath.evaluate(propertyXPath, document, XPathConstants.STRING);
+				if (value != null && !value.isEmpty()) {
+					return value;
+				}
+			}
+		} catch (Throwable e) {
+			logger.info("Some problem in obtaining property", e);
+		}
+		return "";
+	}
+
 	private VeraPDFValidationResult generateBaseResult(Document document, XPath xpath) throws XPathExpressionException {
 		VeraPDFValidationResult result = new VeraPDFValidationResult();
 		String exceptionPath = BASE_PATH + "taskResult/exceptionMessage";
 		String exception = (String) xpath.evaluate(exceptionPath,
 				document,
 				XPathConstants.STRING);
-		result.setProcessingError(exception);
+		if (exception != null && !exception.isEmpty()) {
+			result.addValidationError(new ValidationError(exception));
+		}
 
 		String isCompliantPath = VALIDATION_REPORT_PATH + "@isCompliant";
-		Boolean isCompliant = (Boolean) xpath.evaluate(isCompliantPath,
+		String isCompliantString = (String) xpath.evaluate(isCompliantPath,
 				document,
-				XPathConstants.BOOLEAN);
-		if (isCompliant != null) {
-			result.setValid(isCompliant);
-			if (!isCompliant) {
-				result.setValidationErrors(getvalidationErrors(document, xpath));
-			}
+				XPathConstants.STRING);
+		boolean isCompliant = Boolean.parseBoolean(isCompliantString);
+		if (isCompliant) {
+			// set temporary OPEN result. will have to check document on flavour part 3
+			result.setTestResult(DomainDocument.BaseTestResult.OPEN);
+		} else {
+			addValidationErrors(result, document, xpath);
 		}
 		return result;
 	}
 
-	private List<ValidationError> getvalidationErrors(Document document, XPath xpath) throws XPathExpressionException {
-		List<ValidationError> res = new ArrayList<>();
+	private void addValidationErrors(VeraPDFValidationResult result, Document document, XPath xpath) throws XPathExpressionException {
 		String rulesPath = VALIDATION_REPORT_PATH + "details/rule";
 		NodeList rules = (NodeList) xpath.evaluate(rulesPath,
 				document,
@@ -129,7 +186,7 @@ public class VeraPDFProcessor implements Runnable {
 		for (int i = 0; i < rules.getLength(); ++i) {
 			Node rule = rules.item(i);
 			NamedNodeMap attributes = rule.getAttributes();
-			if (attributes.getNamedItem("status").getNodeValue().equals("failed")) {
+			if (attributes.getNamedItem("status").getNodeValue().equalsIgnoreCase("failed")) {
 				String specification = attributes.getNamedItem("specification").getNodeValue();
 				String clause = attributes.getNamedItem("clause").getNodeValue();
 				String testNumber = attributes.getNamedItem("testNumber").getNodeValue();
@@ -138,13 +195,13 @@ public class VeraPDFProcessor implements Runnable {
 				for (int j = 0; j < children.getLength(); ++j) {
 					Node child = children.item(j);
 					if (child.getNodeName().equals("description")) {
-						description = child.getNodeValue();
+						description = child.getTextContent();
+						break;
 					}
 				}
-				res.add(new ValidationError(specification, clause, testNumber, description));
+				result.addValidationError(new RuleViolationError(specification, clause, testNumber, description));
 			}
 		}
-		return res;
 	}
 
 	void stopProcess() {
@@ -154,9 +211,13 @@ public class VeraPDFProcessor implements Runnable {
 		}
 	}
 
+	private VeraPDFValidationResult generateProblemResult(String message, Throwable e) {
+		return generateProblemResult(message + ": " + e.getMessage());
+	}
+
 	private VeraPDFValidationResult generateProblemResult(String message) {
 		VeraPDFValidationResult res = new VeraPDFValidationResult();
-		res.setProcessingError(message);
+		res.addValidationError(new ValidationError(message));
 		return res;
 	}
 }

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+echo "Starting heritrix"
+
+# Set JVM memory
+export JAVA_OPTS=-Xmx2048M
+
+# Heritrix environment variables
+export HERITRIX_HOME={{ logius_heritrix_home }}
+export HERITRIX_OUT={{ logius_log_dir }}/heritrix_out.log
+
+# Run Heritrix
+{{ logius_heritrix_home }}/bin/heritrix -a {{ logius_heritrix_admin_user }}:{{ logius_heritrix_admin_password }} -p {{ logius_heritrix_port }}

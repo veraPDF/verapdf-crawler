@@ -6,15 +6,15 @@ server:
   - type: http
     port: 8101
 verapdfPath: /home/anton/verapdf/verapdf
+logiusUrl: http://localhost:9000/api
 logging:
   level: WARN
   loggers:
-    "CustomLogger":
-      additive: false
+    org.verapdf.service:
       level: INFO
-      appenders:
-      - type: file
-        currentLogFilename: /home/anton/Documents/Logius/logs/verapdfService.log
-        archive: true
-        archivedLogFilenamePattern: /home/anton/Documents/Logius/logs/logius-%d.log
-        archivedFileCount: 10
+  appenders:
+    - type: file
+      currentLogFilename: /home/anton/Documents/Logius/logs/verapdfService.log
+      archive: true
+      archivedLogFilenamePattern: /home/anton/Documents/Logius/logs/verapdfService-%d.log
+      archivedFileCount: 10

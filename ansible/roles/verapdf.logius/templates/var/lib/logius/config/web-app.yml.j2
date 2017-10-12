@@ -1,0 +1,58 @@
+# Configuration information for the Logius web application
+#
+# Dropwizard server config
+server:
+  # Application GUI connector
+  applicationConnectors:
+  - type: {{ logius_web_connection_type }}
+    port: {{ logius_web_port }}
+  # Dropwizard admin GUI connector
+  adminConnectors:
+  - type: {{ logius_web_connection_type }}
+    port: {{ logius_web_admin_port }}
+# Email service details for notification
+emailServer:
+  host: {{ logius_gmail_host }}
+  address: {{ logius_gmail_address }}
+  user: {{ logius_gmail_user }}
+  password: {{ logius_gmail_password }}
+  port: {{ logius_gmail_port }}
+# Application database config
+database:
+  driverClass: com.mysql.cj.jdbc.Driver
+  user: {{ logius_db_user_name }}
+  password: {{ logius_db_password }}
+  url: {{ logius_db_connection_string }}
+  properties:
+    charSet: UTF-8
+    hibernate.dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+  # the maximum amount of time to wait on an empty pool before throwing an exception
+  maxWaitForConnection: 1s
+  validationQuery: "/* MyApplication Health Check */ SELECT 1"
+  # the minimum number of connections to keep open
+  minSize: 8
+  # the maximum number of connections to keep open
+  maxSize: 32
+  # whether or not idle connections should be validated
+  checkConnectionWhileIdle: true
+  checkConnectionOnReturn: true
+  checkConnectionOnBorrow: true
+heritrix:
+  configTemplatePath: {{ logius_app_resources }}/sample_configuration.cxml
+  url: {{ logius_heritrix_url }}
+  login: {{ logius_heritrix_admin_user}}
+  password: {{ logius_heritrix_admin_password }}
+  logiusAppUrl: {{ logius_web_connection_type }}://{{ logius_server_name }}:{{ logius_web_port }}
+veraPDFService:
+  url: {{ logius_web_connection_type }}://{{ logius_server_name }}:{{ logius_verapdf_port }}
+logging:
+  level: WARN
+  loggers:
+    org.verapdf.crawler:
+      level: INFO
+      appenders:
+      - type: file
+        currentLogFilename: "{{ logius_log_dir }}/logius.log"
+        archive: true
+        archivedLogFilenamePattern: "{{ logius_log_dir }}/logius-%d.log"
+        archivedFileCount: 10
