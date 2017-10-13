@@ -1,0 +1,5 @@
+[servers:children]
+heritrix
+
+[heritrix]
+local

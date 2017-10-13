@@ -95,17 +95,19 @@ $(function () {
     Chart.defaults.global.legend.display = false;
     Chart.defaults.global.title.fontColor = 'white';
     Chart.defaults.global.title.fontSize = 14;
-    Chart.scaleService.updateScaleDefaults('linear', {
+    Chart.scaleService.updateScaleDefaults('linear', {    // y-Axis
         color: 'white',
         ticks: {
-            fontColor: 'white'
+            fontColor: 'white',
+            beginAtZero: true,
+            fixedStepSize: 1
         },
         gridLines: {
             color: 'rgba(255, 255, 255, 0.1)',
             zeroLineColor: 'rgba(255, 255, 255, 0.25)'
         }
     });
-    Chart.scaleService.updateScaleDefaults('category', {
+    Chart.scaleService.updateScaleDefaults('category', {   // x-Axis
         color: 'white',
         ticks: {
             fontColor: 'white'
@@ -238,10 +240,15 @@ $(function () {
                 $('.documents .not-open-count').text(result['notOpenPdfDocumentsCount']);
 
                 // Flavours chart
+                flavourChartDataset.data = [];
+                $.each(FLAVOURS, function() {
+                    flavourChartDataset.data.push(0);
+                });
+
                 var flavouredDocuments = 0;
                 $.each(result['flavourStatistics'], function(index, valueCount) {
                     var dataSetIndex = FLAVOURS[valueCount['value']].dataSetIndex;
-                    flavoursChart.data.datasets[0].data[dataSetIndex] = valueCount['count'];
+                    flavourChartDataset.data[dataSetIndex] = valueCount['count'];
                     flavouredDocuments += valueCount['count'];
                 });
                 var noneDataSetIndex = FLAVOURS['None'].dataSetIndex;
@@ -249,9 +256,14 @@ $(function () {
                 flavoursChart.update();
 
                 // Versions chart
+                versionsChartDataset.data = [];
+                $.each(VERSIONS, function() {
+                    versionsChartDataset.data.push(0);
+                });
+
                 $.each(result['versionStatistics'], function(index, valueCount) {
                     var dataSetIndex = VERSIONS[valueCount['value']].dataSetIndex;
-                    versionsChart.data.datasets[0].data[dataSetIndex] = valueCount['count'];
+                    versionsChartDataset.data[dataSetIndex] = valueCount['count'];
                 });
                 versionsChart.update();
 
@@ -496,11 +508,11 @@ $(function () {
     var summaryDatePicker = new Pikaday({
         field: document.getElementById('summary-date-input'),
         firstDay: 1,
-        minDate: new Date(2017, 7, 4),
         maxDate: new Date(),
-        yearRange: [2000, 2020],
+        yearRange: [new Date().getFullYear() - 10, new Date().getFullYear()],
         showTime: false,
-        format: 'DD-MM-YYYY'
+        format: 'YYYY-MM-DD',
+        onSelect: loadSummaryData
     });
 
     var summaryChartContext = document.getElementById("summary-chart").getContext('2d');
@@ -524,11 +536,11 @@ $(function () {
     var documentsDatePicker = new Pikaday({
         field: document.getElementById('documents-date-input'),
         firstDay: 1,
-        minDate: new Date(2017, 7, 4),
-        maxDate: new Date(2020, 12, 31),
-        yearRange: [2000, 2020],
+        maxDate: new Date(),
+        yearRange: [new Date().getFullYear() - 10, new Date().getFullYear()],
         showTime: false,
-        format: 'DD-MM-YYYY'
+        format: 'YYYY-MM-DD',
+        onSelect: loadDocumentsData
     });
 
     var flavoursChartContext = document.getElementById("flavours-chart").getContext('2d');
@@ -613,11 +625,11 @@ $(function () {
     var errorsDatePicker = new Pikaday({
         field: document.getElementById('errors-date-input'),
         firstDay: 1,
-        minDate: new Date(2017, 7, 4),
-        maxDate: new Date(2020, 12, 31),
-        yearRange: [2000, 2020],
+        maxDate: new Date(),
+        yearRange: [new Date().getFullYear() - 10, new Date().getFullYear()],
         showTime: false,
-        format: 'DD-MM-YYYY'
+        format: 'YYYY-MM-DD',
+        onSelect: loadErrorsData
     });
 
     var errorsChartContext = document.getElementById("errors-chart").getContext('2d');
