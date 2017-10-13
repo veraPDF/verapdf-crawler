@@ -61,8 +61,11 @@ CREATE TABLE `document_properties` (
 CREATE TABLE `pdf_validation_jobs_queue` (
   `document_url`       VARCHAR(255)                        NOT NULL,
   `filepath`           VARCHAR(255)                        NOT NULL,
-  `validation_status`  ENUM ('NOT_STARTED', 'IN_PROGRESS', 'PAUSED') NOT NULL DEFAULT 'NOT_STARTED',
-  PRIMARY KEY (`document_url`)
+  `validation_status`  ENUM ('NOT_STARTED', 'IN_PROGRESS', 'PAUSED', 'ABORTED') NOT NULL DEFAULT 'NOT_STARTED',
+  PRIMARY KEY (`document_url`),
+  CONSTRAINT `pdf_validation_jobs_queue_documents_document_url_fk` FOREIGN KEY (`document_url`) REFERENCES `documents` (`document_url`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 );
 DROP TABLE IF EXISTS `validation_errors`;
 CREATE TABLE `validation_errors` (

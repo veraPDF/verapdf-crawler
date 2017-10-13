@@ -40,56 +40,47 @@ public class ValidationService implements Runnable {
         return stopReason;
     }
 
-    public void start() {
+	public ValidationJob getCurrentJob() {
+		return currentJob;
+	}
+
+	private void setCurrentJob(ValidationJob currentJob) {
+    	synchronized (ValidationService.class) {
+			this.currentJob = currentJob;
+		}
+	}
+
+	public void start() {
         running = true;
         stopReason = null;
         new Thread(this, "Thread-ValidationService").start();
     }
 
-    // this method should be called in one synchronized(this object) block
-    // with methods that remove crawl jobs
-    public void cleanUnlinkedDocuments() {
-        if (this.currentJob != null) {
-            ValidationJob currentJobFromDB = validationJobDAO.current();
-
-            if (!this.currentJob.getId().equals(currentJobFromDB.getId())) {
-                throw new IllegalStateException("Validation service current job is not equal to DB current job");
-            }
-            if (currentJobFromDB.getDocument() == null) {
-                logger.info("Clearing current job");
-                this.currentJob = null;
-                try {
-                    validator.terminateValidation();
-                } catch (IOException e) {
-                    logger.error("Can't terminate current job", e);
-                }
-            }
-        }
-        validationJobDAO.bulkRemoveUnlinked();
-    }
+    public void abortCurrentJob() {
+		try {
+			logger.info("Aborting current job");
+			currentJob.setStatus(ValidationJob.Status.ABORTED);
+			validator.terminateValidation();
+		} catch (IOException e) {
+			logger.error("Can't terminate current job", e);
+		}
+	}
 
     @Override
     public void run() {
         logger.info("Validation service started");
         try {
-            synchronized (ValidationService.class) {
-                logger.info("Getting current job");
-                currentJob = currentJob();
-            }
+			setCurrentJob(retrieveCurrentJob());
             if (currentJob != null) {
                 try {
                     processStartedJob();
                 } catch (IOException e) {
                     saveErrorResult(e);
                 }
-                clearCurrentJob();
             }
 
             while (running) {
-                synchronized (ValidationService.class) {
-                    logger.info("Getting next job");
-                    currentJob = nextJob();
-                }
+                setCurrentJob(retrieveNextJob());
                 if (currentJob != null) {
                     logger.info("Validating " + currentJob.getId());
                     try {
@@ -98,7 +89,6 @@ public class ValidationService implements Runnable {
                     } catch (IOException e) {
                         saveErrorResult(e);
                     }
-                    clearCurrentJob();
                     continue;
                 }
                 Thread.sleep(60 * 1000);
@@ -121,16 +111,10 @@ public class ValidationService implements Runnable {
         saveResult(result);
     }
 
-    private void clearCurrentJob() {
-        synchronized (ValidationService.class) {
-            logger.info("Clearing current Job");
-            this.currentJob = null;
-        }
-    }
-
     @SuppressWarnings("WeakerAccess") // @UnitOfWork works only with public methods
     @UnitOfWork
-    public ValidationJob nextJob() {
+    public ValidationJob retrieveNextJob() {
+		logger.debug("Getting next job");
         ValidationJob job = validationJobDAO.next();
         if (job != null) {
             job.setStatus(ValidationJob.Status.IN_PROGRESS);
@@ -140,43 +124,46 @@ public class ValidationService implements Runnable {
 
     @SuppressWarnings("WeakerAccess")
     @UnitOfWork
-    public ValidationJob currentJob() {
+    public ValidationJob retrieveCurrentJob() {
+		logger.debug("Getting current job");
         return validationJobDAO.current();
     }
 
     @SuppressWarnings("WeakerAccess")
     @UnitOfWork
     public void saveResult(VeraPDFValidationResult result) {
-        synchronized (ValidationService.class) {
-            if (currentJob != null) {
-                try {
-                    DomainDocument document = currentJob.getDocument();
-                    document.setBaseTestResult(result.getTestResult());
+        try {
+            if (!currentJob.getStatus().equals(ValidationJob.Status.ABORTED)) {
+				logger.debug("Saving validation job results");
+                DomainDocument document = currentJob.getDocument();
+                document.setBaseTestResult(result.getTestResult());
 
-                    // Save errors where needed
-                    List<ValidationError> validationErrors = result.getValidationErrors();
-                    for (int index = 0; index < validationErrors.size(); index++) {
-                        validationErrors.set(index, validationErrorDAO.save(validationErrors.get(index)));
-                    }
-                    document.setValidationErrors(validationErrors);
-
-                    // Link properties
-                    document.setProperties(result.getProperties());
-
-                    // And update document (note that document was detached from hibernate context, thus we need to save explicitly)
-                    documentDAO.save(document);
-                } finally {
-                    cleanJob(currentJob);
+                // Save errors where needed
+                List<ValidationError> validationErrors = result.getValidationErrors();
+                for (int index = 0; index < validationErrors.size(); index++) {
+                    validationErrors.set(index, validationErrorDAO.save(validationErrors.get(index)));
                 }
-            }
+                document.setValidationErrors(validationErrors);
+
+                // Link properties
+                document.setProperties(result.getProperties());
+
+                // And update document (note that document was detached from hibernate context, thus we need to save explicitly)
+                documentDAO.save(document);
+            } else {
+            	logger.debug("Validation job was aborted, don't save any results");
+			}
+        } finally {
+            cleanJob(currentJob);
         }
     }
 
     private void cleanJob(ValidationJob job) {
-        if (job == null) {
-            return;
-        }
-        if (job.getFilePath() != null) {
+    	logger.debug("Cleanup validation job");
+		if (job == null) {
+			return;
+		}
+    	if (job.getFilePath() != null) {
             if (!new File(job.getFilePath()).delete()) {
                 logger.warn("Failed to clean validation job file " + job.getFilePath());
             }
