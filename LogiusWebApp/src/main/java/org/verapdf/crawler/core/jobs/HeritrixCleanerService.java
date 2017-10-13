@@ -3,6 +3,7 @@ package org.verapdf.crawler.core.jobs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
+import org.verapdf.crawler.tools.AbstractService;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -13,54 +14,43 @@ import java.util.*;
 /**
  * @author Maksim Bezrukov
  */
-public class HeritrixCleanerService implements Runnable {
+public class HeritrixCleanerService extends AbstractService {
 
 	private static final Logger logger = LoggerFactory.getLogger(HeritrixCleanerService.class);
 
+	private static final long SLEEP_DURATION = 60*1000;
+
 	private final HeritrixClient heritrixClient;
 	private final Set<String> heritrixJobIds = Collections.synchronizedSet(new HashSet<>());
-	private boolean running;
 
 	public HeritrixCleanerService(HeritrixClient heritrixClient) {
-		running = false;
+		super("HeritrixCleanerService", SLEEP_DURATION);
 		this.heritrixClient = heritrixClient;
 	}
 
-	public boolean isRunning() {
-		return running;
-	}
-
-	public void start() {
-		running = true;
-		new Thread(this, "Thread-HeritrixCleanerService").start();
+	@Override
+	protected void onStart() {
 	}
 
 	@Override
-	public void run() {
-		logger.info("Heritrix cleaner service started");
-		while (running) {
-			if (!heritrixJobIds.isEmpty()) {
-				// will create here another set for removing objects
-				// this is necesary, because with iterator based solution we have to
-				// lock that part of code, but we do not want to do that here
-				Set<String> removed = new HashSet<>();
-				for (String id : heritrixJobIds) {
-					try {
-						if (heritrixClient.deleteJobFolder(id)) {
-							removed.add(id);
-						}
-					} catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException e) {
-						logger.error("Error during heritrix job deleting", e);
+	protected boolean onRepeat() {
+		if (!heritrixJobIds.isEmpty()) {
+			// will create here another set for removing objects
+			// this is necesary, because with iterator based solution we have to
+			// lock that part of code, but we do not want to do that here
+			Set<String> removed = new HashSet<>();
+			for (String id : heritrixJobIds) {
+				try {
+					if (heritrixClient.deleteJobFolder(id)) {
+						removed.add(id);
 					}
+				} catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException e) {
+					logger.error("Error during heritrix job deleting", e);
 				}
-				heritrixJobIds.removeAll(removed);
 			}
-			try {
-				Thread.sleep(60 * 1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+			heritrixJobIds.removeAll(removed);
 		}
+		return true;
 	}
 
 	public void teardownAndClearHeritrixJob(String heritrixJobId) {

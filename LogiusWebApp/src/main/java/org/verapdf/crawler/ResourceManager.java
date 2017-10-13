@@ -70,8 +70,8 @@ public class ResourceManager {
                 new VeraPDFServiceHealthCheck(veraPDFServiceConfiguration));
         healthChecks.put("validationService", new ValidationServiceHealthCheck(validationService));
         healthChecks.put("monitorCrawlJobStatusService",
-                new MonitorCrawlJobStatusServiceHealthCheck(monitorCrawlJobStatusService));
-        healthChecks.put("heritrixCleanerService", new HeritrixCleanerServiceHealthCheck(heritrixCleanerService));
+                new ServiceHealthCheck(monitorCrawlJobStatusService));
+        healthChecks.put("heritrixCleanerService", new ServiceHealthCheck(heritrixCleanerService));
 
         // Launching services
         validationService.start();

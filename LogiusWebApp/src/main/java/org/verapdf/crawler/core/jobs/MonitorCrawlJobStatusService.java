@@ -11,6 +11,7 @@ import org.verapdf.crawler.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.db.CrawlJobDAO;
 import org.verapdf.crawler.db.CrawlRequestDAO;
 import org.verapdf.crawler.db.ValidationJobDAO;
+import org.verapdf.crawler.tools.AbstractService;
 
 import java.util.Date;
 import java.util.List;
@@ -18,10 +19,11 @@ import java.util.List;
 /**
  * @author Maksim Bezrukov
  */
-public class MonitorCrawlJobStatusService implements Runnable {
+public class MonitorCrawlJobStatusService extends AbstractService {
 
 	private static final Logger logger = LoggerFactory.getLogger(MonitorCrawlJobStatusService.class);
 
+	private static final long SLEEP_DURATION = 60*1000;
     private static final int BATCH_SIZE = 20;
 
 	private final CrawlJobDAO crawlJobDAO;
@@ -29,10 +31,9 @@ public class MonitorCrawlJobStatusService implements Runnable {
 	private final ValidationJobDAO validationJobDAO;
 	private final HeritrixClient heritrixClient;
 	private final EmailServerConfiguration emailServerConfiguration;
-	private boolean running;
 
 	public MonitorCrawlJobStatusService(CrawlJobDAO crawlJobDAO, CrawlRequestDAO crawlRequestDAO, ValidationJobDAO validationJobDAO, HeritrixClient heritrixClient, EmailServerConfiguration emailServerConfiguration) {
-		running = false;
+		super("MonitorCrawlJobStatusService", SLEEP_DURATION);
 		this.crawlJobDAO = crawlJobDAO;
 		this.crawlRequestDAO = crawlRequestDAO;
 		this.validationJobDAO = validationJobDAO;
@@ -40,39 +41,24 @@ public class MonitorCrawlJobStatusService implements Runnable {
 		this.emailServerConfiguration = emailServerConfiguration;
 	}
 
-	public boolean isRunning() {
-		return running;
-	}
-
-	public void start() {
-		running = true;
-		new Thread(this, "Thread-MonitorCrawlJobStatusService").start();
+	@Override
+	protected void onStart() {
 	}
 
 	@Override
-	public void run() {
-		logger.info("Crawl Job service started");
-		while (running) {
-			try {
-                String lastDomain = null;
-                while (running) {
-                    lastDomain = checkJobsBatch(lastDomain);
-                    if (lastDomain == null) {
-                        break;
-                    }
-                }
-			} catch (Exception e) {
-				logger.error("Domains check failed", e);
-			}
-			try {
-				Thread.sleep(60 * 1000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+	protected boolean onRepeat() {
+		String lastDomain = null;
+		while (isRunning()) {
+			lastDomain = checkJobsBatch(lastDomain);
+			if (lastDomain == null) {
+				break;
 			}
 		}
+		return true;
 	}
 
-    @UnitOfWork
+	@SuppressWarnings("WeakerAccess")
+	@UnitOfWork
     public String checkJobsBatch(String lastDomain) {
         List<CrawlJob> runningJobs = crawlJobDAO.findByStatus(CrawlJob.Status.RUNNING, lastDomain, BATCH_SIZE);
 		boolean containsRunningJobs = runningJobs != null && !runningJobs.isEmpty();
