@@ -20,7 +20,7 @@ public class ValidationJob {
     private String id;
 
     @MapsId("document_url")
-    @OneToOne(cascade = CascadeType.ALL, optional = false)
+    @OneToOne(cascade = CascadeType.PERSIST, optional = false)
 	@PrimaryKeyJoinColumn(name = "document_url", referencedColumnName = "document_url")
     private DomainDocument document;
 
