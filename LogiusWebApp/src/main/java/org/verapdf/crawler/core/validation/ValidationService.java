@@ -22,7 +22,7 @@ public class ValidationService implements Runnable {
     private final DocumentDAO documentDAO;
     private final PDFValidator validator;
     private boolean running = false;
-    private boolean isAborted = false;
+    private ValidationJob currentJob;
     private String stopReason;
 
     public ValidationService(ValidationJobDAO validationJobDAO, ValidationErrorDAO validationErrorDAO, DocumentDAO documentDAO, PDFValidator validator) {
@@ -46,37 +46,62 @@ public class ValidationService implements Runnable {
         new Thread(this, "Thread-ValidationService").start();
     }
 
-    public void abort() throws IOException {
-        isAborted = true;
-        validator.terminateValidation();
+    // this method should be called in one synchronized(this object) block
+    // with methods that remove crawl jobs
+    public void cleanUnlinkedDocuments() {
+        if (this.currentJob != null) {
+            ValidationJob currentJobFromDB = validationJobDAO.current();
+
+            if (!this.currentJob.getId().equals(currentJobFromDB.getId())) {
+                throw new IllegalStateException("Validation service current job is not equal to DB current job");
+            }
+            if (currentJobFromDB.getDocument() == null) {
+                this.currentJob = null;
+                try {
+                    validator.terminateValidation();
+                } catch (IOException e) {
+                    logger.error("Can't terminate current job", e);
+                }
+            }
+        }
+        validationJobDAO.bulkRemoveUnlinked();
     }
 
     @Override
     public void run() {
         logger.info("Validation service started");
         try {
-            ValidationJob job = currentJob();
-            if (job != null) {
+            synchronized (this) {
+                currentJob = currentJob();
+            }
+            if (currentJob != null) {
                 try {
-                    processStartedJob(job);
+                    processStartedJob();
                 } catch (IOException e) {
-                    saveErrorResult(job, e);
+                    saveErrorResult(e);
+                }
+                synchronized (this) {
+                    this.currentJob = null;
                 }
             }
 
             while (running) {
-                job = nextJob();
-                if (job != null) {
-                    logger.info("Validating " + job.getDocument().getUrl());
+                synchronized (this) {
+                    currentJob = nextJob();
+                }
+                if (currentJob != null) {
+                    logger.info("Validating " + currentJob.getId());
                     try {
-                        validator.startValidation(job);
-                        processStartedJob(job);
+                        validator.startValidation(currentJob);
+                        processStartedJob();
                     } catch (IOException e) {
-                        saveErrorResult(job, e);
+                        saveErrorResult(e);
+                    }
+                    synchronized (this) {
+                        this.currentJob = null;
                     }
                     continue;
                 }
-
                 Thread.sleep(60 * 1000);
             }
         } catch (Throwable e) {
@@ -87,14 +112,14 @@ public class ValidationService implements Runnable {
         }
     }
 
-    private void processStartedJob(ValidationJob job) throws IOException, ValidationDeadlockException, InterruptedException {
-        VeraPDFValidationResult result = validator.getValidationResult(job);
-        saveResult(job, result);
+    private void processStartedJob() throws IOException, ValidationDeadlockException, InterruptedException {
+        VeraPDFValidationResult result = validator.getValidationResult(currentJob);
+        saveResult(result);
     }
 
-    private void saveErrorResult(ValidationJob job, Throwable e) {
+    private void saveErrorResult(Throwable e) {
         VeraPDFValidationResult result = new VeraPDFValidationResult(e.getMessage());
-        saveResult(job, result);
+        saveResult(result);
     }
 
     @SuppressWarnings("WeakerAccess") // @UnitOfWork works only with public methods
@@ -115,33 +140,33 @@ public class ValidationService implements Runnable {
 
     @SuppressWarnings("WeakerAccess")
     @UnitOfWork
-    public void saveResult(ValidationJob job, VeraPDFValidationResult result) {
-        try {
-            if (!isAborted) {
-                DomainDocument document = job.getDocument();
-                document.setBaseTestResult(result.getTestResult());
+    public void saveResult(VeraPDFValidationResult result) {
+        synchronized (this) {
+            if (currentJob != null) {
+                try {
+                    DomainDocument document = currentJob.getDocument();
+                    document.setBaseTestResult(result.getTestResult());
 
-                // Save errors where needed
-                List<ValidationError> validationErrors = result.getValidationErrors();
-                for (int index = 0; index < validationErrors.size(); index++) {
-                    validationErrors.set(index, validationErrorDAO.save(validationErrors.get(index)));
+                    // Save errors where needed
+                    List<ValidationError> validationErrors = result.getValidationErrors();
+                    for (int index = 0; index < validationErrors.size(); index++) {
+                        validationErrors.set(index, validationErrorDAO.save(validationErrors.get(index)));
+                    }
+                    document.setValidationErrors(validationErrors);
+
+                    // Link properties
+                    document.setProperties(result.getProperties());
+
+                    // And update document (note that document was detached from hibernate context, thus we need to save explicitly)
+                    documentDAO.save(document);
+                } finally {
+                    cleanJob(currentJob);
                 }
-                document.setValidationErrors(validationErrors);
-
-                // Link properties
-                document.setProperties(result.getProperties());
-
-                // And update document (note that document was detached from hibernate context, thus we need to save explicitly)
-                documentDAO.save(document);
             }
-        } finally {
-            cleanJob(job);
         }
     }
 
-    @SuppressWarnings("WeakerAccess")
-    @UnitOfWork
-    public void cleanJob(ValidationJob job) {
+    private void cleanJob(ValidationJob job) {
         if (job == null) {
             return;
         }

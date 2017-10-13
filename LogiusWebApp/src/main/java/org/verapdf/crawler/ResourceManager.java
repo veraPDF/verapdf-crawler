@@ -11,21 +11,18 @@ import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.configurations.EmailServerConfiguration;
 import org.verapdf.crawler.configurations.VeraPDFServiceConfiguration;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
+import org.verapdf.crawler.core.jobs.HeritrixCleanerService;
 import org.verapdf.crawler.core.jobs.MonitorCrawlJobStatusService;
 import org.verapdf.crawler.core.validation.PDFValidator;
 import org.verapdf.crawler.db.*;
 import org.verapdf.crawler.core.validation.ValidationService;
 import org.verapdf.crawler.core.validation.VeraPDFValidator;
-import org.verapdf.crawler.health.HeritrixHealthCheck;
-import org.verapdf.crawler.health.MonitorCrawlJobStatusServiceHealthCheck;
-import org.verapdf.crawler.health.ValidationServiceHealthCheck;
-import org.verapdf.crawler.health.VeraPDFServiceHealthCheck;
+import org.verapdf.crawler.health.*;
 import org.verapdf.crawler.resources.*;
 
 import java.util.*;
 
 public class ResourceManager {
-    private static final Logger logger = LoggerFactory.getLogger(ResourceManager.class);
 
     private final List<Object> resources = new ArrayList<>();
     private final Map<String, HealthCheck> healthChecks = new HashMap<>();
@@ -50,6 +47,7 @@ public class ResourceManager {
         MonitorCrawlJobStatusService monitorCrawlJobStatusService = new UnitOfWorkAwareProxyFactory(hibernate).create(MonitorCrawlJobStatusService.class,
                 new Class[]{CrawlJobDAO.class, CrawlRequestDAO.class, ValidationJobDAO.class, HeritrixClient.class, EmailServerConfiguration.class},
                 new Object[]{crawlJobDAO, crawlRequestDAO, validationJobDAO, heritrix, config.getEmailServerConfiguration()});
+        HeritrixCleanerService heritrixCleanerService = new HeritrixCleanerService(heritrix);
 
         // Discover admin connector port
         DefaultServerFactory serverFactory = (DefaultServerFactory) config.getServerFactory();
@@ -57,7 +55,7 @@ public class ResourceManager {
         int adminPort = adminConnectorFactory.getPort();
 
         // Initializing resources
-        resources.add(new CrawlJobResource(crawlJobDAO, validationJobDAO, heritrix));
+        resources.add(new CrawlJobResource(crawlJobDAO, validationJobDAO, heritrix, validationService, heritrixCleanerService));
         resources.add(new CrawlRequestResource(crawlRequestDAO, crawlJobDAO, heritrix));
         resources.add(new DocumentResource(crawlJobDAO, documentDAO, validationJobDAO));
         resources.add(new DocumentPropertyResource(documentDAO));
@@ -73,10 +71,12 @@ public class ResourceManager {
         healthChecks.put("validationService", new ValidationServiceHealthCheck(validationService));
         healthChecks.put("monitorCrawlJobStatusService",
                 new MonitorCrawlJobStatusServiceHealthCheck(monitorCrawlJobStatusService));
+        healthChecks.put("heritrixCleanerService", new HeritrixCleanerServiceHealthCheck(heritrixCleanerService));
 
         // Launching services
         validationService.start();
         monitorCrawlJobStatusService.start();
+        heritrixCleanerService.start();
     }
 
     public Map<String, HealthCheck> getHealthChecks() {

@@ -8,10 +8,7 @@ import org.verapdf.crawler.api.document.DomainDocument_;
 import org.verapdf.crawler.api.validation.ValidationJob;
 import org.verapdf.crawler.api.validation.ValidationJob_;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.CriteriaUpdate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import java.util.List;
 
 public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
@@ -38,6 +35,7 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         criteriaQuery.where(
                 builder.equal(jobRoot.get(ValidationJob_.status), status)
         );
+        criteriaQuery.where(builder.isNotNull(jobRoot.get(ValidationJob_.document).get(DomainDocument_.url)));
         return currentSession().createQuery(criteriaQuery).setMaxResults(1).uniqueResult();
     }
 
@@ -100,5 +98,16 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
                 builder.equal(jobRoot.get(ValidationJob_.status), ValidationJob.Status.NOT_STARTED)
         ));
         criteriaUpdate.set(jobRoot.get(ValidationJob_.status), status);
+    }
+
+    public void bulkRemoveUnlinked() {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaDelete<ValidationJob> criteriaDelete = builder.createCriteriaDelete(ValidationJob.class);
+        Root<ValidationJob> jobRoot = criteriaDelete.from(ValidationJob.class);
+        criteriaDelete.where(builder.isNull(jobRoot.get(ValidationJob_.document).get(DomainDocument_.url)));
+    }
+
+    public void flush() {
+        currentSession().flush();
     }
 }
