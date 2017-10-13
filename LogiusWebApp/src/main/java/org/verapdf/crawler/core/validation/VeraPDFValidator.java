@@ -67,6 +67,7 @@ public class VeraPDFValidator implements PDFValidator {
                         break;
 
                     case ABORTED:
+                        logger.info("Validation is aborted");
                         return new VeraPDFValidationResult("Validation was aborted");
 
                     default:

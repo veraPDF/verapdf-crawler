@@ -56,6 +56,7 @@ public class ValidationService implements Runnable {
                 throw new IllegalStateException("Validation service current job is not equal to DB current job");
             }
             if (currentJobFromDB.getDocument() == null) {
+                logger.info("Clearing current job");
                 this.currentJob = null;
                 try {
                     validator.terminateValidation();
@@ -71,7 +72,8 @@ public class ValidationService implements Runnable {
     public void run() {
         logger.info("Validation service started");
         try {
-            synchronized (this) {
+            synchronized (ValidationService.class) {
+                logger.info("Getting current job");
                 currentJob = currentJob();
             }
             if (currentJob != null) {
@@ -80,13 +82,12 @@ public class ValidationService implements Runnable {
                 } catch (IOException e) {
                     saveErrorResult(e);
                 }
-                synchronized (this) {
-                    this.currentJob = null;
-                }
+                clearCurrentJob();
             }
 
             while (running) {
-                synchronized (this) {
+                synchronized (ValidationService.class) {
+                    logger.info("Getting next job");
                     currentJob = nextJob();
                 }
                 if (currentJob != null) {
@@ -97,9 +98,7 @@ public class ValidationService implements Runnable {
                     } catch (IOException e) {
                         saveErrorResult(e);
                     }
-                    synchronized (this) {
-                        this.currentJob = null;
-                    }
+                    clearCurrentJob();
                     continue;
                 }
                 Thread.sleep(60 * 1000);
@@ -122,6 +121,13 @@ public class ValidationService implements Runnable {
         saveResult(result);
     }
 
+    private void clearCurrentJob() {
+        synchronized (ValidationService.class) {
+            logger.info("Clearing current Job");
+            this.currentJob = null;
+        }
+    }
+
     @SuppressWarnings("WeakerAccess") // @UnitOfWork works only with public methods
     @UnitOfWork
     public ValidationJob nextJob() {
@@ -141,7 +147,7 @@ public class ValidationService implements Runnable {
     @SuppressWarnings("WeakerAccess")
     @UnitOfWork
     public void saveResult(VeraPDFValidationResult result) {
-        synchronized (this) {
+        synchronized (ValidationService.class) {
             if (currentJob != null) {
                 try {
                     DomainDocument document = currentJob.getDocument();

@@ -72,23 +72,16 @@ public class CrawlJobResource {
     public CrawlJob restartCrawlJob(@PathParam("domain") String domain) {
         CrawlJob crawlJob = this.getCrawlJob(domain);
         domain = crawlJob.getDomain();
-        List<CrawlRequest> crawlRequests;
+        List<CrawlRequest> crawlRequests = crawlJob.getCrawlRequests();
         heritrixCleanerService.teardownAndClearHeritrixJob(crawlJob.getHeritrixJobId());
         synchronized (validationService) {
-            crawlRequests = removeCrawlJob(crawlJob);
+            crawlJobDao.remove(crawlJob);
             validationService.cleanUnlinkedDocuments();
-            validationJobDAO.flush();
         }
         CrawlJob newJob = crawlJobDao.save(new CrawlJob(domain));
         newJob.getCrawlRequests().addAll(crawlRequests);
         CrawlJobResource.startCrawlJob(newJob, heritrix);
         return newJob;
-    }
-
-    private List<CrawlRequest> removeCrawlJob(CrawlJob crawlJob) {
-        List<CrawlRequest> crawlRequests = crawlJob.getCrawlRequests();
-        crawlJobDao.remove(crawlJob);
-        return crawlRequests;
     }
 
     @GET

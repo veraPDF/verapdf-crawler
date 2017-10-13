@@ -105,9 +105,6 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         CriteriaDelete<ValidationJob> criteriaDelete = builder.createCriteriaDelete(ValidationJob.class);
         Root<ValidationJob> jobRoot = criteriaDelete.from(ValidationJob.class);
         criteriaDelete.where(builder.isNull(jobRoot.get(ValidationJob_.document).get(DomainDocument_.url)));
-    }
-
-    public void flush() {
         currentSession().flush();
     }
 }
