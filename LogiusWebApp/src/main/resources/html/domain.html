@@ -142,7 +142,6 @@
 
         <div class="errors tab-pane fade" id="errors" role="tabpanel">
             <form class="form-inline d-flex justify-content-end">
-                <input type="text" class="form-control form-control-sm" placeholder="Any producer" id="errors-producer-input">
                 <!--div class="btn-group">
                     <button class="btn btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         Any PDF/A flavour
@@ -159,65 +158,30 @@
                         <a class="dropdown-item" href="#">PDF/A-3u</a>
                     </div>
                 </div-->
-                <select class="form-control form-control-sm" id="errors-flavour-input">
-                    <option selected>Any PDF/A flavour</option>
-                    <option value="1a">PDF/A-1a</option>
-                    <option value="1b">PDF/A-1b</option>
-                    <option value="2a">PDF/A-2a</option>
-                    <option value="2b">PDF/A-2b</option>
-                    <option value="2u">PDF/A-2u</option>
-                    <option value="3a">PDF/A-3a</option>
-                    <option value="3b">PDF/A-3b</option>
-                    <option value="3u">PDF/A-3u</option>
+                <select class="form-control form-control-sm" id="errors-flavour-input" title="Flavour">
+                    <option value="" selected>Any PDF/A flavour</option>
                 </select>
+                <select class="form-control form-control-sm" id="errors-version-input" title="Version">
+                    <option value="" selected>Any PDF version</option>
+                </select>
+                <input type="text" class="form-control form-control-sm" placeholder="Any producer" id="errors-producer-input">
                 <input type="text" class="form-control form-control-sm" placeholder="Documents from" id="errors-date-input">
             </form>
             <div>
                 <div class="errors-chart">
                     <canvas id="errors-chart"></canvas>
                 </div>
-                <div class="errors-list">
-                    <!--<div class="d-flex align-items-center">-->
-                    <!--<span class="material-icons" style="color: #fd5858">lens</span>-->
-                    <!--<span>Error 1: description</span>-->
-                    <!--</div>-->
-                    <!--<div class="d-flex align-items-center">-->
-                    <!--<span class="material-icons" style="color: #fd9651">lens</span>-->
-                    <!--<span>Error 2: description</span>-->
-                    <!--</div>-->
-                    <!--<div class="d-flex align-items-center">-->
-                    <!--<span class="material-icons" style="color: #fdeb72">lens</span>-->
-                    <!--<span>Error 3: description</span>-->
-                    <!--</div>-->
-                    <!--<div class="d-flex align-items-center">-->
-                    <!--<span class="material-icons" style="color: #cdfd92">lens</span>-->
-                    <!--<span>Error 4: description</span>-->
-                    <!--</div>-->
-                    <!--<div class="d-flex align-items-center">-->
-                    <!--<span class="material-icons" style="color: #9cfdc2">lens</span>-->
-                    <!--<span>Error 5: description</span>-->
-                    <!--</div>-->
-                    <!--<div class="d-flex align-items-center">-->
-                    <!--<span class="material-icons" style="color: #a7fafd">lens</span>-->
-                    <!--<span>Error 6: description</span>-->
-                    <!--</div>-->
-                    <!--<div class="d-flex align-items-center">-->
-                    <!--<span class="material-icons" style="color: #94a8fd">lens</span>-->
-                    <!--<span>Error 7: description</span>-->
-                    <!--</div>-->
-                    <!--<div class="d-flex align-items-center">-->
-                    <!--<span class="material-icons" style="color: #ca94fd">lens</span>-->
-                    <!--<span>Error 8: description</span>-->
-                    <!--</div>-->
-                    <!--<div class="d-flex align-items-center">-->
-                    <!--<span class="material-icons" style="color: #fd89e9">lens</span>-->
-                    <!--<span>Error 9: description</span>-->
-                    <!--</div>-->
-                    <!--<div class="d-flex align-items-center">-->
-                    <!--<span class="material-icons" style="color: #ff9ca0">lens</span>-->
-                    <!--<span>Error 10: description</span>-->
-                    <!--</div>-->
-                </div>
+                <table class="errors-list">
+                    <tbody>
+                    <tr class="template">
+                        <td><div class="count"></div></td>
+                        <td class="error-description">
+                            <div><span class="short"></span>:</div>
+                            <div class="full"></div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

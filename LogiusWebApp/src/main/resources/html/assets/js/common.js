@@ -12,3 +12,7 @@ function getUrlParameter(sParam) {
         }
     }
 }
+
+function normalizeURL(url){
+    return url.replace(':', '%3A');
+}
