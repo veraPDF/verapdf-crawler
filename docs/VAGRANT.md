@@ -16,6 +16,7 @@ In order to update the application the Ansible task also installs:
 - Git in order to update the project source code
 - Maven 3 to build Java projects
 - The unzip utility for unpacking the veraPDF installer
+- The community edition of the tanukisoftware service wrapper for Java applications
 
 Pre-requisites
 --------------
@@ -64,7 +65,7 @@ This will create and configure the VirtualBox and then used Ansible to install t
 ```bash
 vagrant ssh
 ```
-and run the setup scripts.
+Once logged in you'll be able to control the applications as a set of linux services as described in [SERVICES.md](SERVICES.md).
 
 Ansible
 -------
