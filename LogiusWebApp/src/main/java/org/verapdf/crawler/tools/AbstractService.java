@@ -57,10 +57,10 @@ public abstract class AbstractService implements Runnable {
 		}
 	}
 
-	protected abstract void onStart();
+	protected abstract void onStart() throws Throwable;
 
 	/**
 	 * @return true if we have to sleep after action has been finished
 	 */
-	protected abstract boolean onRepeat();
+	protected abstract boolean onRepeat() throws Throwable;
 }

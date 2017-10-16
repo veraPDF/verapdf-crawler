@@ -68,7 +68,7 @@ public class ResourceManager {
         healthChecks.put("heritrix", new HeritrixHealthCheck(heritrix));
         healthChecks.put("verapdf",
                 new VeraPDFServiceHealthCheck(veraPDFServiceConfiguration));
-        healthChecks.put("validationService", new ValidationServiceHealthCheck(validationService));
+        healthChecks.put("validationService", new ServiceHealthCheck(validationService));
         healthChecks.put("monitorCrawlJobStatusService",
                 new ServiceHealthCheck(monitorCrawlJobStatusService));
         healthChecks.put("heritrixCleanerService", new ServiceHealthCheck(heritrixCleanerService));

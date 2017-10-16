@@ -10,34 +10,29 @@ import org.verapdf.crawler.api.validation.error.ValidationError;
 import org.verapdf.crawler.db.DocumentDAO;
 import org.verapdf.crawler.db.ValidationErrorDAO;
 import org.verapdf.crawler.db.ValidationJobDAO;
+import org.verapdf.crawler.tools.AbstractService;
 
 import java.io.*;
 import java.util.List;
 
-public class ValidationService implements Runnable {
+public class ValidationService extends AbstractService {
+
     private static final Logger logger = LoggerFactory.getLogger(ValidationService.class);
+
+	private static final long SLEEP_DURATION = 60*1000;
 
     private final ValidationJobDAO validationJobDAO;
     private final ValidationErrorDAO validationErrorDAO;
     private final DocumentDAO documentDAO;
     private final PDFValidator validator;
-    private boolean running = false;
     private ValidationJob currentJob;
-    private String stopReason;
 
     public ValidationService(ValidationJobDAO validationJobDAO, ValidationErrorDAO validationErrorDAO, DocumentDAO documentDAO, PDFValidator validator) {
-        this.validationJobDAO = validationJobDAO;
+        super("ValidationService", SLEEP_DURATION);
+    	this.validationJobDAO = validationJobDAO;
         this.validationErrorDAO = validationErrorDAO;
         this.documentDAO = documentDAO;
         this.validator = validator;
-    }
-
-    public boolean isRunning() {
-        return running;
-    }
-
-    public String getStopReason() {
-        return stopReason;
     }
 
 	public ValidationJob getCurrentJob() {
@@ -50,12 +45,6 @@ public class ValidationService implements Runnable {
 		}
 	}
 
-	public void start() {
-        running = true;
-        stopReason = null;
-        new Thread(this, "Thread-ValidationService").start();
-    }
-
     public void abortCurrentJob() {
 		try {
 			logger.info("Aborting current job");
@@ -66,42 +55,35 @@ public class ValidationService implements Runnable {
 		}
 	}
 
-    @Override
-    public void run() {
-        logger.info("Validation service started");
-        try {
-			setCurrentJob(retrieveCurrentJob());
-            if (currentJob != null) {
-                try {
-                    processStartedJob();
-                } catch (IOException e) {
-                    saveErrorResult(e);
-                }
-            }
+	@Override
+	protected void onStart() throws InterruptedException, ValidationDeadlockException {
+		setCurrentJob(retrieveCurrentJob());
+		if (currentJob != null) {
+			try {
+				processStartedJob();
+			} catch (IOException e) {
+				saveErrorResult(e);
+			}
+		}
+	}
 
-            while (running) {
-                setCurrentJob(retrieveNextJob());
-                if (currentJob != null) {
-                    logger.info("Validating " + currentJob.getId());
-                    try {
-                        validator.startValidation(currentJob);
-                        processStartedJob();
-                    } catch (IOException e) {
-                        saveErrorResult(e);
-                    }
-                    continue;
-                }
-                Thread.sleep(60 * 1000);
-            }
-        } catch (Throwable e) {
-            logger.error("Fatal error in validator, stopping validation service.", e);
-            this.stopReason = e.getMessage();
-        } finally {
-            running = false;
-        }
-    }
+	@Override
+	protected boolean onRepeat() throws ValidationDeadlockException, InterruptedException {
+		setCurrentJob(retrieveNextJob());
+		if (currentJob != null) {
+			logger.info("Validating " + currentJob.getId());
+			try {
+				validator.startValidation(currentJob);
+				processStartedJob();
+			} catch (IOException e) {
+				saveErrorResult(e);
+			}
+			return false;
+		}
+		return true;
+	}
 
-    private void processStartedJob() throws IOException, ValidationDeadlockException, InterruptedException {
+	private void processStartedJob() throws IOException, ValidationDeadlockException, InterruptedException {
         VeraPDFValidationResult result = validator.getValidationResult(currentJob);
         saveResult(result);
     }
