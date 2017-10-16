@@ -2,6 +2,7 @@ package org.verapdf.crawler.resources;
 
 import io.dropwizard.hibernate.UnitOfWork;
 import io.dropwizard.jersey.params.IntParam;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.api.crawling.CrawlRequest;
@@ -11,6 +12,8 @@ import org.verapdf.crawler.api.monitoring.ValidationQueueStatus;
 import org.verapdf.crawler.api.validation.ValidationJob;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.api.crawling.CrawlJob;
+import org.verapdf.crawler.core.jobs.HeritrixCleanerService;
+import org.verapdf.crawler.core.validation.ValidationService;
 import org.verapdf.crawler.db.CrawlJobDAO;
 import org.verapdf.crawler.db.ValidationJobDAO;
 import org.verapdf.crawler.tools.DomainUtils;
@@ -23,8 +26,7 @@ import javax.ws.rs.core.Response;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 
 @Path("/crawl-jobs")
 @Produces(MediaType.APPLICATION_JSON)
@@ -37,11 +39,16 @@ public class CrawlJobResource {
     private final CrawlJobDAO crawlJobDao;
     private final ValidationJobDAO validationJobDAO;
     private final HeritrixClient heritrix;
+    private final ValidationService validationService;
+    private final HeritrixCleanerService heritrixCleanerService;
 
-    public CrawlJobResource(CrawlJobDAO crawlJobDao, ValidationJobDAO validationJobDAO, HeritrixClient heritrix) {
+    public CrawlJobResource(CrawlJobDAO crawlJobDao, ValidationJobDAO validationJobDAO, HeritrixClient heritrix,
+                            ValidationService validationService, HeritrixCleanerService heritrixCleanerService) {
         this.crawlJobDao = crawlJobDao;
         this.validationJobDAO = validationJobDAO;
         this.heritrix = heritrix;
+        this.validationService = validationService;
+        this.heritrixCleanerService = heritrixCleanerService;
     }
 
     @GET
@@ -60,25 +67,40 @@ public class CrawlJobResource {
 
     @POST
     @Path("/{domain}")
+    @UnitOfWork
     public CrawlJob restartCrawlJob(@PathParam("domain") String domain) {
-//        //TODO: REWRITE!!!!
-//        //TODO: should delete this job and launch a new one with new id
-//        try {
-//            CrawlJob crawlJob = crawlJobDao.getCrawlJobByCrawlUrl(domain);
-//            List<String> list = new ArrayList<>();
-//            list.add(crawlJob.getDomain());
-//            crawlJobDao.setJobFinished(domain, false);
-//            heritrix.teardownJob(domain);
-//            heritrix.createJob(domain, list);
-//            heritrix.buildJob(domain);
-//            heritrix.launchJob(domain);
-//            logger.info("Crawl job on "+ crawlJob.getDomain() + " restarted");
-//            return getCrawlJob(domain);
-//        }
-//        catch (Exception e) {
-//            logger.error("Error restarting job", e);
-            return null;
-//        }
+		domain = DomainUtils.trimUrl(domain);
+
+		CrawlJob crawlJob = crawlJobDao.getByDomain(domain);
+		List<CrawlRequest> crawlRequests = null;
+		if (crawlJob != null) {
+			// Keep requests list to link to new job
+			crawlRequests = new ArrayList<>();
+			crawlRequests.addAll(crawlJob.getCrawlRequests());
+
+			// Tear down heritrix
+			heritrixCleanerService.teardownAndClearHeritrixJob(crawlJob.getHeritrixJobId());
+
+			// Remove job from DB
+			crawlJobDao.remove(crawlJob);
+
+			// Stop validation job if it's related to this crawl job
+			synchronized (ValidationService.class) {
+				ValidationJob currentJob = validationService.getCurrentJob();
+				if (currentJob != null && currentJob.getDocument().getCrawlJob().getDomain().equals(domain)) {
+					validationService.abortCurrentJob();
+				}
+			}
+		}
+
+		// Create and start new crawl job
+        CrawlJob newJob = new CrawlJob(domain);
+		if (crawlRequests != null) {
+			newJob.setCrawlRequests(crawlRequests);
+		}
+        crawlJobDao.save(newJob);
+        startCrawlJob(newJob, heritrix);
+        return newJob;
     }
 
     @GET
@@ -186,4 +208,19 @@ public class CrawlJobResource {
 //         */
 //        return null;
 //    }
+
+    static void startCrawlJob(CrawlJob crawlJob, HeritrixClient heritrix) {
+        try {
+            heritrix.createJob(crawlJob.getHeritrixJobId(), crawlJob.getDomain());
+            heritrix.buildJob(crawlJob.getHeritrixJobId());
+            heritrix.launchJob(crawlJob.getHeritrixJobId());
+            crawlJob.setStatus(CrawlJob.Status.RUNNING);
+        } catch (Exception e) {
+            logger.error("Failed to start crawling job for domain " + crawlJob.getDomain(), e);
+            crawlJob.setFinished(true);
+            crawlJob.setFinishTime(new Date());
+            crawlJob.setStatus(CrawlJob.Status.FAILED);
+        }
+        // TODO: cleanup heritrix in finally
+    }
 }

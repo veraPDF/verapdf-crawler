@@ -11,15 +11,17 @@ public class ValidationJob {
     public enum Status {
         NOT_STARTED,
         IN_PROGRESS,
-        PAUSED
+        PAUSED,
+		ABORTED
     }
 
     @Id
     @Column(name = "document_url")
     private String id;
 
-    @OneToOne()
-    @JoinColumn(name = "document_url", referencedColumnName = "document_url", insertable = false)
+    @MapsId("document_url")
+    @OneToOne(cascade = CascadeType.PERSIST, optional = false)
+	@PrimaryKeyJoinColumn(name = "document_url", referencedColumnName = "document_url")
     private DomainDocument document;
 
     @Column(name = "filepath")

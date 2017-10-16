@@ -8,10 +8,7 @@ import org.verapdf.crawler.api.document.DomainDocument_;
 import org.verapdf.crawler.api.validation.ValidationJob;
 import org.verapdf.crawler.api.validation.ValidationJob_;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.CriteriaUpdate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import java.util.List;
 
 public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
@@ -38,6 +35,7 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         criteriaQuery.where(
                 builder.equal(jobRoot.get(ValidationJob_.status), status)
         );
+        criteriaQuery.where(builder.isNotNull(jobRoot.get(ValidationJob_.document).get(DomainDocument_.url)));
         return currentSession().createQuery(criteriaQuery).setMaxResults(1).uniqueResult();
     }
 
@@ -46,11 +44,11 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
     }
 
     public void pause(String domain) {
-        bulkUpdateState(domain, ValidationJob.Status.PAUSED);
+        bulkUpdateState(domain, ValidationJob.Status.NOT_STARTED, ValidationJob.Status.PAUSED);
     }
 
     public void unpause(String domain) {
-        bulkUpdateState(domain, ValidationJob.Status.NOT_STARTED);
+        bulkUpdateState(domain, ValidationJob.Status.PAUSED, ValidationJob.Status.NOT_STARTED);
     }
 
     public Long count(String domain) {
@@ -91,14 +89,18 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         return list(query);
     }
 
-    private void bulkUpdateState(String domain, ValidationJob.Status status) {
+    private void bulkUpdateState(String domain, ValidationJob.Status oldStatus, ValidationJob.Status newStatus) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaUpdate<ValidationJob> criteriaUpdate = builder.createCriteriaUpdate(ValidationJob.class);
         Root<ValidationJob> jobRoot = criteriaUpdate.from(ValidationJob.class);
-        criteriaUpdate.where(builder.and(
-                builder.equal(jobRoot.get(ValidationJob_.document).get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain),
-                builder.equal(jobRoot.get(ValidationJob_.status), ValidationJob.Status.NOT_STARTED)
+
+        Subquery<ValidationJob> subquery = criteriaUpdate.subquery(ValidationJob.class);
+        Root<ValidationJob> subqueryRoot = subquery.correlate(jobRoot);
+        subquery.where(builder.and(
+                builder.equal(subqueryRoot.get(ValidationJob_.document).get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain),
+                builder.equal(subqueryRoot.get(ValidationJob_.status), oldStatus)
         ));
-        criteriaUpdate.set(jobRoot.get(ValidationJob_.status), status);
+        criteriaUpdate.set(jobRoot.get(ValidationJob_.status), newStatus);
+        currentSession().createQuery(criteriaUpdate).executeUpdate();
     }
 }

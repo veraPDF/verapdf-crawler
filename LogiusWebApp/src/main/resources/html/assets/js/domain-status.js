@@ -63,9 +63,14 @@ $(function () {
         // Heritrix details
         $('.heritrix .status').text(jobStatus.heritrixStatus.statusDescription);
         $('.heritrix .job-id a').text(jobStatus.crawlJob.heritrixJobId).attr('href', heritrixEngineUrl + '/job/' + jobStatus.crawlJob.heritrixJobId);
-        $('.heritrix .crawled-urls .total-count').text(jobStatus.heritrixStatus.uriTotalsStatus.totalUriCount);
-        $('.heritrix .crawled-urls .downloaded-count').text(jobStatus.heritrixStatus.uriTotalsStatus.downloadedUriCount);
-        $('.heritrix .crawled-urls .queued-count').text(jobStatus.heritrixStatus.uriTotalsStatus.queuedUriCount);
+        if (jobStatus.heritrixStatus.uriTotalsStatus) {
+            $('.heritrix .crawled-urls .total-count').text(jobStatus.heritrixStatus.uriTotalsStatus.totalUriCount);
+            $('.heritrix .crawled-urls .downloaded-count').text(jobStatus.heritrixStatus.uriTotalsStatus.downloadedUriCount);
+            $('.heritrix .crawled-urls .queued-count').text(jobStatus.heritrixStatus.uriTotalsStatus.queuedUriCount);
+            $('.heritrix .crawled-urls').show();
+        } else {
+            $('.heritrix .crawled-urls').hide();
+        }
 
         var heritrixLogTbody = $('.heritrix tbody');
         heritrixLogTbody.find('tr:not(.template)').remove();
@@ -120,7 +125,6 @@ $(function () {
                 $('.main').removeClass('status-' + crawlJob.status.toLowerCase(), { children: true });
 
                 // domainInfoLoaded(result);
-                jobStatusLoaded(putData);
 
 
             },
@@ -146,8 +150,7 @@ $(function () {
             success: function (result) {
                 $('.main').removeClass('status-' + crawlJob.status.toLowerCase(), { children: true });
 
-                // domainInfoLoaded(result);   
-                jobStatusLoaded(putData);
+                // domainInfoLoaded(result);
 
             },
             error: function (result) {
