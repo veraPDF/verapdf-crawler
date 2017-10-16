@@ -3,6 +3,9 @@ package org.verapdf.crawler;
 import com.codahale.metrics.health.HealthCheck;
 import io.dropwizard.hibernate.HibernateBundle;
 import io.dropwizard.hibernate.UnitOfWorkAwareProxyFactory;
+import io.dropwizard.jetty.HttpConnectorFactory;
+import io.dropwizard.server.DefaultServerFactory;
+import io.dropwizard.server.ServerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.configurations.EmailServerConfiguration;
@@ -48,6 +51,11 @@ public class ResourceManager {
                 new Class[]{CrawlJobDAO.class, CrawlRequestDAO.class, ValidationJobDAO.class, HeritrixClient.class, EmailServerConfiguration.class},
                 new Object[]{crawlJobDAO, crawlRequestDAO, validationJobDAO, heritrix, config.getEmailServerConfiguration()});
 
+        // Discover admin connector port
+        DefaultServerFactory serverFactory = (DefaultServerFactory) config.getServerFactory();
+        HttpConnectorFactory adminConnectorFactory = (HttpConnectorFactory) serverFactory.getAdminConnectors().get(0);
+        int adminPort = adminConnectorFactory.getPort();
+
         // Initializing resources
         resources.add(new CrawlJobResource(crawlJobDAO, validationJobDAO, heritrix));
         resources.add(new CrawlRequestResource(crawlRequestDAO, crawlJobDAO, heritrix));
@@ -55,6 +63,8 @@ public class ResourceManager {
         resources.add(new DocumentPropertyResource(documentDAO));
         resources.add(new ValidationServiceResource(pdfPropertyDAO, namespaceDAO, validationJobDAO));
         resources.add(new ReportResource(documentDAO));
+        resources.add(new HealthResource(adminPort));
+        resources.add(new HeritrixResource(heritrix));
 
         // Initializing health checks
         healthChecks.put("heritrix", new HeritrixHealthCheck(heritrix));

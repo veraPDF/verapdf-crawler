@@ -62,6 +62,10 @@ body.container-fluid {
   border-color: #1550ad;
 }
 
+.main .template {
+  display: none;
+}
+
 .footer {
   /* position: absolute; */
   bottom: 0;
@@ -487,4 +491,113 @@ a.action .label {
 .important-notice {
   border: 1px solid white;
   padding: 10px;
+}
+
+/* Status page */
+.health-checks {
+  margin-bottom: 30px;
+}
+
+.health-checks h4 {
+  margin-bottom: 20px;
+}
+
+.health-checks .loading {
+  height: 144px;
+}
+
+.health-checks .loaded div {
+  display: flex;
+}
+
+.health-checks .check-name {
+  flex: 0 0 250px;
+}
+
+.health-checks .check-status {
+  flex: 0 0 100px;
+}
+
+.health-checks .healthy .check-status {
+  color: #43c46f;
+}
+
+.health-checks .unhealthy .check-status {
+  color: #fd5858;
+}
+
+.active-domains-list td, .active-domains-list th {
+  border-top: none;
+  vertical-align: middle;
+}
+
+.active-domains-list .col-date {
+  width: 200px;
+}
+
+.active-domains-list .col-status {
+  width: 100px;
+}
+
+.active-domains-list th.col-actions {
+  width: 200px;
+}
+
+.active-domains-list td.col-actions {
+  width: 60px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.active-domains-list td.col-actions.hide {
+  visibility: hidden;
+}
+
+.validation-queue td, .validation-queue th {
+  border-top: none;
+  vertical-align: middle;
+}
+
+.validation-queue .in-progress {
+  color: #43c46f;
+}
+
+/* Domain status page */
+.status-loaded {
+  display: none;
+}
+
+.job-requests td, .job-requests th {
+  border-top: none;
+  vertical-align: middle;
+}
+
+.job-requests .col-id {
+  width: 350px;
+}
+
+.job-requests .col-status {
+  width: 100px;
+}
+
+.heritrix {
+  margin: 40px 0;
+}
+
+.heritrix .title {
+  display: flex;
+  justify-content: space-between;
+}
+
+.heritrix .crawled-urls {
+  margin-bottom: 20px;
+}
+
+.heritrix td, .heritrix th {
+  border-top: none;
+  vertical-align: middle;
+}
+
+.heritrix td {
+  font-size: 14px;
 }

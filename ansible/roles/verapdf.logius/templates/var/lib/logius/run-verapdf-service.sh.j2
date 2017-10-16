@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-nohup java -jar {{ logius_app_bin }}/verapdf-service-1.0.jar server {{ logius_app_config }}/verapdf-service.yml >{{ logius_log_dir }}/verapdf_service_out.log 2>&1 &
+nohup java -jar {{ logius_app_bin }}/verapdf-service-1.0.jar server {{ logius_app_conf }}/verapdf-service.yml >{{ logius_log_dir }}/verapdf_service_out.log 2>&1 &

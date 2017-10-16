@@ -1,6 +1,7 @@
 package org.verapdf.crawler.api.monitoring;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.verapdf.crawler.api.validation.ValidationJob;
 
 import java.util.List;
 
@@ -12,12 +13,12 @@ public class ValidationQueueStatus {
 	@JsonProperty
 	private Long count;
 	@JsonProperty
-	private List<String> topDocuments;
+	private List<ValidationJob> topDocuments;
 
 	public ValidationQueueStatus() {
 	}
 
-	public ValidationQueueStatus(Long count, List<String> topDocuments) {
+	public ValidationQueueStatus(Long count, List<ValidationJob> topDocuments) {
 		this.count = count;
 		this.topDocuments = topDocuments;
 	}
@@ -30,11 +31,11 @@ public class ValidationQueueStatus {
 		this.count = count;
 	}
 
-	public List<String> getTopDocuments() {
+	public List<ValidationJob> getTopDocuments() {
 		return topDocuments;
 	}
 
-	public void setTopDocuments(List<String> documents) {
+	public void setTopDocuments(List<ValidationJob> documents) {
 		this.topDocuments = documents;
 	}
 }

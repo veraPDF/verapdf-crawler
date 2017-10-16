@@ -2,6 +2,9 @@ package org.verapdf.crawler.api.monitoring;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.verapdf.crawler.api.crawling.CrawlJob;
+import org.verapdf.crawler.api.crawling.CrawlRequest;
+
+import java.util.List;
 
 /**
  * @author Maksim Bezrukov
@@ -10,6 +13,8 @@ public class CrawlJobStatus {
 
 	@JsonProperty
 	private CrawlJob crawlJob;
+	@JsonProperty
+	private List<CrawlRequest> crawlRequests;
 	@JsonProperty
 	private HeritrixCrawlJobStatus heritrixStatus;
 	@JsonProperty
@@ -20,6 +25,7 @@ public class CrawlJobStatus {
 
 	public CrawlJobStatus(CrawlJob crawlJob, HeritrixCrawlJobStatus heritrixStatus, ValidationQueueStatus validationQueueStatus) {
 		this.crawlJob = crawlJob;
+		this.crawlRequests = crawlJob.getCrawlRequests();
 		this.heritrixStatus = heritrixStatus;
 		this.validationQueueStatus = validationQueueStatus;
 	}
@@ -30,6 +36,14 @@ public class CrawlJobStatus {
 
 	public void setCrawlJob(CrawlJob crawlJob) {
 		this.crawlJob = crawlJob;
+	}
+
+	public List<CrawlRequest> getCrawlRequests() {
+		return crawlRequests;
+	}
+
+	public void setCrawlRequests(List<CrawlRequest> crawlRequests) {
+		this.crawlRequests = crawlRequests;
 	}
 
 	public HeritrixCrawlJobStatus getHeritrixStatus() {
