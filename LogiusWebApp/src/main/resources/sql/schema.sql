@@ -1,4 +1,14 @@
+DROP TABLE IF EXISTS `pdf_properties_namespaces`;
+DROP TABLE IF EXISTS `pdf_properties_xpath`;
+DROP TABLE IF EXISTS `pdf_properties`;
+DROP TABLE IF EXISTS `documents_validation_errors`;
+DROP TABLE IF EXISTS `validation_errors`;
+DROP TABLE IF EXISTS `pdf_validation_jobs_queue`;
+DROP TABLE IF EXISTS `document_properties`;
+DROP TABLE IF EXISTS `documents`;
 DROP TABLE IF EXISTS `crawl_job_requests_crawl_jobs`;
+DROP TRIGGER IF EXISTS crawl_jobs_B4_INSERT;
+DROP TABLE IF EXISTS `crawl_jobs`;
 DROP TABLE IF EXISTS `crawl_job_requests`;
 CREATE TABLE `crawl_job_requests` (
   `id`           VARCHAR(36) NOT NULL,
@@ -7,11 +17,6 @@ CREATE TABLE `crawl_job_requests` (
   `crawl_since`  DATE     DEFAULT NULL,
   PRIMARY KEY (`id`)
 );
-DROP TABLE IF EXISTS `document_properties`;
-DROP TABLE IF EXISTS `documents_validation_errors`;
-DROP TABLE IF EXISTS `documents`;
-DROP TABLE IF EXISTS `pdf_validation_jobs_queue`;
-DROP TABLE IF EXISTS `crawl_jobs`;
 CREATE TABLE `crawl_jobs` (
   `domain`          VARCHAR(255) NOT NULL,
   `heritrix_job_id` VARCHAR(36)  NOT NULL,
@@ -23,7 +28,6 @@ CREATE TABLE `crawl_jobs` (
   PRIMARY KEY (`domain`),
   UNIQUE KEY `crawl_jobs_domain_uindex` (`heritrix_job_id`)
 );
-DROP TRIGGER IF EXISTS crawl_jobs_B4_INSERT;
 CREATE TRIGGER crawl_jobs_B4_INSERT BEFORE INSERT ON `crawl_jobs`
     FOR EACH ROW SET NEW.start_time = IFNULL(NEW.start_time, NOW());
 
@@ -67,7 +71,6 @@ CREATE TABLE `pdf_validation_jobs_queue` (
     ON DELETE CASCADE
     ON UPDATE CASCADE
 );
-DROP TABLE IF EXISTS `validation_errors`;
 CREATE TABLE `validation_errors` (
   `id`            INT(11) NOT NULL AUTO_INCREMENT,
   `type`          VARCHAR(32) NOT NULL DEFAULT 'GENERIC',
@@ -89,20 +92,17 @@ CREATE TABLE `documents_validation_errors` (
     ON DELETE CASCADE
     ON UPDATE CASCADE
 );
-DROP TABLE IF EXISTS `pdf_properties`;
 CREATE TABLE `pdf_properties` (
   `property_name` VARCHAR(127) NOT NULL,
   `property_enabled` TINYINT(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`property_name`)
 );
-DROP TABLE IF EXISTS `pdf_properties_xpath`;
 CREATE TABLE `pdf_properties_xpath` (
   `property_name` VARCHAR(127) NOT NULL,
   `xpath_index`   INT(11)      NOT NULL DEFAULT '0',
   `xpath`         VARCHAR(255) NOT NULL,
   PRIMARY KEY (`property_name`, `xpath_index`)
 );
-DROP TABLE IF EXISTS `pdf_properties_namespaces`;
 CREATE TABLE `pdf_properties_namespaces` (
   `namespace_prefix` VARCHAR(20)  NOT NULL,
   `namespace_url`    VARCHAR(255) NOT NULL,

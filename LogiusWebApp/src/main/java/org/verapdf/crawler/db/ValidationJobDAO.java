@@ -44,11 +44,11 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
     }
 
     public void pause(String domain) {
-        bulkUpdateState(domain, ValidationJob.Status.PAUSED);
+        bulkUpdateState(domain, ValidationJob.Status.NOT_STARTED, ValidationJob.Status.PAUSED);
     }
 
     public void unpause(String domain) {
-        bulkUpdateState(domain, ValidationJob.Status.NOT_STARTED);
+        bulkUpdateState(domain, ValidationJob.Status.PAUSED, ValidationJob.Status.NOT_STARTED);
     }
 
     public Long count(String domain) {
@@ -89,22 +89,18 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         return list(query);
     }
 
-    private void bulkUpdateState(String domain, ValidationJob.Status status) {
+    private void bulkUpdateState(String domain, ValidationJob.Status oldStatus, ValidationJob.Status newStatus) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaUpdate<ValidationJob> criteriaUpdate = builder.createCriteriaUpdate(ValidationJob.class);
         Root<ValidationJob> jobRoot = criteriaUpdate.from(ValidationJob.class);
-        criteriaUpdate.where(builder.and(
-                builder.equal(jobRoot.get(ValidationJob_.document).get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain),
-                builder.equal(jobRoot.get(ValidationJob_.status), ValidationJob.Status.NOT_STARTED)
-        ));
-        criteriaUpdate.set(jobRoot.get(ValidationJob_.status), status);
-    }
 
-    public void bulkRemoveUnlinked() {
-        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
-        CriteriaDelete<ValidationJob> criteriaDelete = builder.createCriteriaDelete(ValidationJob.class);
-        Root<ValidationJob> jobRoot = criteriaDelete.from(ValidationJob.class);
-        criteriaDelete.where(builder.isNull(jobRoot.get(ValidationJob_.document).get(DomainDocument_.url)));
-        currentSession().flush();
+        Subquery<ValidationJob> subquery = criteriaUpdate.subquery(ValidationJob.class);
+        Root<ValidationJob> subqueryRoot = subquery.correlate(jobRoot);
+        subquery.where(builder.and(
+                builder.equal(subqueryRoot.get(ValidationJob_.document).get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain),
+                builder.equal(subqueryRoot.get(ValidationJob_.status), oldStatus)
+        ));
+        criteriaUpdate.set(jobRoot.get(ValidationJob_.status), newStatus);
+        currentSession().createQuery(criteriaUpdate).executeUpdate();
     }
 }
