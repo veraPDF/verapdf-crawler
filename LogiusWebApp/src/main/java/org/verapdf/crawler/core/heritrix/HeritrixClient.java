@@ -166,11 +166,8 @@ public class HeritrixClient {
 
     public boolean isJobFinished(String heritrixJobId) throws IOException, ParserConfigurationException, SAXException, XPathExpressionException {
         String currentJobStatus = getStatusDescription(heritrixJobId);
-        if (currentJobStatus.contains(":")) {
-            currentJobStatus = currentJobStatus.split(": ")[1];
-        }
         currentJobStatus = currentJobStatus.trim().toLowerCase();
-        return currentJobStatus.startsWith("finished") || currentJobStatus.startsWith("aborted");
+        return currentJobStatus.startsWith("finished");
     }
 
     private String getStatusDescription(String heritrixJobId) throws IOException, ParserConfigurationException, SAXException, XPathExpressionException {
