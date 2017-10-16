@@ -137,7 +137,7 @@
     creates: "/etc/init.d/{{ item.key }}"
   with_dict: "{{ vera_app_details }}"
 
-- name: Add Web app startup scripts
+- name: Add Heritrix startup script
   template:
     src: "var/lib/logius/{{ item }}.sh.j2"
     dest: "{{ logius_app_home }}/{{ item }}.sh"
@@ -146,6 +146,20 @@
     mode: 0755
   with_items:
     - "run-heritrix"
+
+- name: Add Heritrix init.d script
+  template:
+    src: "etc/init.d/heritrix.sh.j2"
+    dest: "/etc/init.d/heritrix.sh"
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: 0755
+
+- name: Register Heritrix init.d script
+  command: "update-rc.d heritrix.sh defaults 100"
+
+- name: Start Heritrix via init.d script
+  command: "/etc/init.d/heritrix.sh"
 
 - name: Create app DB Schema
   mysql_db:
@@ -165,3 +179,15 @@
   file:
     path: "/etc/nginx/sites-enabled/default"
     state: absent
+
+- name: Start nginx
+  service:
+    name: "nginx"
+    state: started
+
+- name: Start the logius application services
+  service:
+    name: "{{ item.key }}"
+    state: started
+  with_dict: "{{ vera_app_details }}"
+  notify: reload nginx

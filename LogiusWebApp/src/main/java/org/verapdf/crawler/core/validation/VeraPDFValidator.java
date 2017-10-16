@@ -47,6 +47,9 @@ public class VeraPDFValidator implements PDFValidator {
     public VeraPDFValidationResult getValidationResult(ValidationJob job) throws IOException, ValidationDeadlockException, InterruptedException {
         try {
             int validationRetries = 0;
+            if (job == null) {
+                return new VeraPDFValidationResult("Validation can't be performed for empty validation job");
+            }
             String filename = job.getFilePath();
 
             long endTime = System.currentTimeMillis() + GET_VALIDATION_RESULT_TIMEOUT;
@@ -64,6 +67,7 @@ public class VeraPDFValidator implements PDFValidator {
                         break;
 
                     case ABORTED:
+                        logger.info("Validation is aborted");
                         return new VeraPDFValidationResult("Validation was aborted");
 
                     default:

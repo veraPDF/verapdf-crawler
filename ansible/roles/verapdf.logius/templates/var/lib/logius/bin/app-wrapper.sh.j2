@@ -29,9 +29,9 @@
 #       Configuration GUI.
 ### BEGIN INIT INFO
 # Provides: {{ item.value.app_name }}
-# Required-Start: $local_fs $network $syslog
+# Required-Start: $local_fs $network $syslog {{ item.value.required_start }}
 # Should-Start:
-# Required-Stop:
+# Required-Stop: {{ item.value.required_stop }}
 # Default-Start: 2 3 4 5
 # Default-Stop: 0 1 6
 # Short-Description: {{ item.value.long_app_name }}

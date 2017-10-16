@@ -1,5 +1,6 @@
 package org.verapdf.crawler.core.heritrix;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -61,6 +62,7 @@ public class HeritrixClient {
     private final String engineUrl;
     private final String baseJobUrl;
     private final String logiusAppUrl;
+    private final String jobsFolderPath;
     private final CredentialsProvider credsProvider;
     private final SSLConnectionSocketFactory sslConnectionSocketFactory;
 
@@ -69,6 +71,7 @@ public class HeritrixClient {
         this.engineUrl = baseUrl + "engine";
         this.baseJobUrl = this.engineUrl + "/job/";
         this.logiusAppUrl = config.getLogiusAppUrl();
+        this.jobsFolderPath = config.getJobsFolder();
         // Configure credential provider
         URL domain = new URL(baseUrl);
         HttpHost targetHost = new HttpHost(domain.getHost(), domain.getPort(), "https");
@@ -144,19 +147,38 @@ public class HeritrixClient {
         return heritrixJobId;
     }
 
+    public boolean deleteJobFolder(String heritrixJobId) throws ParserConfigurationException, SAXException, XPathExpressionException, IOException {
+        String currentJobStatus = getStatusDescription(heritrixJobId);
+        if (currentJobStatus.equalsIgnoreCase("unbuilt")) {
+            String path = this.jobsFolderPath.endsWith("/") ?
+                    this.jobsFolderPath + heritrixJobId :
+                    this.jobsFolderPath + "/" + heritrixJobId;
+            try {
+                FileUtils.deleteDirectory(new File(path));
+                return true;
+            } catch (IOException e) {
+                logger.error("Can't delete heritrix job folder", e);
+                return false;
+            }
+        }
+        return false;
+    }
+
     public boolean isJobFinished(String heritrixJobId) throws IOException, ParserConfigurationException, SAXException, XPathExpressionException {
+        String currentJobStatus = getStatusDescription(heritrixJobId);
+        currentJobStatus = currentJobStatus.trim().toLowerCase();
+        return currentJobStatus.startsWith("finished");
+    }
+
+    private String getStatusDescription(String heritrixJobId) throws IOException, ParserConfigurationException, SAXException, XPathExpressionException {
         try (InputStream status = new StringInputStream(getFullStatus(heritrixJobId))) {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();
             Document document = db.parse(status);
             XPathFactory xpf = XPathFactory.newInstance();
             XPath xpath = xpf.newXPath();
-            String currentJobStatus = (String) xpath.evaluate(STATUS_DESCRIPTION_XPATH, document, XPathConstants.STRING);
-            if (currentJobStatus.contains(":")) {
-                currentJobStatus = currentJobStatus.split(": ")[1];
-            }
-            currentJobStatus = currentJobStatus.trim().toLowerCase();
-            return currentJobStatus.startsWith("finished") || currentJobStatus.startsWith("aborted");
+            String res = (String) xpath.evaluate(STATUS_DESCRIPTION_XPATH, document, XPathConstants.STRING);
+            return res.trim();
         }
     }
 

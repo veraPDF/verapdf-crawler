@@ -35,6 +35,9 @@ public class DocumentResource {
     @UnitOfWork
     public DomainDocument saveDocument(DomainDocument document) {
         CrawlJob job = crawlJobDAO.getByHeritrixJobId(document.getCrawlJob().getHeritrixJobId());
+        if (job == null) {
+            return null;
+        }
         document.setCrawlJob(job);
 
         documentDAO.save(document);

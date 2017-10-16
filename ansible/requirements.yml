@@ -1,0 +1,6 @@
+- src: tschifftner.hostname
+- src: tersmitten.timezone
+- src: tersmitten.apt
+- src: geerlingguy.mysql
+- src: HanXHX.nginx
+- src: robdyke.maven

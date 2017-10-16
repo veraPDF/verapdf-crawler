@@ -109,4 +109,8 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         return currentSession().createQuery(criteriaQuery).setMaxResults(limit).list();
     }
 
+    public void remove(CrawlJob crawlJob) {
+        currentSession().delete(crawlJob);
+        currentSession().flush();
+    }
 }
