@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-nohup java -jar {{ logius_app_bin }}/web-app-1.0.jar server {{ logius_app_config }}/web-app.yml >{{ logius_log_dir }}/logius_out.log 2>&1 &
-nohup java -jar {{ logius_app_bin }}/sample-web-app-1.0.jar server {{ logius_app_config }}/sample-web-app.yml >{{ logius_log_dir }}/sample_out.log 2>&1 &
-nohup java -jar {{ logius_app_bin }}/verapdf-service-1.0.jar server {{ logius_app_config }}/verapdf-service.yml >{{ logius_log_dir }}/verapdf_service_out.log 2>&1 &
+nohup java -jar {{ logius_app_bin }}/web-app-1.0.jar server {{ logius_app_conf }}/web-app.yml >{{ logius_log_dir }}/logius_out.log 2>&1 &
+nohup java -jar {{ logius_app_bin }}/sample-web-app-1.0.jar server {{ logius_app_conf }}/sample-web-app.yml >{{ logius_log_dir }}/sample_out.log 2>&1 &
+nohup java -jar {{ logius_app_bin }}/verapdf-service-1.0.jar server {{ logius_app_conf }}/verapdf-service.yml >{{ logius_log_dir }}/verapdf_service_out.log 2>&1 &

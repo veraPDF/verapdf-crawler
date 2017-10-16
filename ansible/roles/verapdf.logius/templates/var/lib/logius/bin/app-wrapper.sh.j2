@@ -1,0 +1,50 @@
+#! /bin/sh
+
+#
+# Copyright (c) 1999, 2017 Tanuki Software, Ltd.
+# http://www.tanukisoftware.com
+# All rights reserved.
+#
+# This software is the proprietary information of Tanuki Software.
+# You shall use it only in accordance with the terms of the
+# license agreement you entered into with Tanuki Software.
+# http://wrapper.tanukisoftware.com/doc/english/licenseOverview.html
+#
+# Java Service Wrapper sh script.  Suitable for starting and stopping
+#  wrapped Java applications on UNIX platforms.
+#
+
+#-----------------------------------------------------------------------------
+# These settings can be modified to fit the needs of your application
+# Optimized for use with version 3.5.33 of the Wrapper.
+
+# IMPORTANT - Please always stop and uninstall an application before making
+#             any changes to this file.  Failure to do so could remove the
+#             script's ability to control the application.
+
+# Initialization block for the install_initd and remove_initd scripts used by
+#  SUSE linux, CentOS and RHEL distributions.
+# Note: From CentOS 6, make sure the BEGIN INIT INFO section is before any line
+#       of code otherwise the service won't be displayed in the Service
+#       Configuration GUI.
+### BEGIN INIT INFO
+# Provides: {{ item.value.app_name }}
+# Required-Start: $local_fs $network $syslog
+# Should-Start:
+# Required-Stop:
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: {{ item.value.long_app_name }}
+# Description: {{ item.value.app_description }}
+### END INIT INFO
+
+# Application
+APP_NAME="{{ item.value.app_name }}"
+APP_LONG_NAME="{{ item.value.long_app_name }}"
+# If uncommented (and set to false), APP_NAME and APP_LONG_NAME will no longer
+#  be passed to the wrapper. See documentation for details.
+#APP_NAME_PASS_TO_WRAPPER=false
+
+# Wrapper
+WRAPPER_CMD="./wrapper"
+WRAPPER_CONF="../conf/{{ item.value.app_name }}.conf"
