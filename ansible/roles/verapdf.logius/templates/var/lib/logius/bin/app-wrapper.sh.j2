@@ -48,3 +48,134 @@ APP_LONG_NAME="{{ item.value.long_app_name }}"
 # Wrapper
 WRAPPER_CMD="./wrapper"
 WRAPPER_CONF="../conf/{{ item.value.app_name }}.conf"
+
+# Priority at which to run the wrapper.  See "man nice" for valid priorities.
+#  nice is only used if a priority is specified.
+PRIORITY=
+
+# Location of the pid file.
+PIDDIR="."
+
+# PIDFILE_CHECK_PID tells the script to double check whether the pid in the pid
+#  file actually exists and belongs to this application.  When not set, only
+#  check the pid, but not what it is.  This is only needed when multiple
+#  applications need to share the same pid file.
+PIDFILE_CHECK_PID=true
+
+# FIXED_COMMAND tells the script to use a hard coded action rather than
+#  expecting the first parameter of the command line to be the command.
+#  By default the command will be expected to be the first parameter.
+#FIXED_COMMAND=console
+
+# PASS_THROUGH tells the script to pass all arguments through to the JVM
+#  as is.  If PASS_THROUGH is set to true and FIXED_COMMAND is specified
+#  then all arguments will be passed. If PASS_THROUGH is set to true but
+#  FIXED_COMMAND is not specified then all arguments starting with the
+#  second will be passed.
+#PASS_THROUGH=true
+
+# If uncommented, causes the Wrapper to be shutdown using an anchor file.
+#  When launched with the 'start' command, it will also ignore all INT and
+#  TERM signals.
+#IGNORE_SIGNALS=true
+
+# Wrapper will start the JVM asynchronously. Your application may have some
+#  initialization tasks and it may be desirable to wait a few seconds
+#  before returning.  For example, to delay the invocation of following
+#  startup scripts.  Setting WAIT_AFTER_STARTUP to a positive number will
+#  cause the start command to delay for the indicated period of time
+#  (in seconds).
+WAIT_AFTER_STARTUP=0
+
+# If set, wait for the wrapper to report that the daemon has started
+WAIT_FOR_STARTED_STATUS=true
+WAIT_FOR_STARTED_TIMEOUT=120
+
+# If set, the status, start_msg and stop_msg commands will print out detailed
+#   state information on the Wrapper and Java processes.
+#DETAIL_STATUS=true
+
+# If set, the 'pause' and 'resume' commands will be enabled.  These make it
+#  possible to pause the JVM or Java application without completely stopping
+#  the Wrapper.  See the wrapper.pausable and wrapper.pausable.stop_jvm
+#  properties for more information.
+#PAUSABLE=true
+
+# Set the mode used to 'pause' or 'resume' the Wrapper. Possible values are
+#  'signals' which uses SIGUSR1 and SIGUSR2, and 'file' which uses the command
+#  file to to communicate these actions.  The default value is 'signals'.
+#  Be aware that depending on the mode, the properties wrapper.signal.mode.usr1,
+#  wrapper.signal.mode.usr2, or wrapper.commandfile of the configuration file may
+#  be overriden.
+#PAUSABLE_MODE=signals
+
+# If specified, the Wrapper will be run as the specified user.
+# IMPORTANT - Make sure that the user has the required privileges to write
+#  the PID file and wrapper.log files.  Failure to be able to write the log
+#  file will cause the Wrapper to exit without any way to write out an error
+#  message.
+# NOTE - This will set the user which is used to run the Wrapper as well as
+#  the JVM and is not useful in situations where a privileged resource or
+#  port needs to be allocated prior to the user being changed.
+RUN_AS_USER={{ logius_linux_user }}
+
+# Set the full path to the 'su' command (substitute user).
+# NOTE - In case 'su' is not in the PATH, you can set the absolute path here,
+#  for example:
+#  SU_BIN=/bin/su
+# NOTE - For Red Hat, the script will use '/sbin/runuser' if it is present and
+#  ignore the value of SU_BIN.
+SU_BIN=su
+
+# Set option(s) for 'su' or 'runuser'.
+# In case the user set in RUN_AS_USER has no bash set, the 'su' command will fail.
+# The workaround for GNU/Linux system is to specify which bash to use with
+#  the '-s' option.
+#SU_OPTS="-s /bin/bash"
+
+# Set the full path to the 'id' command.
+# For example:
+#  ID_BIN=/usr/bin/id
+ID_BIN=id
+
+# By default we show a detailed usage block.  Uncomment to show brief usage.
+#BRIEF_USAGE=true
+
+# Set which service management tool to use.
+# Possible values are:
+#   for linux...: auto, systemd, upstart, initd
+#   for aix.....: auto, src, initd
+# When set to 'auto', this script file will try to detect in the order of the
+# list for each platform which service management tool to use to install the Wrapper.
+SERVICE_MANAGEMENT_TOOL=auto
+
+# When installing on Mac OSX platforms, the following domain will be used to
+#  prefix the plist file name.
+PLIST_DOMAIN=org.tanukisoftware.wrapper
+
+# When installing on Mac OSX platforms, this parameter controls whether the daemon
+#  is to be kept continuously running or to let demand and conditions control the
+#  invocation.
+MACOSX_KEEP_RUNNING="false"
+
+# The following two lines are used by the chkconfig command. Change as is
+#  appropriate for your application.  They should remain commented.
+# chkconfig: 2345 20 80
+# description: @app.long.name@
+
+# Set run level to use when installing the application to start and stop on
+#  system startup and shutdown.  It is important that the application always
+#  be uninstalled before making any changes to the run levels.
+# It is also possible to specify different run levels based on the individual
+#  platform.  When doing so this script will look for defined run levels in
+#  the following order:
+#   1) "RUN_LEVEL_S_$DIST_OS" or "RUN_LEVEL_K_$DIST_OS", where "$DIST_OS" is
+#      the value of DIST_OS.  "RUN_LEVEL_S_solaris=20" for example.
+#   2) RUN_LEVEL_S or RUN_LEVEL_K, to specify specify start or stop run levels.
+#   3) RUN_LEVEL, to specify a general run level.
+RUN_LEVEL=20
+
+# List of files to source prior to executing any commands. Use ';' as delimiter.
+# For example:
+#  FILES_TO_SOURCE="/home/user/.bashrc;anotherfile;../file3"
+FILES_TO_SOURCE=
