@@ -156,8 +156,9 @@ public class CrawlJobResource {
         HeritrixCrawlJobStatus heritrixStatus = null;
         try {
             heritrixStatus = heritrix.getHeritrixStatus(crawlJob.getHeritrixJobId());
-        } catch (IOException | XPathExpressionException | SAXException | ParserConfigurationException e) {
+        } catch (Throwable e) {
             logger.error("Error during obtaining heritrix status", e);
+            heritrixStatus = new HeritrixCrawlJobStatus("Unavailable: " + e.getMessage(), null, null);
         }
 
         String crawlJobDomain = crawlJob.getDomain();
