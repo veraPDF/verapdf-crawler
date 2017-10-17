@@ -204,7 +204,8 @@ public class HeritrixClient {
                 long totalUriCount = Long.parseLong(totalUriCountString);
                 uriTotalsStatus = new HeritrixCrawlJobStatus.HeritrixURITotalsStatus(downloadedUriCount, queuedUriCount, totalUriCount);
             } catch (NumberFormatException e) {
-                logger.error("Can not obtain number value", e);
+                // No need to log. This block of code can be reached only in cases
+                // when there is no uri information
             }
 
             String jobLogTailXpath = "/job/jobLogTail/value";

@@ -114,8 +114,10 @@ public class ValidationService extends AbstractService {
     @SuppressWarnings("WeakerAccess")
     @UnitOfWork
     public void saveResult(VeraPDFValidationResult result) {
-        try {
+		boolean shouldCleanDB = false;
+    	try {
             if (!currentJob.getStatus().equals(ValidationJob.Status.ABORTED)) {
+            	shouldCleanDB = true;
 				logger.debug("Saving validation job results");
                 DomainDocument document = currentJob.getDocument();
                 document.setBaseTestResult(result.getTestResult());
@@ -136,11 +138,11 @@ public class ValidationService extends AbstractService {
             	logger.debug("Validation job was aborted, don't save any results");
 			}
         } finally {
-            cleanJob(currentJob);
+            cleanJob(currentJob, shouldCleanDB);
         }
     }
 
-    private void cleanJob(ValidationJob job) {
+    private void cleanJob(ValidationJob job, boolean shouldCleanDB) {
     	logger.debug("Cleanup validation job");
 		if (job == null) {
 			return;
@@ -150,6 +152,8 @@ public class ValidationService extends AbstractService {
                 logger.warn("Failed to clean validation job file " + job.getFilePath());
             }
         }
-        validationJobDAO.remove(job);
+        if (shouldCleanDB) {
+			validationJobDAO.remove(job);
+		}
     }
 }
