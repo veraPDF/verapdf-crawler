@@ -50,6 +50,7 @@ heritrix_use_self_cert: true
 #
 logius_git_branch: "integration"
 logius_git_update: "yes"
+logius_git_root: "{{ logius_app_home }}/src"
 
 # Disable schema re-creation
 #
