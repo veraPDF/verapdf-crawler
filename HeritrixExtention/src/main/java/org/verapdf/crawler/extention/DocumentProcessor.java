@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
@@ -19,14 +21,15 @@ import org.verapdf.common.RetryFailedException;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 
 public class DocumentProcessor extends MirrorWriterProcessor {
 
     private static final int MAX_RETRIES = 120;
     private static final long RETRY_INTERVAL = 30 * 1000;
-
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
+    private static SimpleDateFormat loggingDateFormat = new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss.SSS]");
+    private static SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
 
     private ObjectMapper mapper;
 
@@ -61,72 +64,105 @@ public class DocumentProcessor extends MirrorWriterProcessor {
     }
 
     public DocumentProcessor() {
+        log("Initializing new document processor object");
         mapper = new ObjectMapper();
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
     @Override
     protected boolean shouldProcess(CrawlURI crawlURI) {
-        // TODO: add crawlSince parameter, and compare here with Last-Modified value and do now download and process older files
+        try {
+            // TODO: add crawlSince parameter, and compare here with Last-Modified value and do now download and process older files
 
-        if (supportedContentTypes.keySet().contains(crawlURI.getContentType())) {
-            return true;
+            log("shouldProcess method invocation with uri " + crawlURI.getURI());
+            if (supportedContentTypes.keySet().contains(crawlURI.getContentType())) {
+                return true;
+            }
+
+            String extension = FilenameUtils.getExtension(crawlURI.getURI());
+            return supportedContentTypes.values().contains(extension);
+        } catch (Throwable e) {
+            log("Fail to check file type of " + crawlURI.getURI() + ". Exception message: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
-
-        String extension = FilenameUtils.getExtension(crawlURI.getURI());
-        return supportedContentTypes.values().contains(extension);
     }
 
     @Override
     protected void innerProcess(CrawlURI crawlURI) {
+        String uri = crawlURI.getURI();
         try {
+            log("innerProcess method invocation with uri " + uri);
             // Download file
+            log("Downloading file");
             super.innerProcess(crawlURI);
 
             // Create document
-            DomainDocument document = new DomainDocument(jobId, crawlURI.getURI());
+            log("Creating document");
+            DomainDocument document = new DomainDocument(jobId, uri);
 
             // File path
+            log("Obtaining document path");
             String baseDir = getPath().getFile().getCanonicalPath();
-            String fileName = crawlURI.getData().get(A_MIRROR_PATH).toString();
+            Object object = crawlURI.getData().get(A_MIRROR_PATH);
+            if (object == null) {
+                log("Can not obtain file name from crawlURI data object");
+                return;
+            }
+            String fileName = object.toString();
+            log("File name obtained: " + fileName + ". Setting file path");
             document.setFilePath(FilenameUtils.concat(baseDir, fileName));
 
             // Content type
-            if (supportedContentTypes.containsKey(crawlURI.getContentType())) {
-                document.setContentType(supportedContentTypes.get(crawlURI.getContentType()));
+            log("Setting content type");
+            String contentType = crawlURI.getContentType();
+            if (supportedContentTypes.containsKey(contentType)) {
+                document.setContentType(supportedContentTypes.get(contentType));
             } else {
-                document.setContentType(FilenameUtils.getExtension(crawlURI.getURI()));
+                document.setContentType(FilenameUtils.getExtension(uri));
             }
 
             // Set last modified
+            log("Setting last modified date");
             Header lastModifiedHeader = crawlURI.getHttpMethod().getResponseHeader("Last-Modified");
             if (lastModifiedHeader != null) {
                 try {
                     document.setLastModified(dateFormat.parse(lastModifiedHeader.getValue()));
                 } catch (ParseException e) {
-                    System.out.println("Fail to parse " + lastModifiedHeader + " for " + crawlURI.getURI() + ", lastModified won't be set for this document.");
+                    log("Fail to parse " + lastModifiedHeader + " for " + uri + ", lastModified won't be set for this document.");
                     e.printStackTrace();
                 }
             }
 
             // Send to main application for further processing
+            log("Sending to main application for further processing");
+            log("Generating POST request");
             HttpPost request = new HttpPost(logiusUrl + "/api/documents");
             String documentString = mapper.writeValueAsString(document);
             StringEntity payload = new StringEntity(documentString, ContentType.APPLICATION_JSON);
             request.setEntity(payload);
 
+            log("Sending request");
             try (CloseableHttpClient httpClient = new GracefulHttpClient(MAX_RETRIES, RETRY_INTERVAL)) {
                 try (CloseableHttpResponse response = httpClient.execute(request)){
-                    if (response.getStatusLine().getStatusCode() != 200) {
-                        System.out.println("Fail to POST document " + documentString + "."
-                                + " Response " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase()
-                                + (response.getEntity() != null ? "\n" + IOUtils.toString(response.getEntity().getContent()) : ""));
+                    StatusLine statusLine = response.getStatusLine();
+                    int statusCode = statusLine.getStatusCode();
+                    log("Response obtained with status code " + statusCode);
+                    if (statusCode != 200) {
+                        HttpEntity responseEntity = response.getEntity();
+                        log("Fail to POST document " + documentString + "."
+                                + " Response " + statusCode + " " + statusLine.getReasonPhrase()
+                                + (responseEntity != null ? "\n" + IOUtils.toString(responseEntity.getContent()) : ""));
                     }
                 }
             }
-        } catch (IOException e) {
-            System.out.println("Fail to process " + crawlURI.getURI());
+        } catch (Throwable e) {
+            log("Fail to process " + uri + ". Exception message: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private static void log(String message) {
+        System.out.println(loggingDateFormat.format(new Date()) + " org.verapdf.crawler.extension.DocumentProcessor: " + message);
     }
 }
