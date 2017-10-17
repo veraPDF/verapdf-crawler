@@ -75,12 +75,18 @@ $(function () {
         var heritrixLogTbody = $('.heritrix tbody');
         heritrixLogTbody.find('tr:not(.template)').remove();
 
-        var logTemplate = $('.heritrix table .template').clone().removeClass('template');
-        $.each(jobStatus.heritrixStatus.jobLogTail, function(index, message) {
-            var element = logTemplate.clone();
-            element.find('.message').text(message);
-            heritrixLogTbody.append(element);
-        });
+        if (jobStatus.heritrixStatus.jobLogTail) {
+            var logTemplate = $('.heritrix table .template').clone().removeClass('template');
+            $.each(jobStatus.heritrixStatus.jobLogTail, function(index, message) {
+                var element = logTemplate.clone();
+                element.find('.message').text(message);
+                heritrixLogTbody.append(element);
+            });
+            $('.heritrix table').show();
+        } else {
+            $('.heritrix table').hide();
+        }
+
 
         // Validation queue details
         $('.validation-queue .validation-queue-size').text(jobStatus.validationQueueStatus.count);
