@@ -40,18 +40,24 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
 
     public long count(String domainFilter, Boolean finished) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
-        CriteriaQuery<Long> query = builder.createQuery(Long.class);
-        Root<CrawlJob> crawlJob = query.from(CrawlJob.class);
-        query.select(builder.count(crawlJob));
+        CriteriaQuery<Long> criteriaQuery = builder.createQuery(Long.class);
+        Root<CrawlJob> crawlJob = criteriaQuery.from(CrawlJob.class);
+        criteriaQuery.select(builder.count(crawlJob));
 
+        List<Predicate> restrictions = new ArrayList<>();
         if (domainFilter != null) {
-            query = query.where(builder.like(crawlJob.get(CrawlJob_.domain), "%" + domainFilter + "%"));
+            restrictions.add(builder.like(crawlJob.get(CrawlJob_.domain), "%" + domainFilter + "%"));
         }
         if (finished != null) {
-            query.where(builder.equal(crawlJob.get(CrawlJob_.finished), finished));
+            restrictions.add(builder.equal(crawlJob.get(CrawlJob_.finished), finished));
+        }
+        if (restrictions.size() == 1) {
+            criteriaQuery.where(restrictions.get(0));
+        } else if (!restrictions.isEmpty()) {
+            criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
         }
 
-        return this.currentSession().createQuery(query).getSingleResult();
+        return this.currentSession().createQuery(criteriaQuery).getSingleResult();
     }
 
     public List<CrawlJob> find(String domainFilter, Boolean finished, Integer start, Integer limit) {
@@ -59,11 +65,18 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         CriteriaQuery<CrawlJob> criteriaQuery = builder.createQuery(CrawlJob.class);
         Root<CrawlJob> crawlJob = criteriaQuery.from(CrawlJob.class);
 
+        List<Predicate> restrictions = new ArrayList<>();
         if (domainFilter != null) {
-            criteriaQuery.where(builder.like(crawlJob.get(CrawlJob_.domain), "%" + domainFilter + "%"));
+            restrictions.add(builder.like(crawlJob.get(CrawlJob_.domain), "%" + domainFilter + "%"));
         }
         if (finished != null) {
-            criteriaQuery.where(builder.equal(crawlJob.get(CrawlJob_.finished), finished));
+            restrictions.add(builder.equal(crawlJob.get(CrawlJob_.finished), finished));
+        }
+
+        if (restrictions.size() == 1) {
+            criteriaQuery.where(restrictions.get(0));
+        } else if (!restrictions.isEmpty()) {
+            criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
         }
         criteriaQuery.orderBy(builder.desc(crawlJob.get(CrawlJob_.startTime)));
 
