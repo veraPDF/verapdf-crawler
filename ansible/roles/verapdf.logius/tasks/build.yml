@@ -7,7 +7,7 @@
     version: "{{ logius_git_branch }}"
     update: "{{ logius_git_update }}"
   tags:
-    - install
+    - "install"
 
 - name: Update git repository
   git:
@@ -17,6 +17,7 @@
     clone: no
   tags:
     - "update"
+    - "install"
 
 - name: Build Maven project
   command: mvn clean package
@@ -24,6 +25,7 @@
     chdir: "{{ logius_git_root }}"
   tags:
     - "update"
+    - "install"
 
 - name: Stop the logius application services
   service:
@@ -35,6 +37,7 @@
     - "logius-web"
   tags:
     - "update"
+    - "install"
 
 - name: Deploy application jars
   copy:
@@ -51,17 +54,19 @@
     - { src_app_name: "HeritrixExtention", src_version: "", dest_dir: "{{ logius_heritrix_home }}/lib", dest_jar: "logius-heritrix-extenstion" }
   tags:
     - "update"
+    - "install"
 
 - name: Start Heritrix via init.d script
   command: "/etc/init.d/heritrix.sh"
   tags:
-    - install
+    - "install"
 
 - name: Start nginx
   service:
     name: "nginx"
     state: started
   tags:
+    - "install"
     - "update"
 
 - name: Start the logius application services
@@ -71,4 +76,5 @@
   with_dict: "{{ vera_app_details }}"
   notify: reload nginx
   tags:
+    - "install"
     - "update"
