@@ -7,7 +7,7 @@
     remote_src: True
     creates: "{{ tanuki_installer_dir }}"
   tags:
-    - install
+    - "install"
 
 - name: Copy the needed Tanuki files
   copy:
@@ -22,7 +22,7 @@
     - { src: "/lib/libwrapper.so", dest: "{{ logius_app_lib }}/libwrapper.so" }
     - { src: "/lib/wrapper.jar", dest: "{{ logius_app_lib }}/wrapper.jar" }
   tags:
-    - install
+    - "install"
 
 - name: Deploy service wrapper scripts
   template:
@@ -33,7 +33,7 @@
     mode: "755"
   with_dict: "{{ vera_app_details }}"
   tags:
-    - install
+    - "install"
 
 - name: Place second server scripty block in
   blockinfile:
@@ -44,7 +44,7 @@
     block: "{{ lookup('file', 'scriptend') }}"
   with_dict: "{{ vera_app_details }}"
   tags:
-    - install
+    - "install"
 
 - name: Deploy service configuration files
   template:
@@ -55,7 +55,7 @@
     mode: "755"
   with_dict: "{{ vera_app_details }}"
   tags:
-    - install
+    - "install"
 
 - name: Install veraPDF services
   command: "{{ logius_app_bin }}/{{ item.key }} install"
@@ -63,4 +63,4 @@
     creates: "/etc/init.d/{{ item.key }}"
   with_dict: "{{ vera_app_details }}"
   tags:
-    - install
+    - "install"

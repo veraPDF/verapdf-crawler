@@ -5,7 +5,7 @@
     name: "{{ logius_linux_group }}"
     state: present
   tags:
-    - install
+    - "install"
 
 - name: Create logius user
   user:
@@ -15,7 +15,7 @@
     createhome: no
     system: yes
   tags:
-    - install
+    - "install"
 
 - name: Create application install directory
   file:
@@ -30,7 +30,7 @@
     - "{{ logius_app_conf }}"
     - "{{ logius_app_res }}"
   tags:
-    - install
+    - "install"
 
 - name: Create application log directory
   file:
@@ -40,7 +40,7 @@
     group: "{{ logius_linux_group }}"
     mode: "755"
   tags:
-    - install
+    - "install"
 
 - name: Copy application sample report
   copy:
@@ -54,7 +54,7 @@
     - "sample_report.ods"
     - "sample_configuration.cxml"
   tags:
-    - install
+    - "install"
 
 - name: Add Web app configuration templates
   template:
@@ -68,7 +68,8 @@
     - "logius-sample"
     - "verapdf-service"
   tags:
-    - install
+    - "install"
+    - "update"
 
 - name: Create app DB Schema
   mysql_db:
@@ -77,7 +78,7 @@
     target: "{{ logius_git_root }}/LogiusWebApp/src/main/resources/sql/schema.sql"
   when: logius_db_create_schema
   tags:
-    - install
+    - "install"
 
 - name: Setup default properties
   mysql_db:
@@ -86,11 +87,11 @@
     target: "{{ logius_git_root }}/LogiusWebApp/src/main/resources/sql/pdf_properties_base_settings.sql"
   when: logius_db_create_schema
   tags:
-    - install
+    - "install"
 
 - name: Remove default nginx site
   file:
     path: "/etc/nginx/sites-enabled/default"
     state: absent
   tags:
-    - install
+    - "install"
