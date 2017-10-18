@@ -9,8 +9,8 @@ import javax.persistence.*;
 public class ValidationJob {
 
     public enum Status {
-        NOT_STARTED,
         IN_PROGRESS,
+        NOT_STARTED,
         PAUSED,
 		ABORTED
     }

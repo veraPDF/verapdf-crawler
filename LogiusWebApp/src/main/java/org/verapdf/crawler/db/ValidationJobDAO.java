@@ -32,10 +32,10 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<ValidationJob> criteriaQuery = builder.createQuery(ValidationJob.class);
         Root<ValidationJob> jobRoot = criteriaQuery.from(ValidationJob.class);
-        criteriaQuery.where(
-                builder.equal(jobRoot.get(ValidationJob_.status), status)
-        );
-        criteriaQuery.where(builder.isNotNull(jobRoot.get(ValidationJob_.document).get(DomainDocument_.url)));
+        criteriaQuery.where(builder.and(
+                builder.equal(jobRoot.get(ValidationJob_.status), status),
+                builder.isNotNull(jobRoot.get(ValidationJob_.document).get(DomainDocument_.url))
+        ));
         return currentSession().createQuery(criteriaQuery).setMaxResults(1).uniqueResult();
     }
 
@@ -79,7 +79,7 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
             );
         }
         criteriaQuery.orderBy(
-                builder.desc(job.get(ValidationJob_.status)),
+                builder.asc(job.get(ValidationJob_.status)),
                 builder.asc(job.get(ValidationJob_.id))
         );
         Query<ValidationJob> query = currentSession().createQuery(criteriaQuery);
