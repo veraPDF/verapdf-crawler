@@ -4,6 +4,7 @@ import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
 import org.verapdf.crawler.api.crawling.CrawlJob_;
+import org.verapdf.crawler.api.document.DomainDocument;
 import org.verapdf.crawler.api.document.DomainDocument_;
 import org.verapdf.crawler.api.validation.ValidationJob;
 import org.verapdf.crawler.api.validation.ValidationJob_;
@@ -94,13 +95,17 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         CriteriaUpdate<ValidationJob> criteriaUpdate = builder.createCriteriaUpdate(ValidationJob.class);
         Root<ValidationJob> jobRoot = criteriaUpdate.from(ValidationJob.class);
 
-        Subquery<ValidationJob> subquery = criteriaUpdate.subquery(ValidationJob.class);
-        Root<ValidationJob> subqueryRoot = subquery.correlate(jobRoot);
-        subquery.where(builder.and(
-                builder.equal(subqueryRoot.get(ValidationJob_.document).get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain),
-                builder.equal(subqueryRoot.get(ValidationJob_.status), oldStatus)
-        ));
+        Subquery<String> subquery = criteriaUpdate.subquery(String.class);
+        Root<DomainDocument> subqueryRoot = subquery.from(DomainDocument.class);
+        subquery.select(subqueryRoot.get(DomainDocument_.url));
+        subquery.where(
+                builder.equal(subqueryRoot.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain)
+        );
         criteriaUpdate.set(jobRoot.get(ValidationJob_.status), newStatus);
+        criteriaUpdate.where(builder.and(
+                jobRoot.get(ValidationJob_.id).in(subquery),
+                builder.equal(jobRoot.get(ValidationJob_.status), oldStatus)
+        ));
         currentSession().createQuery(criteriaUpdate).executeUpdate();
     }
 }
