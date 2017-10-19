@@ -13,6 +13,7 @@ import org.verapdf.crawler.configurations.VeraPDFServiceConfiguration;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.core.jobs.HeritrixCleanerService;
 import org.verapdf.crawler.core.jobs.MonitorCrawlJobStatusService;
+import org.verapdf.crawler.core.reports.ReportsGenerator;
 import org.verapdf.crawler.core.validation.PDFValidator;
 import org.verapdf.crawler.db.*;
 import org.verapdf.crawler.core.validation.ValidationService;
@@ -28,6 +29,8 @@ public class ResourceManager {
     private final Map<String, HealthCheck> healthChecks = new HashMap<>();
 
     public ResourceManager(LogiusConfiguration config, HeritrixClient heritrix, HibernateBundle<LogiusConfiguration> hibernate) {
+        // Initializing report generator
+        ReportsGenerator.initialize(config.getReportsConfiguration());
         // Initializing all DAO objects
         CrawlRequestDAO crawlRequestDAO = new CrawlRequestDAO(hibernate.getSessionFactory());
         CrawlJobDAO crawlJobDAO = new CrawlJobDAO(hibernate.getSessionFactory());
