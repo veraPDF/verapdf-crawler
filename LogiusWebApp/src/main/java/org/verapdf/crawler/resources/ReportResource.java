@@ -116,14 +116,20 @@ public class ReportResource {
             domain = DomainUtils.trimUrl(domain);
         }
         Date start = DateParam.getDateFromParam(startDate);
-        List<String> pdfType = Collections.singletonList("pdf");
-        Long compliantPDFCount = documentDAO.count(domain, pdfType, DomainDocument.BaseTestResult.OPEN, start);
+        Long compliantPDFCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(),
+                DomainDocument.BaseTestResult.OPEN, start);
         long compliantPDFA12DocumentsCount = compliantPDFCount == null ? 0 : compliantPDFCount;
-        Long odfCount = documentDAO.count(domain, Arrays.asList("odt", "ods", "odp"), null, start);
+        Long odfCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OPEN_OFFICE.getTypes(),
+                null, start);
         long odfDocumentsCount = odfCount == null ? 0 : odfCount;
-        List<DomainDocument> invalidPDFDocuments = documentDAO.getDocuments(domain, pdfType, DomainDocument.BaseTestResult.NOT_OPEN, start);
-        List<String> microsoftDocuments = documentDAO.getDocumentsUrls(domain, Arrays.asList("doc", "xls", "ppt"), null, start);
-        List<String> openOfficeXMLDocuments = documentDAO.getDocumentsUrls(domain, Arrays.asList("docx", "xlsx", "pptx"), null, start);
+        List<DomainDocument> invalidPDFDocuments = documentDAO.getDocuments(domain,
+                DomainDocument.DocumentTypeGroup.PDF.getTypes(),
+                DomainDocument.BaseTestResult.NOT_OPEN, start);
+        List<String> microsoftDocuments = documentDAO.getDocumentsUrls(domain,
+                DomainDocument.DocumentTypeGroup.MS_OFFICE.getTypes(),
+                null, start);
+        List<String> openOfficeXMLDocuments = documentDAO.getDocumentsUrls(domain,
+                DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), null, start);
         try {
             File tempODS = ReportsGenerator.generateODSReport(start, compliantPDFA12DocumentsCount,
 					odfDocumentsCount, invalidPDFDocuments, microsoftDocuments, openOfficeXMLDocuments);

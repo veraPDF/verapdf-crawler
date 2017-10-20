@@ -66,7 +66,7 @@ public class ReportsGenerator {
 	private static void fillNonPDFA12Documents(List<DomainDocument> documentsList, SpreadSheet spreadSheet) {
 		Sheet sheet = spreadSheet.getSheet(1);
 		sheet.ensureColumnCount(5);
-		sheet.ensureRowCount(100);
+		sheet.ensureRowCount(getNonPDFA12DocumentsRowCount(documentsList));
 		int i = 1;
 		for (DomainDocument document : documentsList) {
 			sheet.setValueAt(document.getUrl(), 0, i);
@@ -77,21 +77,21 @@ public class ReportsGenerator {
 				setProperty("producer", 3, i, properties, sheet);
 			}
 			List<ValidationError> validationErrors = document.getValidationErrors();
-			if (validationErrors != null) {
+			if (validationErrors != null && !validationErrors.isEmpty()) {
 				int j = i;
 				for (ValidationError error : validationErrors) {
 					sheet.setValueAt(error.getFullDescription(), 4, j++);
 				}
-				if (i < j) {
+				if (j - i > 1) {
 					for (int l = 0; l < 4; ++l) {
 						MutableCell<SpreadSheet> cell = sheet.getCellAt(l, i);
 						cell.merge(1, j - i);
 					}
-					i=j;
-					continue;
 				}
+				i = j;
+			} else {
+				++i;
 			}
-			++i;
 		}
 	}
 
@@ -101,6 +101,23 @@ public class ReportsGenerator {
 		if (property != null) {
 			sheet.setValueAt(property, columnIndex, rowIndex);
 		}
+	}
+
+	private static int getNonPDFA12DocumentsRowCount(List<DomainDocument> documentList) {
+		if (documentList == null || documentList.isEmpty()) {
+			return 0;
+		}
+		int res = documentList.size();
+		for (DomainDocument document : documentList) {
+			List<ValidationError> validationErrors = document.getValidationErrors();
+			if (validationErrors != null) {
+				int errorsCount = validationErrors.size();
+				if (errorsCount > 1) {
+					res += errorsCount;
+				}
+			}
+		}
+		return res;
 	}
 
 	private static void fillSummary(Date documentsSince,
