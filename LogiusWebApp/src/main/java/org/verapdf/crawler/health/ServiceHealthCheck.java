@@ -1,7 +1,6 @@
 package org.verapdf.crawler.health;
 
 import com.codahale.metrics.health.HealthCheck;
-import org.verapdf.crawler.core.jobs.HeritrixCleanerService;
 import org.verapdf.crawler.tools.AbstractService;
 
 /**

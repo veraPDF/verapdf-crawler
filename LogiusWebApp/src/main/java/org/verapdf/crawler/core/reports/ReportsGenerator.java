@@ -27,7 +27,8 @@ public class ReportsGenerator {
 		config = reportsConfiguration;
 	}
 
-	public static File generateODSReport(Date documentsSince,
+	public static File generateODSReport(String domain,
+										 Date documentsSince,
 										 long compliantPDFA12DocumentsCount,
 										 long odfDocumentsCount,
 										 List<DomainDocument> nonPDFA12Documents,
@@ -36,6 +37,11 @@ public class ReportsGenerator {
 		if (config == null) {
 			throw new IllegalStateException("Initialization fail. Configuration has not been set");
 		}
+		File tempFolder = new File(config.getOdsTempFolder());
+		if (!tempFolder.isDirectory() && (tempFolder.exists() || !tempFolder.mkdirs())) {
+			throw new IllegalStateException("Initialization fail on obtaining ods temp folder");
+		}
+
 		File template = new File(config.getOdsTemplatePath());
 		SpreadSheet spreadSheet = SpreadSheet.createFromFile(template);
 		fillSummary(documentsSince, compliantPDFA12DocumentsCount, odfDocumentsCount,
@@ -47,7 +53,7 @@ public class ReportsGenerator {
 		fillSimpleSheet(microsoftOfficeDocuments, 2, spreadSheet);
 		fillSimpleSheet(openOfficeXMLDocuments, 3, spreadSheet);
 
-		File tempODSReport = File.createTempFile("logiusODS-report", ".ods");
+		File tempODSReport = new File(tempFolder, "logiusODSReport-" + domain + "-" + System.currentTimeMillis() + ".ods");
 		spreadSheet.saveAs(tempODSReport);
 		return tempODSReport;
 	}

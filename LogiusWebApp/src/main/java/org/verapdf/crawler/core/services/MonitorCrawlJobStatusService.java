@@ -1,4 +1,4 @@
-package org.verapdf.crawler.core.jobs;
+package org.verapdf.crawler.core.services;
 
 import io.dropwizard.hibernate.UnitOfWork;
 import org.slf4j.Logger;

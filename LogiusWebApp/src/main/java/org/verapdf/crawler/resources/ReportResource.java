@@ -131,7 +131,7 @@ public class ReportResource {
         List<String> openOfficeXMLDocuments = documentDAO.getDocumentsUrls(domain,
                 DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), null, start);
         try {
-            File tempODS = ReportsGenerator.generateODSReport(start, compliantPDFA12DocumentsCount,
+            File tempODS = ReportsGenerator.generateODSReport(domain, start, compliantPDFA12DocumentsCount,
 					odfDocumentsCount, invalidPDFDocuments, microsoftDocuments, openOfficeXMLDocuments);
             logger.info("ODS report requested");
             return Response.ok(tempODS, MediaType.APPLICATION_OCTET_STREAM)

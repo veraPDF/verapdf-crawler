@@ -99,3 +99,7 @@ logius_gmail_password: Logius2017
 logius_gmail_port: 587
 
 logius_verapdf_path: "{{ verapdf_install_dest }}/verapdf"
+
+logius_temp_folder: PLACEHOLDER_FOR_TEMP_FOLDER
+
+logius_notifications_emails: maksim.bezrukov@duallab.com,yuliya.ivaniukovich@duallab.com,boris.doubrov@duallab.com

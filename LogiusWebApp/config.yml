@@ -39,6 +39,8 @@ heritrix:
   jobsFolder: /home/anton/heritrix/jobs/
 reports:
   odsTemplatePath: /home/anton/Documents/Logius/LogiusWebApp/src/main/resources/sample_report.ods
+  notificationEmails: temp.email@domain.com,temp2email@domain.com
+  odsTempFolder: /home/anton/Documents/Logius/temp/ods
 veraPDFService:
   url: http://localhost:8100
 logging:
