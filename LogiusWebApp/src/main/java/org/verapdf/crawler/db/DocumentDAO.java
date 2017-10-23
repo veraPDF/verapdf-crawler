@@ -48,7 +48,7 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         return currentSession().createQuery(criteriaQuery).getSingleResult();
     }
 
-    public List<DomainDocument> getDocuments(String domain, List<String> documentTypes, DomainDocument.BaseTestResult testResult, Date startDate) {
+    public List<DomainDocument> getDocuments(String domain, List<String> documentTypes, DomainDocument.BaseTestResult testResult, Date startDate, Integer limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<DomainDocument> criteriaQuery = builder.createQuery(DomainDocument.class);
         Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
@@ -64,10 +64,14 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         }
         criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
 
-        return list(criteriaQuery);
+        Query<DomainDocument> query = currentSession().createQuery(criteriaQuery);
+        if (limit != null) {
+            query.setMaxResults(limit);
+        }
+        return query.list();
     }
 
-    public List<String> getDocumentsUrls(String domain, List<String> documentTypes, DomainDocument.BaseTestResult testResult, Date startDate) {
+    public List<String> getDocumentsUrls(String domain, List<String> documentTypes, DomainDocument.BaseTestResult testResult, Date startDate, Integer limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<String> criteriaQuery = builder.createQuery(String.class);
         Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
@@ -84,7 +88,11 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         }
         criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
 
-        return currentSession().createQuery(criteriaQuery).list();
+        Query<String> query = currentSession().createQuery(criteriaQuery);
+        if (limit != null) {
+            query.setMaxResults(limit);
+        }
+        return query.list();
     }
 
     public List<String> getDocumentPropertyValues(String propertyName, String domain, String propertyValueFilter, Integer limit) {

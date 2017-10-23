@@ -30,6 +30,8 @@ public class ReportResource {
 
     private static final Logger logger = LoggerFactory.getLogger(ReportResource.class);
 
+    private static final int ODS_MAX_DOCUMENTS_SHOW = 100;
+
     private final DocumentDAO documentDAO;
 
     public ReportResource(DocumentDAO documentDAO) {
@@ -124,12 +126,12 @@ public class ReportResource {
         long odfDocumentsCount = odfCount == null ? 0 : odfCount;
         List<DomainDocument> invalidPDFDocuments = documentDAO.getDocuments(domain,
                 DomainDocument.DocumentTypeGroup.PDF.getTypes(),
-                DomainDocument.BaseTestResult.NOT_OPEN, start);
+                DomainDocument.BaseTestResult.NOT_OPEN, start, ODS_MAX_DOCUMENTS_SHOW);
         List<String> microsoftDocuments = documentDAO.getDocumentsUrls(domain,
                 DomainDocument.DocumentTypeGroup.MS_OFFICE.getTypes(),
-                null, start);
+                null, start, ODS_MAX_DOCUMENTS_SHOW);
         List<String> openOfficeXMLDocuments = documentDAO.getDocumentsUrls(domain,
-                DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), null, start);
+                DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), null, start, ODS_MAX_DOCUMENTS_SHOW);
         try {
             File tempODS = ReportsGenerator.generateODSReport(domain, start, compliantPDFA12DocumentsCount,
 					odfDocumentsCount, invalidPDFDocuments, microsoftDocuments, openOfficeXMLDocuments);
