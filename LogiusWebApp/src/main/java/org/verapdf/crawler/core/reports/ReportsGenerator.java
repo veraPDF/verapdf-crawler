@@ -31,6 +31,9 @@ public class ReportsGenerator {
 										 Date documentsSince,
 										 long compliantPDFA12DocumentsCount,
 										 long odfDocumentsCount,
+										 long nonPDFA12DocumentsCount,
+										 long microsoftOfficeDocumentsCount,
+										 long openOfficeXMLDocumentsCount,
 										 List<DomainDocument> nonPDFA12Documents,
 										 List<String> microsoftOfficeDocuments,
 										 List<String> openOfficeXMLDocuments) throws IOException {
@@ -44,10 +47,12 @@ public class ReportsGenerator {
 
 		File template = new File(config.getOdsTemplatePath());
 		SpreadSheet spreadSheet = SpreadSheet.createFromFile(template);
-		fillSummary(documentsSince, compliantPDFA12DocumentsCount, odfDocumentsCount,
-				nonPDFA12Documents == null ? 0 : nonPDFA12Documents.size(),
-				microsoftOfficeDocuments == null ? 0 : microsoftOfficeDocuments.size(),
-				openOfficeXMLDocuments == null ? 0 : openOfficeXMLDocuments.size(),
+		fillSummary(documentsSince,
+				compliantPDFA12DocumentsCount,
+				odfDocumentsCount,
+				nonPDFA12DocumentsCount,
+				microsoftOfficeDocumentsCount,
+				openOfficeXMLDocumentsCount,
 				spreadSheet);
 		fillNonPDFA12Documents(nonPDFA12Documents, spreadSheet);
 		fillSimpleSheet(microsoftOfficeDocuments, 2, spreadSheet);
