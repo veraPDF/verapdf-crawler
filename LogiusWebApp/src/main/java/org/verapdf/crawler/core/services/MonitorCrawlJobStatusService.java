@@ -1,4 +1,4 @@
-package org.verapdf.crawler.core.jobs;
+package org.verapdf.crawler.core.services;
 
 import io.dropwizard.hibernate.UnitOfWork;
 import org.slf4j.Logger;
@@ -30,15 +30,13 @@ public class MonitorCrawlJobStatusService extends AbstractService {
 	private final CrawlRequestDAO crawlRequestDAO;
 	private final ValidationJobDAO validationJobDAO;
 	private final HeritrixClient heritrixClient;
-	private final EmailServerConfiguration emailServerConfiguration;
 
-	public MonitorCrawlJobStatusService(CrawlJobDAO crawlJobDAO, CrawlRequestDAO crawlRequestDAO, ValidationJobDAO validationJobDAO, HeritrixClient heritrixClient, EmailServerConfiguration emailServerConfiguration) {
+	public MonitorCrawlJobStatusService(CrawlJobDAO crawlJobDAO, CrawlRequestDAO crawlRequestDAO, ValidationJobDAO validationJobDAO, HeritrixClient heritrixClient) {
 		super("MonitorCrawlJobStatusService", SLEEP_DURATION);
 		this.crawlJobDAO = crawlJobDAO;
 		this.crawlRequestDAO = crawlRequestDAO;
 		this.validationJobDAO = validationJobDAO;
 		this.heritrixClient = heritrixClient;
-		this.emailServerConfiguration = emailServerConfiguration;
 	}
 
 	@Override
@@ -103,7 +101,7 @@ public class MonitorCrawlJobStatusService extends AbstractService {
 		for (CrawlRequest request : crawlRequests) {
 			request.setFinished(true);
             if (request.getEmailAddress() != null) {
-                SendEmail.sendFinishNotification(request, emailServerConfiguration);
+                SendEmail.sendFinishNotification(request);
             }
 		}
 	}

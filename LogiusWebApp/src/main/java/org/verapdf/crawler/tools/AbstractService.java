@@ -2,6 +2,7 @@ package org.verapdf.crawler.tools;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.core.email.SendEmail;
 
 /**
  * @author Maksim Bezrukov
@@ -9,6 +10,9 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractService implements Runnable {
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractService.class);
+
+	private static final String EMAIL_SUBJECT = "Logius health checks fails";
+	private static final String EMAIL_BODY = "Service %s stopped, stop reason: %s";
 
 	private final String serviceName;
 	private final long sleepTime;
@@ -34,9 +38,11 @@ public abstract class AbstractService implements Runnable {
 	}
 
 	public void start() {
-		running = true;
-		stopReason = null;
-		new Thread(this, "Thread-" + this.serviceName).start();
+		if (!running) {
+			running = true;
+			stopReason = null;
+			new Thread(this, "Thread-" + this.serviceName).start();
+		}
 	}
 
 	@Override
@@ -52,6 +58,7 @@ public abstract class AbstractService implements Runnable {
 		} catch (Throwable e) {
 			logger.error("Fatal error, stopping " + this.serviceName, e);
 			this.stopReason = e.getMessage();
+			SendEmail.sendReportNotification(EMAIL_SUBJECT, String.format(EMAIL_BODY, this.serviceName, this.stopReason));
 		} finally {
 			running = false;
 		}

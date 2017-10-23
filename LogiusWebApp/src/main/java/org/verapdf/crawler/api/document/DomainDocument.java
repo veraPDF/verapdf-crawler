@@ -3,11 +3,14 @@ package org.verapdf.crawler.api.document;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.commons.collections.CollectionUtils;
 import org.verapdf.crawler.api.crawling.CrawlJob;
 import org.verapdf.crawler.api.validation.error.ValidationError;
 
 import javax.persistence.*;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name = "documents")
@@ -15,11 +18,20 @@ public class DomainDocument {
 
     public enum DocumentTypeGroup {
         PDF(Collections.singletonList("pdf")),
-        OFFICE(Arrays.asList(
-                "odt", "ods", "odp",
-                "doc", "xls", "ppt",
+        OPEN_OFFICE(Arrays.asList(
+                "odt", "ods", "odp"
+        )),
+        MS_OFFICE(Arrays.asList(
+                "doc", "xls", "ppt"
+        )),
+        OO_XML_OFFICE(Arrays.asList(
                 "docx", "xlsx", "pptx"
-        ));
+        )),
+        OFFICE(Stream.of(
+                OPEN_OFFICE.types,
+                MS_OFFICE.types,
+                OO_XML_OFFICE.types
+        ).flatMap(Collection::stream).collect(Collectors.toList()));
 
         private List<String> types;
 

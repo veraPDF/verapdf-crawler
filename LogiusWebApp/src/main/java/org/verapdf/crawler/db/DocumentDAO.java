@@ -48,6 +48,45 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         return currentSession().createQuery(criteriaQuery).getSingleResult();
     }
 
+    public List<DomainDocument> getDocuments(String domain, List<String> documentTypes, DomainDocument.BaseTestResult testResult, Date startDate) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<DomainDocument> criteriaQuery = builder.createQuery(DomainDocument.class);
+        Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
+
+        List<Predicate> restrictions = new ArrayList<>();
+        restrictions.add(builder.equal(document.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain));
+        restrictions.add(document.get(DomainDocument_.contentType).in(documentTypes));
+        if (testResult != null) {
+            restrictions.add(builder.equal(document.get(DomainDocument_.baseTestResult), testResult));
+        }
+        if (startDate != null) {
+            restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
+        }
+        criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
+
+        return list(criteriaQuery);
+    }
+
+    public List<String> getDocumentsUrls(String domain, List<String> documentTypes, DomainDocument.BaseTestResult testResult, Date startDate) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<String> criteriaQuery = builder.createQuery(String.class);
+        Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
+        criteriaQuery.select(document.get(DomainDocument_.url));
+
+        List<Predicate> restrictions = new ArrayList<>();
+        restrictions.add(builder.equal(document.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain));
+        restrictions.add(document.get(DomainDocument_.contentType).in(documentTypes));
+        if (testResult != null) {
+            restrictions.add(builder.equal(document.get(DomainDocument_.baseTestResult), testResult));
+        }
+        if (startDate != null) {
+            restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
+        }
+        criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
+
+        return currentSession().createQuery(criteriaQuery).list();
+    }
+
     public List<String> getDocumentPropertyValues(String propertyName, String domain, String propertyValueFilter, Integer limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<String> criteriaQuery = builder.createQuery(String.class);

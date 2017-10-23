@@ -47,6 +47,10 @@ heritrix:
   password: {{ logius_heritrix_admin_password }}
   logiusAppUrl: {{ logius_web_connection_type }}://{{ logius_server_name }}:{{ logius_web_port }}
   jobsFolder: {{logius_heritrix_home}}/jobs/
+reports:
+  odsTemplatePath: {{ logius_app_res }}/sample_report.ods
+  notificationEmails: {{ logius_notifications_emails }}
+  odsTempFolder: {{ logius_temp_folder }}/ods
 veraPDFService:
   url: {{ logius_web_connection_type }}://{{ logius_server_name }}:{{ logius_verapdf_port }}
 logging:

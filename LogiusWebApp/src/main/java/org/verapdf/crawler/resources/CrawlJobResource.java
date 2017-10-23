@@ -2,7 +2,6 @@ package org.verapdf.crawler.resources;
 
 import io.dropwizard.hibernate.UnitOfWork;
 import io.dropwizard.jersey.params.IntParam;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.api.crawling.CrawlRequest;
@@ -12,7 +11,7 @@ import org.verapdf.crawler.api.monitoring.ValidationQueueStatus;
 import org.verapdf.crawler.api.validation.ValidationJob;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.api.crawling.CrawlJob;
-import org.verapdf.crawler.core.jobs.HeritrixCleanerService;
+import org.verapdf.crawler.core.services.HeritrixCleanerService;
 import org.verapdf.crawler.core.validation.ValidationService;
 import org.verapdf.crawler.db.CrawlJobDAO;
 import org.verapdf.crawler.db.ValidationJobDAO;
@@ -153,7 +152,7 @@ public class CrawlJobResource {
     @UnitOfWork
     public CrawlJobStatus getFullJobStatus(@PathParam("domain") String domain) {
         CrawlJob crawlJob = getCrawlJob(domain);
-        HeritrixCrawlJobStatus heritrixStatus = null;
+        HeritrixCrawlJobStatus heritrixStatus;
         try {
             heritrixStatus = heritrix.getHeritrixStatus(crawlJob.getHeritrixJobId());
         } catch (Throwable e) {

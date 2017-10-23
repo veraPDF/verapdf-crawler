@@ -5,6 +5,7 @@ import org.verapdf.crawler.configurations.HeritrixConfiguration;
 import org.verapdf.crawler.configurations.EmailServerConfiguration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
+import org.verapdf.crawler.configurations.ReportsConfiguration;
 import org.verapdf.crawler.configurations.VeraPDFServiceConfiguration;
 
 import javax.validation.Valid;
@@ -14,6 +15,7 @@ public class LogiusConfiguration extends Configuration {
     private EmailServerConfiguration emailServerConfiguration;
     private HeritrixConfiguration heritrixConfiguration;
     private VeraPDFServiceConfiguration veraPDFServiceConfiguration;
+    private ReportsConfiguration reportsConfiguration;
 
     @Valid
     @NotNull
@@ -57,5 +59,15 @@ public class LogiusConfiguration extends Configuration {
     @JsonProperty("heritrix")
     public void setHeritrixConfiguration(HeritrixConfiguration heritrixConfiguration) {
         this.heritrixConfiguration = heritrixConfiguration;
+    }
+
+    @JsonProperty("reports")
+    public ReportsConfiguration getReportsConfiguration() {
+        return reportsConfiguration;
+    }
+
+    @JsonProperty("reports")
+    public void setReportsConfiguration(ReportsConfiguration reportsConfiguration) {
+        this.reportsConfiguration = reportsConfiguration;
     }
 }

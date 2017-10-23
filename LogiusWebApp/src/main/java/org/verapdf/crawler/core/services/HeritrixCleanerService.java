@@ -1,4 +1,4 @@
-package org.verapdf.crawler.core.jobs;
+package org.verapdf.crawler.core.services;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
