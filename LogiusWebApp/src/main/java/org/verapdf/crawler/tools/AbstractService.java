@@ -38,9 +38,11 @@ public abstract class AbstractService implements Runnable {
 	}
 
 	public void start() {
-		running = true;
-		stopReason = null;
-		new Thread(this, "Thread-" + this.serviceName).start();
+		if (!running) {
+			running = true;
+			stopReason = null;
+			new Thread(this, "Thread-" + this.serviceName).start();
+		}
 	}
 
 	@Override
