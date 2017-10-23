@@ -118,12 +118,16 @@ public class ReportResource {
             domain = DomainUtils.trimUrl(domain);
         }
         Date start = DateParam.getDateFromParam(startDate);
-        Long compliantPDFCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(),
+        long compliantPDFA12Count = getDocumentsCount(domain, DomainDocument.DocumentTypeGroup.PDF,
                 DomainDocument.BaseTestResult.OPEN, start);
-        long compliantPDFA12DocumentsCount = compliantPDFCount == null ? 0 : compliantPDFCount;
-        Long odfCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OPEN_OFFICE.getTypes(),
+        long odfCount = getDocumentsCount(domain, DomainDocument.DocumentTypeGroup.OPEN_OFFICE,
                 null, start);
-        long odfDocumentsCount = odfCount == null ? 0 : odfCount;
+        long invalidPDFA12Count = getDocumentsCount(domain, DomainDocument.DocumentTypeGroup.PDF,
+                DomainDocument.BaseTestResult.NOT_OPEN, start);
+        long msCount = getDocumentsCount(domain, DomainDocument.DocumentTypeGroup.MS_OFFICE,
+                null, start);
+        long ooXMLCount = getDocumentsCount(domain, DomainDocument.DocumentTypeGroup.OO_XML_OFFICE,
+                null, start);
         List<DomainDocument> invalidPDFDocuments = documentDAO.getDocuments(domain,
                 DomainDocument.DocumentTypeGroup.PDF.getTypes(),
                 DomainDocument.BaseTestResult.NOT_OPEN, start, ODS_MAX_DOCUMENTS_SHOW);
@@ -133,8 +137,11 @@ public class ReportResource {
         List<String> openOfficeXMLDocuments = documentDAO.getDocumentsUrls(domain,
                 DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), null, start, ODS_MAX_DOCUMENTS_SHOW);
         try {
-            File tempODS = ReportsGenerator.generateODSReport(domain, start, compliantPDFA12DocumentsCount,
-					odfDocumentsCount, invalidPDFDocuments, microsoftDocuments, openOfficeXMLDocuments);
+            File tempODS = ReportsGenerator.generateODSReport(domain, start,
+                    compliantPDFA12Count, odfCount,
+                    invalidPDFA12Count, msCount,
+                    ooXMLCount, invalidPDFDocuments,
+                    microsoftDocuments, openOfficeXMLDocuments);
             logger.info("ODS report requested");
             return Response.ok(tempODS, MediaType.APPLICATION_OCTET_STREAM)
                     .header("Content-Disposition", "attachment; filename=\"" + tempODS.getName() + "\"")
@@ -143,5 +150,13 @@ public class ReportResource {
             logger.error("Exception during ods report creation: " + e.getMessage(), e);
         }
         return null;
+    }
+
+    private long getDocumentsCount(String domain, DomainDocument.DocumentTypeGroup documentGroup,
+                                   DomainDocument.BaseTestResult testResult,
+                                   Date start) {
+        Long count = documentDAO.count(domain, documentGroup.getTypes(),
+                testResult, start);
+        return count == null ? 0 : count;
     }
 }
