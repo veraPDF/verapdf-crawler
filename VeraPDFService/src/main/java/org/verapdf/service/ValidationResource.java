@@ -11,6 +11,7 @@ import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -23,14 +24,16 @@ public class ValidationResource {
 
     private final ExecutorService service = Executors.newFixedThreadPool(1);
     private final String veraPDFPath;
+    private final File veraPDFErrorLog;
     private VeraPDFProcessor veraPDFProcessor;
     private ValidationSettings validationSettings;
     private VeraPDFValidationResult validationResult;
     private boolean isAborted = false;
 
-    ValidationResource(String veraPDFPath, ValidationSettings validationSettings) throws IOException {
+    ValidationResource(String veraPDFPath, String veraPDFErrorFilePath, ValidationSettings validationSettings) throws IOException {
         this.validationSettings = validationSettings;
         this.veraPDFPath = veraPDFPath;
+        this.veraPDFErrorLog = new File(veraPDFErrorFilePath);
     }
 
     @POST
@@ -75,7 +78,7 @@ public class ValidationResource {
     }
 
     private void validate(String filename) {
-        this.veraPDFProcessor = new VeraPDFProcessor(veraPDFPath, filename, this, this.validationSettings);
+        this.veraPDFProcessor = new VeraPDFProcessor(veraPDFPath, veraPDFErrorLog, filename, this, this.validationSettings);
         service.submit(veraPDFProcessor);
     }
 

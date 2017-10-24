@@ -6,6 +6,7 @@ server:
   - type: http
     port: 8101
 verapdfPath: /home/anton/verapdf/verapdf
+verapdfErrors: /home/anton/Documents/Logius/logs/verapdfErrors.log
 logiusUrl: http://localhost:9000/api
 logging:
   level: WARN
