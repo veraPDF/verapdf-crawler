@@ -53,14 +53,18 @@ public class VeraPDFProcessor implements Runnable {
 	}
 
 	private File getVeraPDFReport(String filename) throws IOException, InterruptedException {
+		logger.info("Preparing veraPDF process");
 		String[] cmd = {verapdfPath, "--extract", "--format", "mrr", "--maxfailuresdisplayed", "1", filename};
 		ProcessBuilder pb = new ProcessBuilder().inheritIO();
 		Path outputPath = Files.createTempFile("veraPDFReport", ".xml");
 		File file = outputPath.toFile();
 		pb.redirectOutput(file);
 		pb.command(cmd);
+		logger.info("Starting veraPDF process for file " + filename);
 		this.process = pb.start();
+		logger.info("VeraPDF process has been started");
 		this.process.waitFor();
+		logger.info("VeraPDF process has been finished");
 		return file;
 	}
 
@@ -71,6 +75,7 @@ public class VeraPDFProcessor implements Runnable {
 		try {
 			report = getVeraPDFReport(this.filePath);
 			if (report != null && !stopped) {
+				logger.info("Obtaining result structure");
 				DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 				dbf.setNamespaceAware(true);
 				DocumentBuilder db = dbf.newDocumentBuilder();
@@ -94,6 +99,7 @@ public class VeraPDFProcessor implements Runnable {
 			logger.info(message, e);
 			result = generateProblemResult(message, e);
 		} finally {
+			logger.info("Finished");
 			if (report != null && !report.delete()) {
 				logger.info("Report has not been deleted manually");
 			}
