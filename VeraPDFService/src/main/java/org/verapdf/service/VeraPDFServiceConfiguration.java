@@ -6,6 +6,7 @@ import io.dropwizard.Configuration;
 public class VeraPDFServiceConfiguration extends Configuration {
 	private String verapdfPath;
 	private String logiusUrl;
+	private String verapdfErrors;
 
 	@JsonProperty
 	public String getLogiusUrl() {
@@ -25,5 +26,15 @@ public class VeraPDFServiceConfiguration extends Configuration {
 	@JsonProperty
 	public void setVerapdfPath(String verapdfPath) {
 		this.verapdfPath = verapdfPath;
+	}
+
+	@JsonProperty
+	public String getVerapdfErrors() {
+		return verapdfErrors;
+	}
+
+	@JsonProperty
+	public void setVerapdfErrors(String verapdfErrors) {
+		this.verapdfErrors = verapdfErrors;
 	}
 }

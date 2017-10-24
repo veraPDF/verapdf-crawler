@@ -39,23 +39,26 @@ public class VeraPDFProcessor implements Runnable {
 	private static final String FLAVOUR_CONFORMANCE_PROPERTY_NAME = "flavourConformance";
 
 	private final String verapdfPath;
+	private final File veraPDFErrorLog;
 	private final String filePath;
 	private Process process;
 	private ValidationResource resource;
 	private boolean stopped = false;
 	private final ValidationSettings settings;
 
-	VeraPDFProcessor(String verapdfPath, String filePath, ValidationResource resource, ValidationSettings settings) {
+	VeraPDFProcessor(String verapdfPath, File veraPDFErrorLog, String filePath, ValidationResource resource, ValidationSettings settings) {
 		this.verapdfPath = verapdfPath;
 		this.filePath = filePath;
 		this.resource = resource;
 		this.settings = settings;
+		this.veraPDFErrorLog = veraPDFErrorLog;
 	}
 
 	private File getVeraPDFReport(String filename) throws IOException, InterruptedException {
 		logger.info("Preparing veraPDF process");
 		String[] cmd = {verapdfPath, "--extract", "--format", "mrr", "--maxfailuresdisplayed", "1", filename};
-		ProcessBuilder pb = new ProcessBuilder().inheritIO();
+		ProcessBuilder pb = new ProcessBuilder();
+		pb.redirectError(this.veraPDFErrorLog);
 		Path outputPath = Files.createTempFile("veraPDFReport", ".xml");
 		File file = outputPath.toFile();
 		pb.redirectOutput(file);
