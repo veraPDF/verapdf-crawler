@@ -415,6 +415,10 @@ a.action .label {
 }
 
 .documents .col {
+  height: 600px;
+}
+
+.documents .col.col-sm-6 {
   height: 400px;
 }
 

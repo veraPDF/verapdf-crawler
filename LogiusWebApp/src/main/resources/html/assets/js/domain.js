@@ -112,7 +112,7 @@ $(function () {
         ticks: {
             fontColor: 'white',
             beginAtZero: true,
-            fixedStepSize: 1
+            callback: Chart.Ticks.formatters.linear
         },
         gridLines: {
             color: 'rgba(255, 255, 255, 0.1)',
@@ -122,6 +122,7 @@ $(function () {
     Chart.scaleService.updateScaleDefaults('category', {   // x-Axis
         color: 'white',
         ticks: {
+            autoSkip: false,
             fontColor: 'white'
         },
         gridLines: {
