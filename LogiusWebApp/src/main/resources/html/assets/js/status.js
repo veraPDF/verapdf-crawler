@@ -144,81 +144,12 @@ $(function () {
         element.find('.start').text(item.startTime);
 
         $(element).find('.status').text(item.status);
-        switch (item.status) {
-            case 'RUNNING':
-                $(element).find('.action-resume').parent().hide();
-                break;
-            case 'PAUSED':
-                $(element).find('.action-pause').parent().hide();
-                break;
-            default:
-                $(element).find('.action-pause').parent().remove();
-                $(element).find('.action-resume').parent().remove();
-                $(element).find('.action-restart').parent().attr('colspan', 2);
-        }
         return element;
     }
 
     function normalizeURL(url) {
         return url.replace(':', '%3A');
     }
-
-    activeDomainsListContainer.on("click", '.action-resume', function (e) {
-        var link = $(this);
-        var currRow = $(this).parent().parent();
-        var putData = {};
-        putData.domain = currRow.find('.domain').text();
-        putData.startTime = currRow.children('.start').text();
-        putData.finishTime = currRow.children('.end').text();
-        putData.status = 'RUNNING';
-
-        $.ajax({
-            url: URL + "/" + normalizeURL(link.parent().siblings().first().text()),
-            type: "PUT",
-            data: JSON.stringify(putData),
-            headers: { "Content-type": "application/json" },
-            success: function (result) {
-                currRow.find('.action-pause').parent().show();
-                currRow.find('.action-resume').parent().hide();
-                currRow.children('.status').text(result.status);
-            },
-            error: function (result) { }
-        });
-
-    });
-
-    activeDomainsListContainer.on("click", '.action-pause', function (e) {
-        var link = $(this);
-        var currRow = $(this).parent().parent();
-        var putData = {};
-        putData.domain = currRow.find('.domain').text();
-        putData.startTime = currRow.children('.start').text();
-        putData.finishTime = currRow.children('.end').text();
-        putData.status = 'PAUSED';
-
-        $.ajax({
-            url: URL + "/" + normalizeURL(link.parent().siblings().first().text()),
-            type: "PUT",
-            data: JSON.stringify(putData),
-            headers: { "Content-type": "application/json" },
-            success: function (result) {
-                currRow.find('.action-pause').parent().hide();
-                currRow.find('.action-resume').parent().show();
-                currRow.children('.status').text(result.status);
-            },
-            error: function (result) { }
-        });
-
-    });
-
-    activeDomainsListContainer.on("click", '.action-restart', function (e) {
-        $.ajax({
-            url: URL + "/" + normalizeURL($($(this).parent().siblings()[0]).children().text()),
-            type: "POST",
-            success: function (result) { },
-            error: function (result) { }
-        });
-    });
 
     domainFilterElement.find('span').on("click", function (e) {
         currentPage = 1;

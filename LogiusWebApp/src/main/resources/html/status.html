@@ -51,8 +51,9 @@
     <div class="active-domains-list">
         <div class="loading">Loading active jobs...</div>
         <div class="loaded">
-            <form class="form-inline d-flex justify-content-between">
+            <form class="form-inline d-flex flex-nowrap justify-content-between">
                 <h4><span class="active-jobs-count"></span> active job(s)</h4>
+                <div class="domains-list-error"></div>
                 <div class="input-group input-group-sm domain-filter">
                     <input type="text" class="form-control" placeholder="Search domain" aria-label="Search domain">
                     <span class="input-group-addon material-icons">search</span>
@@ -65,7 +66,6 @@
                     <th class="col-heritrix-id">Heritrix ID</th>
                     <th class="col-date">Start time</th>
                     <th class="col-status">Status</th>
-                    <th colspan="2" class="col-actions">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -74,24 +74,6 @@
                     <td class="heritrix-id"><a href="#" target="_blank"></a></td>
                     <td class="start"></td>
                     <td class="status"></td>
-                    <td class="col-actions">
-                        <a href="#" class="action d-flex flex-column action-resume">
-                            <span class="material-icons">play_arrow</span>
-                            <span class="label">Resume</span>
-                        </a>
-                    </td>
-                    <td class="col-actions">
-                        <a href="#" class="action d-flex flex-column action-pause">
-                            <span class="material-icons">pause</span>
-                            <span class="label">Pause</span>
-                        </a>
-                    </td>
-                    <td class="col-actions">
-                        <a href="#" class="action d-flex flex-column action-restart">
-                            <span class="material-icons">replay</span>
-                            <span class="label">Restart</span>
-                        </a>
-                    </td>
                 </tr>
                 </tbody>
             </table>

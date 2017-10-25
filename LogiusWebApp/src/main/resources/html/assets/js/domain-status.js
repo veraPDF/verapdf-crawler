@@ -3,9 +3,28 @@ $(function () {
     var heritrixEngineUrl = '';
     var crawlJob = {};
     var loadStatusTimeout;
+    var actionsEnabled = true;
 
     function normalizeURL(url){
         return url.replace(':', '%3A');
+    }
+
+    function enableActions() {
+        actionsEnabled = true;
+        $('.action').removeClass('disabled');
+    }
+
+    function disableActions() {
+        actionsEnabled = false;
+        $('.action').addClass('disabled');
+    }
+
+    function reportError(response) {
+        if (response.responseJSON) {
+            $('.domain-error').text(response.responseJSON.message);
+        } else {
+            $('.domain-error').text(response.responseText);
+        }
     }
 
     // Heritrix settings (engine URL)
@@ -27,9 +46,7 @@ $(function () {
             success: function (result) {
                 jobStatusLoaded(result);
             },
-            error: function (result) {
-                // reportError("Error on job loading");
-            }
+            error: reportError
         });
     }
 
@@ -39,13 +56,7 @@ $(function () {
         $('.status-loaded').show();
 
         // Job details
-        crawlJob = jobStatus.crawlJob;
-
-        $('.main').addClass('status-' + crawlJob.status.toLowerCase(), { children: true });
-
-        $('.domain-name span').text(crawlJob.domain);
-        $('.job-date').text(crawlJob.finished ? 'Tested on ' + crawlJob.startTime + ' - ' + crawlJob.finishTime : 'Test started on ' + crawlJob.startTime);
-        $('.status-text').text(crawlJob.status);
+        updateCrawlJob(jobStatus.crawlJob);
 
         // Crawl requests
         var requestsTbody = $('.job-requests tbody');
@@ -101,6 +112,8 @@ $(function () {
                 element.find('.url').text(validationJob.id);
                 if (validationJob.status === 'IN_PROGRESS') {
                     element.addClass('in-progress');
+                } else if (validationJob.status === 'PAUSED') {
+                    element.addClass('paused');
                 }
                 queueTbody.append(element);
             });
@@ -114,12 +127,31 @@ $(function () {
         loadStatusTimeout = setTimeout(loadJobStatus, refreshInterval);
     }
 
-    $("#action-resume").on('click', function () {
-        var putData = {};//Object.assign({}, currentDomain);
-        putData.domain = crawlJob.domain;
-        putData.startTime = crawlJob.startTime;
-        putData.finishTime = crawlJob.finishTime;
+    function updateCrawlJob(job) {
+        var main = $('.main');
+        if (crawlJob.status) {
+            main.removeClass('status-' + crawlJob.status.toLowerCase(), { children: true });
+        }
+        crawlJob = job;
+        main.addClass('status-' + crawlJob.status.toLowerCase(), { children: true });
 
+        $('.domain-name span').text(crawlJob.domain);
+        $('.job-date').text(crawlJob.finished ? 'Tested on ' + crawlJob.startTime + ' - ' + crawlJob.finishTime : 'Test started on ' + crawlJob.startTime);
+        $('.status-text').text(crawlJob.status);
+        if (actionsEnabled) {
+            $('.action').removeClass('disabled');
+        } else {
+            $('.action').addClass('disabled');
+        }
+    }
+
+    $("#action-resume").on('click', function () {
+        if (!crawlJob || $("#action-resume").hasClass('disabled')) {
+            return;
+        }
+        disableActions();
+
+        var putData = $.extend({}, crawlJob);
         putData.status = 'RUNNING';
 
         $.ajax({
@@ -128,19 +160,22 @@ $(function () {
             data: JSON.stringify(putData),
             headers: { "Content-type": "application/json" },
             success: function (result) {
-                $('.main').removeClass('status-' + crawlJob.status.toLowerCase(), { children: true });
-
-                // domainInfoLoaded(result);
-
-
+                enableActions();
+                updateCrawlJob(result);
             },
-            error: function (result) {
-                // reportError("Error on job loading");
+            error: function (response) {
+                enableActions();
+                reportError(response);
             }
         });
     });
 
     $("#action-pause").on('click', function () {
+        if (!crawlJob || $("#action-pause").hasClass('disabled')) {
+            return;
+        }
+        disableActions();
+
         var putData = {};//Object.assign({}, currentDomain);
         putData.domain = crawlJob.domain;
         putData.startTime = crawlJob.startTime;
@@ -154,26 +189,32 @@ $(function () {
             data: JSON.stringify(putData),
             headers: { "Content-type": "application/json" },
             success: function (result) {
-                $('.main').removeClass('status-' + crawlJob.status.toLowerCase(), { children: true });
-
-                // domainInfoLoaded(result);
-
+                enableActions();
+                updateCrawlJob(result);
             },
-            error: function (result) {
-                // reportError("Error on job loading");
+            error: function (response) {
+                enableActions();
+                reportError(response);
             }
         });
     });
 
     $("#action-restart").on('click', function () {
+        if (!crawlJob || $("#action-restart").hasClass('disabled')) {
+            return;
+        }
+        disableActions();
+
         $.ajax({
             url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
             type: "POST",
             success: function (result) {
-                // domainInfoLoaded(result);
+                enableActions();
+                updateCrawlJob(result);
             },
-            error: function (result) {
-                // reportError("Error on job loading");
+            error: function (response) {
+                enableActions();
+                reportError(response);
             }
         });
 

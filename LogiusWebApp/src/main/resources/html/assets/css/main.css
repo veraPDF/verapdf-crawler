@@ -209,8 +209,19 @@ body.container-fluid {
   margin-bottom: 30px;
 }
 
+.domains-list-title {
+  flex: 0 0 200px;
+}
+
+.domains-list-error {
+  color: #fd5858;
+  text-align: center;
+  margin-right: 20px;
+}
+
 .domain-filter {
-  margin: 10px 0;
+  flex: 0 0 220px;
+  margin: 10px 0 10px auto;
 }
 
 .domain-filter .input-group-addon {
@@ -255,6 +266,24 @@ body.container-fluid {
   text-decoration: none;
 }
 
+.domains-list tr.disabled a.action, .domains-list tr.disabled a.action:active,
+.domains-list tr.disabled a.action:hover, .domains-list tr.disabled a.action:focus {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.domains-list tr.running .empty-action, .domains-list tr.running .action-resume {
+  display: none!important;
+}
+.domains-list tr.paused .empty-action, .domains-list tr.paused .action-pause {
+  display: none!important;
+}
+.domains-list tr.finished .action-resume, .domains-list tr.finished .action-pause {
+  display: none!important;
+}
+.domains-list tr.failed .action-resume, .domains-list tr.failed .action-pause {
+  display: none!important;
+}
+
 a.action {
   text-decoration: none;
   align-items: center;
@@ -263,6 +292,10 @@ a.action {
 
 a.action .label {
   font-size: 12px;
+}
+
+a.action.disabled {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .pagination {
@@ -307,6 +340,10 @@ a.action .label {
   text-decoration: underline;
 }
 
+.domain-error {
+  color: #fd5858;
+}
+
 .job-details span.job-date {
   font-size: 14px;
 }
@@ -315,6 +352,10 @@ a.action .label {
   text-transform: capitalize;
   display: block;
   margin-bottom: 10px;
+}
+
+.job-details .action.disabled {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .job-mails {
@@ -552,20 +593,6 @@ a.action .label {
   width: 100px;
 }
 
-.active-domains-list th.col-actions {
-  width: 200px;
-}
-
-.active-domains-list td.col-actions {
-  width: 60px;
-  padding-left: 0;
-  padding-right: 0;
-}
-
-.active-domains-list td.col-actions.hide {
-  visibility: hidden;
-}
-
 .validation-queue td, .validation-queue th {
   border-top: none;
   vertical-align: middle;
@@ -573,6 +600,10 @@ a.action .label {
 
 .validation-queue .in-progress {
   color: #43c46f;
+}
+
+.validation-queue .paused {
+  color: #fff90a;
 }
 
 /* Domain status page */

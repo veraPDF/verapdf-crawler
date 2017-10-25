@@ -1,6 +1,6 @@
 $(function () {
     var URL = "/api/crawl-jobs"
-    var row = $("#crawl_job_list").children('tbody').children('tr').clone();
+    var rowTemplate = $("#crawl_job_list").children('tbody').children('tr').clone();
     var totalPagesAmount = 1;
     var limit = 10;
     var filter = "";
@@ -15,7 +15,7 @@ $(function () {
     function normalizeURL(url) {
         return url.replace(':', '%3A');
     }
-    function loadAllJobs(limit, start, domainFilter, redrowPagintion) {
+    function loadAllJobs(limit, start, domainFilter, redrawPagintion) {
         var filter = "";
         if (domainFilter) {
             filter = '&domainFilter=' + domainFilter;
@@ -26,8 +26,8 @@ $(function () {
             success: function (result, textStatus, request) {
                 $("#crawl_job_list").children('tbody').empty();
                 if (Array.isArray(result)) {
-                    result.forEach(function (item, i, arr) {
-                        appendCrawlJob(item.domain, item.startTime, item.finishTime, item.status, row[0]);
+                    result.forEach(function (crawlJob) {
+                        appendCrawlJob(crawlJob);
                     });
                 }
                 totalPagesAmount = Math.ceil(request.getResponseHeader('X-Total-Count') / limit);
@@ -36,86 +36,48 @@ $(function () {
                 } else {
                     paginationOpts.totalPages = 1;
                 }
-                if (redrowPagintion) {
+                if (redrawPagintion) {
                     $('#pagination-container').twbsPagination('destroy');
-                    $('#pagination-container').twbsPagination(paginationOpts);
+                    if (paginationOpts.totalPages > 1) {
+                        $('#pagination-container').twbsPagination(paginationOpts);
+                    } else {
+                        $('#pagination-container').hide();
+                    }
                 }
             },
             error: function (result) {
+                reportError(result);
             }
         });
     }
 
-
-
-    function appendCrawlJob(url, start, end, status, row) {
-        var row1 = $(row).clone();
-        row1.find('.domain').text(url)
-        row1.find('.domain').attr("href", "domain.html?domain=" + url);
-        row1.children('.start').text(start)
-        if (status === 'NEW') {
-            row1.children('.end').text('')
-            $(row1).children('.status').text('New');
-            $(row1).find('.empty-action').parent().addClass('hide');
-            $(row1).find('.action-pause').parent().removeClass('hide');
-            $(row1).find('.action-resume').parent().addClass('hide');
-            $(row1).find('.action-restart').parent().removeClass('hide');
-
+    function appendCrawlJob(crawlJob) {
+        var row = rowTemplate.clone();
+        row.find('.domain').text(crawlJob.domain);
+        row.find('.domain').attr("href", "domain.html?domain=" + crawlJob.domain);
+        row.children('.start').text(crawlJob.startTime);
+        if (crawlJob.finishTime) {
+            row.children('.end').text(crawlJob.finishTime);
         }
-        if (status === 'RUNNING') {
-            row1.children('.end').text('')
-            $(row1).children('.status').text('Running');
-            $(row1).find('.empty-action').parent().addClass('hide');
-            $(row1).find('.action-pause').parent().removeClass('hide');
-            $(row1).find('.action-resume').parent().addClass('hide');
-            $(row1).find('.action-restart').parent().removeClass('hide');
-
-        } else if (status === 'PAUSED') {
-            row1.children('.end').text('')
-            $(row1).children('.status').text('Paused');
-            $(row1).find('.empty-action').parent().addClass('hide');
-            $(row1).find('.action-pause').parent().addClass('hide');
-            $(row1).find('.action-resume').parent().removeClass('hide');
-            $(row1).find('.action-restart').parent().removeClass('hide');
-
-        } else if (status === 'FAILED') {
-            row1.children('.end').text(end)
-            $(row1).children('.status').text('Failed');
-            $(row1).find('.empty-action').parent().removeClass('hide');
-            $(row1).find('.action-pause').parent().addClass('hide');
-            $(row1).find('.action-resume').parent().addClass('hide');
-            $(row1).find('.action-restart').parent().removeClass('hide');
-        } else if (status === 'FINISHED') {
-            row1.children('.end').text(end)
-            $(row1).children('.status').text('Finished');
-            $(row1).find('.empty-action').parent().removeClass('hide');
-            $(row1).find('.action-pause').parent().addClass('hide');
-            $(row1).find('.action-resume').parent().addClass('hide');
-            $(row1).find('.action-restart').parent().removeClass('hide');
-        }
-
-        $("#crawl_job_list").children('tbody').append(row1);
-
+        row.children('.status').text(crawlJob.status);
+        row.addClass(crawlJob.status.toLowerCase());
+        $("#crawl_job_list").children('tbody').append(row);
     }
 
 
-    // function reportError(text) {
-    //     var ul = document.getElementById("crawl_url_list");
-    //     var li = document.createElement("li");
-    //     var link = document.createElement("p");
-    //     link.innerHTML = "<font color=\"red\">* " + text + ".</font>"
-    //     li.appendChild(link);
-    //     ul.innerHTML = '';
-    //     ul.appendChild(li);
-    // }
+    function reportError(text) {
+        $('.domains-list-error').text(text);
+    }
 
-
-    // $('#pagination-container').twbsPagination(paginationOpts);
-
-
-    $("#crawl_job_list").on("click", '.action-resume', function (e) {
+    $("#crawl_job_list").on("click", 'a.action-resume', function (e) {
         var link = $(this);
         var currRow = $(this).parent().parent();
+        if (currRow.hasClass('disabled')) {
+            return;
+        }
+        currRow.addClass('disabled');
+
+        var oldStatus = currRow.find('.status').text();
         var putData = {};
         putData.domain = currRow.find('.domain').text();
         putData.startTime = currRow.children('.start').text();
@@ -128,18 +90,28 @@ $(function () {
             data: JSON.stringify(putData),
             headers: { "Content-type": "application/json" },
             success: function (result) {
-                currRow.find('.action-pause').parent().removeClass('hide');
-                currRow.find('.action-resume').parent().addClass('hide');
-                currRow.children('.status').text('Running');
+                currRow.removeClass('disabled');
+                currRow.removeClass(oldStatus.toLowerCase());
+                currRow.addClass(result.status.toLowerCase());
+                currRow.children('.status').text(result.status);
             },
-            error: function (result) { }
+            error: function (result) {
+                currRow.removeClass('disabled');
+                reportError(result);
+            }
         });
 
     });
 
-    $("#crawl_job_list").on("click", '.action-pause', function (e) {
+    $("#crawl_job_list").on("click", 'a.action-pause', function (e) {
         var link = $(this);
         var currRow = $(this).parent().parent();
+        if (currRow.hasClass('disabled')) {
+            return;
+        }
+        currRow.addClass('disabled');
+
+        var oldStatus = currRow.find('.status').text();
         var putData = {};
         putData.domain = currRow.find('.domain').text();
         putData.startTime = currRow.children('.start').text();
@@ -152,21 +124,40 @@ $(function () {
             data: JSON.stringify(putData),
             headers: { "Content-type": "application/json" },
             success: function (result) {
-                currRow.find('.action-pause').parent().addClass('hide');
-                currRow.find('.action-resume').parent().removeClass('hide');
-                currRow.children('.status').text('Paused');
+                currRow.removeClass('disabled');
+                currRow.removeClass(oldStatus.toLowerCase());
+                currRow.addClass(result.status.toLowerCase());
+                currRow.children('.status').text(result.status);
             },
-            error: function (result) { }
+            error: function (result) {
+                currRow.removeClass('disabled');
+                reportError(result);
+            }
         });
 
     });
 
-    $("#crawl_job_list").on("click", '.action-restart', function (e) {
+    $("#crawl_job_list").on("click", 'a.action-restart', function (e) {
+        var currRow = $(this).parent().parent();
+        if (currRow.hasClass('disabled')) {
+            return;
+        }
+        currRow.addClass('disabled');
+
+        var oldStatus = currRow.find('.status').text();
         $.ajax({
             url: URL + "/" + normalizeURL($($(this).parent().siblings()[0]).children().text()),
             type: "POST",
-            success: function (result) { },
-            error: function (result) { }
+            success: function (result) {
+                currRow.removeClass('disabled');
+                currRow.removeClass(oldStatus.toLowerCase());
+                currRow.addClass(result.status.toLowerCase());
+                currRow.children('.status').text(result.status);
+            },
+            error: function (result) {
+                currRow.removeClass('disabled');
+                reportError(result);
+            }
         });
     });
 
