@@ -14,8 +14,11 @@ import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public class DocumentDAO extends AbstractDAO<DomainDocument> {
+
+    private static final int PROPERTY_VALUE_LENGTH = 255;
 
     public static final String NONE = "None"; // used to indicate that some property should be missing, since null means absence of the filter
 
@@ -25,6 +28,15 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
 
     @SuppressWarnings("UnusedReturnValue")
 	public DomainDocument save(DomainDocument document) {
+        Map<String, String> properties = document.getProperties();
+        if (properties != null) {
+            for (Map.Entry<String, String> property : properties.entrySet()) {
+                String currentValue = property.getValue();
+                if (currentValue.length() > PROPERTY_VALUE_LENGTH) {
+                    property.setValue(currentValue.substring(0, PROPERTY_VALUE_LENGTH));
+                }
+            }
+        }
         return persist(document);
     }
 
