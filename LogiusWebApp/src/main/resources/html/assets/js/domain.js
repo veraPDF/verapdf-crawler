@@ -179,6 +179,8 @@ $(function () {
 
         $('.job-mails .label').text(crawlJob.finished ? 'Report sent to:' : 'Send report to:');
 
+        $('a.ods-report-link').attr('href', '/api/report/full.ods?domain=' + crawlJob.domain);
+
         enableActions();
     }
 
