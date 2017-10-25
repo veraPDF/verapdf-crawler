@@ -33,6 +33,7 @@ public class VeraPDFProcessor implements Runnable {
 
 	private static final Logger logger = LoggerFactory.getLogger(VeraPDFProcessor.class);
 
+	private static final int MAX_PREFERRED_PROPERTY_LENGTH = 255;
 	private static final String BASE_PATH = "/report/jobs/job/";
 	private static final String VALIDATION_REPORT_PATH = BASE_PATH + "validationReport/";
 	private static final String FLAVOUR_PART_PROPERTY_NAME = "flavourPart";
@@ -150,17 +151,22 @@ public class VeraPDFProcessor implements Runnable {
 	}
 
 	private String getProperty(List<String> xpaths, Document document, XPath xpath) {
+		String tempResult = "";
 		try {
 			for (String propertyXPath : xpaths) {
 				String value = (String) xpath.evaluate(propertyXPath, document, XPathConstants.STRING);
 				if (value != null && !value.isEmpty()) {
-					return value;
+					if (value.length() <= MAX_PREFERRED_PROPERTY_LENGTH) {
+						return value;
+					} else if (tempResult.isEmpty()) {
+						tempResult = value;
+					}
 				}
 			}
 		} catch (Throwable e) {
 			logger.info("Some problem in obtaining property", e);
 		}
-		return "";
+		return tempResult;
 	}
 
 	private VeraPDFValidationResult generateBaseResult(Document document, XPath xpath) throws XPathExpressionException {
