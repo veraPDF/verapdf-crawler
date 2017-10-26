@@ -39,9 +39,10 @@
 
             
 
-        <form class="form-inline d-flex justify-content-between">
-            <h4 class="">Tested domains</h4>
-            <div class="input-group input-group-sm domain-filter">
+        <form class="form-inline d-flex flex-nowrap justify-content-between">
+            <h4 class="domains-list-title">Tested domains</h4>
+            <div class="domains-list-error"></div>
+            <div class="input-group input-group-sm align-self-end domain-filter">
                 <input type="text" class="form-control" placeholder="Search domain" id="serch-domain" aria-label="Search domain">
                 <span id="serch-domain-action" class="input-group-addon material-icons">search</span>
             </div>
@@ -63,25 +64,25 @@
                     <td class="start"></td>
                     <td class="end"></td>
                     <td class="status"></td>
-                    <td class="col-actions">
+                    <td class="col-actions empty-action">
                             <a href="#" class="action d-flex flex-column empty-action">
                                 <span class="material-icons"></span>
                                 <span class="label"></span>
                             </a>
                         </td>
-                    <td class="col-actions">
+                    <td class="col-actions action-resume">
                         <a href="#" class="action d-flex flex-column action-resume">
                             <span class="material-icons">play_arrow</span>
                             <span class="label">Resume</span>
                         </a>
                     </td>
-                    <td class="col-actions">
+                    <td class="col-actions action-pause">
                             <a href="#" class="action d-flex flex-column action-pause">
                                 <span class="material-icons">pause</span>
                                 <span class="label">Pause</span>
                             </a>
                         </td>
-                    <td class="col-actions">
+                    <td class="col-actions action-restart">
                         <a href="#" class="action d-flex flex-column action-restart">
                             <span class="material-icons">replay</span>
                             <span class="label">Restart</span>

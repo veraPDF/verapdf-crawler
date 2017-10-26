@@ -136,40 +136,69 @@ $(function () {
 
     var normalizedDomain = normalizeURL(getUrlParameter("domain"));
 
+    // Error handler
+    function reportError(response) {
+        if (response.responseJSON) {
+            $('.domain-error').text(response.responseJSON.message);
+        } else {
+            $('.domain-error').text(response.responseText);
+        }
+        enableActions();
+    }
+
     //region Base job information
     var crawlJob;
+    var oldStatus;
     function loadCrawlJob() {
         $.get("api/crawl-jobs/" + normalizedDomain).done(function (result) {
             crawlJobLoaded(result);
             loadSummaryData();
-        });
+        }).fail(reportError);
     }
 
     function crawlJobLoaded(job) {
-        crawlJob = job;
-        crawlJob.isComplete = crawlJob.status === 'FINISHED' || job.status === 'FAILED';
+        var main = $('.main');
+        if (oldStatus) {
+            main.removeClass('status-' + oldStatus.toLowerCase());
+        }
 
-        $('.main').addClass('status-' + crawlJob.status.toLowerCase());
+        crawlJob = job;
+
+        main.addClass('status-' + crawlJob.status.toLowerCase());
 
         $('.domain-name span').text(crawlJob.domain);
 
-        $('.job-date').text(crawlJob.isComplete ? 'Tested on ' + crawlJob.startTime + ' - ' + crawlJob.finishTime : 'Test started on ' + crawlJob.startTime);
+        $('.job-date').text(crawlJob.finished ? 'Tested on ' + crawlJob.startTime + ' - ' + crawlJob.finishTime : 'Test started on ' + crawlJob.startTime);
 
         $('.status-text').text(crawlJob.status).attr('href', 'domain-status.html?domain=' + crawlJob.domain);
 
-        if (!crawlJob.isComplete) {
-            $('.job-mails').addClass('editable');
-        }
+        // TODO: uncomment when emails edit is implemented
+        // if (!crawlJob.finished) {
+        //     $('.job-mails').addClass('editable');
+        // }
 
-        $('.job-mails .label').text(crawlJob.isComplete ? 'Report sent to:' : 'Send report to:');
+        $('.job-mails .label').text(crawlJob.finished ? 'Report sent to:' : 'Send report to:');
+
+        $('a.ods-report-link').attr('href', '/api/report/full.ods?domain=' + crawlJob.domain);
+
+        enableActions();
+    }
+
+    function disableActions() {
+        $('.action').addClass('disabled');
+    }
+
+    function enableActions() {
+        $('.action').removeClass('disabled');
     }
 
     $("#action-resume").on('click', function () {
-        if (!crawlJob) return;
+        if (!crawlJob || $("#action-resume").hasClass('disabled')) return;
 
-        $('.main').removeClass('status-' + crawlJob.status.toLowerCase());
-
+        oldStatus = crawlJob.status;
         crawlJob.status = 'RUNNING';
+
+        disableActions();
 
         $.ajax({
             url: "api/crawl-jobs/" + normalizedDomain,
@@ -177,18 +206,17 @@ $(function () {
             data: JSON.stringify(crawlJob),
             headers: { "Content-type": "application/json" },
             success: crawlJobLoaded,
-            error: function (result) {
-                // reportError("Error on job loading");
-            }
+            error: reportError
         });
     });
 
     $("#action-pause").on('click', function () {
-        if (!crawlJob) return;
+        if (!crawlJob || $("#action-pause").hasClass('disabled')) return;
 
-        $('.main').removeClass('status-' + crawlJob.status.toLowerCase());
-
+        oldStatus = crawlJob.status;
         crawlJob.status = 'PAUSED';
+
+        disableActions();
 
         $.ajax({
             url: "api/crawl-jobs/" + normalizedDomain,
@@ -196,20 +224,22 @@ $(function () {
             data: JSON.stringify(crawlJob),
             headers: { "Content-type": "application/json" },
             success: crawlJobLoaded,
-            error: function (result) {
-                // reportError("Error on job loading");
-            }
+            error: reportError
         });
     });
 
     $("#action-restart").on('click', function () {
+        if (!crawlJob || $("#action-restart").hasClass('disabled')) return;
+
+        oldStatus = crawlJob.status;
+
+        disableActions();
+
         $.ajax({
             url: "api/crawl-jobs/" + normalizedDomain,
             type: "POST",
             success: crawlJobLoaded,
-            error: function (result) {
-                // reportError("Error on job loading");
-            }
+            error: reportError
         });
     });
     //endregion
@@ -218,7 +248,7 @@ $(function () {
     var errorMessage = '';
     var mailsList = '';
     function loadCrawlRequests() {
-        $.get("api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")) + "/requests").done(crawlRequestsLoaded);
+        $.get("api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")) + "/requests").done(crawlRequestsLoaded).fail(reportError);
     }
 
     function crawlRequestsLoaded(requests) {
@@ -234,6 +264,10 @@ $(function () {
                 }
             }
 
+        }
+
+        if (mailsList === '') {
+            mailsList = 'no one';
         }
 
         $('span.job-mails-list').text(mailsList);
@@ -358,9 +392,7 @@ $(function () {
                 summaryChart.data.datasets[0].data[1] = openCount;
                 summaryChart.update()
             },
-            error: function (result) {
-                // reportError("Error on job loading");
-            }
+            error: reportError
         });
     }
     //endregion
@@ -504,9 +536,7 @@ $(function () {
                 updateVersionStatistics(result['versionStatistics']);
                 updateTopProducerStatistics(result['topProducerStatistics']);
             },
-            error: function (result) {
-                // reportError("Error on job loading");
-            }
+            error: reportError
         });
 
     }
@@ -638,9 +668,7 @@ $(function () {
                 errorsChart.data = errorsChartData;
                 errorsChart.update();
             },
-            error: function (result) {
-                // reportError("Error on job loading");
-            }
+            error: reportError
         });
 
     }
