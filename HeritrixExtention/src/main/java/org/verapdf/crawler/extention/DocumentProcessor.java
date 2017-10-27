@@ -75,8 +75,11 @@ public class DocumentProcessor extends MirrorWriterProcessor {
             // TODO: add crawlSince parameter, and compare here with Last-Modified value and do now download and process older files
 
             log("shouldProcess method invocation with uri " + crawlURI.getURI());
-            if (supportedContentTypes.keySet().contains(crawlURI.getContentType())) {
+            String contentType = crawlURI.getContentType();
+            if (supportedContentTypes.keySet().contains(contentType)) {
                 return true;
+            } else if (contentType != null && contentType.startsWith("text")) {
+                return false;
             }
 
             String extension = FilenameUtils.getExtension(crawlURI.getURI());

@@ -340,7 +340,7 @@
             <map>
                 <!-- key is ContentType, value is extension and also the type of document in Logius DB -->
                 <entry key="application/pdf" value="pdf"/>
-                <entry key="pplication/vnd.oasis.opendocument.text" value="odt"/>
+                <entry key="application/vnd.oasis.opendocument.text" value="odt"/>
                 <entry key="application/vnd.oasis.opendocument.spreadsheet" value="ods"/>
                 <entry key="application/vnd.oasis.opendocument.presentation" value="odp"/>
                 <entry key="application/msword" value="doc"/>
