@@ -1,5 +1,5 @@
 $(function () {
-    var refreshInterval = 1000;
+    var refreshInterval = 5000;
     var heritrixEngineUrl = '';
     var crawlJob = {};
     var loadStatusTimeout;

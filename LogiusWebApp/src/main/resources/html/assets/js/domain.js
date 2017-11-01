@@ -677,7 +677,7 @@ $(function () {
 
     //region Main
     loadCrawlJob();
-    loadCrawlRequests();
+    //loadCrawlRequests();
     loadSummaryData();
     //endregion
 });
