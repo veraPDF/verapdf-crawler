@@ -67,7 +67,7 @@ $(function () {
             var element = requestTemplate.clone();
             element.find('.id').text(request.id);
             element.find('.status').text(request.finished ? 'yes' : 'no');
-            element.find('.email').text(request.emailAddress);
+            //element.find('.email').text(request.emailAddress);
             requestsTbody.append(element);
         });
 
