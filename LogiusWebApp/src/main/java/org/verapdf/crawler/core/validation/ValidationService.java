@@ -1,5 +1,8 @@
 package org.verapdf.crawler.core.validation;
 
+import com.adobe.xmp.XMPDateTime;
+import com.adobe.xmp.XMPDateTimeFactory;
+import com.adobe.xmp.XMPException;
 import io.dropwizard.hibernate.UnitOfWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,12 +15,20 @@ import org.verapdf.crawler.db.ValidationErrorDAO;
 import org.verapdf.crawler.db.ValidationJobDAO;
 import org.verapdf.crawler.tools.AbstractService;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.*;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public class ValidationService extends AbstractService {
 
     private static final Logger logger = LoggerFactory.getLogger(ValidationService.class);
+
+    private static final String PROPERTY_NAME_MOD_DATE_XMP = "modDateXMP";
+	private static final String PROPERTY_NAME_MOD_DATE_INFO_DICT = "modDateInfoDict";
 
 	private static final long SLEEP_DURATION = 60*1000;
 
@@ -129,8 +140,23 @@ public class ValidationService extends AbstractService {
                 }
                 document.setValidationErrors(validationErrors);
 
-                // Link properties
-                document.setProperties(result.getProperties());
+                // Link properties and modification date
+				Map<String, String> properties = result.getProperties();
+				String modDateXMP = null;
+				String modDateInfoDict = null;
+				if (properties.containsKey(PROPERTY_NAME_MOD_DATE_XMP)) {
+					modDateXMP = properties.get(PROPERTY_NAME_MOD_DATE_XMP);
+					properties.remove(PROPERTY_NAME_MOD_DATE_XMP);
+				}
+				if (properties.containsKey(PROPERTY_NAME_MOD_DATE_INFO_DICT)) {
+					modDateInfoDict = properties.get(PROPERTY_NAME_MOD_DATE_INFO_DICT);
+					properties.remove(PROPERTY_NAME_MOD_DATE_INFO_DICT);
+				}
+				Date modDate = getModDate(modDateXMP, modDateInfoDict);
+				if (modDate != null) {
+					document.setLastModified(modDate);
+				}
+				document.setProperties(properties);
 
                 // And update document (note that document was detached from hibernate context, thus we need to save explicitly)
                 documentDAO.save(document);
@@ -141,6 +167,26 @@ public class ValidationService extends AbstractService {
             cleanJob(currentJob, shouldCleanDB);
         }
     }
+
+    private static Date getModDate(String fromXMP, String fromInfoDict) {
+		if (fromXMP != null) {
+			try {
+				XMPDateTime fromISO8601 = XMPDateTimeFactory.createFromISO8601(fromXMP);
+				return fromISO8601.getCalendar().getTime();
+			} catch (XMPException e) {
+				return null;
+			}
+		} else if (fromInfoDict != null) {
+			try {
+				XMLGregorianCalendar xmlGregorianCalendar = DatatypeFactory.newInstance().newXMLGregorianCalendar(fromInfoDict);
+				return xmlGregorianCalendar.toGregorianCalendar().getTime();
+			} catch (DatatypeConfigurationException e) {
+				return null;
+			}
+		} else {
+			return null;
+		}
+	}
 
     private void cleanJob(ValidationJob job, boolean shouldCleanDB) {
     	logger.debug("Cleanup validation job");
