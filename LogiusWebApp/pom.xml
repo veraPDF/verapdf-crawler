@@ -19,6 +19,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.verapdf</groupId>
+            <artifactId>verapdf-xmp-core</artifactId>
+            <version>[0.12.0,0.13.0)</version>
+        </dependency>
+
+        <dependency>
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-customsearch</artifactId>
             <version>v1-rev57-1.23.0</version>

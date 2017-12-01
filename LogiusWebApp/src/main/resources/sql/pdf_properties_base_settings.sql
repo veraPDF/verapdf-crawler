@@ -2,6 +2,8 @@ INSERT INTO pdf_properties (property_name, property_enabled)
 VALUES
   ('flavourPart', 1),
   ('flavourConformance', 1),
+  ('modDateXMP', 1),
+  ('modDateInfoDict', 1),
   ('pdfVersion', 1),
   ('producer', 1),
   ('processingTime', 1),
@@ -14,6 +16,9 @@ VALUES
   ('flavourPart', 1, '/report/jobs/job/featuresReport/metadata/xmpPackage/x:xmpmeta/rdf:RDF/rdf:Description/pdfaid:part'),
   ('flavourConformance', 0, '/report/jobs/job/featuresReport/metadata/xmpPackage/x:xmpmeta/rdf:RDF/rdf:Description/@pdfaid:conformance'),
   ('flavourConformance', 1, '/report/jobs/job/featuresReport/metadata/xmpPackage/x:xmpmeta/rdf:RDF/rdf:Description/pdfaid:conformance'),
+  ('modDateXMP', 0, '/report/jobs/job/featuresReport/metadata/xmpPackage/x:xmpmeta/rdf:RDF/rdf:Description/@xmp:ModifyDate'),
+  ('modDateXMP', 1, '/report/jobs/job/featuresReport/metadata/xmpPackage/x:xmpmeta/rdf:RDF/rdf:Description/xmp:ModifyDate'),
+  ('modDateInfoDict', 0, '/report/jobs/job/featuresReport/informationDict/entry[@key=''ModDate'']'),
   ('pdfVersion', 0, '/report/jobs/job/featuresReport/lowLevelInfo/pdfVersion'),
   ('producer', 0, '/report/jobs/job/featuresReport/metadata/xmpPackage/x:xmpmeta/rdf:RDF/rdf:Description/@pdf:Producer'),
   ('producer', 1, '/report/jobs/job/featuresReport/metadata/xmpPackage/x:xmpmeta/rdf:RDF/rdf:Description/pdf:Producer'),
@@ -27,5 +32,6 @@ VALUES
   ('x', 'adobe:ns:meta/'),
   ('rdf', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'),
   ('pdfaid', 'http://www.aiim.org/pdfa/ns/id/'),
-  ('pdf', 'http://ns.adobe.com/pdf/1.3/')
+  ('pdf', 'http://ns.adobe.com/pdf/1.3/'),
+  ('xmp', 'http://ns.adobe.com/xap/1.0/')
 ;
