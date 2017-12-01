@@ -18,6 +18,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.verapdf</groupId>
+            <artifactId>verapdf-xmp-core</artifactId>
+            <version>[0.12.0,0.13.0)</version>
+        </dependency>
+
         <!-- Sql dependencies -->
         <dependency>
             <groupId>mysql</groupId>
