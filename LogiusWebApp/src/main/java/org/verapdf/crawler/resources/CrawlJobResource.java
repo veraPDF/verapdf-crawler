@@ -71,14 +71,18 @@ public class CrawlJobResource {
 		domain = DomainUtils.trimUrl(domain);
 
 		CrawlJob crawlJob = crawlJobDao.getByDomain(domain);
+		CrawlJob.CrawlService service = crawlJob.getCrawlService();
 		List<CrawlRequest> crawlRequests = null;
 		if (crawlJob != null) {
+            String heritrixJobId = crawlJob.getHeritrixJobId();
 			// Keep requests list to link to new job
 			crawlRequests = new ArrayList<>();
 			crawlRequests.addAll(crawlJob.getCrawlRequests());
 
 			// Tear down heritrix
-			heritrixCleanerService.teardownAndClearHeritrixJob(crawlJob.getHeritrixJobId());
+            if (service == CrawlJob.CrawlService.HERITRIX) {
+                heritrixCleanerService.teardownAndClearHeritrixJob(heritrixJobId);
+            }
 
 			// Remove job from DB
 			crawlJobDao.remove(crawlJob);
@@ -93,12 +97,14 @@ public class CrawlJobResource {
 		}
 
 		// Create and start new crawl job
-        CrawlJob newJob = new CrawlJob(domain);
+        CrawlJob newJob = new CrawlJob(domain, service);
 		if (crawlRequests != null) {
 			newJob.setCrawlRequests(crawlRequests);
 		}
         crawlJobDao.save(newJob);
-        startCrawlJob(newJob, heritrix);
+        if (service == CrawlJob.CrawlService.HERITRIX) {
+            startCrawlJob(newJob, heritrix);
+        }
         return newJob;
     }
 
@@ -122,15 +128,16 @@ public class CrawlJobResource {
         CrawlJob crawlJob = this.getCrawlJob(domain);
 
         String heritrixJobId = crawlJob.getHeritrixJobId();
+        CrawlJob.CrawlService service = crawlJob.getCrawlService();
         if(crawlJob.getStatus() == CrawlJob.Status.RUNNING && update.getStatus() == CrawlJob.Status.PAUSED) {
-            if (!heritrix.isJobFinished(heritrixJobId)) {
+            if (service == CrawlJob.CrawlService.HERITRIX && !heritrix.isJobFinished(heritrixJobId)) {
                 heritrix.pauseJob(heritrixJobId);
             }
             validationJobDAO.pause(domain);
             crawlJob.setStatus(CrawlJob.Status.PAUSED);
         }
         if(crawlJob.getStatus() == CrawlJob.Status.PAUSED && update.getStatus() == CrawlJob.Status.RUNNING) {
-            if (!heritrix.isJobFinished(heritrixJobId)) {
+            if (service == CrawlJob.CrawlService.HERITRIX  && !heritrix.isJobFinished(heritrixJobId)) {
                 heritrix.unpauseJob(heritrixJobId);
             }
             validationJobDAO.unpause(domain);
@@ -152,12 +159,14 @@ public class CrawlJobResource {
     @UnitOfWork
     public CrawlJobStatus getFullJobStatus(@PathParam("domain") String domain) {
         CrawlJob crawlJob = getCrawlJob(domain);
-        HeritrixCrawlJobStatus heritrixStatus;
-        try {
-            heritrixStatus = heritrix.getHeritrixStatus(crawlJob.getHeritrixJobId());
-        } catch (Throwable e) {
-            logger.error("Error during obtaining heritrix status", e);
-            heritrixStatus = new HeritrixCrawlJobStatus("Unavailable: " + e.getMessage(), null, null);
+        HeritrixCrawlJobStatus heritrixStatus = null;
+        if (crawlJob.getCrawlService() == CrawlJob.CrawlService.HERITRIX) {
+            try {
+                heritrixStatus = heritrix.getHeritrixStatus(crawlJob.getHeritrixJobId());
+            } catch (Throwable e) {
+                logger.error("Error during obtaining heritrix status", e);
+                heritrixStatus = new HeritrixCrawlJobStatus("Unavailable: " + e.getMessage(), null, null);
+            }
         }
 
         String crawlJobDomain = crawlJob.getDomain();
@@ -211,9 +220,10 @@ public class CrawlJobResource {
 
     static void startCrawlJob(CrawlJob crawlJob, HeritrixClient heritrix) {
         try {
-            heritrix.createJob(crawlJob.getHeritrixJobId(), crawlJob.getDomain());
-            heritrix.buildJob(crawlJob.getHeritrixJobId());
-            heritrix.launchJob(crawlJob.getHeritrixJobId());
+            String heritrixJobId = crawlJob.getHeritrixJobId();
+            heritrix.createJob(heritrixJobId, crawlJob.getDomain());
+            heritrix.buildJob(heritrixJobId);
+            heritrix.launchJob(heritrixJobId);
             crawlJob.setStatus(CrawlJob.Status.RUNNING);
         } catch (Exception e) {
             logger.error("Failed to start crawling job for domain " + crawlJob.getDomain(), e);

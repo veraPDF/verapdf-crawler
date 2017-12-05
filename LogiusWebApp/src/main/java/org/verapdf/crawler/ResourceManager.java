@@ -5,16 +5,13 @@ import io.dropwizard.hibernate.HibernateBundle;
 import io.dropwizard.hibernate.UnitOfWorkAwareProxyFactory;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.DefaultServerFactory;
-import org.verapdf.crawler.configurations.EmailServerConfiguration;
+import org.verapdf.crawler.configurations.BingConfiguration;
 import org.verapdf.crawler.configurations.ReportsConfiguration;
 import org.verapdf.crawler.configurations.VeraPDFServiceConfiguration;
 import org.verapdf.crawler.core.email.SendEmail;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
-import org.verapdf.crawler.core.services.HealthCheckMonitorService;
-import org.verapdf.crawler.core.services.HeritrixCleanerService;
-import org.verapdf.crawler.core.services.MonitorCrawlJobStatusService;
+import org.verapdf.crawler.core.services.*;
 import org.verapdf.crawler.core.reports.ReportsGenerator;
-import org.verapdf.crawler.core.services.ODSCleanerService;
 import org.verapdf.crawler.core.validation.PDFValidator;
 import org.verapdf.crawler.db.*;
 import org.verapdf.crawler.core.validation.ValidationService;
@@ -31,6 +28,7 @@ public class ResourceManager {
     private static final String HEALTH_CHECK_NAME_HERITRIX_CLEANER_SERVICE = "heritrixCleanerService";
     private static final String HEALTH_CHECK_NAME_ODS_CLEANER_SERVICE = "odsCleanerService";
     private static final String HEALTH_CHECK_NAME_HEALTH_CHECK_MONITOR_SERVICE = "healthCheckMonitorService";
+    private static final String HEALTH_CHECK_NAME_BING_SERVICE = "bingService";
 
     private final List<Object> resources = new ArrayList<>();
     private final Map<String, HealthCheck> healthChecks = new HashMap<>();
@@ -56,9 +54,12 @@ public class ResourceManager {
         ValidationService validationService = new UnitOfWorkAwareProxyFactory(hibernate).create(ValidationService.class,
                 new Class[]{ValidationJobDAO.class, ValidationErrorDAO.class, DocumentDAO.class, PDFValidator.class},
                 new Object[]{validationJobDAO, validationErrorDAO, documentDAO, veraPDFValidator});
+        BingService bingService = new UnitOfWorkAwareProxyFactory(hibernate).create(BingService.class,
+                new Class[]{BingConfiguration.class, CrawlJobDAO.class, DocumentDAO.class, ValidationJobDAO.class},
+                new Object[]{config.getBingConfiguration(), crawlJobDAO, documentDAO, validationJobDAO});
         MonitorCrawlJobStatusService monitorCrawlJobStatusService = new UnitOfWorkAwareProxyFactory(hibernate).create(MonitorCrawlJobStatusService.class,
-                new Class[]{CrawlJobDAO.class, CrawlRequestDAO.class, ValidationJobDAO.class, HeritrixClient.class},
-                new Object[]{crawlJobDAO, crawlRequestDAO, validationJobDAO, heritrix});
+                new Class[]{BingService.class, CrawlJobDAO.class, CrawlRequestDAO.class, ValidationJobDAO.class, HeritrixClient.class},
+                new Object[]{bingService, crawlJobDAO, crawlRequestDAO, validationJobDAO, heritrix});
         HeritrixCleanerService heritrixCleanerService = new HeritrixCleanerService(heritrix);
 
         // Discover admin connector port
@@ -85,7 +86,8 @@ public class ResourceManager {
                         HEALTH_CHECK_NAME_MONITOR_CRAWL_JOB_STATUS_SERVICE,
                         HEALTH_CHECK_NAME_HERITRIX_CLEANER_SERVICE,
                         HEALTH_CHECK_NAME_ODS_CLEANER_SERVICE,
-                        HEALTH_CHECK_NAME_HEALTH_CHECK_MONITOR_SERVICE
+                        HEALTH_CHECK_NAME_HEALTH_CHECK_MONITOR_SERVICE,
+                        HEALTH_CHECK_NAME_BING_SERVICE
                 ));
 
         // Initializing health checks
@@ -98,6 +100,7 @@ public class ResourceManager {
         healthChecks.put(HEALTH_CHECK_NAME_HERITRIX_CLEANER_SERVICE, new ServiceHealthCheck(heritrixCleanerService));
         healthChecks.put(HEALTH_CHECK_NAME_ODS_CLEANER_SERVICE, new ServiceHealthCheck(odsCleanerService));
         healthChecks.put(HEALTH_CHECK_NAME_HEALTH_CHECK_MONITOR_SERVICE, new ServiceHealthCheck(healthCheckMonitorService));
+        healthChecks.put(HEALTH_CHECK_NAME_BING_SERVICE, new ServiceHealthCheck(bingService));
 
         // Launching services
         validationService.start();
@@ -105,6 +108,7 @@ public class ResourceManager {
         heritrixCleanerService.start();
         odsCleanerService.start();
         healthCheckMonitorService.start();
+        bingService.start();
     }
 
     public Map<String, HealthCheck> getHealthChecks() {

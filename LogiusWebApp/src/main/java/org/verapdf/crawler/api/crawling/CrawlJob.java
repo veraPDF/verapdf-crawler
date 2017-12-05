@@ -46,6 +46,11 @@ public class CrawlJob {
     @JsonProperty
     private Status status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "crawl_service")
+    @JsonProperty
+    private CrawlService crawlService;
+
     @JsonProperty
     @Column(name = "is_finished")
     private boolean finished;
@@ -67,14 +72,24 @@ public class CrawlJob {
         FAILED
     }
 
+    public enum CrawlService {
+        HERITRIX,
+        BING
+    }
+
     public CrawlJob() {
     }
 
     public CrawlJob(String domain) {
+        this(domain, CrawlService.HERITRIX);
+    }
+
+    public CrawlJob(String domain, CrawlService service) {
         this.domain = domain;
         this.heritrixJobId = UUID.randomUUID().toString();
         this.startTime = new Date();
         this.status = Status.NEW;
+        this.crawlService = service;
     }
 
     public CrawlJob(String heritrixJobId, String jobURL, String domain, Date startTime) {
@@ -82,6 +97,7 @@ public class CrawlJob {
         this.jobURL = jobURL;
         this.domain = domain;
         this.startTime = startTime;
+        this.crawlService = CrawlService.HERITRIX;
     }
 
     public String getDomain() {
@@ -131,6 +147,14 @@ public class CrawlJob {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public CrawlService getCrawlService() {
+        return crawlService;
+    }
+
+    public void setCrawlService(CrawlService crawlService) {
+        this.crawlService = crawlService;
     }
 
     public boolean isFinished() {

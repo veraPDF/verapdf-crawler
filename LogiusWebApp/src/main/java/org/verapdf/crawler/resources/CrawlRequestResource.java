@@ -15,6 +15,7 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.Date;
 import java.util.List;
@@ -36,7 +37,8 @@ public class CrawlRequestResource {
 
     @POST
     @UnitOfWork
-    public CrawlRequest createCrawlRequest(@NotNull @Valid CrawlRequest crawlRequest) {
+    public CrawlRequest createCrawlRequest(@NotNull @Valid CrawlRequest crawlRequest,
+                                           @QueryParam("cralwService") CrawlJob.CrawlService requestedService) {
         // Validate and pre-process input
         List<String> domains = crawlRequest.getCrawlJobs().stream()
                 .map(CrawlJob::getDomain)
@@ -53,10 +55,13 @@ public class CrawlRequestResource {
         }
 
         // For domains that are left start new crawl jobs
+        CrawlJob.CrawlService service = requestedService == null ? CrawlJob.CrawlService.HERITRIX : requestedService;
         for (String domain: domains) {
-            CrawlJob newJob = crawlJobDao.save(new CrawlJob(domain));
+            CrawlJob newJob = crawlJobDao.save(new CrawlJob(domain, service));
             newJob.getCrawlRequests().add(crawlRequest);
-            CrawlJobResource.startCrawlJob(newJob, heritrix);
+            if (service == CrawlJob.CrawlService.HERITRIX) {
+                CrawlJobResource.startCrawlJob(newJob, heritrix);
+            }
         }
         return crawlRequest;
     }

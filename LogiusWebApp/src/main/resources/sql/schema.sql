@@ -25,6 +25,7 @@ CREATE TABLE `crawl_jobs` (
   `finish_time`     DATETIME              DEFAULT NULL,
   `is_finished`     TINYINT(1)            DEFAULT '0',
   `job_status`      VARCHAR(10)           DEFAULT NULL,
+  `crawl_service`   VARCHAR(10)  NOT NULL,
   PRIMARY KEY (`domain`),
   UNIQUE KEY `crawl_jobs_domain_uindex` (`heritrix_job_id`)
 );
