@@ -160,13 +160,17 @@ public class CrawlJobResource {
     public CrawlJobStatus getFullJobStatus(@PathParam("domain") String domain) {
         CrawlJob crawlJob = getCrawlJob(domain);
         HeritrixCrawlJobStatus heritrixStatus = null;
-        if (crawlJob.getCrawlService() == CrawlJob.CrawlService.HERITRIX) {
+        CrawlJob.CrawlService crawlService = crawlJob.getCrawlService();
+        if (crawlService == CrawlJob.CrawlService.HERITRIX) {
             try {
                 heritrixStatus = heritrix.getHeritrixStatus(crawlJob.getHeritrixJobId());
             } catch (Throwable e) {
                 logger.error("Error during obtaining heritrix status", e);
                 heritrixStatus = new HeritrixCrawlJobStatus("Unavailable: " + e.getMessage(), null, null);
             }
+        } else if (crawlService == CrawlJob.CrawlService.BING) {
+            //TODO: fix this
+            heritrixStatus = new HeritrixCrawlJobStatus("Bing job", null, null);
         }
 
         String crawlJobDomain = crawlJob.getDomain();
