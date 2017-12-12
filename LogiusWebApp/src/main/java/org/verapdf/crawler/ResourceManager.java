@@ -68,8 +68,9 @@ public class ResourceManager {
         int adminPort = adminConnectorFactory.getPort();
 
         // Initializing resources
-        resources.add(new CrawlJobResource(crawlJobDAO, validationJobDAO, heritrix, validationService, heritrixCleanerService));
-        resources.add(new CrawlRequestResource(crawlRequestDAO, crawlJobDAO, heritrix));
+        CrawlJobResource crawlJobResource = new CrawlJobResource(crawlJobDAO, validationJobDAO, heritrix, validationService, heritrixCleanerService, bingService);
+        resources.add(crawlJobResource);
+        resources.add(new CrawlRequestResource(crawlRequestDAO, crawlJobDAO, heritrix, crawlJobResource));
         resources.add(new DocumentResource(crawlJobDAO, documentDAO, validationJobDAO));
         resources.add(new DocumentPropertyResource(documentDAO));
         resources.add(new ValidationServiceResource(pdfPropertyDAO, namespaceDAO, validationJobDAO));

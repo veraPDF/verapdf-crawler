@@ -94,13 +94,13 @@ public class BingService extends AbstractService {
 			if (!tempFolder.isDirectory() && (tempFolder.exists() || !tempFolder.mkdirs())) {
 				throw new IllegalStateException("Initialization fail on obtaining job temp folder");
 			}
-			processFileType(this.currentJob, "pdf", tempFolder);
-			processFileType(this.currentJob, "odt", null);
-			processFileType(this.currentJob, "ods", null);
-			processFileType(this.currentJob, "odp", null);
-			processFileType(this.currentJob, "doc", null);
-			processFileType(this.currentJob, "xls", null);
-			processFileType(this.currentJob, "ppt", null);
+			processFileType("pdf", tempFolder);
+			processFileType("odt", null);
+			processFileType("ods", null);
+			processFileType("odp", null);
+			processFileType("doc", null);
+			processFileType("xls", null);
+			processFileType("ppt", null);
 			this.currentJob = null;
 			return false;
 		}
@@ -119,17 +119,16 @@ public class BingService extends AbstractService {
 		return null;
 	}
 
-	private void processFileType(CrawlJob crawlJob, String fileType, File tempFolder) {
-		String domain = crawlJob.getDomain();
-		Set<String> pdfs = obtainURLs(domain, fileType);
+	private void processFileType(String fileType, File tempFolder) {
+		Set<String> pdfs = obtainURLs(fileType);
 		for (String url : pdfs) {
-			processFile(url, crawlJob, fileType, tempFolder);
+			processFile(url, fileType, tempFolder);
 		}
 	}
 
 	@SuppressWarnings("WeakerAccess")
 	@UnitOfWork
-	public void processFile(String url, CrawlJob crawlJob, String fileType, File tempFolder) {
+	public void processFile(String url, String fileType, File tempFolder) {
 		try {
 			try (CloseableHttpClient client = HttpClients.createDefault()) {
 				HttpGet get = new HttpGet(url);
@@ -154,7 +153,7 @@ public class BingService extends AbstractService {
 				}
 				DomainDocument domainDocument = new DomainDocument();
 				domainDocument.setUrl(url);
-				domainDocument.setCrawlJob(crawlJob);
+				domainDocument.setCrawlJob(this.currentJob);
 				domainDocument.setContentType(contentType);
 				Header[] lastModHeaders = response.getHeaders("Last-Modified");
 				if (lastModHeaders != null && lastModHeaders.length > 0) {
@@ -165,7 +164,9 @@ public class BingService extends AbstractService {
 					IOUtils.copy(response.getEntity().getContent(), new FileOutputStream(file));
 					domainDocument.setFilePath(file.getAbsolutePath());
 				}
-				DocumentResource.saveDocument(domainDocument, crawlJob, documentDAO, validationJobDAO);
+				if (this.currentJob != null) {
+					DocumentResource.saveDocument(domainDocument, this.currentJob, documentDAO, validationJobDAO);
+				}
 			} catch (ParseException e) {
 				logger.error("Can't obtain last modified for url: "+ url, e);
 			}
@@ -174,20 +175,23 @@ public class BingService extends AbstractService {
 		}
 	}
 
-	private Set<String> obtainURLs(String site, String fileType) {
+	private Set<String> obtainURLs(String fileType) {
 		Set<String> result = new HashSet<>();
 		int offset = 0;
-		String urlWithoutOffset = "https://api.cognitive.microsoft.com/bing/v7.0/search?" +
-				"q=site%3a" + site + "+filetype%3a" + fileType +
-				"&count=50&offset=";
-		int currentEstimations = offset + 1;
-		while (currentEstimations > offset) {
-			try {
-				currentEstimations = obtainResults(result, urlWithoutOffset, this.apiKey, offset);
-				offset += 50;
-				Thread.sleep(10);
-			} catch (IOException | InterruptedException e) {
-				e.printStackTrace();
+		if (this.currentJob != null) {
+			String site = this.currentJob.getDomain();
+			String urlWithoutOffset = "https://api.cognitive.microsoft.com/bing/v7.0/search?" +
+					"q=site%3a" + site + "+filetype%3a" + fileType +
+					"&count=50&offset=";
+			int currentEstimations = offset + 1;
+			while (currentEstimations > offset && this.currentJob != null) {
+				try {
+					currentEstimations = obtainResults(result, urlWithoutOffset, this.apiKey, offset);
+					offset += 50;
+					Thread.sleep(10);
+				} catch (IOException | InterruptedException e) {
+					logger.error("Some error during links obtaining", e);
+				}
 			}
 		}
 		return result;
@@ -225,6 +229,13 @@ public class BingService extends AbstractService {
 
 	public CrawlJob getCurrentJob() {
 		return currentJob;
+	}
+
+	public void discardJob(CrawlJob job) {
+		if (this.currentJob != null && this.currentJob.getDomain().equals(job.getDomain())) {
+			this.currentJob = null;
+		}
+		deleteTempFolder(job);
 	}
 
 	public boolean deleteTempFolder(CrawlJob job) {

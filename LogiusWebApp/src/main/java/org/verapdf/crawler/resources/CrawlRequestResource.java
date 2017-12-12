@@ -24,15 +24,16 @@ import java.util.stream.Collectors;
 @Path("/crawl-requests")
 @Produces(MediaType.APPLICATION_JSON)
 public class CrawlRequestResource {
-    private static final Logger logger = LoggerFactory.getLogger(CrawlRequestResource.class);
     private final HeritrixClient heritrix;
     private final CrawlRequestDAO crawlRequestDao;
     private final CrawlJobDAO crawlJobDao;
+    private final CrawlJobResource crawlJobResource;
 
-    public CrawlRequestResource(CrawlRequestDAO crawlRequestDao, CrawlJobDAO crawlJobDao, HeritrixClient heritrix) {
+    public CrawlRequestResource(CrawlRequestDAO crawlRequestDao, CrawlJobDAO crawlJobDao, HeritrixClient heritrix, CrawlJobResource crawlJobResource) {
         this.heritrix = heritrix;
         this.crawlRequestDao = crawlRequestDao;
         this.crawlJobDao = crawlJobDao;
+        this.crawlJobResource = crawlJobResource;
     }
 
     @POST
@@ -47,15 +48,18 @@ public class CrawlRequestResource {
         // Save request
         crawlRequest = crawlRequestDao.save(crawlRequest);
 
+        CrawlJob.CrawlService service = requestedService == null ? CrawlJob.CrawlService.HERITRIX : requestedService;
         // Find jobs for domains requested earlier and link with this request
         List<CrawlJob> existingJobs = crawlJobDao.findByDomain(domains);
         for (CrawlJob existingJob: existingJobs) {
+            if (service != existingJob.getCrawlService()) {
+                existingJob = this.crawlJobResource.restartCrawlJob(existingJob, existingJob.getDomain(), service);
+            }
             domains.remove(existingJob.getDomain());
             existingJob.getCrawlRequests().add(crawlRequest);
         }
 
         // For domains that are left start new crawl jobs
-        CrawlJob.CrawlService service = requestedService == null ? CrawlJob.CrawlService.HERITRIX : requestedService;
         for (String domain: domains) {
             CrawlJob newJob = crawlJobDao.save(new CrawlJob(domain, service));
             newJob.getCrawlRequests().add(crawlRequest);
