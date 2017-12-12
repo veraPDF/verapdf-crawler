@@ -18,6 +18,8 @@ public class HeritrixConfiguration {
 	private String configTemplatePath;
 	@NotEmpty
 	private String logiusAppUrl;
+	@NotEmpty
+	private String jobsFolder;
 
 	public HeritrixConfiguration() {
 	}
@@ -71,4 +73,14 @@ public class HeritrixConfiguration {
     public void setLogiusAppUrl(String logiusAppUrl) {
         this.logiusAppUrl = logiusAppUrl;
     }
+
+	@JsonProperty
+	public String getJobsFolder() {
+		return jobsFolder;
+	}
+
+	@JsonProperty
+	public void setJobsFolder(String jobsFolder) {
+		this.jobsFolder = jobsFolder;
+	}
 }

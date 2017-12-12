@@ -33,34 +33,42 @@ public class VeraPDFProcessor implements Runnable {
 
 	private static final Logger logger = LoggerFactory.getLogger(VeraPDFProcessor.class);
 
+	private static final int MAX_PREFERRED_PROPERTY_LENGTH = 255;
 	private static final String BASE_PATH = "/report/jobs/job/";
 	private static final String VALIDATION_REPORT_PATH = BASE_PATH + "validationReport/";
 	private static final String FLAVOUR_PART_PROPERTY_NAME = "flavourPart";
 	private static final String FLAVOUR_CONFORMANCE_PROPERTY_NAME = "flavourConformance";
 
 	private final String verapdfPath;
+	private final File veraPDFErrorLog;
 	private final String filePath;
 	private Process process;
 	private ValidationResource resource;
 	private boolean stopped = false;
 	private final ValidationSettings settings;
 
-	VeraPDFProcessor(String verapdfPath, String filePath, ValidationResource resource, ValidationSettings settings) {
+	VeraPDFProcessor(String verapdfPath, File veraPDFErrorLog, String filePath, ValidationResource resource, ValidationSettings settings) {
 		this.verapdfPath = verapdfPath;
 		this.filePath = filePath;
 		this.resource = resource;
 		this.settings = settings;
+		this.veraPDFErrorLog = veraPDFErrorLog;
 	}
 
 	private File getVeraPDFReport(String filename) throws IOException, InterruptedException {
+		logger.info("Preparing veraPDF process");
 		String[] cmd = {verapdfPath, "--extract", "--format", "mrr", "--maxfailuresdisplayed", "1", filename};
-		ProcessBuilder pb = new ProcessBuilder().inheritIO();
+		ProcessBuilder pb = new ProcessBuilder();
+		pb.redirectError(this.veraPDFErrorLog);
 		Path outputPath = Files.createTempFile("veraPDFReport", ".xml");
 		File file = outputPath.toFile();
 		pb.redirectOutput(file);
 		pb.command(cmd);
+		logger.info("Starting veraPDF process for file " + filename);
 		this.process = pb.start();
+		logger.info("VeraPDF process has been started");
 		this.process.waitFor();
+		logger.info("VeraPDF process has been finished");
 		return file;
 	}
 
@@ -71,6 +79,7 @@ public class VeraPDFProcessor implements Runnable {
 		try {
 			report = getVeraPDFReport(this.filePath);
 			if (report != null && !stopped) {
+				logger.info("Obtaining result structure");
 				DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 				dbf.setNamespaceAware(true);
 				DocumentBuilder db = dbf.newDocumentBuilder();
@@ -94,6 +103,7 @@ public class VeraPDFProcessor implements Runnable {
 			logger.info(message, e);
 			result = generateProblemResult(message, e);
 		} finally {
+			logger.info("Finished");
 			if (report != null && !report.delete()) {
 				logger.info("Report has not been deleted manually");
 			}
@@ -141,17 +151,22 @@ public class VeraPDFProcessor implements Runnable {
 	}
 
 	private String getProperty(List<String> xpaths, Document document, XPath xpath) {
+		String tempResult = "";
 		try {
 			for (String propertyXPath : xpaths) {
 				String value = (String) xpath.evaluate(propertyXPath, document, XPathConstants.STRING);
 				if (value != null && !value.isEmpty()) {
-					return value;
+					if (value.length() <= MAX_PREFERRED_PROPERTY_LENGTH) {
+						return value;
+					} else if (tempResult.isEmpty()) {
+						tempResult = value;
+					}
 				}
 			}
 		} catch (Throwable e) {
 			logger.info("Some problem in obtaining property", e);
 		}
-		return "";
+		return tempResult;
 	}
 
 	private VeraPDFValidationResult generateBaseResult(Document document, XPath xpath) throws XPathExpressionException {

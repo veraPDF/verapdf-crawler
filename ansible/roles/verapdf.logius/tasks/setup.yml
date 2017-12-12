@@ -1,0 +1,97 @@
+---
+
+- name: Create logius group
+  group:
+    name: "{{ logius_linux_group }}"
+    state: present
+  tags:
+    - "install"
+
+- name: Create logius user
+  user:
+    name: "{{ logius_linux_user }}"
+    groups:
+      - "{{ logius_linux_group }}"
+    createhome: no
+    system: yes
+  tags:
+    - "install"
+
+- name: Create application install directory
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: "755"
+  with_items:
+    - "{{ logius_app_bin }}"
+    - "{{ logius_app_lib }}"
+    - "{{ logius_app_conf }}"
+    - "{{ logius_app_res }}"
+  tags:
+    - "install"
+
+- name: Create application log directory
+  file:
+    path: "{{ logius_log_dir }}"
+    state: directory
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: "755"
+  tags:
+    - "install"
+
+- name: Copy application sample report
+  copy:
+    src: "{{ logius_git_root }}/LogiusWebApp/src/main/resources/{{ item }}"
+    remote_src: true
+    dest: "{{ logius_app_res }}/{{ item }}"
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: "755"
+  with_items:
+    - "sample_report.ods"
+    - "sample_configuration.cxml"
+  tags:
+    - "install"
+
+- name: Add Web app configuration templates
+  template:
+    src: "var/lib/logius/conf/{{ item }}.yml.j2"
+    dest: "{{ logius_app_conf }}/{{ item }}.yml"
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: 0644
+  with_items:
+    - "logius-web"
+    - "logius-sample"
+    - "verapdf-service"
+  tags:
+    - "install"
+    - "update"
+
+- name: Create app DB Schema
+  mysql_db:
+    state: import
+    name: "logius"
+    target: "{{ logius_git_root }}/LogiusWebApp/src/main/resources/sql/schema.sql"
+  when: logius_db_create_schema
+  tags:
+    - "install"
+
+- name: Setup default properties
+  mysql_db:
+    state: import
+    name: "logius"
+    target: "{{ logius_git_root }}/LogiusWebApp/src/main/resources/sql/pdf_properties_base_settings.sql"
+  when: logius_db_create_schema
+  tags:
+    - "install"
+
+- name: Remove default nginx site
+  file:
+    path: "/etc/nginx/sites-enabled/default"
+    state: absent
+  tags:
+    - "install"

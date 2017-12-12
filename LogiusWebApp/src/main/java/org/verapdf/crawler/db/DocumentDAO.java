@@ -14,14 +14,29 @@ import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 public class DocumentDAO extends AbstractDAO<DomainDocument> {
+
+    private static final int PROPERTY_VALUE_LENGTH = 255;
+
+    public static final String NONE = "None"; // used to indicate that some property should be missing, since null means absence of the filter
 
     public DocumentDAO(SessionFactory sessionFactory) {
         super(sessionFactory);
     }
 
-    public DomainDocument save(DomainDocument document) {
+    @SuppressWarnings("UnusedReturnValue")
+	public DomainDocument save(DomainDocument document) {
+        Map<String, String> properties = document.getProperties();
+        if (properties != null) {
+            for (Map.Entry<String, String> property : properties.entrySet()) {
+                String currentValue = property.getValue();
+                if (currentValue.length() > PROPERTY_VALUE_LENGTH) {
+                    property.setValue(currentValue.substring(0, PROPERTY_VALUE_LENGTH));
+                }
+            }
+        }
         return persist(document);
     }
 
@@ -43,6 +58,53 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
 
         return currentSession().createQuery(criteriaQuery).getSingleResult();
+    }
+
+    public List<DomainDocument> getDocuments(String domain, List<String> documentTypes, DomainDocument.BaseTestResult testResult, Date startDate, Integer limit) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<DomainDocument> criteriaQuery = builder.createQuery(DomainDocument.class);
+        Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
+
+        List<Predicate> restrictions = new ArrayList<>();
+        restrictions.add(builder.equal(document.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain));
+        restrictions.add(document.get(DomainDocument_.contentType).in(documentTypes));
+        if (testResult != null) {
+            restrictions.add(builder.equal(document.get(DomainDocument_.baseTestResult), testResult));
+        }
+        if (startDate != null) {
+            restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
+        }
+        criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
+
+        Query<DomainDocument> query = currentSession().createQuery(criteriaQuery);
+        if (limit != null) {
+            query.setMaxResults(limit);
+        }
+        return query.list();
+    }
+
+    public List<String> getDocumentsUrls(String domain, List<String> documentTypes, DomainDocument.BaseTestResult testResult, Date startDate, Integer limit) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<String> criteriaQuery = builder.createQuery(String.class);
+        Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
+        criteriaQuery.select(document.get(DomainDocument_.url));
+
+        List<Predicate> restrictions = new ArrayList<>();
+        restrictions.add(builder.equal(document.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain));
+        restrictions.add(document.get(DomainDocument_.contentType).in(documentTypes));
+        if (testResult != null) {
+            restrictions.add(builder.equal(document.get(DomainDocument_.baseTestResult), testResult));
+        }
+        if (startDate != null) {
+            restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
+        }
+        criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
+
+        Query<String> query = currentSession().createQuery(criteriaQuery);
+        if (limit != null) {
+            query.setMaxResults(limit);
+        }
+        return query.list();
     }
 
     public List<String> getDocumentPropertyValues(String propertyName, String domain, String propertyValueFilter, Integer limit) {
@@ -130,9 +192,13 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
 
         if (flavour != null) {
             // AND document.properties['flavour'] = <flavour>
-            MapJoin<DomainDocument, String, String> flavourProperty = document.join(DomainDocument_.properties);
+            MapJoin<DomainDocument, String, String> flavourProperty = document.join(DomainDocument_.properties, JoinType.LEFT);
             flavourProperty.on(builder.equal(flavourProperty.key(), PdfPropertyStatistics.FLAVOUR_PROPERTY_NAME));
-            restrictions.add(builder.equal(flavourProperty.value(), flavour));
+            if (flavour.equals(NONE)) {
+                restrictions.add(builder.isNull(flavourProperty.value()));
+            } else {
+                restrictions.add(builder.equal(flavourProperty.value(), flavour));
+            }
         }
 
         if (version != null) {

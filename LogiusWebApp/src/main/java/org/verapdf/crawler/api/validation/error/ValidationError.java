@@ -1,6 +1,7 @@
 package org.verapdf.crawler.api.validation.error;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -54,5 +55,10 @@ public class ValidationError {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @JsonIgnore
+    public String getFullDescription() {
+        return this.description;
     }
 }

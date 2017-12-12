@@ -58,8 +58,12 @@ body.container-fluid {
   color: white;
 }
 
-.main .form-control:focus {
+.main .form-control, .main .form-control:focus {
   border-color: #1550ad;
+}
+
+.main .template {
+  display: none!important;
 }
 
 .footer {
@@ -205,8 +209,19 @@ body.container-fluid {
   margin-bottom: 30px;
 }
 
+.domains-list-title {
+  flex: 0 0 200px;
+}
+
+.domains-list-error {
+  color: #fd5858;
+  text-align: center;
+  margin-right: 20px;
+}
+
 .domain-filter {
-  margin: 10px 0;
+  flex: 0 0 220px;
+  margin: 10px 0 10px auto;
 }
 
 .domain-filter .input-group-addon {
@@ -251,6 +266,24 @@ body.container-fluid {
   text-decoration: none;
 }
 
+.domains-list tr.disabled a.action, .domains-list tr.disabled a.action:active,
+.domains-list tr.disabled a.action:hover, .domains-list tr.disabled a.action:focus {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.domains-list tr.running .empty-action, .domains-list tr.running .action-resume {
+  display: none!important;
+}
+.domains-list tr.paused .empty-action, .domains-list tr.paused .action-pause {
+  display: none!important;
+}
+.domains-list tr.finished .action-resume, .domains-list tr.finished .action-pause {
+  display: none!important;
+}
+.domains-list tr.failed .action-resume, .domains-list tr.failed .action-pause {
+  display: none!important;
+}
+
 a.action {
   text-decoration: none;
   align-items: center;
@@ -259,6 +292,10 @@ a.action {
 
 a.action .label {
   font-size: 12px;
+}
+
+a.action.disabled {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .pagination {
@@ -303,6 +340,10 @@ a.action .label {
   text-decoration: underline;
 }
 
+.domain-error {
+  color: #fd5858;
+}
+
 .job-details span.job-date {
   font-size: 14px;
 }
@@ -311,6 +352,10 @@ a.action .label {
   text-transform: capitalize;
   display: block;
   margin-bottom: 10px;
+}
+
+.job-details .action.disabled {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .job-mails {
@@ -411,7 +456,15 @@ a.action .label {
 }
 
 .documents .col {
+  height: 600px;
+}
+
+.documents .col.col-sm-6 {
   height: 400px;
+}
+
+.errors {
+  min-height: 330px;
 }
 
 .errors form {
@@ -430,10 +483,14 @@ a.action .label {
 
 .errors .tt-menu {
   background-color: white;
-  min-width: 164px;
+  min-width: 176px;
   color: #495057;
-  margin: -4px 0 0 1px;
-  border-radius: 3px;
+  margin: -4px 0 0 0;
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
+  border-bottom: 1px solid #1550ad;
+  border-left: 1px solid #1550ad;
+  border-right: 1px solid #1550ad;
 }
 
 .errors .tt-dataset {
@@ -441,27 +498,28 @@ a.action .label {
   margin: 2px 0 0 0;
   padding: 1px 10px 3px;
   cursor: pointer;
+  font-size: .875rem;
 }
 
 .errors .errors-list {
   margin-left: 320px;
 }
 
-.errors .errors-list .error-item {
-  margin-bottom: 15px;
-}
-
-.errors .errors-list .material-icons {
-  padding-top: 1px;
+.errors .errors-list td {
+  vertical-align: top;
 }
 
 .errors .errors-list .count {
-  /* min-width: 30px;  TODO: Calculate based on digits count */
-  padding: 0 2px;
+  font-weight: bold;
+  border-radius: 12px;
+  padding: 0 8px 2px;
+  color: #1550ad;
+  text-align: center;
 }
 
 .errors .errors-list .error-description {
   margin-left: 10px;
+  padding: 0 0 15px 10px;
 }
 
 .errors .errors-list .error-description .short {
@@ -487,4 +545,103 @@ a.action .label {
 .important-notice {
   border: 1px solid white;
   padding: 10px;
+}
+
+/* Status page */
+.health-checks {
+  margin-bottom: 30px;
+}
+
+.health-checks h4 {
+  margin-bottom: 20px;
+}
+
+.health-checks .loading {
+  height: 144px;
+}
+
+.health-checks .loaded div {
+  display: flex;
+}
+
+.health-checks .check-name {
+  flex: 0 0 250px;
+}
+
+.health-checks .check-status {
+  flex: 0 0 100px;
+}
+
+.health-checks .healthy .check-status {
+  color: #43c46f;
+}
+
+.health-checks .unhealthy .check-status {
+  color: #fd5858;
+}
+
+.active-domains-list td, .active-domains-list th {
+  border-top: none;
+  vertical-align: middle;
+}
+
+.active-domains-list .col-date {
+  width: 200px;
+}
+
+.active-domains-list .col-status {
+  width: 100px;
+}
+
+.validation-queue td, .validation-queue th {
+  border-top: none;
+  vertical-align: middle;
+}
+
+.validation-queue .in-progress {
+  color: #43c46f;
+}
+
+.validation-queue .paused {
+  color: #fff90a;
+}
+
+/* Domain status page */
+.status-loaded {
+  display: none;
+}
+
+.job-requests td, .job-requests th {
+  border-top: none;
+  vertical-align: middle;
+}
+
+.job-requests .col-id {
+  width: 350px;
+}
+
+.job-requests .col-status {
+  width: 100px;
+}
+
+.heritrix {
+  margin: 40px 0;
+}
+
+.heritrix .title {
+  display: flex;
+  justify-content: space-between;
+}
+
+.heritrix .crawled-urls {
+  margin-bottom: 20px;
+}
+
+.heritrix td, .heritrix th {
+  border-top: none;
+  vertical-align: middle;
+}
+
+.heritrix td {
+  font-size: 14px;
 }

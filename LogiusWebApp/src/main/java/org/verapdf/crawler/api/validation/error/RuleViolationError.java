@@ -1,5 +1,7 @@
 package org.verapdf.crawler.api.validation.error;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 
 @Entity
@@ -23,5 +25,11 @@ public class RuleViolationError extends ValidationError {
 
     public void setRule(Rule rule) {
         this.rule = rule;
+    }
+
+    @Override
+    @JsonIgnore
+    public String getFullDescription() {
+        return rule.getSpecification() + " " + rule.getClause() + "-" + rule.getTestNumber() + ": " + super.getFullDescription();
     }
 }

@@ -139,13 +139,13 @@
                 <ref bean="acceptSurts" />
                 <!-- ...but REJECT those more than a configured link-hop-count from start... -->
                 <bean class="org.archive.modules.deciderules.TooManyHopsDecideRule">
-                    <!-- <property name="maxHops" value="20" /> -->
+                    <property name="maxHops" value="20" />
                 </bean>
                 <!-- ...but ACCEPT those more than a configured link-hop-count from start... -->
-                <bean class="org.archive.modules.deciderules.TransclusionDecideRule">
-                    <!-- <property name="maxTransHops" value="2" /> -->
-                    <!-- <property name="maxSpeculativeHops" value="1" /> -->
-                </bean>
+                <!--<bean class="org.archive.modules.deciderules.TransclusionDecideRule">
+                    <property name="maxTransHops" value="2" />
+                    <property name="maxSpeculativeHops" value="1" />
+                </bean> -->
                 <!-- ...but REJECT those from a configurable (initially empty) set of REJECT SURTs... -->
                 <bean class="org.archive.modules.deciderules.surt.SurtPrefixedDecideRule">
                     <property name="decision" value="REJECT"/>
@@ -168,11 +168,11 @@
                 </bean>
                 <!-- ...and REJECT those with suspicious repeating path-segments... -->
                 <bean class="org.archive.modules.deciderules.PathologicalPathDecideRule">
-                    <!-- <property name="maxRepetitions" value="2" /> -->
+                    <property name="maxRepetitions" value="2" />
                 </bean>
                 <!-- ...and REJECT those with more than threshold number of path-segments... -->
                 <bean class="org.archive.modules.deciderules.TooManyPathSegmentsDecideRule">
-                    <!-- <property name="maxPathDepth" value="20" /> -->
+                    <property name="maxPathDepth" value="15" />
                 </bean>
                 <!-- ...but always ACCEPT those marked as prerequisitee for another URI... -->
                 <bean class="org.archive.modules.deciderules.PrerequisiteAcceptDecideRule">
@@ -340,7 +340,7 @@
             <map>
                 <!-- key is ContentType, value is extension and also the type of document in Logius DB -->
                 <entry key="application/pdf" value="pdf"/>
-                <entry key="pplication/vnd.oasis.opendocument.text" value="odt"/>
+                <entry key="application/vnd.oasis.opendocument.text" value="odt"/>
                 <entry key="application/vnd.oasis.opendocument.spreadsheet" value="ods"/>
                 <entry key="application/vnd.oasis.opendocument.presentation" value="odp"/>
                 <entry key="application/msword" value="doc"/>

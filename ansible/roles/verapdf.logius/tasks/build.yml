@@ -1,0 +1,80 @@
+---
+
+- name: Clone git repository if it's not there
+  git:
+    repo: "{{ logius_git_url }}"
+    dest: "{{ logius_git_root }}"
+    version: "{{ logius_git_branch }}"
+    update: "{{ logius_git_update }}"
+  tags:
+    - "install"
+
+- name: Update git repository
+  git:
+    repo: "{{ logius_git_url }}"
+    dest: "{{ logius_git_root }}"
+    update: "{{ logius_git_update }}"
+    clone: no
+  tags:
+    - "update"
+    - "install"
+
+- name: Build Maven project
+  command: mvn clean package
+  args:
+    chdir: "{{ logius_git_root }}"
+  tags:
+    - "update"
+    - "install"
+
+- name: Stop the logius application services
+  service:
+    name: "{{ item }}"
+    state: stopped
+  with_items:
+    - "verapdf-service"
+    - "logius-sample"
+    - "logius-web"
+  tags:
+    - "update"
+    - "install"
+
+- name: Deploy application jars
+  copy:
+    src: "{{ logius_git_root }}/{{ item.src_app_name }}/target/{{ item.src_app_name }}{{ item.src_version }}.jar"
+    remote_src: true
+    dest: "{{ item.dest_dir }}/{{ item.dest_jar }}.jar"
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: "755"
+  with_items:
+    - { src_app_name: "LogiusWebApp", src_version: "-1.0-SNAPSHOT", dest_dir: "{{ logius_app_lib }}", dest_jar: "logius-web" }
+    - { src_app_name: "VeraPDFService", src_version: "-1.0-SNAPSHOT", dest_dir: "{{ logius_app_lib }}", dest_jar: "verapdf-service" }
+    - { src_app_name: "SampleWebApp", src_version: "-1.0-SNAPSHOT", dest_dir: "{{ logius_app_lib }}", dest_jar: "logius-sample" }
+    - { src_app_name: "HeritrixExtention", src_version: "", dest_dir: "{{ logius_heritrix_home }}/lib", dest_jar: "logius-heritrix-extenstion" }
+  tags:
+    - "update"
+    - "install"
+
+- name: Start Heritrix via init.d script
+  command: "/etc/init.d/heritrix.sh"
+  tags:
+    - "install"
+
+- name: Start nginx
+  service:
+    name: "nginx"
+    state: started
+  tags:
+    - "install"
+    - "update"
+
+- name: Start the logius application services
+  service:
+    name: "{{ item.key }}"
+    state: started
+  with_dict: "{{ vera_app_details }}"
+  notify: reload nginx
+  tags:
+    - "install"
+    - "update"

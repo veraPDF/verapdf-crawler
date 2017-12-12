@@ -9,17 +9,19 @@ import javax.persistence.*;
 public class ValidationJob {
 
     public enum Status {
-        NOT_STARTED,
         IN_PROGRESS,
-        PAUSED
+        NOT_STARTED,
+        PAUSED,
+		ABORTED
     }
 
     @Id
     @Column(name = "document_url")
     private String id;
 
-    @OneToOne()
-    @JoinColumn(name = "document_url", referencedColumnName = "document_url", insertable = false)
+    @MapsId("document_url")
+    @OneToOne(cascade = CascadeType.PERSIST, optional = false)
+	@PrimaryKeyJoinColumn(name = "document_url", referencedColumnName = "document_url")
     private DomainDocument document;
 
     @Column(name = "filepath")
@@ -37,6 +39,11 @@ public class ValidationJob {
         this.id = document.getUrl();
         this.filePath = document.getFilePath();
         this.status = Status.NOT_STARTED;
+    }
+
+    public ValidationJob(String id, Status status) {
+        this.id = id;
+        this.status = status;
     }
 
     public String getId() {

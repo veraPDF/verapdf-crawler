@@ -56,23 +56,8 @@ public class CrawlRequestResource {
         for (String domain: domains) {
             CrawlJob newJob = crawlJobDao.save(new CrawlJob(domain));
             newJob.getCrawlRequests().add(crawlRequest);
-            startCrawlJob(newJob);
+            CrawlJobResource.startCrawlJob(newJob, heritrix);
         }
         return crawlRequest;
-    }
-
-    private void startCrawlJob(CrawlJob crawlJob) {
-        try {
-            heritrix.createJob(crawlJob.getHeritrixJobId(), crawlJob.getDomain());
-            heritrix.buildJob(crawlJob.getHeritrixJobId());
-            heritrix.launchJob(crawlJob.getHeritrixJobId());
-            crawlJob.setStatus(CrawlJob.Status.RUNNING);
-        } catch (Exception e) {
-            logger.error("Failed to start crawling job for domain " + crawlJob.getDomain(), e);
-            crawlJob.setFinished(true);
-            crawlJob.setFinishTime(new Date());
-            crawlJob.setStatus(CrawlJob.Status.FAILED);
-        }
-        // TODO: cleanup heritrix in finally
     }
 }

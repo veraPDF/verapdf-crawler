@@ -1,0 +1,76 @@
+---
+
+- name: Download and unpack the community Tanuki wrapper
+  unarchive:
+    src: "{{ tanuki_wrapper_url }}"
+    dest: "{{ tmp_download }}"
+    remote_src: True
+    creates: "{{ tanuki_installer_dir }}"
+  tags:
+    - "install"
+
+- name: Copy the needed Tanuki files
+  copy:
+    src: "{{ tanuki_installer_dir }}{{ item.src }}"
+    remote_src: true
+    dest: "{{ item.dest }}"
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: "755"
+  with_items:
+    - { src: "/bin/wrapper", dest: "{{ logius_app_bin }}/wrapper" }
+    - { src: "/lib/libwrapper.so", dest: "{{ logius_app_lib }}/libwrapper.so" }
+    - { src: "/lib/wrapper.jar", dest: "{{ logius_app_lib }}/wrapper.jar" }
+  tags:
+    - "install"
+
+- name: Deploy service wrapper scripts
+  template:
+    src: "var/lib/logius/bin/app-wrapper.sh.j2"
+    dest: "{{ logius_app_bin }}/{{ item.key }}"
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: "755"
+  with_dict: "{{ vera_app_details }}"
+  tags:
+    - "install"
+
+- name: Place second server script block in
+  blockinfile:
+    path: "{{ logius_app_bin }}/{{ item.key }}"
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: "755"
+    block: "{{ lookup('file', 'scriptend') }}"
+  with_dict: "{{ vera_app_details }}"
+  tags:
+    - "install"
+
+- name: Deploy service configuration files
+  template:
+    src: "var/lib/logius/conf/wrapper.conf.j2"
+    dest: "{{ logius_app_conf }}/{{ item.key }}.conf"
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: "755"
+  with_dict: "{{ vera_app_details }}"
+  tags:
+    - "install"
+
+- name: Install systemd veraPDF services
+  command: "{{ logius_app_bin }}/{{ item.key }} install"
+  args:
+    creates: "/etc/systemd/system/{{ item.key }}.service"
+  with_dict: "{{ vera_app_details }}"
+  when: ansible_service_mgr == "systemd"
+  tags:
+    - "install"
+
+- name: Install init.d veraPDF services
+  command: "{{ logius_app_bin }}/{{ item.key }} install"
+  args:
+    creates: "/etc/init.d/{{ item.key }}"
+  with_dict: "{{ vera_app_details }}"
+  when: ansible_service_mgr != "systemd"
+  tags:
+    - "install"

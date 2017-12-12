@@ -44,7 +44,7 @@ public class VerapdfServiceApp extends Application<VeraPDFServiceConfiguration> 
 
         ValidationSettings validationSettings = loadValidationSettings(configuration.getLogiusUrl(), mapper);
 
-        environment.jersey().register(new ValidationResource(configuration.getVerapdfPath(), validationSettings));
+        environment.jersey().register(new ValidationResource(configuration.getVerapdfPath(), configuration.getVerapdfErrors(), validationSettings));
     }
 
     private ValidationSettings loadValidationSettings(String logiusUrl, ObjectMapper mapper) throws Exception {

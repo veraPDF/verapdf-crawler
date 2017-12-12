@@ -16,9 +16,39 @@ logius_linux_user: "{{ logius_app_name }}"
 
 logius_app_home: "{{ logius_install_dest }}/{{ logius_app_name }}"
 logius_app_bin: "{{ logius_app_home }}/bin"
-logius_app_config: "{{ logius_app_home }}/config"
-logius_app_resources: "{{ logius_app_home }}/resources"
+logius_app_lib: "{{ logius_app_home }}/lib"
+logius_app_conf: "{{ logius_app_home }}/conf"
+logius_app_res: "{{ logius_app_home }}/res"
 logius_log_dir: "/var/log/{{ logius_app_name }}"
+
+tmp_download: "/tmp"
+tanuki_wrapper_type: "linux-x86-64"
+tanuki_wrapper_version: "3.5.33"
+tanuki_wrapper_url: "https://wrapper.tanukisoftware.com/download/{{ tanuki_wrapper_version }}/wrapper-{{ tanuki_wrapper_type }}-{{ tanuki_wrapper_version }}.tar.gz"
+tanuki_installer_dir: "{{ tmp_download }}/wrapper-{{ tanuki_wrapper_type }}-{{ tanuki_wrapper_version }}"
+
+vera_app_details:
+  logius-web:
+    app_name: "logius-web"
+    long_app_name: "Logius Web"
+    app_description: "Logius web crawler application."
+    main_class: "org.verapdf.crawler.LogiusWebApplication"
+    required_start: ""
+    required_stop: "verapdf-service"
+  logius-sample:
+    app_name: "logius-sample"
+    long_app_name: "Logius Sample"
+    app_description: "Logius sample application."
+    main_class: "org.verapdf.crawler.core.Sample"
+    required_start: ""
+    required_stop: ""
+  verapdf-service:
+    app_name: "verapdf-service"
+    long_app_name: "veraPDF Service"
+    app_description: "Logius veraPDF REST services."
+    main_class: "org.verapdf.service.VerapdfServiceApp"
+    required_start: "logius-web"
+    required_stop: ""
 
 # Database admin password, this is fine for development machine config.
 # Don't check your production password into a public Git repo.
@@ -69,3 +99,7 @@ logius_gmail_password: Logius2017
 logius_gmail_port: 587
 
 logius_verapdf_path: "{{ verapdf_install_dest }}/verapdf"
+
+logius_temp_folder: /var/tmp/logius
+
+logius_notifications_emails: maksim.bezrukov@duallab.com,yuliya.ivaniukovich@duallab.com,boris.doubrov@duallab.com

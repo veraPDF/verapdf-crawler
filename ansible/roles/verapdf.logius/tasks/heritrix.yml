@@ -1,0 +1,28 @@
+---
+
+- name: Add Heritrix startup script
+  template:
+    src: "var/lib/logius/{{ item }}.sh.j2"
+    dest: "{{ logius_app_home }}/{{ item }}.sh"
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: 0755
+  with_items:
+    - "run-heritrix"
+  tags:
+    - "install"
+
+- name: Add Heritrix init.d script
+  template:
+    src: "etc/init.d/heritrix.sh.j2"
+    dest: "/etc/init.d/heritrix.sh"
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    mode: 0755
+  tags:
+    - "install"
+
+- name: Register Heritrix init.d script
+  command: "update-rc.d heritrix.sh defaults 100"
+  tags:
+    - "install"
