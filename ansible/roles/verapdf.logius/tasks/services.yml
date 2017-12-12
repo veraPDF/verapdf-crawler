@@ -35,7 +35,7 @@
   tags:
     - "install"
 
-- name: Place second server scripty block in
+- name: Place second server script block in
   blockinfile:
     path: "{{ logius_app_bin }}/{{ item.key }}"
     owner: "{{ logius_linux_user }}"
@@ -57,10 +57,20 @@
   tags:
     - "install"
 
-- name: Install veraPDF services
+- name: Install systemd veraPDF services
+  command: "{{ logius_app_bin }}/{{ item.key }} install"
+  args:
+    creates: "/etc/systemd/system/{{ item.key }}.service"
+  with_dict: "{{ vera_app_details }}"
+  when: ansible_service_mgr == "systemd"
+  tags:
+    - "install"
+
+- name: Install init.d veraPDF services
   command: "{{ logius_app_bin }}/{{ item.key }} install"
   args:
     creates: "/etc/init.d/{{ item.key }}"
   with_dict: "{{ vera_app_details }}"
+  when: ansible_service_mgr != "systemd"
   tags:
     - "install"
