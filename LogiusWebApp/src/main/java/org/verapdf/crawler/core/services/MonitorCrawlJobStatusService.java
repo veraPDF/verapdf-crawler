@@ -30,9 +30,11 @@ public class MonitorCrawlJobStatusService extends AbstractService {
 	private final CrawlRequestDAO crawlRequestDAO;
 	private final ValidationJobDAO validationJobDAO;
 	private final HeritrixClient heritrixClient;
+	private final BingService bingService;
 
-	public MonitorCrawlJobStatusService(CrawlJobDAO crawlJobDAO, CrawlRequestDAO crawlRequestDAO, ValidationJobDAO validationJobDAO, HeritrixClient heritrixClient) {
+	public MonitorCrawlJobStatusService(BingService bingService, CrawlJobDAO crawlJobDAO, CrawlRequestDAO crawlRequestDAO, ValidationJobDAO validationJobDAO, HeritrixClient heritrixClient) {
 		super("MonitorCrawlJobStatusService", SLEEP_DURATION);
+		this.bingService = bingService;
 		this.crawlJobDAO = crawlJobDAO;
 		this.crawlRequestDAO = crawlRequestDAO;
 		this.validationJobDAO = validationJobDAO;
@@ -58,7 +60,7 @@ public class MonitorCrawlJobStatusService extends AbstractService {
 	@SuppressWarnings("WeakerAccess")
 	@UnitOfWork
     public String checkJobsBatch(String lastDomain) {
-        List<CrawlJob> runningJobs = crawlJobDAO.findByStatus(CrawlJob.Status.RUNNING, lastDomain, BATCH_SIZE);
+        List<CrawlJob> runningJobs = crawlJobDAO.findByStatus(CrawlJob.Status.RUNNING, null, lastDomain, BATCH_SIZE);
 		boolean containsRunningJobs = runningJobs != null && !runningJobs.isEmpty();
 		if (containsRunningJobs) {
 			runningJobs.forEach(this::checkJob);
@@ -72,11 +74,19 @@ public class MonitorCrawlJobStatusService extends AbstractService {
     private boolean checkJob(CrawlJob job) {
         try {
             // Check if Heritrix finished crawling
-            String heritrixJobId = job.getHeritrixJobId();
-            boolean isCrawlingFinished = heritrixClient.isJobFinished(heritrixJobId);
-            if (!isCrawlingFinished) {
-                return false;
-            }
+			CrawlJob.CrawlService service = job.getCrawlService();
+            if (service == CrawlJob.CrawlService.HERITRIX) {
+				String heritrixJobId = job.getHeritrixJobId();
+				boolean isCrawlingFinished = heritrixClient.isJobFinished(heritrixJobId);
+				if (!isCrawlingFinished) {
+					return false;
+				}
+			} else if (service == CrawlJob.CrawlService.BING) {
+				CrawlJob currentJob = bingService.getCurrentJob();
+				if (currentJob != null && currentJob.getDomain().equals(job.getDomain())) {
+					return false;
+				}
+			}
 
             // Check if we have pending validation jobs
             Long validationJobsCount = validationJobDAO.count(job.getDomain());
@@ -88,6 +98,9 @@ public class MonitorCrawlJobStatusService extends AbstractService {
             job.setFinished(true);
             job.setStatus(CrawlJob.Status.FINISHED);
             job.setFinishTime(new Date());
+            if (service == CrawlJob.CrawlService.BING) {
+            	bingService.deleteTempFolder(job);
+			}
             logger.info("Crawling complete for " + job.getDomain());
             return true;
         } catch (Exception e) {

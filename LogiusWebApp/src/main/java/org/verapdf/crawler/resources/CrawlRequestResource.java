@@ -15,6 +15,7 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.Date;
 import java.util.List;
@@ -23,20 +24,22 @@ import java.util.stream.Collectors;
 @Path("/crawl-requests")
 @Produces(MediaType.APPLICATION_JSON)
 public class CrawlRequestResource {
-    private static final Logger logger = LoggerFactory.getLogger(CrawlRequestResource.class);
     private final HeritrixClient heritrix;
     private final CrawlRequestDAO crawlRequestDao;
     private final CrawlJobDAO crawlJobDao;
+    private final CrawlJobResource crawlJobResource;
 
-    public CrawlRequestResource(CrawlRequestDAO crawlRequestDao, CrawlJobDAO crawlJobDao, HeritrixClient heritrix) {
+    public CrawlRequestResource(CrawlRequestDAO crawlRequestDao, CrawlJobDAO crawlJobDao, HeritrixClient heritrix, CrawlJobResource crawlJobResource) {
         this.heritrix = heritrix;
         this.crawlRequestDao = crawlRequestDao;
         this.crawlJobDao = crawlJobDao;
+        this.crawlJobResource = crawlJobResource;
     }
 
     @POST
     @UnitOfWork
-    public CrawlRequest createCrawlRequest(@NotNull @Valid CrawlRequest crawlRequest) {
+    public CrawlRequest createCrawlRequest(@NotNull @Valid CrawlRequest crawlRequest,
+                                           @QueryParam("cralwService") CrawlJob.CrawlService requestedService) {
         // Validate and pre-process input
         List<String> domains = crawlRequest.getCrawlJobs().stream()
                 .map(CrawlJob::getDomain)
@@ -45,18 +48,24 @@ public class CrawlRequestResource {
         // Save request
         crawlRequest = crawlRequestDao.save(crawlRequest);
 
+        CrawlJob.CrawlService service = requestedService == null ? CrawlJob.CrawlService.HERITRIX : requestedService;
         // Find jobs for domains requested earlier and link with this request
         List<CrawlJob> existingJobs = crawlJobDao.findByDomain(domains);
         for (CrawlJob existingJob: existingJobs) {
+            if (service != existingJob.getCrawlService()) {
+                existingJob = this.crawlJobResource.restartCrawlJob(existingJob, existingJob.getDomain(), service);
+            }
             domains.remove(existingJob.getDomain());
             existingJob.getCrawlRequests().add(crawlRequest);
         }
 
         // For domains that are left start new crawl jobs
         for (String domain: domains) {
-            CrawlJob newJob = crawlJobDao.save(new CrawlJob(domain));
+            CrawlJob newJob = crawlJobDao.save(new CrawlJob(domain, service));
             newJob.getCrawlRequests().add(crawlRequest);
-            CrawlJobResource.startCrawlJob(newJob, heritrix);
+            if (service == CrawlJob.CrawlService.HERITRIX) {
+                CrawlJobResource.startCrawlJob(newJob, heritrix);
+            }
         }
         return crawlRequest;
     }

@@ -102,4 +102,6 @@ logius_verapdf_path: "{{ verapdf_install_dest }}/verapdf"
 
 logius_temp_folder: /var/tmp/logius
 
+logius_bing_api_key: someAPIKey
+
 logius_notifications_emails: maksim.bezrukov@duallab.com,yuliya.ivaniukovich@duallab.com,boris.doubrov@duallab.com

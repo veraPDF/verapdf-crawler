@@ -38,13 +38,17 @@ public class DocumentResource {
         if (job == null) {
             return null;
         }
+        return saveDocument(document, job, documentDAO, validationJobDAO);
+    }
+
+    public static DomainDocument saveDocument(DomainDocument document, CrawlJob job, DocumentDAO documentDAO, ValidationJobDAO validationJobDAO) {
         document.setCrawlJob(job);
 
         documentDAO.save(document);
 
         switch (document.getContentType()) {
             case "pdf":
-                validatePdfFile(document);
+                validatePdfFile(document, validationJobDAO);
                 break;
             case "odt":
             case "ods":
@@ -66,16 +70,16 @@ public class DocumentResource {
         return document;
     }
 
-    private void validatePdfFile(DomainDocument document) {
+    private static void validatePdfFile(DomainDocument document, ValidationJobDAO validationJobDAO) {
         ValidationJob validationJob = new ValidationJob(document);
         validationJobDAO.save(validationJob);
     }
 
-    private void validateOpenOfficeFile(DomainDocument document) {
+    private static void validateOpenOfficeFile(DomainDocument document) {
         document.setBaseTestResult(DomainDocument.BaseTestResult.OPEN);
     }
 
-    private void validateMSOfficeFile(DomainDocument document) {
+    private static void validateMSOfficeFile(DomainDocument document) {
         document.setBaseTestResult(DomainDocument.BaseTestResult.NOT_OPEN);
     }
 }

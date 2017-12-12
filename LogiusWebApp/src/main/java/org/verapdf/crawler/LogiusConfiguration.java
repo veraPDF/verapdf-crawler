@@ -1,12 +1,9 @@
 package org.verapdf.crawler;
 
 import io.dropwizard.db.DataSourceFactory;
-import org.verapdf.crawler.configurations.HeritrixConfiguration;
-import org.verapdf.crawler.configurations.EmailServerConfiguration;
+import org.verapdf.crawler.configurations.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
-import org.verapdf.crawler.configurations.ReportsConfiguration;
-import org.verapdf.crawler.configurations.VeraPDFServiceConfiguration;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -16,6 +13,7 @@ public class LogiusConfiguration extends Configuration {
     private HeritrixConfiguration heritrixConfiguration;
     private VeraPDFServiceConfiguration veraPDFServiceConfiguration;
     private ReportsConfiguration reportsConfiguration;
+    private BingConfiguration bingConfiguration;
 
     @Valid
     @NotNull
@@ -69,5 +67,15 @@ public class LogiusConfiguration extends Configuration {
     @JsonProperty("reports")
     public void setReportsConfiguration(ReportsConfiguration reportsConfiguration) {
         this.reportsConfiguration = reportsConfiguration;
+    }
+
+    @JsonProperty("bing")
+    public BingConfiguration getBingConfiguration() {
+        return bingConfiguration;
+    }
+
+    @JsonProperty("bing")
+    public void setBingConfiguration(BingConfiguration bingConfiguration) {
+        this.bingConfiguration = bingConfiguration;
     }
 }

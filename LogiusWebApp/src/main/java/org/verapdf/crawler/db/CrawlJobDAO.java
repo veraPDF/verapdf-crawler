@@ -100,13 +100,16 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         return list(criteriaQuery);
     }
 
-    public List<CrawlJob> findByStatus(CrawlJob.Status status, String afterDomain, int limit) {
+    public List<CrawlJob> findByStatus(CrawlJob.Status status, CrawlJob.CrawlService crawlService, String afterDomain, int limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<CrawlJob> criteriaQuery = builder.createQuery(CrawlJob.class);
         Root<CrawlJob> job = criteriaQuery.from(CrawlJob.class);
 
         List<Predicate> restrictions = new ArrayList<>();
         restrictions.add(builder.equal(job.get(CrawlJob_.status), status));
+        if (crawlService != null) {
+            restrictions.add(builder.equal(job.get(CrawlJob_.crawlService), crawlService));
+        }
         if (afterDomain != null) {
             restrictions.add(builder.greaterThan(job.get(CrawlJob_.domain), afterDomain));
         }

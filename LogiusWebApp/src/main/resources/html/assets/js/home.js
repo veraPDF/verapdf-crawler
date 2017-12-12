@@ -1,5 +1,3 @@
-var URL = "/api/crawl-requests";
-
 $(document).ready(function () {
     // $("#date_input").value = "01-01-2015";
     $("input:button").click(main);
@@ -95,6 +93,12 @@ function main() {
         $("input:button").attr("disabled", false);
         $('#date_input').tooltip('show');
         validForm = false;
+    }
+
+    var isBing = document.getElementById("bing-crawl-service").checked;
+    var URL = "/api/crawl-requests";
+    if (isBing) {
+        URL += "?cralwService=BING"
     }
 
     // If there are validate errors do nothing
