@@ -3,6 +3,7 @@ package org.verapdf.crawler.resources;
 import io.dropwizard.hibernate.UnitOfWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.ResourceManager;
 import org.verapdf.crawler.api.crawling.CrawlJob;
 import org.verapdf.crawler.api.crawling.CrawlRequest;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
@@ -24,16 +25,10 @@ import java.util.stream.Collectors;
 @Path("/crawl-requests")
 @Produces(MediaType.APPLICATION_JSON)
 public class CrawlRequestResource {
-    private final HeritrixClient heritrix;
-    private final CrawlRequestDAO crawlRequestDao;
-    private final CrawlJobDAO crawlJobDao;
-    private final CrawlJobResource crawlJobResource;
+    private final ResourceManager resourceManager;
 
-    public CrawlRequestResource(CrawlRequestDAO crawlRequestDao, CrawlJobDAO crawlJobDao, HeritrixClient heritrix, CrawlJobResource crawlJobResource) {
-        this.heritrix = heritrix;
-        this.crawlRequestDao = crawlRequestDao;
-        this.crawlJobDao = crawlJobDao;
-        this.crawlJobResource = crawlJobResource;
+    public CrawlRequestResource(ResourceManager resourceManager) {
+        this.resourceManager = resourceManager;
     }
 
     @POST
@@ -46,14 +41,14 @@ public class CrawlRequestResource {
                 .map(DomainUtils::trimUrl).collect(Collectors.toList());
 
         // Save request
-        crawlRequest = crawlRequestDao.save(crawlRequest);
+        crawlRequest = resourceManager.getCrawlRequestDAO().save(crawlRequest);
 
         CrawlJob.CrawlService service = requestedService == null ? CrawlJob.CrawlService.HERITRIX : requestedService;
         // Find jobs for domains requested earlier and link with this request
-        List<CrawlJob> existingJobs = crawlJobDao.findByDomain(domains);
+        List<CrawlJob> existingJobs = resourceManager.getCrawlJobDAO().findByDomain(domains);
         for (CrawlJob existingJob: existingJobs) {
             if (service != existingJob.getCrawlService()) {
-                existingJob = this.crawlJobResource.restartCrawlJob(existingJob, existingJob.getDomain(), service);
+                existingJob = CrawlJobResource.restartCrawlJob(existingJob, existingJob.getDomain(), service, resourceManager);
             }
             domains.remove(existingJob.getDomain());
             existingJob.getCrawlRequests().add(crawlRequest);
@@ -61,10 +56,10 @@ public class CrawlRequestResource {
 
         // For domains that are left start new crawl jobs
         for (String domain: domains) {
-            CrawlJob newJob = crawlJobDao.save(new CrawlJob(domain, service));
+            CrawlJob newJob = resourceManager.getCrawlJobDAO().save(new CrawlJob(domain, service));
             newJob.getCrawlRequests().add(crawlRequest);
             if (service == CrawlJob.CrawlService.HERITRIX) {
-                CrawlJobResource.startCrawlJob(newJob, heritrix);
+                CrawlJobResource.startCrawlJob(newJob, resourceManager.getHeritrixClient());
             }
         }
         return crawlRequest;

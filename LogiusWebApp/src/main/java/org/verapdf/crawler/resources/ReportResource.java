@@ -3,6 +3,7 @@ package org.verapdf.crawler.resources;
 import io.dropwizard.hibernate.UnitOfWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.ResourceManager;
 import org.verapdf.crawler.api.document.DomainDocument;
 import org.verapdf.crawler.api.report.CrawlJobSummary;
 import org.verapdf.crawler.api.report.ErrorStatistics;
@@ -32,10 +33,10 @@ public class ReportResource {
 
     private static final int ODS_MAX_DOCUMENTS_SHOW = 100;
 
-    private final DocumentDAO documentDAO;
+    private final ResourceManager resourceManager;
 
-    public ReportResource(DocumentDAO documentDAO) {
-        this.documentDAO = documentDAO;
+    public ReportResource(ResourceManager resourceManager) {
+        this.resourceManager = resourceManager;
     }
 
     @GET
@@ -46,6 +47,7 @@ public class ReportResource {
                                       @QueryParam("startDate") DateParam startDate) throws IOException, ParserConfigurationException, SAXException {
         Date documentsSince = DateParam.getDateFromParam(startDate);
 
+        DocumentDAO documentDAO = resourceManager.getDocumentDAO();
         Long openPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince);
         Long notOpenPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
         Long openOffice = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OFFICE.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince);
@@ -67,6 +69,7 @@ public class ReportResource {
                                                        @QueryParam("startDate") DateParam startDate) {
         Date documentsSince = DateParam.getDateFromParam(startDate);
 
+        DocumentDAO documentDAO = resourceManager.getDocumentDAO();
         Long openPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince);
         Long notOpenPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
         Long total = openPdf + notOpenPdf;
@@ -100,7 +103,7 @@ public class ReportResource {
                                               @QueryParam("producer") String producer) {
         Date documentsSince = DateParam.getDateFromParam(startDate);
 
-        List<ErrorStatistics.ErrorCount> errorCounts = documentDAO.getErrorsStatistics(
+        List<ErrorStatistics.ErrorCount> errorCounts = resourceManager.getDocumentDAO().getErrorsStatistics(
                 domain, documentsSince, flavour, version, producer, ErrorStatistics.TOP_ERRORS_COUNT);
 
         ErrorStatistics errorStatistics = new ErrorStatistics();
@@ -117,6 +120,7 @@ public class ReportResource {
         if (domain != null) {
             domain = DomainUtils.trimUrl(domain);
         }
+        DocumentDAO documentDAO = resourceManager.getDocumentDAO();
         Date start = DateParam.getDateFromParam(startDate);
         long compliantPDFA12Count = getDocumentsCount(domain, DomainDocument.DocumentTypeGroup.PDF,
                 DomainDocument.BaseTestResult.OPEN, start);
@@ -155,7 +159,7 @@ public class ReportResource {
     private long getDocumentsCount(String domain, DomainDocument.DocumentTypeGroup documentGroup,
                                    DomainDocument.BaseTestResult testResult,
                                    Date start) {
-        Long count = documentDAO.count(domain, documentGroup.getTypes(),
+        Long count = resourceManager.getDocumentDAO().count(domain, documentGroup.getTypes(),
                 testResult, start);
         return count == null ? 0 : count;
     }

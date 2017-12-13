@@ -6,6 +6,7 @@ import com.adobe.xmp.XMPException;
 import io.dropwizard.hibernate.UnitOfWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.ResourceManager;
 import org.verapdf.crawler.api.document.DomainDocument;
 import org.verapdf.crawler.api.validation.ValidationJob;
 import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
@@ -32,17 +33,13 @@ public class ValidationService extends AbstractService {
 
 	private static final long SLEEP_DURATION = 60*1000;
 
-    private final ValidationJobDAO validationJobDAO;
-    private final ValidationErrorDAO validationErrorDAO;
-    private final DocumentDAO documentDAO;
+    private final ResourceManager resourceManager;
     private final PDFValidator validator;
     private ValidationJob currentJob;
 
-    public ValidationService(ValidationJobDAO validationJobDAO, ValidationErrorDAO validationErrorDAO, DocumentDAO documentDAO, PDFValidator validator) {
+    public ValidationService(ResourceManager resourceManager, PDFValidator validator) {
         super("ValidationService", SLEEP_DURATION);
-    	this.validationJobDAO = validationJobDAO;
-        this.validationErrorDAO = validationErrorDAO;
-        this.documentDAO = documentDAO;
+    	this.resourceManager = resourceManager;
         this.validator = validator;
     }
 
@@ -108,7 +105,7 @@ public class ValidationService extends AbstractService {
     @UnitOfWork
     public ValidationJob retrieveNextJob() {
 		logger.debug("Getting next job");
-        ValidationJob job = validationJobDAO.next();
+        ValidationJob job = resourceManager.getValidationJobDAO().next();
         if (job != null) {
             job.setStatus(ValidationJob.Status.IN_PROGRESS);
         }
@@ -119,7 +116,7 @@ public class ValidationService extends AbstractService {
     @UnitOfWork
     public ValidationJob retrieveCurrentJob() {
 		logger.debug("Getting current job");
-        return validationJobDAO.current();
+        return resourceManager.getValidationJobDAO().current();
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -136,7 +133,7 @@ public class ValidationService extends AbstractService {
                 // Save errors where needed
                 List<ValidationError> validationErrors = result.getValidationErrors();
                 for (int index = 0; index < validationErrors.size(); index++) {
-                    validationErrors.set(index, validationErrorDAO.save(validationErrors.get(index)));
+                    validationErrors.set(index, resourceManager.getValidationErrorDAO().save(validationErrors.get(index)));
                 }
                 document.setValidationErrors(validationErrors);
 
@@ -159,7 +156,7 @@ public class ValidationService extends AbstractService {
 				document.setProperties(properties);
 
                 // And update document (note that document was detached from hibernate context, thus we need to save explicitly)
-                documentDAO.save(document);
+				resourceManager.getDocumentDAO().save(document);
             } else {
             	logger.debug("Validation job was aborted, don't save any results");
 			}
@@ -199,7 +196,7 @@ public class ValidationService extends AbstractService {
             }
         }
         if (shouldCleanDB) {
-			validationJobDAO.remove(job);
+			resourceManager.getValidationJobDAO().remove(job);
 		}
     }
 }

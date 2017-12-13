@@ -3,6 +3,7 @@ package org.verapdf.crawler.resources;
 import io.dropwizard.hibernate.UnitOfWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.ResourceManager;
 import org.verapdf.crawler.api.crawling.CrawlJob;
 import org.verapdf.crawler.api.document.DomainDocument;
 import org.verapdf.crawler.api.validation.ValidationJob;
@@ -21,34 +22,30 @@ public class DocumentResource {
 
     private static final Logger logger = LoggerFactory.getLogger(DocumentResource.class);
 
-    private CrawlJobDAO crawlJobDAO;
-    private DocumentDAO documentDAO;
-    private ValidationJobDAO validationJobDAO;
+    private ResourceManager resourceManager;
 
-    public DocumentResource(CrawlJobDAO crawlJobDAO, DocumentDAO documentDAO, ValidationJobDAO validationJobDAO) {
-        this.crawlJobDAO = crawlJobDAO;
-        this.documentDAO = documentDAO;
-        this.validationJobDAO = validationJobDAO;
+    public DocumentResource(ResourceManager resourceManager) {
+        this.resourceManager = resourceManager;
     }
 
     @POST
     @UnitOfWork
     public DomainDocument saveDocument(DomainDocument document) {
-        CrawlJob job = crawlJobDAO.getByHeritrixJobId(document.getCrawlJob().getHeritrixJobId());
+        CrawlJob job = resourceManager.getCrawlJobDAO().getByHeritrixJobId(document.getCrawlJob().getHeritrixJobId());
         if (job == null) {
             return null;
         }
-        return saveDocument(document, job, documentDAO, validationJobDAO);
+        return saveDocument(document, job, resourceManager);
     }
 
-    public static DomainDocument saveDocument(DomainDocument document, CrawlJob job, DocumentDAO documentDAO, ValidationJobDAO validationJobDAO) {
+    public static DomainDocument saveDocument(DomainDocument document, CrawlJob job, ResourceManager resourceManager) {
         document.setCrawlJob(job);
 
-        documentDAO.save(document);
+        resourceManager.getDocumentDAO().save(document);
 
         switch (document.getContentType()) {
             case "pdf":
-                validatePdfFile(document, validationJobDAO);
+                validatePdfFile(document, resourceManager.getValidationJobDAO());
                 break;
             case "odt":
             case "ods":

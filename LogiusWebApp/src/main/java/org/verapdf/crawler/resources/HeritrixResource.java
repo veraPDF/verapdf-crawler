@@ -1,5 +1,6 @@
 package org.verapdf.crawler.resources;
 
+import org.verapdf.crawler.ResourceManager;
 import org.verapdf.crawler.api.crawling.HeritrixSettings;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
 
@@ -11,15 +12,15 @@ import javax.ws.rs.core.MediaType;
 @Path("/heritrix")
 public class HeritrixResource {
 
-    private final HeritrixClient heritrix;
+    private final ResourceManager resourceManager;
 
-    public HeritrixResource(HeritrixClient heritrix) {
-        this.heritrix = heritrix;
+    public HeritrixResource(ResourceManager resourceManager) {
+        this.resourceManager = resourceManager  ;
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public HeritrixSettings getHeritrixSettings() {
-        return new HeritrixSettings(heritrix.getEngineUrl());
+        return new HeritrixSettings(resourceManager.getHeritrixClient().getEngineUrl());
     }
 }

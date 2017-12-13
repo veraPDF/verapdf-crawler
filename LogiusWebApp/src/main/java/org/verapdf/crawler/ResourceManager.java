@@ -18,49 +18,62 @@ import org.verapdf.crawler.core.validation.ValidationService;
 import org.verapdf.crawler.core.validation.VeraPDFValidator;
 import org.verapdf.crawler.health.*;
 import org.verapdf.crawler.resources.*;
+import org.verapdf.crawler.tools.AbstractService;
 
 import java.util.*;
 
 public class ResourceManager {
 
-    private static final String HEALTH_CHECK_NAME_VALIDATION_SERVICE = "validationService";
-    private static final String HEALTH_CHECK_NAME_MONITOR_CRAWL_JOB_STATUS_SERVICE = "monitorCrawlJobStatusService";
-    private static final String HEALTH_CHECK_NAME_HERITRIX_CLEANER_SERVICE = "heritrixCleanerService";
-    private static final String HEALTH_CHECK_NAME_ODS_CLEANER_SERVICE = "odsCleanerService";
-    private static final String HEALTH_CHECK_NAME_HEALTH_CHECK_MONITOR_SERVICE = "healthCheckMonitorService";
-    private static final String HEALTH_CHECK_NAME_BING_SERVICE = "bingService";
+    private static final String NAME_VALIDATION_SERVICE = "validationService";
+    private static final String NAME_MONITOR_CRAWL_JOB_STATUS_SERVICE = "monitorCrawlJobStatusService";
+    private static final String NAME_HERITRIX_CLEANER_SERVICE = "heritrixCleanerService";
+    private static final String NAME_ODS_CLEANER_SERVICE = "odsCleanerService";
+    private static final String NAME_HEALTH_CHECK_MONITOR_SERVICE = "healthCheckMonitorService";
+    private static final String NAME_BING_SERVICE = "bingService";
 
     private final List<Object> resources = new ArrayList<>();
+    private final HashMap<String, AbstractService> services = new HashMap<>();
     private final Map<String, HealthCheck> healthChecks = new HashMap<>();
 
-    public ResourceManager(LogiusConfiguration config, HeritrixClient heritrix, HibernateBundle<LogiusConfiguration> hibernate) {
+    private final HeritrixClient heritrixClient;
+
+    private final CrawlRequestDAO crawlRequestDAO;
+    private final CrawlJobDAO crawlJobDAO;
+    private final DocumentDAO documentDAO;
+    private final ValidationJobDAO validationJobDAO;
+    private final ValidationErrorDAO validationErrorDAO;
+    private final PdfPropertyDAO pdfPropertyDAO;
+    private final NamespaceDAO namespaceDAO;
+
+    public ResourceManager(LogiusConfiguration config, HeritrixClient heritrixClient, HibernateBundle<LogiusConfiguration> hibernate) {
+        this.heritrixClient = heritrixClient;
         ReportsConfiguration reportsConfiguration = config.getReportsConfiguration();
         // Initializing static classes
         ReportsGenerator.initialize(reportsConfiguration);
         SendEmail.initialize(config.getEmailServerConfiguration(), reportsConfiguration);
         // Initializing all DAO objects
-        CrawlRequestDAO crawlRequestDAO = new CrawlRequestDAO(hibernate.getSessionFactory());
-        CrawlJobDAO crawlJobDAO = new CrawlJobDAO(hibernate.getSessionFactory());
-        DocumentDAO documentDAO = new DocumentDAO(hibernate.getSessionFactory());
-        ValidationJobDAO validationJobDAO = new ValidationJobDAO(hibernate.getSessionFactory());
-        ValidationErrorDAO validationErrorDAO = new ValidationErrorDAO(hibernate.getSessionFactory());
-        PdfPropertyDAO pdfPropertyDAO = new PdfPropertyDAO(hibernate.getSessionFactory());
-        NamespaceDAO namespaceDAO = new NamespaceDAO(hibernate.getSessionFactory());
+        crawlRequestDAO = new CrawlRequestDAO(hibernate.getSessionFactory());
+        crawlJobDAO = new CrawlJobDAO(hibernate.getSessionFactory());
+        documentDAO = new DocumentDAO(hibernate.getSessionFactory());
+        validationJobDAO = new ValidationJobDAO(hibernate.getSessionFactory());
+        validationErrorDAO = new ValidationErrorDAO(hibernate.getSessionFactory());
+        pdfPropertyDAO = new PdfPropertyDAO(hibernate.getSessionFactory());
+        namespaceDAO = new NamespaceDAO(hibernate.getSessionFactory());
 
         VeraPDFServiceConfiguration veraPDFServiceConfiguration = config.getVeraPDFServiceConfiguration();
 
         // Initializing validators and reporters
         VeraPDFValidator veraPDFValidator = new VeraPDFValidator(veraPDFServiceConfiguration);
-        ValidationService validationService = new UnitOfWorkAwareProxyFactory(hibernate).create(ValidationService.class,
-                new Class[]{ValidationJobDAO.class, ValidationErrorDAO.class, DocumentDAO.class, PDFValidator.class},
-                new Object[]{validationJobDAO, validationErrorDAO, documentDAO, veraPDFValidator});
-        BingService bingService = new UnitOfWorkAwareProxyFactory(hibernate).create(BingService.class,
-                new Class[]{BingConfiguration.class, CrawlJobDAO.class, DocumentDAO.class, ValidationJobDAO.class},
-                new Object[]{config.getBingConfiguration(), crawlJobDAO, documentDAO, validationJobDAO});
-        MonitorCrawlJobStatusService monitorCrawlJobStatusService = new UnitOfWorkAwareProxyFactory(hibernate).create(MonitorCrawlJobStatusService.class,
-                new Class[]{BingService.class, CrawlJobDAO.class, CrawlRequestDAO.class, ValidationJobDAO.class, HeritrixClient.class},
-                new Object[]{bingService, crawlJobDAO, crawlRequestDAO, validationJobDAO, heritrix});
-        HeritrixCleanerService heritrixCleanerService = new HeritrixCleanerService(heritrix);
+        services.put(NAME_VALIDATION_SERVICE, new UnitOfWorkAwareProxyFactory(hibernate).create(ValidationService.class,
+                new Class[]{ResourceManager.class, PDFValidator.class},
+                new Object[]{this, veraPDFValidator}));
+        services.put(NAME_BING_SERVICE, new UnitOfWorkAwareProxyFactory(hibernate).create(BingService.class,
+                new Class[]{BingConfiguration.class, ResourceManager.class},
+                new Object[]{config.getBingConfiguration(), this}));
+        services.put(NAME_MONITOR_CRAWL_JOB_STATUS_SERVICE, new UnitOfWorkAwareProxyFactory(hibernate).create(MonitorCrawlJobStatusService.class,
+                new Class[]{ResourceManager.class},
+                new Object[]{this}));
+        services.put(NAME_HERITRIX_CLEANER_SERVICE, new HeritrixCleanerService(this));
 
         // Discover admin connector port
         DefaultServerFactory serverFactory = (DefaultServerFactory) config.getServerFactory();
@@ -68,48 +81,42 @@ public class ResourceManager {
         int adminPort = adminConnectorFactory.getPort();
 
         // Initializing resources
-        CrawlJobResource crawlJobResource = new CrawlJobResource(crawlJobDAO, validationJobDAO, heritrix, validationService, heritrixCleanerService, bingService);
+        CrawlJobResource crawlJobResource = new CrawlJobResource(this);
         resources.add(crawlJobResource);
-        resources.add(new CrawlRequestResource(crawlRequestDAO, crawlJobDAO, heritrix, crawlJobResource));
-        resources.add(new DocumentResource(crawlJobDAO, documentDAO, validationJobDAO));
-        resources.add(new DocumentPropertyResource(documentDAO));
-        resources.add(new ValidationServiceResource(pdfPropertyDAO, namespaceDAO, validationJobDAO));
-        resources.add(new ReportResource(documentDAO));
+        resources.add(new CrawlRequestResource(this));
+        resources.add(new DocumentResource(this));
+        resources.add(new DocumentPropertyResource(this));
+        resources.add(new ValidationServiceResource(this));
+        resources.add(new ReportResource(this));
         HealthResource healthResource = new HealthResource(adminPort);
         resources.add(healthResource);
-        resources.add(new HeritrixResource(heritrix));
+        resources.add(new HeritrixResource(this));
+        resources.add(new AdminResource(this));
 
         // Initializing the rest of services
-        ODSCleanerService odsCleanerService = new ODSCleanerService(reportsConfiguration);
-        HealthCheckMonitorService healthCheckMonitorService = new HealthCheckMonitorService(healthResource,
+        services.put(NAME_ODS_CLEANER_SERVICE, new ODSCleanerService(reportsConfiguration));
+        services.put(NAME_HEALTH_CHECK_MONITOR_SERVICE, new HealthCheckMonitorService(healthResource,
                 Arrays.asList(
-                        HEALTH_CHECK_NAME_VALIDATION_SERVICE,
-                        HEALTH_CHECK_NAME_MONITOR_CRAWL_JOB_STATUS_SERVICE,
-                        HEALTH_CHECK_NAME_HERITRIX_CLEANER_SERVICE,
-                        HEALTH_CHECK_NAME_ODS_CLEANER_SERVICE,
-                        HEALTH_CHECK_NAME_HEALTH_CHECK_MONITOR_SERVICE,
-                        HEALTH_CHECK_NAME_BING_SERVICE
-                ));
+                        NAME_VALIDATION_SERVICE,
+                        NAME_MONITOR_CRAWL_JOB_STATUS_SERVICE,
+                        NAME_HERITRIX_CLEANER_SERVICE,
+                        NAME_ODS_CLEANER_SERVICE,
+                        NAME_HEALTH_CHECK_MONITOR_SERVICE,
+                        NAME_BING_SERVICE
+                )));
 
         // Initializing health checks
-        healthChecks.put("heritrix", new HeritrixHealthCheck(heritrix));
+        healthChecks.put("heritrix", new HeritrixHealthCheck(heritrixClient));
         healthChecks.put("verapdf",
                 new VeraPDFServiceHealthCheck(veraPDFServiceConfiguration));
-        healthChecks.put(HEALTH_CHECK_NAME_VALIDATION_SERVICE, new ServiceHealthCheck(validationService));
-        healthChecks.put(HEALTH_CHECK_NAME_MONITOR_CRAWL_JOB_STATUS_SERVICE,
-                new ServiceHealthCheck(monitorCrawlJobStatusService));
-        healthChecks.put(HEALTH_CHECK_NAME_HERITRIX_CLEANER_SERVICE, new ServiceHealthCheck(heritrixCleanerService));
-        healthChecks.put(HEALTH_CHECK_NAME_ODS_CLEANER_SERVICE, new ServiceHealthCheck(odsCleanerService));
-        healthChecks.put(HEALTH_CHECK_NAME_HEALTH_CHECK_MONITOR_SERVICE, new ServiceHealthCheck(healthCheckMonitorService));
-        healthChecks.put(HEALTH_CHECK_NAME_BING_SERVICE, new ServiceHealthCheck(bingService));
+        for (Map.Entry<String, AbstractService> serviceEntry : this.services.entrySet()) {
+            healthChecks.put(serviceEntry.getKey(), new ServiceHealthCheck(serviceEntry.getValue()));
+        }
 
         // Launching services
-        validationService.start();
-        monitorCrawlJobStatusService.start();
-        heritrixCleanerService.start();
-        odsCleanerService.start();
-        healthCheckMonitorService.start();
-        bingService.start();
+        for (AbstractService service : this.services.values()) {
+            service.start();
+        }
     }
 
     public Map<String, HealthCheck> getHealthChecks() {
@@ -118,5 +125,53 @@ public class ResourceManager {
 
     public List<Object> getResources() {
         return Collections.unmodifiableList(this.resources);
+    }
+
+    public CrawlRequestDAO getCrawlRequestDAO() {
+        return crawlRequestDAO;
+    }
+
+    public CrawlJobDAO getCrawlJobDAO() {
+        return crawlJobDAO;
+    }
+
+    public DocumentDAO getDocumentDAO() {
+        return documentDAO;
+    }
+
+    public ValidationJobDAO getValidationJobDAO() {
+        return validationJobDAO;
+    }
+
+    public ValidationErrorDAO getValidationErrorDAO() {
+        return validationErrorDAO;
+    }
+
+    public PdfPropertyDAO getPdfPropertyDAO() {
+        return pdfPropertyDAO;
+    }
+
+    public NamespaceDAO getNamespaceDAO() {
+        return namespaceDAO;
+    }
+
+    public HeritrixClient getHeritrixClient() {
+        return heritrixClient;
+    }
+
+    public AbstractService getService(String name) {
+        return services.get(name);
+    }
+
+    public BingService getBingService() {
+        return (BingService) services.get(NAME_BING_SERVICE);
+    }
+
+    public ValidationService getValidationService() {
+        return (ValidationService) services.get(NAME_VALIDATION_SERVICE);
+    }
+
+    public HeritrixCleanerService getHeritrixCleanerService() {
+        return (HeritrixCleanerService) services.get(NAME_HERITRIX_CLEANER_SERVICE);
     }
 }

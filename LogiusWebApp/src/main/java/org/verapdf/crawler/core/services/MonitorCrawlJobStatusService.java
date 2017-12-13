@@ -3,6 +3,7 @@ package org.verapdf.crawler.core.services;
 import io.dropwizard.hibernate.UnitOfWork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.ResourceManager;
 import org.verapdf.crawler.api.crawling.CrawlJob;
 import org.verapdf.crawler.api.crawling.CrawlRequest;
 import org.verapdf.crawler.configurations.EmailServerConfiguration;
@@ -26,19 +27,11 @@ public class MonitorCrawlJobStatusService extends AbstractService {
 	private static final long SLEEP_DURATION = 60*1000;
     private static final int BATCH_SIZE = 20;
 
-	private final CrawlJobDAO crawlJobDAO;
-	private final CrawlRequestDAO crawlRequestDAO;
-	private final ValidationJobDAO validationJobDAO;
-	private final HeritrixClient heritrixClient;
-	private final BingService bingService;
+	private final ResourceManager resourceManager;
 
-	public MonitorCrawlJobStatusService(BingService bingService, CrawlJobDAO crawlJobDAO, CrawlRequestDAO crawlRequestDAO, ValidationJobDAO validationJobDAO, HeritrixClient heritrixClient) {
+	public MonitorCrawlJobStatusService(ResourceManager resourceManager) {
 		super("MonitorCrawlJobStatusService", SLEEP_DURATION);
-		this.bingService = bingService;
-		this.crawlJobDAO = crawlJobDAO;
-		this.crawlRequestDAO = crawlRequestDAO;
-		this.validationJobDAO = validationJobDAO;
-		this.heritrixClient = heritrixClient;
+		this.resourceManager = resourceManager;
 	}
 
 	@Override
@@ -60,7 +53,7 @@ public class MonitorCrawlJobStatusService extends AbstractService {
 	@SuppressWarnings("WeakerAccess")
 	@UnitOfWork
     public String checkJobsBatch(String lastDomain) {
-        List<CrawlJob> runningJobs = crawlJobDAO.findByStatus(CrawlJob.Status.RUNNING, null, lastDomain, BATCH_SIZE);
+        List<CrawlJob> runningJobs = resourceManager.getCrawlJobDAO().findByStatus(CrawlJob.Status.RUNNING, null, lastDomain, BATCH_SIZE);
 		boolean containsRunningJobs = runningJobs != null && !runningJobs.isEmpty();
 		if (containsRunningJobs) {
 			runningJobs.forEach(this::checkJob);
@@ -77,19 +70,19 @@ public class MonitorCrawlJobStatusService extends AbstractService {
 			CrawlJob.CrawlService service = job.getCrawlService();
             if (service == CrawlJob.CrawlService.HERITRIX) {
 				String heritrixJobId = job.getHeritrixJobId();
-				boolean isCrawlingFinished = heritrixClient.isJobFinished(heritrixJobId);
+				boolean isCrawlingFinished = resourceManager.getHeritrixClient().isJobFinished(heritrixJobId);
 				if (!isCrawlingFinished) {
 					return false;
 				}
 			} else if (service == CrawlJob.CrawlService.BING) {
-				CrawlJob currentJob = bingService.getCurrentJob();
+				CrawlJob currentJob = resourceManager.getBingService().getCurrentJob();
 				if (currentJob != null && currentJob.getDomain().equals(job.getDomain())) {
 					return false;
 				}
 			}
 
             // Check if we have pending validation jobs
-            Long validationJobsCount = validationJobDAO.count(job.getDomain());
+            Long validationJobsCount = resourceManager.getValidationJobDAO().count(job.getDomain());
             if (validationJobsCount > 0) {
                 return false;
             }
@@ -99,7 +92,7 @@ public class MonitorCrawlJobStatusService extends AbstractService {
             job.setStatus(CrawlJob.Status.FINISHED);
             job.setFinishTime(new Date());
             if (service == CrawlJob.CrawlService.BING) {
-            	bingService.deleteTempFolder(job);
+            	resourceManager.getBingService().deleteTempFolder(job);
 			}
             logger.info("Crawling complete for " + job.getDomain());
             return true;
@@ -110,7 +103,7 @@ public class MonitorCrawlJobStatusService extends AbstractService {
     }
 
 	private void checkCrawlRequests() {
-		List<CrawlRequest> crawlRequests = crawlRequestDAO.findActiveRequestsWithoutActiveJobs();
+		List<CrawlRequest> crawlRequests = resourceManager.getCrawlRequestDAO().findActiveRequestsWithoutActiveJobs();
 		for (CrawlRequest request : crawlRequests) {
 			request.setFinished(true);
             if (request.getEmailAddress() != null) {

@@ -1,6 +1,7 @@
 package org.verapdf.crawler.resources;
 
 import io.dropwizard.hibernate.UnitOfWork;
+import org.verapdf.crawler.ResourceManager;
 import org.verapdf.crawler.api.monitoring.ValidationQueueStatus;
 import org.verapdf.crawler.api.validation.ValidationJob;
 import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
@@ -28,14 +29,10 @@ import java.util.stream.Collectors;
 @Produces(MediaType.APPLICATION_JSON)
 public class ValidationServiceResource {
 
-	private final PdfPropertyDAO pdfPropertyDAO;
-    private final NamespaceDAO namespaceDAO;
-    private final ValidationJobDAO validationJobDAO;
+	private final ResourceManager resourceManager;
 
-	public ValidationServiceResource(PdfPropertyDAO pdfPropertyDAO, NamespaceDAO namespaceDAO, ValidationJobDAO validationJobDAO) {
-		this.pdfPropertyDAO = pdfPropertyDAO;
-        this.namespaceDAO = namespaceDAO;
-        this.validationJobDAO = validationJobDAO;
+	public ValidationServiceResource(ResourceManager resourceManager) {
+		this.resourceManager = resourceManager;
 	}
 
 	@GET
@@ -43,8 +40,8 @@ public class ValidationServiceResource {
 	@UnitOfWork
 	public ValidationSettings getValidationSettings() {
 		ValidationSettings validationSettings = new ValidationSettings();
-        validationSettings.setProperties(pdfPropertyDAO.getEnabledPropertiesMap().stream().collect(Collectors.toMap(PdfProperty::getName, PdfProperty::getXpathList)));
-        validationSettings.setNamespaces(namespaceDAO.getNamespaces().stream().collect(Collectors.toMap(Namespace::getPrefix, Namespace::getUrl)));
+        validationSettings.setProperties(resourceManager.getPdfPropertyDAO().getEnabledPropertiesMap().stream().collect(Collectors.toMap(PdfProperty::getName, PdfProperty::getXpathList)));
+        validationSettings.setNamespaces(resourceManager.getNamespaceDAO().getNamespaces().stream().collect(Collectors.toMap(Namespace::getPrefix, Namespace::getUrl)));
 		return validationSettings;
 	}
 
@@ -52,8 +49,8 @@ public class ValidationServiceResource {
 	@Path("/queue-status")
 	@UnitOfWork
 	public ValidationQueueStatus getQueueStatus() {
-		Long count = validationJobDAO.count(null);
-		List<ValidationJob> documents = validationJobDAO.getDocuments(null, 10);
+		Long count = resourceManager.getValidationJobDAO().count(null);
+		List<ValidationJob> documents = resourceManager.getValidationJobDAO().getDocuments(null, 10);
 		return new ValidationQueueStatus(count, documents);
 	}
 

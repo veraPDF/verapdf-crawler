@@ -1,6 +1,7 @@
 package org.verapdf.crawler.resources;
 
 import io.dropwizard.hibernate.UnitOfWork;
+import org.verapdf.crawler.ResourceManager;
 import org.verapdf.crawler.db.DocumentDAO;
 
 import javax.validation.constraints.NotNull;
@@ -12,10 +13,10 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 public class DocumentPropertyResource {
 
-    private final DocumentDAO documentDAO;
+    private final ResourceManager resourceManager;
 
-    public DocumentPropertyResource(DocumentDAO documentDAO) {
-        this.documentDAO = documentDAO;
+    public DocumentPropertyResource(ResourceManager resourceManager) {
+        this.resourceManager = resourceManager;
     }
 
     @GET
@@ -25,6 +26,6 @@ public class DocumentPropertyResource {
                                                   @QueryParam("domain") @NotNull String domain,
                                                   @QueryParam("propertyValueFilter") @NotNull String propertyValueFilter,
                                                   @QueryParam("limit") Integer limit) {
-        return documentDAO.getDocumentPropertyValues(propertyName, domain, propertyValueFilter, limit);
+        return resourceManager.getDocumentDAO().getDocumentPropertyValues(propertyName, domain, propertyValueFilter, limit);
     }
 }

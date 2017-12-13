@@ -2,6 +2,7 @@ package org.verapdf.crawler.core.services;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.ResourceManager;
 import org.verapdf.crawler.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.tools.AbstractService;
 import org.xml.sax.SAXException;
@@ -20,12 +21,12 @@ public class HeritrixCleanerService extends AbstractService {
 
 	private static final long SLEEP_DURATION = 60*1000;
 
-	private final HeritrixClient heritrixClient;
+	private final ResourceManager resourceManager;
 	private final Set<String> heritrixJobIds = Collections.synchronizedSet(new HashSet<>());
 
-	public HeritrixCleanerService(HeritrixClient heritrixClient) {
+	public HeritrixCleanerService(ResourceManager resourceManager) {
 		super("HeritrixCleanerService", SLEEP_DURATION);
-		this.heritrixClient = heritrixClient;
+		this.resourceManager = resourceManager;
 	}
 
 	@Override
@@ -41,7 +42,7 @@ public class HeritrixCleanerService extends AbstractService {
 			Set<String> removed = new HashSet<>();
 			for (String id : heritrixJobIds) {
 				try {
-					if (heritrixClient.deleteJobFolder(id)) {
+					if (resourceManager.getHeritrixClient().deleteJobFolder(id)) {
 						removed.add(id);
 					}
 				} catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException e) {
@@ -55,7 +56,7 @@ public class HeritrixCleanerService extends AbstractService {
 
 	public void teardownAndClearHeritrixJob(String heritrixJobId) {
 		try {
-			heritrixClient.teardownJob(heritrixJobId);
+			resourceManager.getHeritrixClient().teardownJob(heritrixJobId);
 		} catch (IOException e) {
 			logger.error("Can't teardown heritrix job: " + heritrixJobId, e);
 		}
