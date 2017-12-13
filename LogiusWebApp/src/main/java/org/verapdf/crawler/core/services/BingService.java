@@ -16,6 +16,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.verapdf.crawler.ResourceManager;
 import org.verapdf.crawler.api.crawling.CrawlJob;
 import org.verapdf.crawler.api.document.DomainDocument;
 import org.verapdf.crawler.configurations.BingConfiguration;
@@ -59,21 +60,17 @@ public class BingService extends AbstractService {
 
 	private final File baseTempFolder;
 	private final String apiKey;
-	private final CrawlJobDAO crawlJobDAO;
-	private final DocumentDAO documentDAO;
-	private final ValidationJobDAO validationJobDAO;
+	private final ResourceManager resourceManager;
 	private CrawlJob currentJob = null;
 
-	public BingService(BingConfiguration bingConfiguration, CrawlJobDAO crawlJobDAO, DocumentDAO documentDAO, ValidationJobDAO validationJobDAO) {
+	public BingService(BingConfiguration bingConfiguration, ResourceManager resourceManager) {
 		super("BingService", SLEEP_DURATION);
 		this.baseTempFolder = new File(bingConfiguration.getBaseTempFolder());
 		if (!this.baseTempFolder.isDirectory() && (this.baseTempFolder.exists() || !this.baseTempFolder.mkdirs())) {
 			throw new IllegalStateException("Initialization fail on obtaining temp folder");
 		}
 		this.apiKey = bingConfiguration.getApiKey();
-		this.crawlJobDAO = crawlJobDAO;
-		this.documentDAO = documentDAO;
-		this.validationJobDAO = validationJobDAO;
+		this.resourceManager = resourceManager;
 	}
 
 	@Override
@@ -110,7 +107,7 @@ public class BingService extends AbstractService {
 	@SuppressWarnings("WeakerAccess")
 	@UnitOfWork
 	public CrawlJob getJob() {
-		List<CrawlJob> byStatus = crawlJobDAO.findByStatus(CrawlJob.Status.NEW, CrawlJob.CrawlService.BING, null, 1);
+		List<CrawlJob> byStatus = resourceManager.getCrawlJobDAO().findByStatus(CrawlJob.Status.NEW, CrawlJob.CrawlService.BING, null, 1);
 		if (byStatus != null && !byStatus.isEmpty()) {
 			CrawlJob crawlJob = byStatus.get(0);
 			crawlJob.setStatus(CrawlJob.Status.RUNNING);
@@ -165,7 +162,7 @@ public class BingService extends AbstractService {
 					domainDocument.setFilePath(file.getAbsolutePath());
 				}
 				if (this.currentJob != null) {
-					DocumentResource.saveDocument(domainDocument, this.currentJob, documentDAO, validationJobDAO);
+					DocumentResource.saveDocument(domainDocument, this.currentJob, this.resourceManager);
 				}
 			} catch (ParseException e) {
 				logger.error("Can't obtain last modified for url: "+ url, e);
