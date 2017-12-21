@@ -252,26 +252,43 @@ $(function () {
     }
 
     function crawlRequestsLoaded(requests) {
-        mailsList = '';
-        for (var i = 0; i < requests.length; i++) {
-            if (i !== requests.length - 1) {
-                if (requests[i].emailAddress) {
-                    mailsList += requests[i].emailAddress + ", ";
-                }
-            } else {
-                if (requests[i].emailAddress) {
-                    mailsList += requests[i].emailAddress;
-                }
+        // mailsList = '';
+        // for (var i = 0; i < requests.length; i++) {
+        //     if (i !== requests.length - 1) {
+        //         if (requests[i].emailAddress) {
+        //             mailsList += requests[i].emailAddress + ", ";
+        //         }
+        //     } else {
+        //         if (requests[i].emailAddress) {
+        //             mailsList += requests[i].emailAddress;
+        //         }
+        //     }
+        //
+        // }
+        //
+        // if (mailsList === '') {
+        //     mailsList = 'no one';
+        // }
+        //
+        // $('span.job-mails-list').text(mailsList);
+        // $('textarea.job-mails-list').val(mailsList);
+        console.log(requests);
+        var minDate = null;
+        for (var i in requests) {
+            var crawlSinceTime = requests[i].crawlSinceTime;
+            if (crawlSinceTime == null) {
+                crawlSinceTime = '2015-01-01';
             }
-
+            if (minDate == null || minDate > crawlSinceTime) {
+                minDate = crawlSinceTime;
+            }
         }
-
-        if (mailsList === '') {
-            mailsList = 'no one';
+        if (minDate != null) {
+            summaryDateInput.val(minDate);
+            documentsDateInput.val(minDate);
+            errorsDateInput.val(minDate);
         }
-
-        $('span.job-mails-list').text(mailsList);
-        $('textarea.job-mails-list').val(mailsList);
+        loadSummaryData();
     }
 
     var emailTextArea = $('.job-mails textarea.job-mails-list').tooltip({
@@ -680,7 +697,6 @@ $(function () {
 
     //region Main
     loadCrawlJob();
-    //loadCrawlRequests();
-    loadSummaryData();
+    loadCrawlRequests();
     //endregion
 });

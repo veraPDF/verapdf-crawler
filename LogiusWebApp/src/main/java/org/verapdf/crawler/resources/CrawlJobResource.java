@@ -166,7 +166,7 @@ public class CrawlJobResource {
             }
         } else if (crawlService == CrawlJob.CrawlService.BING) {
             //TODO: fix this
-            heritrixStatus = new HeritrixCrawlJobStatus("Bing job", null, null);
+            heritrixStatus = null;
         }
 
         String crawlJobDomain = crawlJob.getDomain();

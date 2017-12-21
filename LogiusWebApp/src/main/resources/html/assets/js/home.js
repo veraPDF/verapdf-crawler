@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    // $("#date_input").value = "01-01-2015";
+    $('#date_input').val('2015-01-01');
     $("input:button").click(main);
     $('[data-toggle="tooltip"]').tooltip();
 
