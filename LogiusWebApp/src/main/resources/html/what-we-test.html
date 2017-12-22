@@ -31,6 +31,7 @@
 </header>
 <main class="main">
     <div class="about">
+        <h1>What this tool tests</h1>
         <p>This tool finds and analyses the documents on a given website and outputs the number of:</p>
         <ul>
             <li>documents in PDF/A format by accessibility level "a", "u" or "b"</li>
@@ -38,15 +39,18 @@
             <li>documents in Open Document Format (ODF)</li>
             <li>documents in vendor dependent formats</li>
         </ul>
-        <p>In the green bar we count the documents that comply with the open standards PDF/A, PDF 1.7 or ODF. The red bar contains the counts of the other document formats.</p>
+        <h1>Results</h1>
+        <p>In the green bar we count the documents that comply with the open standards PDF/A or ODF. The red bar contains the counts of the other document formats.</p>
         <p>Under the Documents tab we present statistics by PDF/A version (1, 2, 3) and accessibility level ('a', 'u', 'b') and by PDF version (1.3, 1.4, 1.5, 1.6, 1.7, etc). The Common errors tab gives statistics for the most frequently occurring issues that prevent PDF documents from being PDF/A compliant.</p>
         <p>The tool uses the <a href="http://verapdf.org">VeraPDF checker</a> to test for PDF/A compliance. It determines formats other than PDF/A by reading the version declaration in the file.</p>
         <p>The downloadable report contains all statistics plus the URLs of all documents that were not found to be PDF/A, PDF 1.7 or ODF compliant.</p>
+        <h1>Options</h1>
+        <p>By default, the tool will use the Heritrix crawler to find documents a given website. If you tick the "Use Bing for Crawling" box, the tool will use the Bing&#8482; seach engine to find documents. This may give somewhat faster results as the tool does not need to crawl the website, but the Bing search may not yield up to date references to all documents on the site in a given moment.</p>
         <p>The tool allows you to analyse and count documents younger than a specified date. We added this feature because many organizations only recently have policies to publish documents in PDF/A or ODF format.</p>
         <p>If you specify a date, the tool actually analyses all documents on the website but only counts those from the date specified.  If you launch another job for the same website but with another date, the tool will use the data already stored in the internal database. This saves resources when launching different jobs for the same website.</p>
     </div>
     <div class="important-notice">
-        <b>Important notice.</b>
+        <b>Important notice</b>
         This tool uses open source software, notably the Heritrix crawler and the VeraPDF analyser.
         We do not guarantee the correct and accurate functioning of this software.
         It is possible that the crawler does not find all documents on a website.
