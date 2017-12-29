@@ -74,6 +74,8 @@ $(function () {
         // Heritrix details
         $('.heritrix .crawler-name').text(jobStatus.crawlJob.crawlService);
         $('.heritrix .job-id span').text(jobStatus.crawlJob.heritrixJobId);
+        var heritrixLogTbody = $('.heritrix tbody');
+        heritrixLogTbody.find('tr:not(.template)').remove();
         if (jobStatus.heritrixStatus) {
             $('.heritrix .status').text('Status - ' + jobStatus.heritrixStatus.statusDescription);
             if (jobStatus.heritrixStatus.uriTotalsStatus) {
@@ -84,25 +86,21 @@ $(function () {
             } else {
                 $('.heritrix .crawled-urls').hide();
             }
+            if (jobStatus.heritrixStatus.jobLogTail) {
+                var logTemplate = $('.heritrix table .template').clone().removeClass('template');
+                $.each(jobStatus.heritrixStatus.jobLogTail, function(index, message) {
+                    var element = logTemplate.clone();
+                    element.find('.message').text(message);
+                    heritrixLogTbody.append(element);
+                });
+                $('.heritrix table').show();
+            } else {
+                $('.heritrix table').hide();
+            }
         } else {
             $('.heritrix .crawled-urls').hide();
-        }
-
-        var heritrixLogTbody = $('.heritrix tbody');
-        heritrixLogTbody.find('tr:not(.template)').remove();
-
-        if (jobStatus.heritrixStatus.jobLogTail) {
-            var logTemplate = $('.heritrix table .template').clone().removeClass('template');
-            $.each(jobStatus.heritrixStatus.jobLogTail, function(index, message) {
-                var element = logTemplate.clone();
-                element.find('.message').text(message);
-                heritrixLogTbody.append(element);
-            });
-            $('.heritrix table').show();
-        } else {
             $('.heritrix table').hide();
         }
-
 
         // Validation queue details
         $('.validation-queue .validation-queue-size').text(jobStatus.validationQueueStatus.count);
