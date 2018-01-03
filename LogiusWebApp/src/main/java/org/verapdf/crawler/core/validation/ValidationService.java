@@ -20,6 +20,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ public class ValidationService extends AbstractService {
 
 	private static final long SLEEP_DURATION = 60*1000;
 
+	private List<PDFProcessorAdapter> pdfProcessors;
     private final ResourceManager resourceManager;
     private final PDFValidator validator;
     private ValidationJob currentJob;
@@ -41,6 +43,8 @@ public class ValidationService extends AbstractService {
         super("ValidationService", SLEEP_DURATION);
     	this.resourceManager = resourceManager;
         this.validator = validator;
+        this.pdfProcessors = new ArrayList<>();
+        this.pdfProcessors.add(new PDFWamProcessor(resourceManager.getPDFProcessorsConfiguration().getPdfwamChecker()));
     }
 
 	public ValidationJob getCurrentJob() {
@@ -93,6 +97,13 @@ public class ValidationService extends AbstractService {
 
 	private void processStartedJob() throws IOException, ValidationDeadlockException, InterruptedException {
         VeraPDFValidationResult result = validator.getValidationResult(currentJob);
+        // additional processors logic
+        for (PDFProcessorAdapter pdfProcessor : this.pdfProcessors) {
+			Map<String, String> properties = pdfProcessor.evaluateProperties(currentJob);
+			for (Map.Entry<String, String> property : properties.entrySet()) {
+				result.addProperty(property.getKey(), property.getValue());
+			}
+		}
         saveResult(result);
     }
 

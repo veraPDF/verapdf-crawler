@@ -54,6 +54,8 @@ reports:
 bing:
   baseTempFolder: {{ logius_temp_folder }}/bing
   apiKey: {{ logius_bing_api_key }}
+pdfProcessors:
+  pdfwamChecker: {{ logius_pdfwam_pdfchecker_path }}
 veraPDFService:
   url: {{ logius_web_connection_type }}://{{ logius_server_name }}:{{ logius_verapdf_port }}
 logging:
