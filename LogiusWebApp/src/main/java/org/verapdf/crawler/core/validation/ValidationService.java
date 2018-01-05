@@ -11,9 +11,7 @@ import org.verapdf.crawler.api.document.DomainDocument;
 import org.verapdf.crawler.api.validation.ValidationJob;
 import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 import org.verapdf.crawler.api.validation.error.ValidationError;
-import org.verapdf.crawler.db.DocumentDAO;
-import org.verapdf.crawler.db.ValidationErrorDAO;
-import org.verapdf.crawler.db.ValidationJobDAO;
+import org.verapdf.crawler.configurations.PDFProcessorsConfiguration;
 import org.verapdf.crawler.tools.AbstractService;
 
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -44,7 +42,13 @@ public class ValidationService extends AbstractService {
     	this.resourceManager = resourceManager;
         this.validator = validator;
         this.pdfProcessors = new ArrayList<>();
-        this.pdfProcessors.add(new PDFWamProcessor(resourceManager.getPDFProcessorsConfiguration().getPdfwamChecker()));
+		PDFProcessorsConfiguration pdfProcessorsConfiguration = resourceManager.getPDFProcessorsConfiguration();
+		if (pdfProcessorsConfiguration != null) {
+			String pdfwamChecker = pdfProcessorsConfiguration.getPdfwamChecker();
+			if (pdfwamChecker != null) {
+				this.pdfProcessors.add(new PDFWamProcessor(pdfwamChecker));
+			}
+		}
     }
 
 	public ValidationJob getCurrentJob() {
