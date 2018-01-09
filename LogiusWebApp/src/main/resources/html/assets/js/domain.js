@@ -86,6 +86,13 @@ $(function () {
         '#ca94fd',
         '#fd89e9',
         '#ff9ca0',
+        '#A9A9A9',
+        '#9ACD32',
+        '#808000',
+        '#008B8B',
+        '#9400D3',
+        '#DEB887',
+        '#2F4F4F',
         '#ffffff'
     ];
 
@@ -287,6 +294,7 @@ $(function () {
             summaryDateInput.val(minDate);
             documentsDateInput.val(minDate);
             errorsDateInput.val(minDate);
+            pdfwamErrorsDateInput.val(minDate);
         }
         loadSummaryData();
     }
@@ -349,6 +357,9 @@ $(function () {
                 break;
             case "Common errors":
                 loadErrorsData();
+                break;
+            case "Common PDFWam errors":
+                loadPDFWamErrorsData();
                 break;
         }
     });
@@ -582,22 +593,21 @@ $(function () {
     errorsVersionSelect.on('change', loadErrorsData);
 
     var errorsProducerInput = $("#errors-producer-input");
-    var producerSearchEngine = new Bloodhound({
-        remote: {
-            url: '/api/document-properties/producer/values?domain=' + normalizedDomain + '&propertyValueFilter=_query_&limit=' + TYPEAHEAD_LIMIT,
-            wildcard: '_query_',
-            cache: false
-        },
-        queryTokenizer: Bloodhound.tokenizers.whitespace,
-        datumTokenizer: Bloodhound.tokenizers.whitespace
-    });
     errorsProducerInput.typeahead({
         minLength: 1,
         highlight: true,
         limit: TYPEAHEAD_LIMIT
     }, {
         name: 'producers',
-        source: producerSearchEngine
+        source: new Bloodhound({
+            remote: {
+                url: '/api/document-properties/producer/values?domain=' + normalizedDomain + '&propertyValueFilter=_query_&limit=' + TYPEAHEAD_LIMIT,
+                wildcard: '_query_',
+                cache: false
+            },
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            datumTokenizer: Bloodhound.tokenizers.whitespace
+        })
     });
     errorsProducerInput.bind('typeahead:selected', loadErrorsData);
     errorsProducerInput.on("keydown", function (e) {
@@ -657,7 +667,7 @@ $(function () {
                     }]
                 };
 
-                var errorsListElement = $('.errors-list');
+                var errorsListElement = $('#errors .errors-list');
                 errorsListElement.find('tbody>:not(.template)').remove();
 
                 var template = errorsListElement.find('.template').clone().removeClass('template');
@@ -692,6 +702,150 @@ $(function () {
         });
 
     }
+    //endregion
+
+    //region PDFWam Errors statistics
+    var pdfwamErrorsMap = new Map();
+    pdfwamErrorsMap.set('pdfwam.error', {short: 'Error in pdfwam process', link: null});
+    pdfwamErrorsMap.set('egovmon.pdf.03', {short: 'Structure Elements (tags)', link: 'http://checkers.eiii.eu/en/pdftest/EGOVMON.PDF.03'});
+    pdfwamErrorsMap.set('egovmon.pdf.05', {short: 'Document Permissions', link: 'http://checkers.eiii.eu/en/pdftest/EGOVMON.PDF.05'});
+    pdfwamErrorsMap.set('egovmon.pdf.08', {short: 'Scanned Document', link: 'http://checkers.eiii.eu/en/pdftest/EGOVMON.PDF.08'});
+    pdfwamErrorsMap.set('wcag.pdf.01', {short: 'Alternative Text for Images', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.01'});
+    pdfwamErrorsMap.set('wcag.pdf.02', {short: 'Bookmarks', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.02'});
+    pdfwamErrorsMap.set('wcag.pdf.03', {short: 'Correct Tab and Reading Order', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.03'});
+    pdfwamErrorsMap.set('wcag.pdf.04', {short: 'Decorative Images', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.04'});
+    pdfwamErrorsMap.set('wcag.pdf.06', {short: 'Table Elements', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.06'});
+    pdfwamErrorsMap.set('wcag.pdf.09', {short: 'Heading Levels', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.09'});
+    pdfwamErrorsMap.set('wcag.pdf.12', {short: 'Form Fields', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.12'});
+    pdfwamErrorsMap.set('wcag.pdf.14', {short: 'Running Headers and Footers', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.14'});
+    pdfwamErrorsMap.set('wcag.pdf.15', {short: 'Submit Buttons', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.15'});
+    pdfwamErrorsMap.set('wcag.pdf.16', {short: 'Natural Language', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.16'});
+    pdfwamErrorsMap.set('wcag.pdf.17', {short: 'Page Numbering', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.17'});
+    pdfwamErrorsMap.set('wcag.pdf.18', {short: 'Document Title', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.18'});
+    pdfwamErrorsMap.set('wcag.pdf.sc244', {short: 'Link Text for External Links', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.SC244'});
+    var pdfwamErrorsFlavourSelect = $('#errors-pdfwam-flavour-input');
+    $.each(FLAVOURS, function(serverName, uiDescriptor) {
+        $('<option>')
+            .val(serverName)
+            .text(uiDescriptor.displayName)
+            .appendTo(pdfwamErrorsFlavourSelect);
+    });
+    pdfwamErrorsFlavourSelect.on('change', loadPDFWamErrorsData);
+
+    var pdfwamErrorsVersionSelect = $('#errors-pdfwam-version-input');
+    $.each(VERSIONS, function(serverName, uiDescriptor) {
+        $('<option>')
+            .val(serverName)
+            .text(uiDescriptor.displayName)
+            .appendTo(pdfwamErrorsVersionSelect);
+    });
+    pdfwamErrorsVersionSelect.on('change', loadPDFWamErrorsData);
+
+    var pdfwamErrorsProducerInput = $("#errors-pdfwam-producer-input");
+    pdfwamErrorsProducerInput.typeahead({
+        minLength: 1,
+        highlight: true,
+        limit: TYPEAHEAD_LIMIT
+    }, {
+        name: 'producers',
+        source: new Bloodhound({
+            remote: {
+                url: '/api/document-properties/producer/values?domain=' + normalizedDomain + '&propertyValueFilter=_query_&limit=' + TYPEAHEAD_LIMIT,
+                wildcard: '_query_',
+                cache: false
+            },
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            datumTokenizer: Bloodhound.tokenizers.whitespace
+        })
+    });
+    pdfwamErrorsProducerInput.bind('typeahead:selected', loadPDFWamErrorsData);
+    pdfwamErrorsProducerInput.on("keydown", function (e) {
+        if (e.keyCode === 13) {
+            loadPDFWamErrorsData();
+        }
+    });
+
+    var pdfwamErrorsDateInput = $('#errors-pdfwam-date-input');
+    var pdfwamErrorsDatePicker = new Pikaday($.extend({}, defaultDatePickerOptions, {
+        field: document.getElementById('errors-pdfwam-date-input'),
+        onSelect: loadPDFWamErrorsData
+    }));
+    pdfwamErrorsDateInput.on("keydown", function (e) {
+        if (e.keyCode === 13) {
+            loadPDFWamErrorsData();
+        }
+    });
+
+    var pdfwamErrorsChartContext = document.getElementById("errors-pdfwam-chart").getContext('2d');
+    var pdfwamErrorsChart = new Chart(pdfwamErrorsChartContext, {
+        type: 'pie'
+    });
+
+    function loadPDFWamErrorsData() {
+        var url = '/api/report/pdfwam-statistics?domain=' + crawlJob.domain;
+
+        var flavour = pdfwamErrorsFlavourSelect.find('option:selected').val();
+        if (flavour !== '') {
+            url += '&flavour=' + flavour;
+        }
+
+        var version = pdfwamErrorsVersionSelect.find('option:selected').val();
+        if (version !== '') {
+            url += '&version=' + version;
+        }
+
+        var producer = pdfwamErrorsProducerInput.typeahead('val');
+        if (producer !== '') {
+            url += '&producer=' + producer;
+        }
+
+        var startDate = pdfwamErrorsDateInput.val();
+        if (startDate !== '') {
+            url += '&startDate=' + startDate;
+        }
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function (result) {
+                var errorsChartData = {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [],
+                        borderWidth: 0
+                    }]
+                };
+
+                var errorsListElement = $('#errors-pdfwam .errors-list');
+                errorsListElement.find('tbody>:not(.template)').remove();
+
+                var template = errorsListElement.find('.template').clone().removeClass('template');
+                $.each(result, function(index, errorCount) {
+                    var errorId = errorCount['id'];
+                    var shortDescription = pdfwamErrorsMap.get(errorId).short;
+                    var link = pdfwamErrorsMap.get(errorId).link;
+                    var documentsCount = errorCount['count'];
+                    var errorColor = ERROR_BACKGROUNDS[index];
+
+                    errorsChartData.labels.push(shortDescription);
+                    errorsChartData.datasets[0].data.push(documentsCount);
+                    errorsChartData.datasets[0].backgroundColor.push(errorColor);
+
+                    var element = template.clone();
+                    element.find('.count').css('backgroundColor', errorColor).text(documentsCount);
+                    element.find('.error-description .short').text(shortDescription);
+                    element.find('.error-description .full').text(errorId);
+                    errorsListElement.append(element);
+                });
+
+                pdfwamErrorsChart.data = errorsChartData;
+                pdfwamErrorsChart.update();
+            },
+            error: reportError
+        });
+
+    }
+    //endregion
     //endregion
     //endregion
 

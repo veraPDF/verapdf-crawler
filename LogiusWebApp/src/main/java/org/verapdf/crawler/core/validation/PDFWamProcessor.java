@@ -19,6 +19,7 @@ public class PDFWamProcessor extends PDFProcessorAdapter {
 	private static final Logger logger = LoggerFactory.getLogger(PDFWamProcessor.class);
 
 	private static Set<String> TESTS;
+	private static Set<String> ERROR_PROPERTY_NAMES;
 
 	static {
 		String[] tempTests = new String[]{
@@ -41,6 +42,8 @@ public class PDFWamProcessor extends PDFProcessorAdapter {
 		};
 		TESTS = new HashSet<>(tempTests.length);
 		TESTS.addAll(Arrays.asList(tempTests));
+		ERROR_PROPERTY_NAMES = new HashSet<>(TESTS);
+		ERROR_PROPERTY_NAMES.add("pdfwam.error");
 	}
 
 	private final String pdfwamPdfcheckerPath;
@@ -99,5 +102,9 @@ public class PDFWamProcessor extends PDFProcessorAdapter {
 		Map<String, String> res = new HashMap<>();
 		res.put("pdfwam.error", "fail");
 		return res;
+	}
+
+	public static Set<String> getErrorPropertyNames() {
+		return ERROR_PROPERTY_NAMES;
 	}
 }
