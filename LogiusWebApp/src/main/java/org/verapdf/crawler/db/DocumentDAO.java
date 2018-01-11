@@ -185,6 +185,7 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
 
         restrictions.add(properties.key().in(PDFWamProcessor.getErrorPropertyNames()));
         restrictions.add(builder.like(properties.value(), "%fail%"));
+        restrictions.add(builder.not(builder.like(properties.value(), "%fail:0%")));
 
         if (startDate != null) {
             restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));

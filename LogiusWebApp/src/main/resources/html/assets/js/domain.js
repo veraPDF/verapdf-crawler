@@ -355,10 +355,10 @@ $(function () {
             case "Documents":
                 loadDocumentsData();
                 break;
-            case "Common errors":
+            case "Common PDF/A errors":
                 loadErrorsData();
                 break;
-            case "Common PDFWam errors":
+            case "Common PDF/UA errors":
                 loadPDFWamErrorsData();
                 break;
         }
@@ -674,9 +674,17 @@ $(function () {
                 $.each(result['topErrorStatistics'], function(index, errorCount) {
                     var error = errorCount['error'];
                     var shortDescription = '';
+                    var link = null;
                     if (error['type'] === 'ruleViolation') {
                         var rule = error['rule'];
                         shortDescription = rule['specification'] + ' ' + rule['clause'] + '-' + rule['testNumber'];
+                        link = 'https://github.com/veraPDF/veraPDF-validation-profiles/wiki/';
+                        if (rule['specification'] === 'ISO 19005-1:2005') {
+                            link += 'PDFA-Part-1-rules#rule-';
+                        } else {
+                            link += 'PDFA-Parts-2-and-3-rules#rule-';
+                        }
+                        link += rule['clause'].split('.').join('') + '-' + rule['testNumber'];
                     } else {
                         shortDescription = 'Generic error #' + error['id'];
                     }
@@ -690,7 +698,11 @@ $(function () {
 
                     var element = template.clone();
                     element.find('.count').css('backgroundColor', errorColor).text(documentsCount);
-                    element.find('.error-description .short').text(shortDescription);
+                    var shortDesc = element.find('.error-description .short');
+                    shortDesc.text(shortDescription + ':');
+                    if (link != null) {
+                        shortDesc.attr('href', link);
+                    }
                     element.find('.error-description .full').text(fullDescription);
                     errorsListElement.append(element);
                 });
@@ -706,23 +718,148 @@ $(function () {
 
     //region PDFWam Errors statistics
     var pdfwamErrorsMap = new Map();
-    pdfwamErrorsMap.set('pdfwam.error', {short: 'Error in pdfwam process', link: null});
-    pdfwamErrorsMap.set('egovmon.pdf.03', {short: 'Structure Elements (tags)', link: 'http://checkers.eiii.eu/en/pdftest/EGOVMON.PDF.03'});
-    pdfwamErrorsMap.set('egovmon.pdf.05', {short: 'Document Permissions', link: 'http://checkers.eiii.eu/en/pdftest/EGOVMON.PDF.05'});
-    pdfwamErrorsMap.set('egovmon.pdf.08', {short: 'Scanned Document', link: 'http://checkers.eiii.eu/en/pdftest/EGOVMON.PDF.08'});
-    pdfwamErrorsMap.set('wcag.pdf.01', {short: 'Alternative Text for Images', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.01'});
-    pdfwamErrorsMap.set('wcag.pdf.02', {short: 'Bookmarks', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.02'});
-    pdfwamErrorsMap.set('wcag.pdf.03', {short: 'Correct Tab and Reading Order', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.03'});
-    pdfwamErrorsMap.set('wcag.pdf.04', {short: 'Decorative Images', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.04'});
-    pdfwamErrorsMap.set('wcag.pdf.06', {short: 'Table Elements', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.06'});
-    pdfwamErrorsMap.set('wcag.pdf.09', {short: 'Heading Levels', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.09'});
-    pdfwamErrorsMap.set('wcag.pdf.12', {short: 'Form Fields', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.12'});
-    pdfwamErrorsMap.set('wcag.pdf.14', {short: 'Running Headers and Footers', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.14'});
-    pdfwamErrorsMap.set('wcag.pdf.15', {short: 'Submit Buttons', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.15'});
-    pdfwamErrorsMap.set('wcag.pdf.16', {short: 'Natural Language', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.16'});
-    pdfwamErrorsMap.set('wcag.pdf.17', {short: 'Page Numbering', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.17'});
-    pdfwamErrorsMap.set('wcag.pdf.18', {short: 'Document Title', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.18'});
-    pdfwamErrorsMap.set('wcag.pdf.sc244', {short: 'Link Text for External Links', link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.SC244'});
+    pdfwamErrorsMap.set('pdfwam.error', {
+        short: 'Error in pdfwam process',
+        full: null,
+        link: null
+    });
+    pdfwamErrorsMap.set('egovmon.pdf.03', {
+        short: 'Structure Elements (tags) [EGOVMON.PDF.03]',
+        full: '1.3.1 Info and Relationships “Information, structure, and relationships conveyed through ' +
+        'presentation can be programmatically determined or are available in text. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/EGOVMON.PDF.03'
+    });
+    pdfwamErrorsMap.set('egovmon.pdf.05', {
+        short: 'Document Permissions [EGOVMON.PDF.05]',
+        full: '4.1 Compatible “Maximize compatibility with current and future user agents, including ' +
+        'assistive technologies.”',
+        link: 'http://checkers.eiii.eu/en/pdftest/EGOVMON.PDF.05'
+    });
+    pdfwamErrorsMap.set('egovmon.pdf.08', {
+        short: 'Scanned Document [EGOVMON.PDF.08]',
+        full: '1.4.5 Images of Text “If the technologies being used can achieve the visual presentation, ' +
+        'text is used to convey information rather than images of text except for the following: (Level AA)”' +
+        '<br/>Customizable: The image of text can be visually customized to the user\'s requirements;' +
+        '<br/>Essential: A particular presentation of text is essential to the information being conveyed.',
+        link: 'http://checkers.eiii.eu/en/pdftest/EGOVMON.PDF.08'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.01', {
+        short: 'Alternative Text for Images [WCAG.PDF.01]',
+        full: '1.1.1 Non-text Content "“All non-text content that is presented to the user ' +
+        'has a text alternative that serves the equivalent purpose, except for the situations ' +
+        'listed below. (Level A)"<br/>' +
+        'Controls, Input<br/>' +
+        'Time-Based Media<br/>' +
+        'Test<br/>' +
+        'Sensory<br/>' +
+        'CAPTCHA<br/>' +
+        'Decoration, Formatting, Invisible”<br/>',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.01'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.02', {
+        short: 'Bookmarks [WCAG.PDF.02]',
+        full: '2.4.5 Multiple Ways "More than one way is available to locate a Web page within a set of ' +
+        'Web pages except where the Web Page is the result of, or a step in, a process. (Level AA)"',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.02'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.03', {
+        short: 'Correct Tab and Reading Order [WCAG.PDF.03]',
+        full: '1.3.2 Meaningful Sequence: “When the sequence in which content is presented affects its ' +
+        'meaning, a correct reading sequence can be programmatically determined. (Level A)”<br/>' +
+        '2.1.3 Keyboard (No Exception): “All functionality of the content is operable through ' +
+        'a keyboard interface without requiring specific timings for individual keystrokes. (Level AAA)”<br/>' +
+        '2.4.3 Focus Order: “If a Web page can be navigated sequentially and the navigation sequences ' +
+        'affect meaning or operation, focusable components receive focus in an order that preserves ' +
+        'meaning and operability. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.03'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.04', {
+        short: 'Decorative Images [WCAG.PDF.04]',
+        full: '1.1.1 Non-text Content "“All non-text content that is presented to the user ' +
+        'has a text alternative that serves the equivalent purpose, except for the situations ' +
+        'listed below. (Level A)"<br/>' +
+        'Controls, Input<br/>' +
+        'Time-Based Media<br/>' +
+        'Test<br/>' +
+        'Sensory<br/>' +
+        'CAPTCHA<br/>' +
+        'Decoration, Formatting, Invisible”<br/>',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.04'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.06', {
+        short: 'Table Elements [WCAG.PDF.06]',
+        full: '1.3.1 Meaningful Sequence: ““Information, structure, and relationships conveyed ' +
+        'through presentation can be programmatically determined or are available in text. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.06'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.09', {
+        short: 'Heading Levels [WCAG.PDF.09]',
+        full: '1.3.1 Info and Relationships:“Information, structure, and relationships conveyed ' +
+        'through presentation can be programmatically determined or are available in text. (Level A)”<br/>' +
+        '2.4.1 Bypass Blocks: “A mechanism is available to bypass blocks of content that are repeated ' +
+        'on multiple Web pages. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.09'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.12', {
+        short: 'Form Fields [WCAG.PDF.12]',
+        full: '1.3.1 Info and Relationships: “Information, structure, and relationships conveyed ' +
+        'through presentation can be programmatically determined or are available in text. (Level A)”<br/>' +
+        '4.1.2 Name, Role, Value: “For all user interface components (including but not limited to: ' +
+        'form elements, links and components generated by scripts), the name and role can be ' +
+        'programmatically determined; states, properties, and values that can be set by the user ' +
+        'can be programmatically set; and notification of changes to these items is available to user ' +
+        'agents, including assistive technologies. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.12'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.14', {
+        short: 'Running Headers and Footers [WCAG.PDF.14]',
+        full: '2.4.8 Location: “Information about the user’s location within a set of web ' +
+        'pages is available. (Level AAA)”<br/>' +
+        '3.2.3 Consistent Navigation: “Navigational mechanisms that are repeated on multiple ' +
+        'Web pages within a set of Web pages occur in the same relative order each time they are ' +
+        'repeated, unless a change is initiated by the user. (Level AA)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.14'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.15', {
+        short: 'Submit Buttons [WCAG.PDF.15]',
+        full: '3.2.2 On Input:“Changing the setting of any user interface component ' +
+        'does not automatically cause a change of context unless the user has been advised ' +
+        'of the behavior before using the component. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.15'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.16', {
+        short: 'Natural Language [WCAG.PDF.16]',
+        full: '3.1.1 Language of Page “The default human language of each Web page can be programmatically ' +
+        'determined. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.16'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.17', {
+        short: 'Page Numbering [WCAG.PDF.17]',
+        full: '1.3.1 Info and Relationships:“Information, structure, and relationships conveyed ' +
+        'through presentation can be programmatically determined or are available in text. (Level A)”<br/>' +
+        '3.2.3 Consistent Navigation:“Navigational mechanisms that are repeated on multiple ' +
+        'Web pages within a set of Web pages occur in the same relative order each time ' +
+        'they are repeated, unless a change is initiated by the user. (Level AA)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.17'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.18', {
+        short: 'Document Title [WCAG.PDF.18]',
+        full: '2.4.2 Page Titled “Web pages have titles that describe topic or purpose. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.18'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.sc244', {
+        short: 'Link Text for External Links [WCAG.PDF.SC244]',
+        full: '1.3.1 Info and Relationships “Information, structure, and relationships conveyed ' +
+        'through presentation can be programmatically determined or are available in text. (Level A)”<br/>' +
+        '2.1.1 Keyboard “All functionality of the content is operable through a keyboard interface ' +
+        'without requiring specific timings for individual keystrokes, except where the underlying ' +
+        'function requires input that depends on the path of the user\'s movement and not just ' +
+        'the endpoints. (Level A)”<br/>' +
+        '2.4.4 Link Purpose (In Context)“The purpose of each link can be determined from the link ' +
+        'text alone or from the link text together with its programmatically determined link context, ' +
+        'except where the purpose of the link would be ambiguous to users in general. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.SC244'
+    });
     var pdfwamErrorsFlavourSelect = $('#errors-pdfwam-flavour-input');
     $.each(FLAVOURS, function(serverName, uiDescriptor) {
         $('<option>')
@@ -823,6 +960,7 @@ $(function () {
                 $.each(result, function(index, errorCount) {
                     var errorId = errorCount['id'];
                     var shortDescription = pdfwamErrorsMap.get(errorId).short;
+                    var fullDescription = pdfwamErrorsMap.get(errorId).full;
                     var link = pdfwamErrorsMap.get(errorId).link;
                     var documentsCount = errorCount['count'];
                     var errorColor = ERROR_BACKGROUNDS[index];
@@ -833,8 +971,12 @@ $(function () {
 
                     var element = template.clone();
                     element.find('.count').css('backgroundColor', errorColor).text(documentsCount);
-                    element.find('.error-description .short').text(shortDescription);
-                    element.find('.error-description .full').text(errorId);
+                    var shortDesc = element.find('.error-description .short');
+                    shortDesc.text(shortDescription);
+                    if (link != null) {
+                        shortDesc.attr('href', link);
+                    }
+                    element.find('.error-description .full').html(fullDescription);
                     errorsListElement.append(element);
                 });
 
