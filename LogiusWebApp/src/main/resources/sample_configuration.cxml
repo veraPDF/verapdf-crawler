@@ -139,7 +139,7 @@
                 <ref bean="acceptSurts" />
                 <!-- ...but REJECT those more than a configured link-hop-count from start... -->
                 <bean class="org.archive.modules.deciderules.TooManyHopsDecideRule">
-                    <property name="maxHops" value="20" />
+                    <property name="maxHops" value="15" />
                 </bean>
                 <!-- ...but ACCEPT those more than a configured link-hop-count from start... -->
                 <!--<bean class="org.archive.modules.deciderules.TransclusionDecideRule">
@@ -172,7 +172,7 @@
                 </bean>
                 <!-- ...and REJECT those with more than threshold number of path-segments... -->
                 <bean class="org.archive.modules.deciderules.TooManyPathSegmentsDecideRule">
-                    <property name="maxPathDepth" value="15" />
+                    <property name="maxPathDepth" value="10" />
                 </bean>
                 <!-- ...but always ACCEPT those marked as prerequisitee for another URI... -->
                 <bean class="org.archive.modules.deciderules.PrerequisiteAcceptDecideRule">
