@@ -44,6 +44,8 @@ reports:
 bing:
   baseTempFolder: /home/anton/Documents/Logius/temp/bing
   apiKey: someApiKey
+pdfProcessors:
+  pdfwamChecker: /home/anton/Documents/Logius/pdfwam/pdfchecker.py
 veraPDFService:
   url: http://localhost:8100
 logging:

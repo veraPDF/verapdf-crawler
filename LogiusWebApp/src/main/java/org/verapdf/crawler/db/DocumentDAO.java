@@ -7,8 +7,10 @@ import org.verapdf.crawler.api.crawling.CrawlJob_;
 import org.verapdf.crawler.api.document.DomainDocument;
 import org.verapdf.crawler.api.document.DomainDocument_;
 import org.verapdf.crawler.api.report.ErrorStatistics;
+import org.verapdf.crawler.api.report.PDFWamErrorStatistics;
 import org.verapdf.crawler.api.report.PdfPropertyStatistics;
 import org.verapdf.crawler.api.validation.error.ValidationError;
+import org.verapdf.crawler.core.validation.PDFWamProcessor;
 
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
@@ -161,6 +163,65 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         if (limit != null) {
             query.setMaxResults(limit);
         }
+
+        return query.list();
+    }
+
+    public List<PDFWamErrorStatistics.ErrorCount> getPDFWamErrorsStatistics(String domain, Date startDate, String flavour, String version, String producer) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<PDFWamErrorStatistics.ErrorCount> criteriaQuery = builder.createQuery(PDFWamErrorStatistics.ErrorCount.class);
+        Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
+        MapJoin<DomainDocument, String, String> properties = document.join(DomainDocument_.properties);
+
+        Expression<Long> documentCount = builder.count(document);
+        criteriaQuery.select(builder.construct(
+                PDFWamErrorStatistics.ErrorCount.class,
+                properties.key(),
+                documentCount
+        ));
+
+        List<Predicate> restrictions = new ArrayList<>();
+        restrictions.add(builder.equal(document.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain));
+
+        restrictions.add(properties.key().in(PDFWamProcessor.getErrorPropertyNames()));
+        restrictions.add(builder.like(properties.value(), "%fail%"));
+        restrictions.add(builder.not(builder.like(properties.value(), "%fail:0%")));
+
+        if (startDate != null) {
+            restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
+        }
+
+        if (flavour != null) {
+            // AND document.properties['flavour'] = <flavour>
+            MapJoin<DomainDocument, String, String> flavourProperty = document.join(DomainDocument_.properties, JoinType.LEFT);
+            flavourProperty.on(builder.equal(flavourProperty.key(), PdfPropertyStatistics.FLAVOUR_PROPERTY_NAME));
+            if (flavour.equals(NONE)) {
+                restrictions.add(builder.isNull(flavourProperty.value()));
+            } else {
+                restrictions.add(builder.equal(flavourProperty.value(), flavour));
+            }
+        }
+
+        if (version != null) {
+            // AND document.properties['version'] = <version>
+            MapJoin<DomainDocument, String, String> versionProperty = document.join(DomainDocument_.properties);
+            versionProperty.on(builder.equal(versionProperty.key(), PdfPropertyStatistics.VERSION_PROPERTY_NAME));
+            restrictions.add(builder.equal(versionProperty.value(), version));
+        }
+
+        if (producer != null) {
+            // AND document.properties['producer'] = <producer>
+            MapJoin<DomainDocument, String, String> producerProperty = document.join(DomainDocument_.properties);
+            producerProperty.on(builder.equal(producerProperty.key(), PdfPropertyStatistics.PRODUCER_PROPERTY_NAME));
+            restrictions.add(builder.like(producerProperty.value(), "%" + producer + "%"));
+        }
+        criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
+
+        criteriaQuery.groupBy(properties.key());
+
+        criteriaQuery.orderBy(builder.desc(documentCount));
+
+        Query<PDFWamErrorStatistics.ErrorCount> query = currentSession().createQuery(criteriaQuery);
 
         return query.list();
     }

@@ -7,6 +7,7 @@ import org.verapdf.crawler.ResourceManager;
 import org.verapdf.crawler.api.document.DomainDocument;
 import org.verapdf.crawler.api.report.CrawlJobSummary;
 import org.verapdf.crawler.api.report.ErrorStatistics;
+import org.verapdf.crawler.api.report.PDFWamErrorStatistics;
 import org.verapdf.crawler.api.report.PdfPropertyStatistics;
 import org.verapdf.crawler.core.reports.ReportsGenerator;
 import org.verapdf.crawler.db.DocumentDAO;
@@ -14,6 +15,7 @@ import org.verapdf.crawler.tools.DateParam;
 import org.verapdf.crawler.tools.DomainUtils;
 import org.xml.sax.SAXException;
 
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -109,6 +111,20 @@ public class ReportResource {
         ErrorStatistics errorStatistics = new ErrorStatistics();
         errorStatistics.setTopErrorStatistics(errorCounts);
         return errorStatistics;
+    }
+
+
+    @GET
+    @Path("/pdfwam-statistics")
+    @Produces(MediaType.APPLICATION_JSON)
+    @UnitOfWork
+    public List<PDFWamErrorStatistics.ErrorCount> getDocumentPropertyStatistics(@QueryParam("domain") @NotNull String domain,
+                                                                                @QueryParam("startDate") DateParam startDate,
+                                                                                @QueryParam("flavour") String flavour,
+                                                                                @QueryParam("version") String version,
+                                                                                @QueryParam("producer") String producer) {
+        Date documentsSince = DateParam.getDateFromParam(startDate);
+        return resourceManager.getDocumentDAO().getPDFWamErrorsStatistics(domain, documentsSince, flavour, version, producer);
     }
 
     @GET

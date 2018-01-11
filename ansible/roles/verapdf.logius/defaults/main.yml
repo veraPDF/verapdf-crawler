@@ -100,6 +100,13 @@ logius_gmail_port: 587
 
 logius_verapdf_path: "{{ verapdf_install_dest }}/verapdf"
 
+logius_pdfwam_git_url: "https://gitlab.tingtun.no/eiii_source/pdfwam.git"
+logius_pdfwam_git_root: "{{ logius_app_home }}"
+logius_pdfwam_git_branch: "master"
+logius_pdfwam_app_name: "pdfwam"
+logius_pdfwam_home: "{{ logius_pdfwam_git_root }}/{{ logius_pdfwam_app_name }}"
+logius_pdfwam_pdfchecker_path: "{{ logius_pdfwam_home }}/pdfchecker.py"
+
 logius_temp_folder: /var/tmp/logius
 
 logius_bing_api_key: someAPIKey

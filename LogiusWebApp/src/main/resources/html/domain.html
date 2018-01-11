@@ -96,7 +96,10 @@
             <a class="nav-link" data-toggle="tab" aria-controls="documents" href="#documents">Documents</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" data-toggle="tab" aria-controls="errors" href="#errors">Common errors</a>
+            <a class="nav-link" data-toggle="tab" aria-controls="errors" href="#errors">Common PDF/A errors</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" aria-controls="errors-pdfwam" href="#errors-pdfwam">Common PDF/UA errors</a>
         </li>
     </ul>
 
@@ -180,7 +183,36 @@
                     <tr class="template">
                         <td><div class="count"></div></td>
                         <td class="error-description">
-                            <div><span class="short"></span>:</div>
+                            <div><a class="short"></a></div>
+                            <div class="full"></div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="errors tab-pane fade" id="errors-pdfwam" role="tabpanel">
+            <form class="form-inline d-flex justify-content-end">
+                <select class="form-control form-control-sm" id="errors-pdfwam-flavour-input" title="Flavour">
+                    <option value="" selected>Any PDF/A flavour</option>
+                </select>
+                <select class="form-control form-control-sm" id="errors-pdfwam-version-input" title="Version">
+                    <option value="" selected>Any PDF version</option>
+                </select>
+                <input type="text" class="form-control form-control-sm" placeholder="Any producer" id="errors-pdfwam-producer-input">
+                <input type="text" class="form-control form-control-sm" placeholder="Documents from" id="errors-pdfwam-date-input">
+            </form>
+            <div>
+                <div class="errors-chart">
+                    <canvas id="errors-pdfwam-chart"></canvas>
+                </div>
+                <table class="errors-list">
+                    <tbody>
+                    <tr class="template">
+                        <td><div class="count"></div></td>
+                        <td class="error-description">
+                            <div><a class="short"></a></div>
                             <div class="full"></div>
                         </td>
                     </tr>

@@ -11,15 +11,14 @@ import org.verapdf.crawler.api.document.DomainDocument;
 import org.verapdf.crawler.api.validation.ValidationJob;
 import org.verapdf.crawler.api.validation.VeraPDFValidationResult;
 import org.verapdf.crawler.api.validation.error.ValidationError;
-import org.verapdf.crawler.db.DocumentDAO;
-import org.verapdf.crawler.db.ValidationErrorDAO;
-import org.verapdf.crawler.db.ValidationJobDAO;
+import org.verapdf.crawler.configurations.PDFProcessorsConfiguration;
 import org.verapdf.crawler.tools.AbstractService;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +32,7 @@ public class ValidationService extends AbstractService {
 
 	private static final long SLEEP_DURATION = 60*1000;
 
+	private List<PDFProcessorAdapter> pdfProcessors;
     private final ResourceManager resourceManager;
     private final PDFValidator validator;
     private ValidationJob currentJob;
@@ -41,6 +41,14 @@ public class ValidationService extends AbstractService {
         super("ValidationService", SLEEP_DURATION);
     	this.resourceManager = resourceManager;
         this.validator = validator;
+        this.pdfProcessors = new ArrayList<>();
+		PDFProcessorsConfiguration pdfProcessorsConfiguration = resourceManager.getPDFProcessorsConfiguration();
+		if (pdfProcessorsConfiguration != null) {
+			String pdfwamChecker = pdfProcessorsConfiguration.getPdfwamChecker();
+			if (pdfwamChecker != null) {
+				this.pdfProcessors.add(new PDFWamProcessor(pdfwamChecker));
+			}
+		}
     }
 
 	public ValidationJob getCurrentJob() {
@@ -93,6 +101,13 @@ public class ValidationService extends AbstractService {
 
 	private void processStartedJob() throws IOException, ValidationDeadlockException, InterruptedException {
         VeraPDFValidationResult result = validator.getValidationResult(currentJob);
+        // additional processors logic
+        for (PDFProcessorAdapter pdfProcessor : this.pdfProcessors) {
+			Map<String, String> properties = pdfProcessor.evaluateProperties(currentJob);
+			for (Map.Entry<String, String> property : properties.entrySet()) {
+				result.addProperty(property.getKey(), property.getValue());
+			}
+		}
         saveResult(result);
     }
 

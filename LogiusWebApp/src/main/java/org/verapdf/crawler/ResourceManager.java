@@ -6,6 +6,7 @@ import io.dropwizard.hibernate.UnitOfWorkAwareProxyFactory;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.DefaultServerFactory;
 import org.verapdf.crawler.configurations.BingConfiguration;
+import org.verapdf.crawler.configurations.PDFProcessorsConfiguration;
 import org.verapdf.crawler.configurations.ReportsConfiguration;
 import org.verapdf.crawler.configurations.VeraPDFServiceConfiguration;
 import org.verapdf.crawler.core.email.SendEmail;
@@ -37,6 +38,8 @@ public class ResourceManager {
 
     private final HeritrixClient heritrixClient;
 
+    private final LogiusConfiguration config;
+
     private final CrawlRequestDAO crawlRequestDAO;
     private final CrawlJobDAO crawlJobDAO;
     private final DocumentDAO documentDAO;
@@ -46,11 +49,12 @@ public class ResourceManager {
     private final NamespaceDAO namespaceDAO;
 
     public ResourceManager(LogiusConfiguration config, HeritrixClient heritrixClient, HibernateBundle<LogiusConfiguration> hibernate) {
+        this.config = config;
         this.heritrixClient = heritrixClient;
-        ReportsConfiguration reportsConfiguration = config.getReportsConfiguration();
+        ReportsConfiguration reportsConfiguration = this.config.getReportsConfiguration();
         // Initializing static classes
         ReportsGenerator.initialize(reportsConfiguration);
-        SendEmail.initialize(config.getEmailServerConfiguration(), reportsConfiguration);
+        SendEmail.initialize(this.config.getEmailServerConfiguration(), reportsConfiguration);
         // Initializing all DAO objects
         crawlRequestDAO = new CrawlRequestDAO(hibernate.getSessionFactory());
         crawlJobDAO = new CrawlJobDAO(hibernate.getSessionFactory());
@@ -60,7 +64,7 @@ public class ResourceManager {
         pdfPropertyDAO = new PdfPropertyDAO(hibernate.getSessionFactory());
         namespaceDAO = new NamespaceDAO(hibernate.getSessionFactory());
 
-        VeraPDFServiceConfiguration veraPDFServiceConfiguration = config.getVeraPDFServiceConfiguration();
+        VeraPDFServiceConfiguration veraPDFServiceConfiguration = this.config.getVeraPDFServiceConfiguration();
 
         // Initializing validators and reporters
         VeraPDFValidator veraPDFValidator = new VeraPDFValidator(veraPDFServiceConfiguration);
@@ -69,14 +73,14 @@ public class ResourceManager {
                 new Object[]{this, veraPDFValidator}));
         services.put(NAME_BING_SERVICE, new UnitOfWorkAwareProxyFactory(hibernate).create(BingService.class,
                 new Class[]{BingConfiguration.class, ResourceManager.class},
-                new Object[]{config.getBingConfiguration(), this}));
+                new Object[]{this.config.getBingConfiguration(), this}));
         services.put(NAME_MONITOR_CRAWL_JOB_STATUS_SERVICE, new UnitOfWorkAwareProxyFactory(hibernate).create(MonitorCrawlJobStatusService.class,
                 new Class[]{ResourceManager.class},
                 new Object[]{this}));
         services.put(NAME_HERITRIX_CLEANER_SERVICE, new HeritrixCleanerService(this));
 
         // Discover admin connector port
-        DefaultServerFactory serverFactory = (DefaultServerFactory) config.getServerFactory();
+        DefaultServerFactory serverFactory = (DefaultServerFactory) this.config.getServerFactory();
         HttpConnectorFactory adminConnectorFactory = (HttpConnectorFactory) serverFactory.getAdminConnectors().get(0);
         int adminPort = adminConnectorFactory.getPort();
 
@@ -173,5 +177,9 @@ public class ResourceManager {
 
     public HeritrixCleanerService getHeritrixCleanerService() {
         return (HeritrixCleanerService) services.get(NAME_HERITRIX_CLEANER_SERVICE);
+    }
+
+    public PDFProcessorsConfiguration getPDFProcessorsConfiguration() {
+        return this.config.getPdfProcessorsConfiguration();
     }
 }

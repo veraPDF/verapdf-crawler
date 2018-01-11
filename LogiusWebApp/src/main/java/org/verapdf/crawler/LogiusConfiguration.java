@@ -14,6 +14,7 @@ public class LogiusConfiguration extends Configuration {
     private VeraPDFServiceConfiguration veraPDFServiceConfiguration;
     private ReportsConfiguration reportsConfiguration;
     private BingConfiguration bingConfiguration;
+    private PDFProcessorsConfiguration pdfProcessorsConfiguration;
 
     @Valid
     @NotNull
@@ -77,5 +78,15 @@ public class LogiusConfiguration extends Configuration {
     @JsonProperty("bing")
     public void setBingConfiguration(BingConfiguration bingConfiguration) {
         this.bingConfiguration = bingConfiguration;
+    }
+
+    @JsonProperty("pdfProcessors")
+    public PDFProcessorsConfiguration getPdfProcessorsConfiguration() {
+        return pdfProcessorsConfiguration;
+    }
+
+    @JsonProperty("pdfProcessors")
+    public void setPdfProcessorsConfiguration(PDFProcessorsConfiguration pdfProcessorsConfiguration) {
+        this.pdfProcessorsConfiguration = pdfProcessorsConfiguration;
     }
 }

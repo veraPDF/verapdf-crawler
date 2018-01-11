@@ -86,6 +86,13 @@ $(function () {
         '#ca94fd',
         '#fd89e9',
         '#ff9ca0',
+        '#A9A9A9',
+        '#9ACD32',
+        '#808000',
+        '#008B8B',
+        '#9400D3',
+        '#DEB887',
+        '#2F4F4F',
         '#ffffff'
     ];
 
@@ -287,6 +294,7 @@ $(function () {
             summaryDateInput.val(minDate);
             documentsDateInput.val(minDate);
             errorsDateInput.val(minDate);
+            pdfwamErrorsDateInput.val(minDate);
         }
         loadSummaryData();
     }
@@ -347,8 +355,11 @@ $(function () {
             case "Documents":
                 loadDocumentsData();
                 break;
-            case "Common errors":
+            case "Common PDF/A errors":
                 loadErrorsData();
+                break;
+            case "Common PDF/UA errors":
+                loadPDFWamErrorsData();
                 break;
         }
     });
@@ -582,22 +593,21 @@ $(function () {
     errorsVersionSelect.on('change', loadErrorsData);
 
     var errorsProducerInput = $("#errors-producer-input");
-    var producerSearchEngine = new Bloodhound({
-        remote: {
-            url: '/api/document-properties/producer/values?domain=' + normalizedDomain + '&propertyValueFilter=_query_&limit=' + TYPEAHEAD_LIMIT,
-            wildcard: '_query_',
-            cache: false
-        },
-        queryTokenizer: Bloodhound.tokenizers.whitespace,
-        datumTokenizer: Bloodhound.tokenizers.whitespace
-    });
     errorsProducerInput.typeahead({
         minLength: 1,
         highlight: true,
         limit: TYPEAHEAD_LIMIT
     }, {
         name: 'producers',
-        source: producerSearchEngine
+        source: new Bloodhound({
+            remote: {
+                url: '/api/document-properties/producer/values?domain=' + normalizedDomain + '&propertyValueFilter=_query_&limit=' + TYPEAHEAD_LIMIT,
+                wildcard: '_query_',
+                cache: false
+            },
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            datumTokenizer: Bloodhound.tokenizers.whitespace
+        })
     });
     errorsProducerInput.bind('typeahead:selected', loadErrorsData);
     errorsProducerInput.on("keydown", function (e) {
@@ -657,16 +667,24 @@ $(function () {
                     }]
                 };
 
-                var errorsListElement = $('.errors-list');
+                var errorsListElement = $('#errors .errors-list');
                 errorsListElement.find('tbody>:not(.template)').remove();
 
                 var template = errorsListElement.find('.template').clone().removeClass('template');
                 $.each(result['topErrorStatistics'], function(index, errorCount) {
                     var error = errorCount['error'];
                     var shortDescription = '';
+                    var link = null;
                     if (error['type'] === 'ruleViolation') {
                         var rule = error['rule'];
                         shortDescription = rule['specification'] + ' ' + rule['clause'] + '-' + rule['testNumber'];
+                        link = 'https://github.com/veraPDF/veraPDF-validation-profiles/wiki/';
+                        if (rule['specification'] === 'ISO 19005-1:2005') {
+                            link += 'PDFA-Part-1-rules#rule-';
+                        } else {
+                            link += 'PDFA-Parts-2-and-3-rules#rule-';
+                        }
+                        link += rule['clause'].split('.').join('') + '-' + rule['testNumber'];
                     } else {
                         shortDescription = 'Generic error #' + error['id'];
                     }
@@ -680,7 +698,11 @@ $(function () {
 
                     var element = template.clone();
                     element.find('.count').css('backgroundColor', errorColor).text(documentsCount);
-                    element.find('.error-description .short').text(shortDescription);
+                    var shortDesc = element.find('.error-description .short');
+                    shortDesc.text(shortDescription + ':');
+                    if (link != null) {
+                        shortDesc.attr('href', link);
+                    }
                     element.find('.error-description .full').text(fullDescription);
                     errorsListElement.append(element);
                 });
@@ -692,6 +714,280 @@ $(function () {
         });
 
     }
+    //endregion
+
+    //region PDFWam Errors statistics
+    var pdfwamErrorsMap = new Map();
+    pdfwamErrorsMap.set('pdfwam.error', {
+        short: 'Error in pdfwam process',
+        full: null,
+        link: null
+    });
+    pdfwamErrorsMap.set('egovmon.pdf.03', {
+        short: 'Structure Elements (tags) [EGOVMON.PDF.03]',
+        full: '1.3.1 Info and Relationships “Information, structure, and relationships conveyed through ' +
+        'presentation can be programmatically determined or are available in text. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/EGOVMON.PDF.03'
+    });
+    pdfwamErrorsMap.set('egovmon.pdf.05', {
+        short: 'Document Permissions [EGOVMON.PDF.05]',
+        full: '4.1 Compatible “Maximize compatibility with current and future user agents, including ' +
+        'assistive technologies.”',
+        link: 'http://checkers.eiii.eu/en/pdftest/EGOVMON.PDF.05'
+    });
+    pdfwamErrorsMap.set('egovmon.pdf.08', {
+        short: 'Scanned Document [EGOVMON.PDF.08]',
+        full: '1.4.5 Images of Text “If the technologies being used can achieve the visual presentation, ' +
+        'text is used to convey information rather than images of text except for the following: (Level AA)”' +
+        '<br/>Customizable: The image of text can be visually customized to the user\'s requirements;' +
+        '<br/>Essential: A particular presentation of text is essential to the information being conveyed.',
+        link: 'http://checkers.eiii.eu/en/pdftest/EGOVMON.PDF.08'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.01', {
+        short: 'Alternative Text for Images [WCAG.PDF.01]',
+        full: '1.1.1 Non-text Content "“All non-text content that is presented to the user ' +
+        'has a text alternative that serves the equivalent purpose, except for the situations ' +
+        'listed below. (Level A)"<br/>' +
+        'Controls, Input<br/>' +
+        'Time-Based Media<br/>' +
+        'Test<br/>' +
+        'Sensory<br/>' +
+        'CAPTCHA<br/>' +
+        'Decoration, Formatting, Invisible”<br/>',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.01'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.02', {
+        short: 'Bookmarks [WCAG.PDF.02]',
+        full: '2.4.5 Multiple Ways "More than one way is available to locate a Web page within a set of ' +
+        'Web pages except where the Web Page is the result of, or a step in, a process. (Level AA)"',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.02'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.03', {
+        short: 'Correct Tab and Reading Order [WCAG.PDF.03]',
+        full: '1.3.2 Meaningful Sequence: “When the sequence in which content is presented affects its ' +
+        'meaning, a correct reading sequence can be programmatically determined. (Level A)”<br/>' +
+        '2.1.3 Keyboard (No Exception): “All functionality of the content is operable through ' +
+        'a keyboard interface without requiring specific timings for individual keystrokes. (Level AAA)”<br/>' +
+        '2.4.3 Focus Order: “If a Web page can be navigated sequentially and the navigation sequences ' +
+        'affect meaning or operation, focusable components receive focus in an order that preserves ' +
+        'meaning and operability. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.03'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.04', {
+        short: 'Decorative Images [WCAG.PDF.04]',
+        full: '1.1.1 Non-text Content "“All non-text content that is presented to the user ' +
+        'has a text alternative that serves the equivalent purpose, except for the situations ' +
+        'listed below. (Level A)"<br/>' +
+        'Controls, Input<br/>' +
+        'Time-Based Media<br/>' +
+        'Test<br/>' +
+        'Sensory<br/>' +
+        'CAPTCHA<br/>' +
+        'Decoration, Formatting, Invisible”<br/>',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.04'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.06', {
+        short: 'Table Elements [WCAG.PDF.06]',
+        full: '1.3.1 Meaningful Sequence: ““Information, structure, and relationships conveyed ' +
+        'through presentation can be programmatically determined or are available in text. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.06'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.09', {
+        short: 'Heading Levels [WCAG.PDF.09]',
+        full: '1.3.1 Info and Relationships:“Information, structure, and relationships conveyed ' +
+        'through presentation can be programmatically determined or are available in text. (Level A)”<br/>' +
+        '2.4.1 Bypass Blocks: “A mechanism is available to bypass blocks of content that are repeated ' +
+        'on multiple Web pages. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.09'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.12', {
+        short: 'Form Fields [WCAG.PDF.12]',
+        full: '1.3.1 Info and Relationships: “Information, structure, and relationships conveyed ' +
+        'through presentation can be programmatically determined or are available in text. (Level A)”<br/>' +
+        '4.1.2 Name, Role, Value: “For all user interface components (including but not limited to: ' +
+        'form elements, links and components generated by scripts), the name and role can be ' +
+        'programmatically determined; states, properties, and values that can be set by the user ' +
+        'can be programmatically set; and notification of changes to these items is available to user ' +
+        'agents, including assistive technologies. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.12'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.14', {
+        short: 'Running Headers and Footers [WCAG.PDF.14]',
+        full: '2.4.8 Location: “Information about the user’s location within a set of web ' +
+        'pages is available. (Level AAA)”<br/>' +
+        '3.2.3 Consistent Navigation: “Navigational mechanisms that are repeated on multiple ' +
+        'Web pages within a set of Web pages occur in the same relative order each time they are ' +
+        'repeated, unless a change is initiated by the user. (Level AA)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.14'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.15', {
+        short: 'Submit Buttons [WCAG.PDF.15]',
+        full: '3.2.2 On Input:“Changing the setting of any user interface component ' +
+        'does not automatically cause a change of context unless the user has been advised ' +
+        'of the behavior before using the component. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.15'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.16', {
+        short: 'Natural Language [WCAG.PDF.16]',
+        full: '3.1.1 Language of Page “The default human language of each Web page can be programmatically ' +
+        'determined. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.16'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.17', {
+        short: 'Page Numbering [WCAG.PDF.17]',
+        full: '1.3.1 Info and Relationships:“Information, structure, and relationships conveyed ' +
+        'through presentation can be programmatically determined or are available in text. (Level A)”<br/>' +
+        '3.2.3 Consistent Navigation:“Navigational mechanisms that are repeated on multiple ' +
+        'Web pages within a set of Web pages occur in the same relative order each time ' +
+        'they are repeated, unless a change is initiated by the user. (Level AA)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.17'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.18', {
+        short: 'Document Title [WCAG.PDF.18]',
+        full: '2.4.2 Page Titled “Web pages have titles that describe topic or purpose. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.18'
+    });
+    pdfwamErrorsMap.set('wcag.pdf.sc244', {
+        short: 'Link Text for External Links [WCAG.PDF.SC244]',
+        full: '1.3.1 Info and Relationships “Information, structure, and relationships conveyed ' +
+        'through presentation can be programmatically determined or are available in text. (Level A)”<br/>' +
+        '2.1.1 Keyboard “All functionality of the content is operable through a keyboard interface ' +
+        'without requiring specific timings for individual keystrokes, except where the underlying ' +
+        'function requires input that depends on the path of the user\'s movement and not just ' +
+        'the endpoints. (Level A)”<br/>' +
+        '2.4.4 Link Purpose (In Context)“The purpose of each link can be determined from the link ' +
+        'text alone or from the link text together with its programmatically determined link context, ' +
+        'except where the purpose of the link would be ambiguous to users in general. (Level A)”',
+        link: 'http://checkers.eiii.eu/en/pdftest/WCAG.PDF.SC244'
+    });
+    var pdfwamErrorsFlavourSelect = $('#errors-pdfwam-flavour-input');
+    $.each(FLAVOURS, function(serverName, uiDescriptor) {
+        $('<option>')
+            .val(serverName)
+            .text(uiDescriptor.displayName)
+            .appendTo(pdfwamErrorsFlavourSelect);
+    });
+    pdfwamErrorsFlavourSelect.on('change', loadPDFWamErrorsData);
+
+    var pdfwamErrorsVersionSelect = $('#errors-pdfwam-version-input');
+    $.each(VERSIONS, function(serverName, uiDescriptor) {
+        $('<option>')
+            .val(serverName)
+            .text(uiDescriptor.displayName)
+            .appendTo(pdfwamErrorsVersionSelect);
+    });
+    pdfwamErrorsVersionSelect.on('change', loadPDFWamErrorsData);
+
+    var pdfwamErrorsProducerInput = $("#errors-pdfwam-producer-input");
+    pdfwamErrorsProducerInput.typeahead({
+        minLength: 1,
+        highlight: true,
+        limit: TYPEAHEAD_LIMIT
+    }, {
+        name: 'producers',
+        source: new Bloodhound({
+            remote: {
+                url: '/api/document-properties/producer/values?domain=' + normalizedDomain + '&propertyValueFilter=_query_&limit=' + TYPEAHEAD_LIMIT,
+                wildcard: '_query_',
+                cache: false
+            },
+            queryTokenizer: Bloodhound.tokenizers.whitespace,
+            datumTokenizer: Bloodhound.tokenizers.whitespace
+        })
+    });
+    pdfwamErrorsProducerInput.bind('typeahead:selected', loadPDFWamErrorsData);
+    pdfwamErrorsProducerInput.on("keydown", function (e) {
+        if (e.keyCode === 13) {
+            loadPDFWamErrorsData();
+        }
+    });
+
+    var pdfwamErrorsDateInput = $('#errors-pdfwam-date-input');
+    var pdfwamErrorsDatePicker = new Pikaday($.extend({}, defaultDatePickerOptions, {
+        field: document.getElementById('errors-pdfwam-date-input'),
+        onSelect: loadPDFWamErrorsData
+    }));
+    pdfwamErrorsDateInput.on("keydown", function (e) {
+        if (e.keyCode === 13) {
+            loadPDFWamErrorsData();
+        }
+    });
+
+    var pdfwamErrorsChartContext = document.getElementById("errors-pdfwam-chart").getContext('2d');
+    var pdfwamErrorsChart = new Chart(pdfwamErrorsChartContext, {
+        type: 'pie'
+    });
+
+    function loadPDFWamErrorsData() {
+        var url = '/api/report/pdfwam-statistics?domain=' + crawlJob.domain;
+
+        var flavour = pdfwamErrorsFlavourSelect.find('option:selected').val();
+        if (flavour !== '') {
+            url += '&flavour=' + flavour;
+        }
+
+        var version = pdfwamErrorsVersionSelect.find('option:selected').val();
+        if (version !== '') {
+            url += '&version=' + version;
+        }
+
+        var producer = pdfwamErrorsProducerInput.typeahead('val');
+        if (producer !== '') {
+            url += '&producer=' + producer;
+        }
+
+        var startDate = pdfwamErrorsDateInput.val();
+        if (startDate !== '') {
+            url += '&startDate=' + startDate;
+        }
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function (result) {
+                var errorsChartData = {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [],
+                        borderWidth: 0
+                    }]
+                };
+
+                var errorsListElement = $('#errors-pdfwam .errors-list');
+                errorsListElement.find('tbody>:not(.template)').remove();
+
+                var template = errorsListElement.find('.template').clone().removeClass('template');
+                $.each(result, function(index, errorCount) {
+                    var errorId = errorCount['id'];
+                    var shortDescription = pdfwamErrorsMap.get(errorId).short;
+                    var fullDescription = pdfwamErrorsMap.get(errorId).full;
+                    var link = pdfwamErrorsMap.get(errorId).link;
+                    var documentsCount = errorCount['count'];
+                    var errorColor = ERROR_BACKGROUNDS[index];
+
+                    errorsChartData.labels.push(shortDescription);
+                    errorsChartData.datasets[0].data.push(documentsCount);
+                    errorsChartData.datasets[0].backgroundColor.push(errorColor);
+
+                    var element = template.clone();
+                    element.find('.count').css('backgroundColor', errorColor).text(documentsCount);
+                    var shortDesc = element.find('.error-description .short');
+                    shortDesc.text(shortDescription);
+                    if (link != null) {
+                        shortDesc.attr('href', link);
+                    }
+                    element.find('.error-description .full').html(fullDescription);
+                    errorsListElement.append(element);
+                });
+
+                pdfwamErrorsChart.data = errorsChartData;
+                pdfwamErrorsChart.update();
+            },
+            error: reportError
+        });
+
+    }
+    //endregion
     //endregion
     //endregion
 
