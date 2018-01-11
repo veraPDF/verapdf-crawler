@@ -19,6 +19,8 @@
     dest: "{{ verapdf_tmp_root }}"
     remote_src: True
     creates: "{{ verapdf_tmp_installer_dir }}"
+  tags:
+      - "update-vera"
 
 - name: Add the autoinstall XML file from a template
   template:
@@ -27,9 +29,13 @@
     owner: "{{ verapdf_linux_user }}"
     group: "{{ verapdf_linux_group }}"
     mode: 0775
+  tags:
+      - "update-vera"
 
 - name: Run veraPDF installer
   command: "java -jar {{ verapdf_installer_jar }} {{ verapdf_tmp_installer_dir }}/verapdf-install.xml"
+  tags:
+      - "update-vera"
 
 - name: Overwrite features congiguration
   template:
@@ -38,6 +44,8 @@
     owner: "{{ verapdf_linux_user }}"
     group: "{{ verapdf_linux_group }}"
     mode: 0775
+  tags:
+      - "update-vera"
 
 - name: Set ownership of veraPDF installation
   file:
@@ -46,3 +54,5 @@
     group: "{{ verapdf_linux_group }}"
     mode: 0775
     recurse: yes
+  tags:
+      - "update-vera"
