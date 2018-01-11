@@ -1,0 +1,17 @@
+# tasks file for verapdf.pdfwam
+---
+- name: Clone PDFwam git repository
+  git:
+    repo: "{{ logius_pdfwam_git_url }}"
+    dest: "{{ logius_pdfwam_home }}"
+    version: "{{ logius_pdfwam_git_branch }}"
+    update: yes
+  tags:
+    - "install"
+
+- name: Set PDFWam ownership
+  file:
+    path: "{{ logius_pdfwam_home }}"
+    owner: "{{ logius_linux_user }}"
+    group: "{{ logius_linux_group }}"
+    recurse: yes

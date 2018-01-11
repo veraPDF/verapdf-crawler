@@ -7,6 +7,9 @@
 - name: INCLUDE | heritrix
   include: heritrix.yml
 
+- name: INCLUDE | pdfwam
+  include: pdfwam.yml
+
 - name: INCLUDE | services
   include: services.yml
 
