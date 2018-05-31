@@ -1,6 +1,7 @@
 package org.verapdf.service;
 
 import javanet.staxutils.SimpleNamespaceContext;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.verapdf.crawler.api.document.DomainDocument;
@@ -76,8 +77,11 @@ public class VeraPDFProcessor implements Runnable {
 	public void run() {
 		VeraPDFValidationResult result;
 		File report = null;
+		File tempPdfFile = null;
 		try {
-			report = getVeraPDFReport(this.filePath);
+			tempPdfFile = checkExtension(this.filePath);
+			String toValidatePath = tempPdfFile == null ? this.filePath : tempPdfFile.getAbsolutePath();
+			report = getVeraPDFReport(toValidatePath);
 			if (report != null && !stopped) {
 				logger.info("Obtaining result structure");
 				DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -107,10 +111,32 @@ public class VeraPDFProcessor implements Runnable {
 			if (report != null && !report.delete()) {
 				logger.info("Report has not been deleted manually");
 			}
+			if (tempPdfFile != null && !tempPdfFile.delete()) {
+				logger.info("Temp pdf file has not been deleted manually");
+			}
 		}
 		if (!stopped) {
 			this.resource.validationFinished(result);
 		}
+	}
+
+	private File checkExtension(String filePath) {
+		if (!filePath.endsWith(".pdf")) {
+			File cur = new File(filePath);
+			if (cur.isFile()) {
+				try {
+					File res = File.createTempFile("tempPdf", ".pdf", cur.getParentFile());
+					try (InputStream is = new FileInputStream(cur);
+					OutputStream os = new FileOutputStream(res)) {
+						IOUtils.copy(is, os);
+					}
+					return res;
+				} catch (IOException e) {
+					logger.error("Some problem during copy file " + filePath, e);
+				}
+			}
+		}
+		return null;
 	}
 
 	private void addNameSpaces(SimpleNamespaceContext nsc) {
