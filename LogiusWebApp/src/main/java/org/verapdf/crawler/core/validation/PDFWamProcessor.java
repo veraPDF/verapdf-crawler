@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -66,11 +67,15 @@ public class PDFWamProcessor extends PDFProcessorAdapter {
 	}
 
 	private InputStream startProcess(ValidationJob job) throws IOException, InterruptedException {
+		logger.info("Starting PDFWam process...");
 		String[] cmd = {"python", this.pdfwamPdfcheckerPath, "-q", "-r", "-l", "ERROR", job.getFilePath()};
 		ProcessBuilder pb = new ProcessBuilder();
 		pb.command(cmd);
 		Process process = pb.start();
-		process.waitFor();
+		if (!process.waitFor(30, TimeUnit.MINUTES)) {
+			logger.info("PDFWam process reached timeout. Destroying...");
+			process.destroy();
+		}
 		return process.getInputStream();
 	}
 

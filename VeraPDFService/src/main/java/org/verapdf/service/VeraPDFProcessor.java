@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Maksim Bezrukov
@@ -57,7 +58,7 @@ public class VeraPDFProcessor implements Runnable {
 	}
 
 	private File getVeraPDFReport(String filename) throws IOException, InterruptedException {
-		logger.info("Preparing veraPDF process");
+		logger.info("Preparing veraPDF process...");
 		String[] cmd = {verapdfPath, "--extract", "--format", "mrr", "--maxfailuresdisplayed", "1", filename};
 		ProcessBuilder pb = new ProcessBuilder();
 		pb.redirectError(this.veraPDFErrorLog);
@@ -68,7 +69,10 @@ public class VeraPDFProcessor implements Runnable {
 		logger.info("Starting veraPDF process for file " + filename);
 		this.process = pb.start();
 		logger.info("VeraPDF process has been started");
-		this.process.waitFor();
+		if (!this.process.waitFor(30, TimeUnit.MINUTES)) {
+			this.process.destroy();
+			logger.info("VeraPDF process has reached timeout. Destroying...");
+		}
 		logger.info("VeraPDF process has been finished");
 		return file;
 	}
