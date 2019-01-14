@@ -23,8 +23,9 @@ public class NamespaceDAO extends AbstractDAO<Namespace>{
     }
 
     public List<Namespace> getNamespaces() {
-        CriteriaQuery<Namespace> criteriaQuery = currentSession().getCriteriaBuilder()
-                .createQuery(Namespace.class);
+        CriteriaQuery<Namespace> criteriaQuery = currentSession()
+                .getCriteriaBuilder().createQuery(Namespace.class);
+        Root<Namespace> namespace = criteriaQuery.from(Namespace.class);
         return currentSession().createQuery(requireNonNull(criteriaQuery)).getResultList();
     }
 }

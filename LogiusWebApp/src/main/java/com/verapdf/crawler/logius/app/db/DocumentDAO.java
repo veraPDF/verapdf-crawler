@@ -10,6 +10,8 @@ import com.verapdf.crawler.logius.app.report.PdfPropertyStatistics;
 import com.verapdf.crawler.logius.app.validation.error.ValidationError;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import javax.persistence.criteria.*;
@@ -18,6 +20,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+@Repository
+@Transactional
 public class DocumentDAO extends AbstractDAO<DomainDocument> {
 
     private static final int PROPERTY_VALUE_LENGTH = 255;

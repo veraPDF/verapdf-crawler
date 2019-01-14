@@ -5,6 +5,8 @@ import com.verapdf.crawler.logius.app.crawling.CrawlJob_;
 //import io.dropwizard.hibernate.AbstractDAO;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -15,6 +17,8 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
+@Repository
+@Transactional
 public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
 
     public CrawlJobDAO(SessionFactory sessionFactory) {

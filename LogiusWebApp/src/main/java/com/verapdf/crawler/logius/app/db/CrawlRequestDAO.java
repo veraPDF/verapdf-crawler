@@ -5,10 +5,14 @@ import com.verapdf.crawler.logius.app.crawling.CrawlJob_;
 import com.verapdf.crawler.logius.app.crawling.CrawlRequest;
 import com.verapdf.crawler.logius.app.crawling.CrawlRequest_;
 import org.hibernate.SessionFactory;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.criteria.*;
 import java.util.List;
 
+@Repository
+@Transactional
 public class CrawlRequestDAO extends AbstractDAO<CrawlRequest> {
 
     public CrawlRequestDAO(SessionFactory sessionFactory) {

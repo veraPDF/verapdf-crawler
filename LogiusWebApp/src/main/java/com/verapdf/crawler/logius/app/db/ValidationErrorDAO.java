@@ -2,6 +2,8 @@ package com.verapdf.crawler.logius.app.db;
 
 import com.verapdf.crawler.logius.app.validation.error.*;
 import org.hibernate.SessionFactory;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -9,6 +11,8 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Root;
 
+@Repository
+@Transactional
 public class ValidationErrorDAO extends AbstractDAO<ValidationError> {
 
     private static final int MAX_DESCRIPTION_LENGTH = 2048;

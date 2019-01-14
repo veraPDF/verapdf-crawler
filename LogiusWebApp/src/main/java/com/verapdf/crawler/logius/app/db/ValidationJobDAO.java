@@ -7,10 +7,14 @@ import com.verapdf.crawler.logius.app.validation.ValidationJob;
 import com.verapdf.crawler.logius.app.validation.ValidationJob_;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.criteria.*;
 import java.util.List;
 
+@Repository
+@Transactional
 public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
     public ValidationJobDAO(SessionFactory sessionFactory) {
         super(sessionFactory);
