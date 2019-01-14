@@ -1,4 +1,4 @@
-package org.verapdf.common;
+package com.verapdf.common;
 
 import org.apache.http.HttpRequest;
 
