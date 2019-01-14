@@ -1,8 +1,7 @@
-package org.verapdf.crawler.extention;
+package com.verapdf.crawler.extention;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.httpclient.Header;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -12,13 +11,13 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.archive.modules.CrawlURI;
 import org.archive.modules.writer.MirrorWriterProcessor;
-import org.verapdf.common.GracefulHttpClient;
-import org.verapdf.common.RetryFailedException;
+import com.verapdf.common.GracefulHttpClient;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -127,10 +126,10 @@ public class DocumentProcessor extends MirrorWriterProcessor {
 
             // Set last modified
             log("Setting last modified date");
-            Header lastModifiedHeader = crawlURI.getHttpMethod().getResponseHeader("Last-Modified");
+            String lastModifiedHeader = crawlURI.getHttpResponseHeader("Last-Modified");
             if (lastModifiedHeader != null) {
                 try {
-                    document.setLastModified(dateFormat.parse(lastModifiedHeader.getValue()));
+                    document.setLastModified(dateFormat.parse(lastModifiedHeader));
                 } catch (ParseException e) {
                     log("Fail to parse " + lastModifiedHeader + " for " + uri + ", lastModified won't be set for this document.");
                     e.printStackTrace();
@@ -140,14 +139,14 @@ public class DocumentProcessor extends MirrorWriterProcessor {
             // Send to main application for further processing
             log("Sending to main application for further processing");
             log("Generating POST request");
-            HttpPost request = new HttpPost(logiusUrl + "/api/documents");
+            HttpPost request = new HttpPost(logiusUrl + "/logius/documents");
             String documentString = mapper.writeValueAsString(document);
             StringEntity payload = new StringEntity(documentString, ContentType.APPLICATION_JSON);
             request.setEntity(payload);
 
             log("Sending request");
             try (CloseableHttpClient httpClient = new GracefulHttpClient(MAX_RETRIES, RETRY_INTERVAL)) {
-                try (CloseableHttpResponse response = httpClient.execute(request)){
+                try (CloseableHttpResponse response = httpClient.execute(request)) {
                     StatusLine statusLine = response.getStatusLine();
                     int statusCode = statusLine.getStatusCode();
                     log("Response obtained with status code " + statusCode);

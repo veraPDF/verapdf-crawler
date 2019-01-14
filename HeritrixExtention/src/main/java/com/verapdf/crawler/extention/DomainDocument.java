@@ -1,4 +1,4 @@
-package org.verapdf.crawler.extention;
+package com.verapdf.crawler.extention;
 
 import java.util.Date;
 

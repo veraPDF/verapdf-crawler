@@ -19,7 +19,13 @@
             <name>maven2</name>
             <url>http://builds.archive.org/maven2</url>
         </repository>
+        <repository>
+            <id>heritrix</id>
+            <name>heritrix</name>
+            <url>http://builds.archive.org/maven2/org/archive/heritrix/heritrix</url>
+        </repository>
     </repositories>
+
 
     <dependencies>
         <dependency>
@@ -30,7 +36,7 @@
         <dependency>
             <groupId>org.archive.heritrix</groupId>
             <artifactId>heritrix-modules</artifactId>
-            <version>3.2.0</version>
+            <version>3.3.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
