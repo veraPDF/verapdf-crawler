@@ -1,11 +1,10 @@
-package org.verapdf.crawler.db;
+package com.verapdf.crawler.logius.app.db;
 
-import io.dropwizard.hibernate.AbstractDAO;
+import com.verapdf.crawler.logius.app.crawling.CrawlJob;
+import com.verapdf.crawler.logius.app.crawling.CrawlJob_;
+import com.verapdf.crawler.logius.app.crawling.CrawlRequest;
+import com.verapdf.crawler.logius.app.crawling.CrawlRequest_;
 import org.hibernate.SessionFactory;
-import org.verapdf.crawler.api.crawling.CrawlJob;
-import org.verapdf.crawler.api.crawling.CrawlJob_;
-import org.verapdf.crawler.api.crawling.CrawlRequest;
-import org.verapdf.crawler.api.crawling.CrawlRequest_;
 
 import javax.persistence.criteria.*;
 import java.util.List;

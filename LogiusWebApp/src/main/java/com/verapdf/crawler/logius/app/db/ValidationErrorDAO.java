@@ -1,8 +1,8 @@
-package org.verapdf.crawler.db;
+package com.verapdf.crawler.logius.app.db;
 
-import io.dropwizard.hibernate.AbstractDAO;
+import com.verapdf.crawler.logius.app.validation.error.*;
 import org.hibernate.SessionFactory;
-import org.verapdf.crawler.api.validation.error.*;
+
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;

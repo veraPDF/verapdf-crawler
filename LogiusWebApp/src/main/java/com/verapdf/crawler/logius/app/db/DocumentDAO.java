@@ -1,16 +1,16 @@
-package org.verapdf.crawler.db;
+package com.verapdf.crawler.logius.app.db;
 
-import io.dropwizard.hibernate.AbstractDAO;
+import com.verapdf.crawler.logius.app.core.validation.PDFWamProcessor;
+import com.verapdf.crawler.logius.app.crawling.CrawlJob_;
+import com.verapdf.crawler.logius.app.document.DomainDocument;
+import com.verapdf.crawler.logius.app.document.DomainDocument_;
+import com.verapdf.crawler.logius.app.report.ErrorStatistics;
+import com.verapdf.crawler.logius.app.report.PDFWamErrorStatistics;
+import com.verapdf.crawler.logius.app.report.PdfPropertyStatistics;
+import com.verapdf.crawler.logius.app.validation.error.ValidationError;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
-import org.verapdf.crawler.api.crawling.CrawlJob_;
-import org.verapdf.crawler.api.document.DomainDocument;
-import org.verapdf.crawler.api.document.DomainDocument_;
-import org.verapdf.crawler.api.report.ErrorStatistics;
-import org.verapdf.crawler.api.report.PDFWamErrorStatistics;
-import org.verapdf.crawler.api.report.PdfPropertyStatistics;
-import org.verapdf.crawler.api.validation.error.ValidationError;
-import org.verapdf.crawler.core.validation.PDFWamProcessor;
+
 
 import javax.persistence.criteria.*;
 import java.util.ArrayList;
