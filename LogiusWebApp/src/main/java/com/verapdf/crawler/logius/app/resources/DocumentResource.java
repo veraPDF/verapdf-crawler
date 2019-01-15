@@ -19,7 +19,7 @@ import javax.transaction.Transactional;
 
 
 @RestController
-@RequestMapping(value = "/api/documents", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "logius/documents", produces = MediaType.APPLICATION_JSON_VALUE)
 public class DocumentResource {
 
     private static final Logger logger = LoggerFactory.getLogger(DocumentResource.class);

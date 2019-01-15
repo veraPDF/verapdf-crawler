@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/report")
+@RequestMapping("logius/report")
 public class ReportResource {
     // todo: clarify if we need multi-domain statistics (even if not, we use domain as a query param rather than path param to easy migrate in the future)
 

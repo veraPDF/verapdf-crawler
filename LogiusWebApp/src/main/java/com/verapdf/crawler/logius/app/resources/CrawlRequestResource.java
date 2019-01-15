@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 
 @RestController
-@RequestMapping(value = "/api/crawl-requests", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "logius/crawl-requests", produces = MediaType.APPLICATION_JSON_VALUE)
 public class CrawlRequestResource {
     private final CrawlRequestDAO crawlRequestDAO;
     private final CrawlJobDAO crawlJobDAO;

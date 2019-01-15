@@ -14,7 +14,7 @@ import javax.validation.constraints.NotNull;
 
 import java.util.List;
 
-@RequestMapping(value = "/api/document-properties", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "logius/document-properties", produces = MediaType.APPLICATION_JSON_VALUE)
 public class DocumentPropertyResource {
 
     private final DocumentDAO documentDAO;
