@@ -3,10 +3,7 @@ package com.verapdf.crawler.logius.app.resources;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import com.verapdf.crawler.logius.app.db.DocumentDAO;
 
 import javax.transaction.Transactional;
@@ -14,6 +11,7 @@ import javax.validation.constraints.NotNull;
 
 import java.util.List;
 
+@RestController
 @RequestMapping(value = "logius/document-properties", produces = MediaType.APPLICATION_JSON_VALUE)
 public class DocumentPropertyResource {
 
