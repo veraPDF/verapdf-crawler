@@ -139,7 +139,7 @@ public class DocumentProcessor extends MirrorWriterProcessor {
             // Send to main application for further processing
             log("Sending to main application for further processing");
             log("Generating POST request");
-            HttpPost request = new HttpPost(logiusUrl + "/logius/documents");
+            HttpPost request = new HttpPost(logiusUrl + "/api/documents");
             String documentString = mapper.writeValueAsString(document);
             StringEntity payload = new StringEntity(documentString, ContentType.APPLICATION_JSON);
             request.setEntity(payload);
