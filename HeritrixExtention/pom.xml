@@ -19,11 +19,6 @@
             <name>maven2</name>
             <url>http://builds.archive.org/maven2</url>
         </repository>
-        <repository>
-            <id>heritrix</id>
-            <name>heritrix</name>
-            <url>http://builds.archive.org/maven2/org/archive/heritrix/heritrix</url>
-        </repository>
     </repositories>
 
 
