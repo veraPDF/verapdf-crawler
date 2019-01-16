@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.util.*;
 
 @RestController
-@RequestMapping(value = "logius/crawl-jobs", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/crawl-jobs", produces = MediaType.APPLICATION_JSON_VALUE)
 public class CrawlJobResource {
 
     private static final Logger logger = LoggerFactory.getLogger(CrawlJobResource.class);

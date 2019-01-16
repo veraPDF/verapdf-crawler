@@ -19,7 +19,7 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("logius/validation-service")
+@RequestMapping("/validation-service")
 public class ValidationServiceResource {
 
     private final ValidationJobDAO validationJobDAO;

@@ -10,7 +10,7 @@ import com.verapdf.crawler.logius.app.crawling.HeritrixSettings;
 
 
 @RestController
-@RequestMapping("logius/heritrix")
+@RequestMapping("/heritrix")
 public class HeritrixResource {
 
     private final HeritrixClient heritrixClient;

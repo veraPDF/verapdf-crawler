@@ -16,7 +16,7 @@ import java.util.Map;
  * @author Maksim Bezrukov
  */
 @RestController
-@RequestMapping(value = "logius/admin", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/admin", produces = MediaType.APPLICATION_JSON_VALUE)
 public class AdminResource {
 	private final Map<String, AbstractService> availableServices;
 
