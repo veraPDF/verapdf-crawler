@@ -3,6 +3,7 @@ package org.verapdf.crawler.logius.resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,9 @@ import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
 
@@ -118,7 +122,7 @@ public class ReportResource {
     }
 
 
-    @GetMapping(value = "/full.ods", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = "/full.ods")
     @Transactional
     public ResponseEntity getFullReportAsOds(@RequestParam("domain") String domain,
                                              @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate) {
@@ -148,11 +152,12 @@ public class ReportResource {
                     ooXMLCount, invalidPDFDocuments,
                     microsoftDocuments, openOfficeXMLDocuments);
             logger.info("ODS report requested");
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.add("Content-Disposition", "attachment; filename=\"" + tempODS.getName() + "\"");
-
-            return new ResponseEntity<>(tempODS, headers, HttpStatus.OK);
+            Path path = Paths.get(tempODS.getAbsolutePath());
+            ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(path));
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType("application/octet-stream"))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + tempODS.getName() + "\"")
+                    .body(resource);
 
         } catch (IOException e) {
             logger.error("Exception during ods report creation: " + e.getMessage(), e);
