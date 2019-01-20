@@ -3,8 +3,8 @@ package org.verapdf.crawler.logius.core.tasks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.verapdf.crawler.logius.core.email.SendEmail;
 import org.verapdf.crawler.logius.core.heritrix.HeritrixClient;
-import org.verapdf.crawler.logius.tools.AbstractService;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -18,14 +18,14 @@ import java.util.Set;
  * @author Maksim Bezrukov
  */
 @Service
-public class HeritrixCleanerTask extends AbstractService {
+public class HeritrixCleanerTask extends AbstractTask {
     private static final Logger logger = LoggerFactory.getLogger(HeritrixCleanerTask.class);
     private static final long SLEEP_DURATION = 60 * 1000;
     private final HeritrixClient heritrixClient;
     private final Set<String> heritrixJobIds = Collections.synchronizedSet(new HashSet<>());
 
-    public HeritrixCleanerTask(HeritrixClient heritrixClient) {
-        super("HeritrixCleanerService", SLEEP_DURATION);
+    public HeritrixCleanerTask(HeritrixClient heritrixClient, SendEmail email) {
+        super("HeritrixCleanerTask", SLEEP_DURATION, email);
         this.heritrixClient = heritrixClient;
     }
 

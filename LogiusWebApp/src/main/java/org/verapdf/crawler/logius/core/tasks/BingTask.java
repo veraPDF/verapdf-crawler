@@ -1,20 +1,20 @@
 package org.verapdf.crawler.logius.core.tasks;
 
 import org.springframework.stereotype.Service;
+import org.verapdf.crawler.logius.core.email.SendEmail;
 import org.verapdf.crawler.logius.service.BingService;
-import org.verapdf.crawler.logius.tools.AbstractService;
 
 /**
  * @author Maksim Bezrukov
  */
 @Service
-public class BingTask extends AbstractService {
+public class BingTask extends AbstractTask {
     private static final long SLEEP_DURATION = 60 * 1000;
     private final BingService bingService;
 
 
-    public BingTask(BingService bingService) {
-        super("BingService", SLEEP_DURATION);
+    public BingTask(BingService bingService, SendEmail sendEmail) {
+        super("BingTask", SLEEP_DURATION, sendEmail);
         this.bingService = bingService;
     }
 

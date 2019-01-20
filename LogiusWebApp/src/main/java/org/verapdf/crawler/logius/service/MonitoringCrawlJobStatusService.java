@@ -52,7 +52,7 @@ public class MonitoringCrawlJobStatusService {
     }
 
 
-    public boolean checkJob(CrawlJob job) {
+    private boolean checkJob(CrawlJob job) {
         try {
             // Check if Heritrix finished crawling
             CrawlJob.CrawlService service = job.getCrawlService();

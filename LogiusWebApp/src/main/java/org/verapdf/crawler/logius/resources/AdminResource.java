@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.verapdf.crawler.logius.tools.AbstractService;
+import org.verapdf.crawler.logius.core.tasks.AbstractTask;
 
 import java.util.Map;
 
@@ -18,16 +18,16 @@ import java.util.Map;
 @RestController
 @RequestMapping(value = "api/admin", produces = MediaType.APPLICATION_JSON_VALUE)
 public class AdminResource {
-    private final Map<String, AbstractService> availableServices;
+    private final Map<String, AbstractTask> availableServices;
 
     @Autowired
-    public AdminResource(Map<String, AbstractService> availableServices) {
+    public AdminResource(Map<String, AbstractTask> availableServices) {
         this.availableServices = availableServices;
     }
 
     @PostMapping("/service")
     public ResponseEntity startService(@RequestParam("name") String name) {
-        AbstractService service = availableServices.get(name);
+        AbstractTask service = availableServices.get(name);
         if (service == null) {
             return ResponseEntity.notFound().build();
         }

@@ -18,7 +18,8 @@ import org.verapdf.crawler.logius.monitoring.CrawlJobStatus;
 import org.verapdf.crawler.logius.monitoring.HeritrixCrawlJobStatus;
 import org.verapdf.crawler.logius.monitoring.ValidationQueueStatus;
 import org.verapdf.crawler.logius.service.BingService;
-import org.verapdf.crawler.logius.service.ValidationService;
+import org.verapdf.crawler.logius.service.ValidationJobService;
+import org.verapdf.crawler.logius.service.ValidatorService;
 import org.verapdf.crawler.logius.tools.DomainUtils;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 import org.xml.sax.SAXException;
@@ -43,16 +44,19 @@ public class CrawlJobResource {
     private final CrawlJobDAO crawlJobDAO;
     private final HeritrixClient heritrixClient;
     private final ValidationJobDAO validationJobDAO;
-    private final ValidationService validationService;
+    private final ValidationJobService validationJobService;
+    private final ValidatorService validatorService;
     private final HeritrixCleanerTask heritrixCleanerTask;
     private final BingService bingService;
 
     public CrawlJobResource(CrawlJobDAO crawlJobDAO, HeritrixClient heritrixClient, ValidationJobDAO validationJobDAO,
-                            ValidationService validationService, HeritrixCleanerTask heritrixCleanerTask, BingService bingService) {
+                            ValidationJobService validationJobService, ValidatorService validatorService,
+                            HeritrixCleanerTask heritrixCleanerTask, BingService bingService) {
         this.crawlJobDAO = crawlJobDAO;
         this.heritrixClient = heritrixClient;
         this.validationJobDAO = validationJobDAO;
-        this.validationService = validationService;
+        this.validationJobService = validationJobService;
+        this.validatorService = validatorService;
         this.heritrixCleanerTask = heritrixCleanerTask;
         this.bingService = bingService;
     }
@@ -87,8 +91,7 @@ public class CrawlJobResource {
             String heritrixJobId = crawlJob.getHeritrixJobId();
             CrawlJob.CrawlService currentService = crawlJob.getCrawlService();
             // Keep requests list to link to new job
-            crawlRequests = new ArrayList<>();
-            crawlRequests.addAll(crawlJob.getCrawlRequests());
+            crawlRequests = new ArrayList<>(crawlJob.getCrawlRequests());
 
             // Tear crawl service
             if (currentService == CrawlJob.CrawlService.HERITRIX) {
@@ -101,10 +104,10 @@ public class CrawlJobResource {
             crawlJobDAO.remove(crawlJob);
 
             // Stop validation job if it's related to this crawl job
-            synchronized (ValidationService.class) {
-                ValidationJob currentJob = validationService.getCurrentJob();
+            synchronized (ValidationJobService.class) {
+                ValidationJob currentJob = validationJobService.getCurrentJob();
                 if (currentJob != null && currentJob.getDocument().getCrawlJob().getDomain().equals(domain)) {
-                    validationService.abortCurrentJob();
+                    validatorService.abortCurrentJob();
                 }
             }
         }

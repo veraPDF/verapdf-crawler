@@ -4,7 +4,7 @@
 //import com.fasterxml.jackson.databind.ObjectMapper;
 //import SendEmail;
 //import org.verapdf.crawler.resources.HealthResource;
-//import AbstractService;
+//import AbstractTask;
 //
 //import java.io.IOException;
 //import java.util.*;
@@ -12,7 +12,7 @@
 ///**
 // * @author Maksim Bezrukov
 // */
-//static class HealthCheckMonitorService extends AbstractService {
+//static class HealthCheckMonitorService extends AbstractTask {
 //
 //	private static final long SLEEP_DURATION = 60*1000;
 //

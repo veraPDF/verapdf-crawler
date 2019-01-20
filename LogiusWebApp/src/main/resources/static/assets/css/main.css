@@ -89,7 +89,7 @@ body.container-fluid {
 }
 
 
-/* index.html */
+/* index.static */
 .main-form {
     font-size: 22px;
     display: inline-block;
@@ -205,7 +205,7 @@ body.container-fluid {
     border-top-color: #1550ad;
 }
 
-/* domains.html */
+/* domains.static */
 
 .main h4 {
     color: white;
