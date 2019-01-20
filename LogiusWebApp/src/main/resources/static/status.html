@@ -4,21 +4,24 @@
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
 
     <title>Service health</title>
-    <script src="https://code.jquery.com/jquery-3.2.1.min.js" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" crossorigin="anonymous"></script>
+    <script crossorigin="anonymous" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script crossorigin="anonymous"
+            src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+    <script crossorigin="anonymous"
+            src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js"></script>
 
     <script src="assets/js/common.js"></script>
     <script src="assets/js/status.js"></script>
     <script src="assets/vendor/jquery.twbsPagination.min.js"></script>
 
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" crossorigin="anonymous">
+    <link crossorigin="anonymous" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css"
+          rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
-    <link rel="stylesheet" type="text/css" href="assets/css/main.css">
+    <link href="assets/css/main.css" rel="stylesheet" type="text/css">
 </head>
 
 <body class="container-fluid">
@@ -55,7 +58,7 @@
                 <h4><span class="active-jobs-count"></span> active job(s)</h4>
                 <div class="domains-list-error"></div>
                 <div class="input-group input-group-sm domain-filter">
-                    <input type="text" class="form-control" placeholder="Search domain" aria-label="Search domain">
+                    <input aria-label="Search domain" class="form-control" placeholder="Search domain" type="text">
                     <span class="input-group-addon material-icons">search</span>
                 </div>
             </form>
@@ -78,7 +81,7 @@
                 </tbody>
             </table>
             <nav>
-                <ul id="pagination-container" class="pagination pagination-sm justify-content-center"></ul>
+                <ul class="pagination pagination-sm justify-content-center" id="pagination-container"></ul>
             </nav>
         </div>
     </div>

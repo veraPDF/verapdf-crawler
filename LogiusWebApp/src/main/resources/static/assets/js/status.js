@@ -32,14 +32,14 @@ $(function () {
         }
         $.get('/api/healthcheck').done(renderHealthChecks);
     }
-    
+
     function renderHealthChecks(healthchecks) {
         var container = $('.health-checks');
         var loaded = container.find('.loaded');
         loaded.find('>:not(.template)').remove();
 
         var template = loaded.find('.template');
-        $.each(healthchecks, function(name, healthcheck) {
+        $.each(healthchecks, function (name, healthcheck) {
             var element = template.clone();
             element.removeClass('template');
             element.find('.check-name').text(name);
@@ -62,7 +62,7 @@ $(function () {
 
     // Heritrix settings (engine URL)
     function loadHeritrixSettings(callback) {
-        $.get('/api/heritrix').done(function(heritrix) {
+        $.get('/api/heritrix').done(function (heritrix) {
             heritrixEngineUrl = heritrix.engineUrl;
             callback();
         });
@@ -183,7 +183,7 @@ $(function () {
             tbody.find('tr:not(.template)').remove();
 
             var template = tbody.find('.template');
-            $.each(queueStatus.topDocuments, function(index, validationJob) {
+            $.each(queueStatus.topDocuments, function (index, validationJob) {
                 var element = template.clone().removeClass('template');
                 element.find('.url').text(validationJob.id);
                 if (validationJob.status === 'IN_PROGRESS') {
@@ -202,7 +202,7 @@ $(function () {
 
     // Start load
     loadHealthChecks();
-    loadHeritrixSettings(function() {
+    loadHeritrixSettings(function () {
         loadActiveJobs();
     });
     loadValidationQueueStatus();

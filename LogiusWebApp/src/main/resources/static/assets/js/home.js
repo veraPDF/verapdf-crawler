@@ -52,7 +52,6 @@ $(document).ready(function () {
 });
 
 
-
 function main() {
     $("input:button").attr("disabled", true);
     $('#date_input').tooltip('hide');
@@ -98,11 +97,11 @@ function main() {
     var isBing = document.getElementById("bing-crawl-service").checked;
     var URL = "/api/crawl-requests";
     if (isBing) {
-        URL += "?cralwService=BING"
+        URL += "?crawlService=BING"
     }
 
     // If there are validate errors do nothing
-    if(!validForm){
+    if (!validForm) {
         return;
     }
 

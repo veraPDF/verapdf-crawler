@@ -3,29 +3,33 @@
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
 
     <title>Crawl jobs</title>
-    <script src="https://code.jquery.com/jquery-3.2.1.min.js" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" crossorigin="anonymous"></script>
+    <script crossorigin="anonymous" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script crossorigin="anonymous"
+            src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+    <script crossorigin="anonymous"
+            src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
     <script src="assets/vendor/moment.min.js"></script>
     <script src="assets/vendor/pikaday.min.js"></script>
     <script src="assets/vendor/typeahead.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js" crossorigin="anonymous"></script>
+    <script crossorigin="anonymous" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
 
     <script src="assets/js/common.js"></script>
     <script src="assets/js/domain.js"></script>
 
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <link rel="stylesheet" href="assets/vendor/pikaday.css">
+    <link crossorigin="anonymous" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css"
+          rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css"
+          rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="assets/vendor/pikaday.css" rel="stylesheet">
 
 
     <!-- TODO: Set correct path -->
-    <link rel="stylesheet" type="text/css" href="assets/css/main.css">
+    <link href="assets/css/main.css" rel="stylesheet" type="text/css">
 </head>
 <body class="container-fluid">
 <header class="header">
@@ -72,34 +76,35 @@
         <div class="d-flex flex-column align-items-center">
             <b><a class="status-text" href="#"></a></b>
             <div class="d-flex flex-row align-items-center">
-                <a href="#" class="action resume d-flex flex-column" id="action-resume">
+                <a class="action resume d-flex flex-column" href="#" id="action-resume">
                     <span class="material-icons">play_arrow</span>
                     <span class="label">Resume</span>
                 </a>
-                <a href="#" class="action pause d-flex flex-column" id="action-pause">
+                <a class="action pause d-flex flex-column" href="#" id="action-pause">
                     <span class="material-icons">pause</span>
                     <span class="label">Pause</span>
                 </a>
-                <a href="#" class="action restart d-flex flex-column" id="action-restart">
+                <a class="action restart d-flex flex-column" href="#" id="action-restart">
                     <span class="material-icons">replay</span>
                     <span class="label">Restart</span>
                 </a>
-            </div>                       
-        </div> 
+            </div>
+        </div>
     </div>
 
     <ul class="nav nav-tabs" role="tablist">
         <li class="nav-item">
-            <a class="nav-link active" data-toggle="tab" aria-controls="summary" href="#summary">Summary</a>
+            <a aria-controls="summary" class="nav-link active" data-toggle="tab" href="#summary">Summary</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" data-toggle="tab" aria-controls="documents" href="#documents">Documents</a>
+            <a aria-controls="documents" class="nav-link" data-toggle="tab" href="#documents">Documents</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" data-toggle="tab" aria-controls="errors" href="#errors">Common PDF/A errors</a>
+            <a aria-controls="errors" class="nav-link" data-toggle="tab" href="#errors">Common PDF/A errors</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" data-toggle="tab" aria-controls="errors-pdfwam" href="#errors-pdfwam">Common PDF/UA errors</a>
+            <a aria-controls="errors-pdfwam" class="nav-link" data-toggle="tab" href="#errors-pdfwam">Common PDF/UA
+                errors</a>
         </li>
     </ul>
 
@@ -110,7 +115,8 @@
                 <canvas id="summary-chart"></canvas>
             </div>
             <form class="form-inline d-flex justify-content-end">
-                <input type="text" class="form-control form-control-sm" placeholder="Documents from" id="summary-date-input">
+                <input class="form-control form-control-sm" id="summary-date-input" placeholder="Documents from"
+                       type="text">
             </form>
             <div class="good-documents">
                 <div class="percent"></div>
@@ -130,7 +136,8 @@
                     <span class="total-count"></span> PDF documents found
                     (<span class="open-count"></span> open, <span class="not-open-count"></span> not open)
                 </div>
-                <input type="text" class="form-control form-control-sm" placeholder="Documents from" id="documents-date-input">
+                <input class="form-control form-control-sm" id="documents-date-input" placeholder="Documents from"
+                       type="text">
             </form>
             <div class="row">
                 <div class="col col-sm-6">
@@ -166,13 +173,15 @@
                     </div>
                 </div-->
                 <select class="form-control form-control-sm" id="errors-flavour-input" title="Flavour">
-                    <option value="" selected>Any PDF/A flavour</option>
+                    <option selected value="">Any PDF/A flavour</option>
                 </select>
                 <select class="form-control form-control-sm" id="errors-version-input" title="Version">
-                    <option value="" selected>Any PDF version</option>
+                    <option selected value="">Any PDF version</option>
                 </select>
-                <input type="text" class="form-control form-control-sm" placeholder="Any producer" id="errors-producer-input">
-                <input type="text" class="form-control form-control-sm" placeholder="Documents from" id="errors-date-input">
+                <input class="form-control form-control-sm" id="errors-producer-input" placeholder="Any producer"
+                       type="text">
+                <input class="form-control form-control-sm" id="errors-date-input" placeholder="Documents from"
+                       type="text">
             </form>
             <div>
                 <div class="errors-chart">
@@ -181,7 +190,9 @@
                 <table class="errors-list">
                     <tbody>
                     <tr class="template">
-                        <td><div class="count"></div></td>
+                        <td>
+                            <div class="count"></div>
+                        </td>
                         <td class="error-description">
                             <div><a class="short"></a></div>
                             <div class="full"></div>
@@ -195,13 +206,15 @@
         <div class="errors tab-pane fade" id="errors-pdfwam" role="tabpanel">
             <form class="form-inline d-flex justify-content-end">
                 <select class="form-control form-control-sm" id="errors-pdfwam-flavour-input" title="Flavour">
-                    <option value="" selected>Any PDF/A flavour</option>
+                    <option selected value="">Any PDF/A flavour</option>
                 </select>
                 <select class="form-control form-control-sm" id="errors-pdfwam-version-input" title="Version">
-                    <option value="" selected>Any PDF version</option>
+                    <option selected value="">Any PDF version</option>
                 </select>
-                <input type="text" class="form-control form-control-sm" placeholder="Any producer" id="errors-pdfwam-producer-input">
-                <input type="text" class="form-control form-control-sm" placeholder="Documents from" id="errors-pdfwam-date-input">
+                <input class="form-control form-control-sm" id="errors-pdfwam-producer-input" placeholder="Any producer"
+                       type="text">
+                <input class="form-control form-control-sm" id="errors-pdfwam-date-input" placeholder="Documents from"
+                       type="text">
             </form>
             <div>
                 <div class="errors-chart">
@@ -210,7 +223,9 @@
                 <table class="errors-list">
                     <tbody>
                     <tr class="template">
-                        <td><div class="count"></div></td>
+                        <td>
+                            <div class="count"></div>
+                        </td>
                         <td class="error-description">
                             <div><a class="short"></a></div>
                             <div class="full"></div>
@@ -223,7 +238,7 @@
     </div>
 
     <div class="links d-flex justify-content-end">
-        <a href="#" class="ods-report-link" target="_blank">download ODS</a>
+        <a class="ods-report-link" href="#" target="_blank">download ODS</a>
     </div>
 
 </main>

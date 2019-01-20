@@ -12,9 +12,11 @@ $(function () {
             loadAllJobs(limit, (page - 1) * limit, filter);
         }
     };
+
     function normalizeURL(url) {
         return url.replace(':', '%3A');
     }
+
     function loadAllJobs(limit, start, domainFilter, redrawPagintion) {
         var filter = "";
         if (domainFilter) {
@@ -88,7 +90,7 @@ $(function () {
             url: URL + "/" + normalizeURL(link.parent().siblings().first().text()),
             type: "PUT",
             data: JSON.stringify(putData),
-            headers: { "Content-type": "application/json" },
+            headers: {"Content-type": "application/json"},
             success: function (result) {
                 currRow.removeClass('disabled');
                 currRow.removeClass(oldStatus.toLowerCase());
@@ -122,7 +124,7 @@ $(function () {
             url: URL + "/" + normalizeURL(link.parent().siblings().first().text()),
             type: "PUT",
             data: JSON.stringify(putData),
-            headers: { "Content-type": "application/json" },
+            headers: {"Content-type": "application/json"},
             success: function (result) {
                 currRow.removeClass('disabled');
                 currRow.removeClass(oldStatus.toLowerCase());

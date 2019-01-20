@@ -5,7 +5,7 @@ $(function () {
     var loadStatusTimeout;
     var actionsEnabled = true;
 
-    function normalizeURL(url){
+    function normalizeURL(url) {
         return url.replace(':', '%3A');
     }
 
@@ -29,7 +29,7 @@ $(function () {
 
     // Heritrix settings (engine URL)
     function loadHeritrixSettings(callback) {
-        $.get('/api/heritrix').done(function(heritrix) {
+        $.get('/api/heritrix').done(function (heritrix) {
             heritrixEngineUrl = heritrix.engineUrl;
             callback();
         });
@@ -63,7 +63,7 @@ $(function () {
         requestsTbody.find('tr:not(.template)').remove();
 
         var requestTemplate = $('.job-requests table .template').clone().removeClass('template');
-        $.each(jobStatus.crawlRequests, function(index, request) {
+        $.each(jobStatus.crawlRequests, function (index, request) {
             var element = requestTemplate.clone();
             element.find('.id').text(request.id);
             element.find('.status').text(request.finished ? 'yes' : 'no');
@@ -88,7 +88,7 @@ $(function () {
             }
             if (jobStatus.heritrixStatus.jobLogTail) {
                 var logTemplate = $('.heritrix table .template').clone().removeClass('template');
-                $.each(jobStatus.heritrixStatus.jobLogTail, function(index, message) {
+                $.each(jobStatus.heritrixStatus.jobLogTail, function (index, message) {
                     var element = logTemplate.clone();
                     element.find('.message').text(message);
                     heritrixLogTbody.append(element);
@@ -110,7 +110,7 @@ $(function () {
             queueTbody.find('tr:not(.template)').remove();
 
             var template = queueTbody.find('.template');
-            $.each(jobStatus.validationQueueStatus.topDocuments, function(index, validationJob) {
+            $.each(jobStatus.validationQueueStatus.topDocuments, function (index, validationJob) {
                 var element = template.clone().removeClass('template');
                 element.find('.url').text(validationJob.id);
                 if (validationJob.status === 'IN_PROGRESS') {
@@ -133,10 +133,10 @@ $(function () {
     function updateCrawlJob(job) {
         var main = $('.main');
         if (crawlJob.status) {
-            main.removeClass('status-' + crawlJob.status.toLowerCase(), { children: true });
+            main.removeClass('status-' + crawlJob.status.toLowerCase(), {children: true});
         }
         crawlJob = job;
-        main.addClass('status-' + crawlJob.status.toLowerCase(), { children: true });
+        main.addClass('status-' + crawlJob.status.toLowerCase(), {children: true});
 
         $('.domain-name span').text(crawlJob.domain);
         $('.job-date').text(crawlJob.finished ? 'Tested on ' + crawlJob.startTime + ' - ' + crawlJob.finishTime : 'Test started on ' + crawlJob.startTime);
@@ -161,7 +161,7 @@ $(function () {
             url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
             type: "PUT",
             data: JSON.stringify(putData),
-            headers: { "Content-type": "application/json" },
+            headers: {"Content-type": "application/json"},
             success: function (result) {
                 enableActions();
                 updateCrawlJob(result);
@@ -190,7 +190,7 @@ $(function () {
             type: "PUT",
             // async:false,
             data: JSON.stringify(putData),
-            headers: { "Content-type": "application/json" },
+            headers: {"Content-type": "application/json"},
             success: function (result) {
                 enableActions();
                 updateCrawlJob(result);
@@ -223,7 +223,7 @@ $(function () {
 
     });
 
-    loadHeritrixSettings(function() {
+    loadHeritrixSettings(function () {
         loadJobStatus();
     });
 });
