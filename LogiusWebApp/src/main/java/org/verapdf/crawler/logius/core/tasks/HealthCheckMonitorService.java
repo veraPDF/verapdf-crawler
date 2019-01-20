@@ -1,4 +1,4 @@
-//package org.verapdf.crawler.core.services;
+//package org.verapdf.crawler.core.tasks;
 //
 //import com.fasterxml.jackson.databind.JsonNode;
 //import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,7 +12,7 @@
 ///**
 // * @author Maksim Bezrukov
 // */
-//public class HealthCheckMonitorService extends AbstractService {
+//static class HealthCheckMonitorService extends AbstractService {
 //
 //	private static final long SLEEP_DURATION = 60*1000;
 //
@@ -23,7 +23,7 @@
 //	private final Set<String> excludeChecks;
 //	private final Set<String> notifiedChecks = new HashSet<>();
 //
-//	public HealthCheckMonitorService(HealthResource healthResource, List<String> excludeChecks) {
+//	static HealthCheckMonitorService(HealthResource healthResource, List<String> excludeChecks) {
 //		super("HealthCheckMonitorService", SLEEP_DURATION);
 //		this.healthResource = healthResource;
 //		this.excludeChecks = excludeChecks == null ? new HashSet<>() : new HashSet<>(excludeChecks);
@@ -32,7 +32,7 @@
 //	@Override
 //	protected void onStart() throws InterruptedException {
 //		// we prefer to sleep on start before 1st check to avoid sending emails
-//		// during services startup
+//		// during tasks startup
 //		Thread.sleep(SLEEP_DURATION);
 //	}
 //

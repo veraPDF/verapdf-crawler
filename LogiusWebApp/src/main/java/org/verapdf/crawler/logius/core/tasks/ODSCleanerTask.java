@@ -1,10 +1,10 @@
-package com.verapdf.crawler.logius.app.core.services;
+package org.verapdf.crawler.logius.core.tasks;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.verapdf.crawler.logius.app.tools.AbstractService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.verapdf.crawler.logius.tools.AbstractService;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,13 +17,13 @@ import java.nio.file.attribute.FileTime;
  */
 
 @Service
-public class ODSCleanerService extends AbstractService {
-    private static final Logger logger = LoggerFactory.getLogger(HeritrixCleanerService.class);
+public class ODSCleanerTask extends AbstractService {
+    private static final Logger logger = LoggerFactory.getLogger(HeritrixCleanerTask.class);
     private static final long SLEEP_DURATION = 60 * 60 * 1000;
     private static final long FILE_LIFETIME_IN_MILLIS = 7 * 24 * 60 * 60 * 1000;
     private String odsTempFolder;
 
-    public ODSCleanerService(@Value("${reports.odsTempFolder}") String odsTempFolder) {
+    public ODSCleanerTask(@Value("${reports.odsTempFolder}") String odsTempFolder) {
         super("ODSCleanerService", SLEEP_DURATION);
         this.odsTempFolder = odsTempFolder;
     }
