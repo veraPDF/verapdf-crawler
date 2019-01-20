@@ -1,29 +1,11 @@
 package org.verapdf.crawler.core;
 
-import io.dropwizard.Application;
-import io.dropwizard.Configuration;
-import io.dropwizard.assets.AssetsBundle;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-public class Sample extends Application<Configuration> {
-    public static void main(String[] args) throws Exception {
-        new Sample().run(args);
-    }
-
-    @Override
-    public String getName() {
-        return "sample";
-    }
-
-    @Override
-    public void initialize(Bootstrap<Configuration> bootstrap) {
-        bootstrap.addBundle(new AssetsBundle("/html", "/", "sample.html"));
-    }
-
-    @Override
-    public void run(Configuration configuration,
-                    Environment environment) {
-        environment.jersey().setUrlPattern("/crawl/*");
+@SpringBootApplication
+public class Sample {
+    public static void main(String[] args)  {
+        SpringApplication.run(Sample.class, args);
     }
 }
