@@ -1,120 +1,70 @@
-package com.verapdf.crawler.logius.app.core.validation;
+package org.verapdf.crawler.logius.service;
 
 import com.adobe.xmp.XMPDateTime;
 import com.adobe.xmp.XMPDateTimeFactory;
 import com.adobe.xmp.XMPException;
-import com.verapdf.crawler.logius.app.validation.ValidationJob;
-import com.verapdf.crawler.logius.app.validation.error.ValidationError;
-import com.verapdf.crawler.logius.app.tools.AbstractService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import com.verapdf.crawler.logius.app.document.DomainDocument;
-import com.verapdf.crawler.logius.app.validation.VeraPDFValidationResult;
-import com.verapdf.crawler.logius.app.db.DocumentDAO;
-import com.verapdf.crawler.logius.app.db.ValidationErrorDAO;
-import com.verapdf.crawler.logius.app.db.ValidationJobDAO;
 import org.springframework.transaction.annotation.Transactional;
+import org.verapdf.crawler.logius.core.tasks.ValidationTask;
+import org.verapdf.crawler.logius.core.validation.PDFValidator;
+import org.verapdf.crawler.logius.db.DocumentDAO;
+import org.verapdf.crawler.logius.db.ValidationErrorDAO;
+import org.verapdf.crawler.logius.db.ValidationJobDAO;
+import org.verapdf.crawler.logius.document.DomainDocument;
+import org.verapdf.crawler.logius.validation.ValidationJob;
+import org.verapdf.crawler.logius.validation.VeraPDFValidationResult;
+import org.verapdf.crawler.logius.validation.error.ValidationError;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 @Service
-public class ValidationService extends AbstractService {
-
-    private static final Logger logger = LoggerFactory.getLogger(ValidationService.class);
-
+public class ValidationService {
+    private static final Logger logger = LoggerFactory.getLogger(ValidationTask.class);
     private static final String PROPERTY_NAME_MOD_DATE_XMP = "modDateXMP";
     private static final String PROPERTY_NAME_MOD_DATE_INFO_DICT = "modDateInfoDict";
 
-    private static final long SLEEP_DURATION = 60 * 1000;
-
     private final PDFValidator validator;
-    private ValidationJob currentJob;
     private final ValidationJobDAO validationJobDAO;
     private final ValidationErrorDAO validationErrorDAO;
     private final DocumentDAO documentDAO;
-    private final List<PDFProcessorAdapter> pdfProcessors;
-
+    private ValidationJob currentJob;
 
     public ValidationService(PDFValidator validator, ValidationJobDAO validationJobDAO,
                              ValidationErrorDAO validationErrorDAO, DocumentDAO documentDAO) {
-        super("ValidationService", SLEEP_DURATION);
+
         this.validator = validator;
         this.validationJobDAO = validationJobDAO;
         this.validationErrorDAO = validationErrorDAO;
         this.documentDAO = documentDAO;
     }
 
-    public ValidationJob getCurrentJob() {
-        return currentJob;
-    }
-
-    private void setCurrentJob(ValidationJob currentJob) {
-        synchronized (ValidationService.class) {
-            this.currentJob = currentJob;
-        }
-    }
-
-    public void abortCurrentJob() {
-        try {
-            logger.info("Aborting current job");
-            currentJob.setStatus(ValidationJob.Status.ABORTED);
-            validator.terminateValidation();
-        } catch (IOException e) {
-            logger.error("Can't terminate current job", e);
-        }
-    }
-
-    @Override
-    protected void onStart() throws InterruptedException, ValidationDeadlockException {
-        setCurrentJob(retrieveCurrentJob());
-        if (currentJob != null) {
+    private static Date getModDate(String fromXMP, String fromInfoDict) {
+        if (fromXMP != null) {
             try {
-                processStartedJob();
-            } catch (IOException e) {
-                saveErrorResult(e);
+                XMPDateTime fromISO8601 = XMPDateTimeFactory.createFromISO8601(fromXMP);
+                return fromISO8601.getCalendar().getTime();
+            } catch (XMPException e) {
+                return null;
             }
-        }
-    }
-
-    @Override
-    protected boolean onRepeat() throws ValidationDeadlockException, InterruptedException {
-        System.out.println("valid");
-        setCurrentJob(retrieveNextJob());
-        if (currentJob != null) {
-            logger.info("Validating " + currentJob.getId());
+        } else if (fromInfoDict != null) {
             try {
-                validator.startValidation(currentJob);
-                processStartedJob();
-            } catch (IOException e) {
-                saveErrorResult(e);
+                XMLGregorianCalendar xmlGregorianCalendar = DatatypeFactory.newInstance().newXMLGregorianCalendar(fromInfoDict);
+                return xmlGregorianCalendar.toGregorianCalendar().getTime();
+            } catch (DatatypeConfigurationException e) {
+                return null;
             }
-            return false;
+        } else {
+            return null;
         }
-        return true;
-    }
-
-    private void processStartedJob() throws IOException, ValidationDeadlockException, InterruptedException {
-        VeraPDFValidationResult result = validator.getValidationResult(currentJob);
-        // additional processors logic
-        for (PDFProcessorAdapter pdfProcessor : this.pdfProcessors) {
-            Map<String, String> properties = pdfProcessor.evaluateProperties(currentJob);
-            for (Map.Entry<String, String> property : properties.entrySet()) {
-                result.addProperty(property.getKey(), property.getValue());
-            }
-        }
-        saveResult(result);
-    }
-
-    private void saveErrorResult(Throwable e) {
-        VeraPDFValidationResult result = new VeraPDFValidationResult(e.getMessage());
-        saveResult(result);
     }
 
     @Transactional
@@ -124,14 +74,20 @@ public class ValidationService extends AbstractService {
         if (job != null) {
             job.setStatus(ValidationJob.Status.IN_PROGRESS);
         }
+        synchronized (ValidationService.class) {
+            this.currentJob = job;
+        }
         return job;
     }
-
 
     @Transactional
     public ValidationJob retrieveCurrentJob() {
         logger.debug("Getting current job");
-        return validationJobDAO.current();
+        ValidationJob job = validationJobDAO.current();
+        synchronized (ValidationService.class) {
+            this.currentJob = job;
+        }
+        return job;
     }
 
     @Transactional
@@ -179,26 +135,6 @@ public class ValidationService extends AbstractService {
         }
     }
 
-    private static Date getModDate(String fromXMP, String fromInfoDict) {
-        if (fromXMP != null) {
-            try {
-                XMPDateTime fromISO8601 = XMPDateTimeFactory.createFromISO8601(fromXMP);
-                return fromISO8601.getCalendar().getTime();
-            } catch (XMPException e) {
-                return null;
-            }
-        } else if (fromInfoDict != null) {
-            try {
-                XMLGregorianCalendar xmlGregorianCalendar = DatatypeFactory.newInstance().newXMLGregorianCalendar(fromInfoDict);
-                return xmlGregorianCalendar.toGregorianCalendar().getTime();
-            } catch (DatatypeConfigurationException e) {
-                return null;
-            }
-        } else {
-            return null;
-        }
-    }
-
     private void cleanJob(ValidationJob job, boolean shouldCleanDB) {
         logger.debug("Cleanup validation job");
         if (job == null) {
@@ -213,4 +149,19 @@ public class ValidationService extends AbstractService {
             validationJobDAO.remove(job);
         }
     }
+
+    public void abortCurrentJob() {
+        try {
+            logger.info("Aborting current job");
+            getCurrentJob().setStatus(ValidationJob.Status.ABORTED);
+            validator.terminateValidation();
+        } catch (IOException e) {
+            logger.error("Can't terminate current job", e);
+        }
+    }
+
+    public ValidationJob getCurrentJob() {
+        return currentJob;
+    }
+
 }

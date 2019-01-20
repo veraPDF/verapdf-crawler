@@ -1,9 +1,7 @@
-package com.verapdf.crawler.logius.app.core.services;
+package org.verapdf.crawler.logius.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.verapdf.crawler.logius.app.resources.DocumentResource;
-import com.verapdf.crawler.logius.app.tools.AbstractService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -19,10 +17,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import com.verapdf.crawler.logius.app.crawling.CrawlJob;
-import com.verapdf.crawler.logius.app.document.DomainDocument;
-import com.verapdf.crawler.logius.app.db.CrawlJobDAO;
 import org.springframework.transaction.annotation.Transactional;
+import org.verapdf.crawler.logius.crawling.CrawlJob;
+import org.verapdf.crawler.logius.db.CrawlJobDAO;
+import org.verapdf.crawler.logius.document.DomainDocument;
+import org.verapdf.crawler.logius.resources.DocumentResource;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -32,64 +31,31 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-/**
- * @author Maksim Bezrukov
- */
 @Service
-public class BingService extends AbstractService {
-
-    private static final Logger logger = LoggerFactory.getLogger(HeritrixCleanerService.class);
+public class BingService {
+    private static final Logger logger = LoggerFactory.getLogger(BingService.class);
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
-    private static final long SLEEP_DURATION = 60 * 1000;
-
-    private static final Map<String, String> fileTypes = new HashMap<>();
-
-    static {
-        fileTypes.put("application/pdf", "pdf");
-        fileTypes.put("application/vnd.oasis.opendocument.text", "odt");
-        fileTypes.put("application/vnd.oasis.opendocument.spreadsheet", "ods");
-        fileTypes.put("application/vnd.oasis.opendocument.presentation", "odp");
-        fileTypes.put("application/msword", "doc");
-        fileTypes.put("application/vnd.openxmlformats-officedocument.wordprocessingml.document", "docx");
-        fileTypes.put("application/vnd.ms-powerpoint", "ppt");
-        fileTypes.put("application/vnd.openxmlformats-officedocument.presentationml.presentation", "pptx");
-        fileTypes.put("application/vnd.ms-excel", "xls");
-        fileTypes.put("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "xlsx");
-    }
-
-    @Value("${bing.baseTempFolder}")
-    private String baseTempUrl;
-    @Value("${bing.apiKey}")
+    private final CrawlJobDAO crawlJobDAO;
+    private final DocumentResource documentResource;
+    private final Map<String, String> fileTypes;
     private String apiKey;
     private File baseTempFolder;
     private CrawlJob currentJob = null;
 
-    private final CrawlJobDAO crawlJobDAO;
-    private final DocumentResource documentResource;
-
-    public BingService(CrawlJobDAO crawlJobDAO, DocumentResource documentResource, @Value("${bing.baseTempFolder}") String baseTempUrl,
-                       @Value("${bing.apiKey}") String apiKey) {
-        super("BingService", SLEEP_DURATION);
+    public BingService(@Value("${bing.baseTempFolder}") String baseTempUrl,
+                       @Value("${bing.apiKey}") String apiKey,
+                       CrawlJobDAO crawlJobDAO,
+                       DocumentResource documentResource, Map<String, String> fileTypes) {
         this.apiKey = apiKey;
-        this.baseTempUrl = baseTempUrl;
         this.crawlJobDAO = crawlJobDAO;
         this.documentResource = documentResource;
         this.baseTempFolder = new File(baseTempUrl);
+        this.fileTypes = fileTypes;
         if (!this.baseTempFolder.isDirectory() && (this.baseTempFolder.exists() || !this.baseTempFolder.mkdirs())) {
             throw new IllegalStateException("Initialization fail on obtaining temp folder");
         }
 
     }
-
-    @Override
-    protected void onStart() {
-    }
-
-    @Override
-    protected boolean onRepeat() {
-        return checkNewJobs();
-    }
-
 
     @Transactional
     public boolean checkNewJobs() {
@@ -112,7 +78,6 @@ public class BingService extends AbstractService {
         return true;
     }
 
-    @Transactional
     public CrawlJob getJob() {
         List<CrawlJob> byStatus = crawlJobDAO.findByStatus(CrawlJob.Status.NEW, CrawlJob.CrawlService.BING, null, 1);
         if (byStatus != null && !byStatus.isEmpty()) {
@@ -130,7 +95,7 @@ public class BingService extends AbstractService {
         }
     }
 
-    @Transactional
+
     public void processFile(String url, String fileType, File tempFolder) {
         try {
             try (CloseableHttpClient client = HttpClients.createDefault()) {
