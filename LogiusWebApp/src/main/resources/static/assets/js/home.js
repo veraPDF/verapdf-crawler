@@ -98,6 +98,8 @@ function main() {
     var URL = "/api/crawl-requests";
     if (isBing) {
         URL += "?crawlService=BING"
+    } else {
+        URL += "?crawlService=HERITRIX"
     }
 
     // If there are validate errors do nothing
