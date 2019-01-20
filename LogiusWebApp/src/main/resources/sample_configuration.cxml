@@ -589,14 +589,14 @@
 
 
     <!-- QUEUE ASSIGNMENT POLICY -->
-   
+
     <bean id="queueAssignmentPolicy"
       class="org.archive.crawler.frontier.SurtAuthorityQueueAssignmentPolicy">
      <property name="forceQueueAssignment" value="" />
      <property name="deferToPrevious" value="true" />
      <property name="parallelQueues" value="25" />
     </bean>
-    
+
 
     <!-- URI PRECEDENCE POLICY -->
     <!--
