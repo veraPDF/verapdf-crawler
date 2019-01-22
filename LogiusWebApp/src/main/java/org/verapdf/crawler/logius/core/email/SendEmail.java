@@ -35,7 +35,7 @@ public class SendEmail {
 
 
     public void sendReportNotification(String subject, String text) {
-        send(reportTargetEmails, subject, text);
+        send(subject, text, reportTargetEmails);
     }
 
     @Async
@@ -44,7 +44,7 @@ public class SendEmail {
         String domainsString = generateDomainsString(request.getCrawlJobs());
         String subject = String.format(SUBJECT, domainsString);
         String body = String.format(EMAIL_BODY, domainsString);
-        send(emailAddress, subject, body);
+        send(subject, body, emailAddress);
     }
 
     private String generateDomainsString(List<CrawlJob> crawlJobs) {
@@ -57,11 +57,8 @@ public class SendEmail {
         return builder.substring(0, builder.length() - DOMAIN_SEPARATOR.length());
     }
 
-    private void send(String targetEmail, String subject, String text) {
-        send(new String[]{targetEmail}, subject, text);
-    }
 
-    private void send(String[] recipientAddresses, String subject, String text) {
+    private void send(String subject, String text, String... recipientAddresses) {
         try {
             MimeMessage[] messages = new MimeMessage[recipientAddresses.length];
             for (int i = 0; i < recipientAddresses.length; i++) {
