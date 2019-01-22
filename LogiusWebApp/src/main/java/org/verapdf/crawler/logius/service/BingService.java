@@ -148,7 +148,7 @@ public class BingService {
         int offset = 0;
         if (this.currentJob != null) {
             String site = this.currentJob.getDomain();
-            String urlWithoutOffset = "https://logius.cognitive.microsoft.com/bing/v7.0/search?" +
+            String urlWithoutOffset = "https://api.cognitive.microsoft.com/bing/v7.0/search?" +
                     "q=site%3a" + site + "+filetype%3a" + fileType +
                     "&count=50&offset=";
             int currentEstimations = offset + 1;
