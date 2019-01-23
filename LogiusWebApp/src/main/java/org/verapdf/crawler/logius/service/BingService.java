@@ -54,7 +54,6 @@ public class BingService {
         if (!this.baseTempFolder.isDirectory() && (this.baseTempFolder.exists() || !this.baseTempFolder.mkdirs())) {
             throw new IllegalStateException("Initialization fail on obtaining temp folder");
         }
-
     }
 
     @Transactional
@@ -125,7 +124,11 @@ public class BingService {
                 domainDocument.setContentType(contentType);
                 Header[] lastModHeaders = response.getHeaders("Last-Modified");
                 if (lastModHeaders != null && lastModHeaders.length > 0) {
-                    domainDocument.setLastModified(dateFormat.parse(lastModHeaders[0].getValue()));
+                    try {
+                        domainDocument.setLastModified(dateFormat.parse(lastModHeaders[0].getValue()));
+                    } catch (ParseException e) {
+                        logger.info("Fail to parse last modified date for " + url + ", lastModified won't be set for this document.");
+                    }
                 }
                 if (tempFolder != null) {
                     File file = File.createTempFile("logius", "." + contentType, tempFolder);
@@ -135,8 +138,6 @@ public class BingService {
                 if (this.currentJob != null) {
                     documentResource.saveDocument(domainDocument, this.currentJob);
                 }
-            } catch (ParseException e) {
-                logger.error("Can't obtain last modified for url: " + url, e);
             }
         } catch (IOException e) {
             logger.error("Can't create url: " + url, e);

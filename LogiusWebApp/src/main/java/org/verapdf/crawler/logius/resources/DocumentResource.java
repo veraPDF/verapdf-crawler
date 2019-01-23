@@ -4,6 +4,7 @@ package org.verapdf.crawler.logius.resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,7 +16,6 @@ import org.verapdf.crawler.logius.db.ValidationJobDAO;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 
-import javax.transaction.Transactional;
 
 
 @RestController
@@ -56,6 +56,7 @@ public class DocumentResource {
         return saveDocument(document, job);
     }
 
+    @Transactional
     public DomainDocument saveDocument(DomainDocument document, CrawlJob job) {
         document.setCrawlJob(job);
         documentDAO.save(document);
