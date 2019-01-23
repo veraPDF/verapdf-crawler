@@ -17,9 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
-import org.verapdf.crawler.logius.db.CrawlJobDAO;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.resources.DocumentResource;
 
@@ -34,8 +32,8 @@ import java.util.*;
 @Service
 public class BingService {
     private static final Logger logger = LoggerFactory.getLogger(BingService.class);
-    private static SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
-    private final CrawlJobDAO crawlJobDAO;
+    private static SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
+    private final CrawlJobService crawlJobService;
     private final DocumentResource documentResource;
     private final Map<String, String> fileTypes;
     private String apiKey;
@@ -44,10 +42,10 @@ public class BingService {
 
     public BingService(@Value("${bing.baseTempFolder}") String baseTempUrl,
                        @Value("${bing.apiKey}") String apiKey,
-                       CrawlJobDAO crawlJobDAO,
+                       CrawlJobService crawlJobService,
                        DocumentResource documentResource, Map<String, String> fileTypes) {
         this.apiKey = apiKey;
-        this.crawlJobDAO = crawlJobDAO;
+        this.crawlJobService = crawlJobService;
         this.documentResource = documentResource;
         this.baseTempFolder = new File(baseTempUrl);
         this.fileTypes = fileTypes;
@@ -56,9 +54,8 @@ public class BingService {
         }
     }
 
-    @Transactional
     public boolean checkNewJobs() {
-        this.currentJob = getJob();
+        this.currentJob = crawlJobService.getNewBingJob();
         if (this.currentJob != null) {
             File tempFolder = new File(this.baseTempFolder, this.currentJob.getHeritrixJobId());
             if (!tempFolder.isDirectory() && (tempFolder.exists() || !tempFolder.mkdirs())) {
@@ -75,16 +72,6 @@ public class BingService {
             return false;
         }
         return true;
-    }
-
-    public CrawlJob getJob() {
-        List<CrawlJob> byStatus = crawlJobDAO.findByStatus(CrawlJob.Status.NEW, CrawlJob.CrawlService.BING, null, 1);
-        if (byStatus != null && !byStatus.isEmpty()) {
-            CrawlJob crawlJob = byStatus.get(0);
-            crawlJob.setStatus(CrawlJob.Status.RUNNING);
-            return crawlJob;
-        }
-        return null;
     }
 
     private void processFileType(String fileType, File tempFolder) {
