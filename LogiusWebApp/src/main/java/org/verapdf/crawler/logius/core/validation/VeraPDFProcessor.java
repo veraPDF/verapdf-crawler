@@ -56,8 +56,8 @@ public class VeraPDFProcessor implements Supplier<VeraPDFValidationResult> {
     private Process process;
     private boolean stopped = false;
 
-    VeraPDFProcessor(@Value("${veraPDFService.verapdfPath}") String verapdfPath,
-                     @Value("${veraPDFService.verapdfErrors}") String veraPDFErrorLog) {
+    VeraPDFProcessor(@Value("${logius.veraPDFService.verapdfPath}") String verapdfPath,
+                     @Value("${logius.veraPDFService.verapdfErrors}") String veraPDFErrorLog) {
         this.verapdfPath = verapdfPath;
         this.veraPDFErrorLog = new File(veraPDFErrorLog);
     }

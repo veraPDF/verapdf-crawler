@@ -65,7 +65,6 @@ public class ValidatorService {
 
     private void processStartedJob() throws IOException, ValidationDeadlockException, InterruptedException {
         VeraPDFValidationResult result = validator.getValidationResult(validationJobService.getCurrentJob());
-        // additional processors logic
         for (PDFProcessorAdapter pdfProcessor : this.pdfProcessors) {
             Map<String, String> properties = pdfProcessor.evaluateProperties(validationJobService.getCurrentJob());
             for (Map.Entry<String, String> property : properties.entrySet()) {
