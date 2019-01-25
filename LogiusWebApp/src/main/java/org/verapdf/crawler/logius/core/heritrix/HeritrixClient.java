@@ -54,15 +54,15 @@ public class HeritrixClient {
     private static final String STATUS_DESCRIPTION_XPATH = "/job/statusDescription";
     private final CredentialsProvider credsProvider;
     private final SSLConnectionSocketFactory sslConnectionSocketFactory;
-    @Value("${heritrix.configTemplatePath}")
+    @Value("${logius.heritrix.configTemplatePath}")
     private String configTemplatePath;
-    @Value("${heritrix.logiusAppUrl}")
+    @Value("${logius.heritrix.logiusAppUrl}")
     private String logiusAppUrl;
-    @Value("${heritrix.jobsFolder}")
+    @Value("${logius.heritrix.jobsFolder}")
     private String jobsFolder;
-    @Value("${heritrix.url}engine")
+    @Value("${logius.heritrix.url}engine")
     private String engineUrl;
-    @Value("${heritrix.url}engine/job/")
+    @Value("${logius.heritrix.url}engine/job/")
     private String baseJobUrl;
 
 

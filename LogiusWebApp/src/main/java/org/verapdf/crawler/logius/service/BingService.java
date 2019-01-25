@@ -15,6 +15,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,15 +37,17 @@ public class BingService {
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
     private final CrawlJobService crawlJobService;
     private final DocumentResource documentResource;
+    @Qualifier("fileTypes")
     private final Map<String, String> fileTypes;
     private String apiKey;
     private File baseTempFolder;
     private CrawlJob currentJob = null;
 
-    public BingService(@Value("${bing.baseTempFolder}") String baseTempUrl,
-                       @Value("${bing.apiKey}") String apiKey,
+    public BingService(@Value("${logius.bing.baseTempFolder}") String baseTempUrl,
+                       @Value("${logius.bing.apiKey}") String apiKey,
                        CrawlJobService crawlJobService,
-                       DocumentResource documentResource, Map<String, String> fileTypes) {
+                       DocumentResource documentResource,
+                       Map<String, String> fileTypes) {
         this.apiKey = apiKey;
         this.crawlJobService = crawlJobService;
         this.documentResource = documentResource;

@@ -19,11 +19,11 @@ import java.security.NoSuchAlgorithmException;
 
 @Configuration
 public class HeritrixConfiguration {
-    @Value("${heritrix.url}")
+    @Value("${logius.heritrix.url}")
     private String url;
-    @Value("${heritrix.login}")
+    @Value("${logius.heritrix.login}")
     private String login;
-    @Value("${heritrix.password}")
+    @Value("${logius.heritrix.password}")
     private String password;
 
     @Bean

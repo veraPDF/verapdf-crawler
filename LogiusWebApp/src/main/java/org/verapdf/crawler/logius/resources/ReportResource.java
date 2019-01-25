@@ -117,8 +117,7 @@ public class ReportResource {
                                                                                 @RequestParam(value = "flavour", required = false) String flavour,
                                                                                 @RequestParam(value = "version", required = false) String version,
                                                                                 @RequestParam(value = "producer", required = false) String producer) {
-        Date documentsSince = startDate;
-        return documentDAO.getPDFWamErrorsStatistics(domain, documentsSince, flavour, version, producer);
+        return documentDAO.getPDFWamErrorsStatistics(domain, startDate, flavour, version, producer);
     }
 
 

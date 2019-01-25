@@ -58,7 +58,6 @@ public abstract class AbstractTask implements Runnable {
     public void run() {
         logger.info(this.serviceName + " started");
         try {
-            //Thread.sleep(this.sleepTime);
             onStart();
             while (running) {
                 if (onRepeat()) {

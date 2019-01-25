@@ -10,7 +10,5 @@ import java.util.Map;
  */
 public abstract class PDFProcessorAdapter {
 
-    public Map<String, String> evaluateProperties(ValidationJob job) {
-        return Collections.emptyMap();
-    }
+    public abstract Map<String, String> evaluateProperties(ValidationJob job);
 }

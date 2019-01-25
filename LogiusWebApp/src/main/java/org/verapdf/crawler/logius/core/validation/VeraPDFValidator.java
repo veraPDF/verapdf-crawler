@@ -2,14 +2,14 @@ package org.verapdf.crawler.logius.core.validation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.stereotype.Service;
+import org.verapdf.crawler.logius.service.ValidationSettingsService;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 import org.verapdf.crawler.logius.validation.VeraPDFServiceStatus;
 import org.verapdf.crawler.logius.validation.VeraPDFValidationResult;
-import org.verapdf.crawler.logius.validation.settings.ValidationSettings;
 
-import java.io.File;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -21,20 +21,16 @@ public class VeraPDFValidator implements PDFValidator {
     private static final long GET_VALIDATION_RESULT_TIMEOUT = 5 * 60 * 1000;      // 5 min
     private static final long GET_VALIDATION_RESULT_CHECK_INTERVAL = 5 * 1000;    // 5 sec
     private static final int MAX_VALIDATION_RETRIES = 3;
-    private final File veraPDFErrorLog;
-    private final ValidationSettings validationSettings;
     private final ExecutorService service = Executors.newFixedThreadPool(1);
-    private String veraPDFPath;
     private VeraPDFProcessor veraPDFProcessor;
     private VeraPDFValidationResult validationResult;
+    private ObjectFactory<VeraPDFProcessor> veraPDFProcessorObjectFactory;
     private boolean isAborted = false;
-
-    public VeraPDFValidator(@Value("${veraPDFService.verapdfPath}") String veraPDFPath,
-                            @Value("${veraPDFService.verapdfErrors}") String veraPDFErrorFilePath,
-                            ValidationSettings validationSettings) {
-        this.veraPDFPath = veraPDFPath;
-        this.validationSettings = validationSettings;
-        this.veraPDFErrorLog = new File(veraPDFErrorFilePath);
+    private final ValidationSettingsService validationSettingsService;
+    public VeraPDFValidator(ObjectFactory<VeraPDFProcessor> veraPDFProcessorObjectFactory,
+                            ValidationSettingsService validationSettingsService) {
+        this.veraPDFProcessorObjectFactory = veraPDFProcessorObjectFactory;
+        this.validationSettingsService = validationSettingsService;
     }
 
     @Override
@@ -86,12 +82,6 @@ public class VeraPDFValidator implements PDFValidator {
         }
     }
 
-    void validationFinished(VeraPDFValidationResult result) {
-        this.validationResult = result;
-        this.veraPDFProcessor = null;
-        //TODO: send message to main service
-    }
-
     public void terminateValidation() {
         logger.info("Terminating current job");
         if (this.veraPDFProcessor != null) {
@@ -122,8 +112,15 @@ public class VeraPDFValidator implements PDFValidator {
     }
 
     private void validate(String filename) {
-        this.veraPDFProcessor = new VeraPDFProcessor(veraPDFPath, veraPDFErrorLog, filename, this, validationSettings);
-        service.submit(veraPDFProcessor);
+        this.veraPDFProcessor = veraPDFProcessorObjectFactory.getObject();
+        veraPDFProcessor.setFilePath(filename);
+        veraPDFProcessor.setSettings(validationSettingsService.getValidationSettings());
+        CompletableFuture
+                .supplyAsync(veraPDFProcessor, service)
+                .thenAccept(result ->{
+                    this.validationResult = result;
+                    this.veraPDFProcessor = null;
+                });
     }
 
     private VeraPDFServiceStatus.ProcessorStatus evaluateStatus() {

@@ -20,11 +20,11 @@ import java.util.Map;
 @Service
 public class ReportsGenerator {
 
-    @Value("${reports.odsTemplatePath}")
+    @Value("${logius.reports.odsTemplatePath}")
     private String odsTemplatePath;
-    @Value("${reports.notificationEmails}")
+    @Value("${logius.reports.notificationEmails}")
     private String notificationEmails;
-    @Value("${reports.odsTempFolder}")
+    @Value("${logius.reports.odsTempFolder}")
     private String odsTempFolder;
 
     private ReportsGenerator() {

@@ -8,7 +8,8 @@ import java.util.Map;
 
 @Configuration
 public class FileTypesConfiguration {
-    @Bean
+
+    @Bean(name="fileTypes")
     public Map<String, String> fileTypes() {
         Map<String, String> fileTypes = new HashMap<>();
         fileTypes.put("application/pdf", "pdf");

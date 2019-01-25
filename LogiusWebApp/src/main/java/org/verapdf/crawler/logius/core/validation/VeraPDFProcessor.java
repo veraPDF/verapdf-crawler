@@ -4,6 +4,10 @@ import javanet.staxutils.SimpleNamespaceContext;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.validation.VeraPDFValidationResult;
 import org.verapdf.crawler.logius.validation.error.RuleViolationError;
@@ -27,12 +31,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * @author Maksim Bezrukov
  */
 
-public class VeraPDFProcessor implements Runnable {
+@Component
+@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+public class VeraPDFProcessor implements Supplier<VeraPDFValidationResult> {
 
     private static final Logger logger = LoggerFactory.getLogger(VeraPDFProcessor.class);
 
@@ -44,19 +51,23 @@ public class VeraPDFProcessor implements Runnable {
 
     private final String verapdfPath;
     private final File veraPDFErrorLog;
-    private final String filePath;
-    private final ValidationSettings settings;
+    private String filePath;
+    private ValidationSettings settings;
     private Process process;
-    private VeraPDFValidator validator;
     private boolean stopped = false;
 
-    VeraPDFProcessor(String verapdfPath, File veraPDFErrorLog,
-                     String filePath, VeraPDFValidator validator, ValidationSettings settings) {
+    VeraPDFProcessor(@Value("${veraPDFService.verapdfPath}") String verapdfPath,
+                     @Value("${veraPDFService.verapdfErrors}") String veraPDFErrorLog) {
         this.verapdfPath = verapdfPath;
+        this.veraPDFErrorLog = new File(veraPDFErrorLog);
+    }
+
+    public void setFilePath(String filePath) {
         this.filePath = filePath;
-        this.validator = validator;
+    }
+
+    public void setSettings(ValidationSettings settings) {
         this.settings = settings;
-        this.veraPDFErrorLog = veraPDFErrorLog;
     }
 
     private File getVeraPDFReport(String filename) throws IOException, InterruptedException {
@@ -79,52 +90,6 @@ public class VeraPDFProcessor implements Runnable {
         return file;
     }
 
-    @Override
-    public void run() {
-        VeraPDFValidationResult result;
-        File report = null;
-        File tempPdfFile = null;
-        try {
-            tempPdfFile = checkExtension(this.filePath);
-            String toValidatePath = tempPdfFile == null ? this.filePath : tempPdfFile.getAbsolutePath();
-            report = getVeraPDFReport(toValidatePath);
-            if (report != null && !stopped) {
-                logger.info("Obtaining result structure");
-                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-                dbf.setNamespaceAware(true);
-                DocumentBuilder db = dbf.newDocumentBuilder();
-                Document document = db.parse(report);
-                XPathFactory xpf = XPathFactory.newInstance();
-                XPath xpath = xpf.newXPath();
-                SimpleNamespaceContext nsc = new SimpleNamespaceContext();
-                addNameSpaces(nsc);
-                xpath.setNamespaceContext(nsc);
-                result = generateBaseResult(document, xpath);
-                evaluateProperties(result, document, xpath);
-            } else {
-                result = generateProblemResult("Some problem in report generation");
-            }
-        } catch (InterruptedException e) {
-            String message = "Process has been interrupted";
-            logger.info(message, e);
-            result = generateProblemResult(message, e);
-        } catch (Throwable e) {
-            String message = "Some problem in generating result";
-            logger.info(message, e);
-            result = generateProblemResult(message, e);
-        } finally {
-            logger.info("Finished");
-            if (report != null && !report.delete()) {
-                logger.info("Report has not been deleted manually");
-            }
-            if (tempPdfFile != null && !tempPdfFile.delete()) {
-                logger.info("Temp pdf file has not been deleted manually");
-            }
-        }
-        if (!stopped) {
-            this.validator.validationFinished(result);
-        }
-    }
 
     private File checkExtension(String filePath) {
         if (!filePath.endsWith(".pdf")) {
@@ -266,5 +231,53 @@ public class VeraPDFProcessor implements Runnable {
         VeraPDFValidationResult res = new VeraPDFValidationResult();
         res.addValidationError(new ValidationError(message));
         return res;
+    }
+
+    @Override
+    public VeraPDFValidationResult get() {
+        VeraPDFValidationResult result;
+        File report = null;
+        File tempPdfFile = null;
+        try {
+            tempPdfFile = checkExtension(this.filePath);
+            String toValidatePath = tempPdfFile == null ? this.filePath : tempPdfFile.getAbsolutePath();
+            report = getVeraPDFReport(toValidatePath);
+            if (report != null && !stopped) {
+                logger.info("Obtaining result structure");
+                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                dbf.setNamespaceAware(true);
+                DocumentBuilder db = dbf.newDocumentBuilder();
+                Document document = db.parse(report);
+                XPathFactory xpf = XPathFactory.newInstance();
+                XPath xpath = xpf.newXPath();
+                SimpleNamespaceContext nsc = new SimpleNamespaceContext();
+                addNameSpaces(nsc);
+                xpath.setNamespaceContext(nsc);
+                result = generateBaseResult(document, xpath);
+                evaluateProperties(result, document, xpath);
+            } else {
+                result = generateProblemResult("Some problem in report generation");
+            }
+        } catch (InterruptedException e) {
+            String message = "Process has been interrupted";
+            logger.info(message, e);
+            result = generateProblemResult(message, e);
+        } catch (Throwable e) {
+            String message = "Some problem in generating result";
+            logger.info(message, e);
+            result = generateProblemResult(message, e);
+        } finally {
+            logger.info("Finished");
+            if (report != null && !report.delete()) {
+                logger.info("Report has not been deleted manually");
+            }
+            if (tempPdfFile != null && !tempPdfFile.delete()) {
+                logger.info("Temp pdf file has not been deleted manually");
+            }
+        }
+        if (!stopped) {
+            return result;
+        }
+        return null;
     }
 }

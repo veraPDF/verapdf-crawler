@@ -1,5 +1,6 @@
 package org.verapdf.crawler.logius.core.tasks;
 
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.verapdf.crawler.logius.core.email.SendEmail;
 import org.verapdf.crawler.logius.service.MonitoringCrawlJobStatusService;
@@ -8,7 +9,7 @@ import org.verapdf.crawler.logius.service.MonitoringCrawlJobStatusService;
  * @author Maksim Bezrukov
  */
 
-@Service
+@Component
 public class MonitorCrawlJobStatusTask extends AbstractTask {
     private static final long SLEEP_DURATION = 60 * 1000;
 

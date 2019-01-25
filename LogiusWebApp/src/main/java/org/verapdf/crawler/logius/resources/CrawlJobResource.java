@@ -71,8 +71,8 @@ public class CrawlJobResource {
         long totalCount = crawlJobDAO.count(domainFilter, finished);
         List<CrawlJob> crawlJobs = crawlJobDAO.find(domainFilter, finished, startParam, limitParam);
         HttpHeaders headers = new HttpHeaders();
-        headers.add("X-Total-Count", "" + totalCount);
-        return new ResponseEntity<>(crawlJobs, headers, HttpStatus.OK);
+        headers.add("X-Total-Count", String.valueOf(totalCount));
+        return ResponseEntity.ok().headers(headers).body(crawlJobs);
     }
 
     @PostMapping("/{domain}")
@@ -218,40 +218,8 @@ public class CrawlJobResource {
         }
 
         crawlJob.getCrawlRequests().removeIf(request -> email.equals(request.getEmailAddress()));
-
-//        if (crawlJob.getCrawlRequests().size() == 0) {
-//            // todo: clarify if possible/required to terminate CrawlJob if no associated CrawlRequests left
-//        }
-
         return ResponseEntity.ok(crawlJob.getCrawlRequests());
     }
-//
-//    @GET
-//    @Path("/{domain}/documents")
-//    static List<Object> getDomainDocuments(@PathParam("domain") String domain,
-//                                           @QueryParam("startDate") DateParam startDate,
-//                                           @QueryParam("type") String type,
-//                                           @QueryParam("start") IntParam start,
-//                                           @QueryParam("limit") IntParam limit,
-//                                           @QueryParam("property") List<String> properties) {
-//        /* todo: introduce new domain object DomainDocument with the following structure:
-//            {
-//                url: '',
-//                contentType: '',
-//                compliant: true,
-//                properties: {
-//                    requestedProperty1: '',
-//                    requestedProperty2: '',
-//                    ...
-//                },
-//                errors: [
-//                    'Error description 1',
-//                    'Error description 2'
-//                ]
-//            }
-//         */
-//        return null;
-//    }
 
 
     public void startCrawlJob(CrawlJob crawlJob) {

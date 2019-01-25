@@ -3,6 +3,7 @@ package org.verapdf.crawler.logius.core.tasks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.verapdf.crawler.logius.core.email.SendEmail;
 
@@ -16,14 +17,14 @@ import java.nio.file.attribute.FileTime;
  * @author Maksim Bezrukov
  */
 
-@Service
+@Component
 public class ODSCleanerTask extends AbstractTask {
     private static final Logger logger = LoggerFactory.getLogger(HeritrixCleanerTask.class);
     private static final long SLEEP_DURATION = 60 * 60 * 1000;
     private static final long FILE_LIFETIME_IN_MILLIS = 7 * 24 * 60 * 60 * 1000;
     private String odsTempFolder;
 
-    public ODSCleanerTask(@Value("${reports.odsTempFolder}") String odsTempFolder, SendEmail sendEmail) {
+    public ODSCleanerTask(@Value("${logius.reports.odsTempFolder}") String odsTempFolder, SendEmail sendEmail) {
         super("ODSCleanerService", SLEEP_DURATION, sendEmail);
         this.odsTempFolder = odsTempFolder;
     }

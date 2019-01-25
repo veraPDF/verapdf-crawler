@@ -2,6 +2,7 @@ package org.verapdf.crawler.logius.core.tasks;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.verapdf.crawler.logius.core.email.SendEmail;
 import org.verapdf.crawler.logius.core.heritrix.HeritrixClient;
@@ -17,7 +18,7 @@ import java.util.Set;
 /**
  * @author Maksim Bezrukov
  */
-@Service
+@Component
 public class HeritrixCleanerTask extends AbstractTask {
     private static final Logger logger = LoggerFactory.getLogger(HeritrixCleanerTask.class);
     private static final long SLEEP_DURATION = 60 * 1000;

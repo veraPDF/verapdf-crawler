@@ -67,7 +67,7 @@ public class PDFWamProcessor extends PDFProcessorAdapter {
                 return generateErrorResult();
             }
         }
-        return super.evaluateProperties(job);
+        return Collections.emptyMap();
     }
 
     private InputStream startProcess(ValidationJob job) throws IOException, InterruptedException {
