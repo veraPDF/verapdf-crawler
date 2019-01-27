@@ -18,22 +18,18 @@ public class ValidationSettings {
         this.namespaces = namespaces;
     }
 
-    @JsonProperty
     public Map<String, List<String>> getProperties() {
         return properties;
     }
 
-    @JsonProperty
     public void setProperties(Map<String, List<String>> properties) {
         this.properties = properties;
     }
 
-    @JsonProperty
     public Map<String, String> getNamespaces() {
         return namespaces;
     }
 
-    @JsonProperty
     public void setNamespaces(Map<String, String> namespaces) {
         this.namespaces = namespaces;
     }

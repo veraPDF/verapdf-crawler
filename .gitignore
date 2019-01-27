@@ -56,3 +56,6 @@ buildNumber.properties
 **/config-dev.yml
 **/sample_configuration_dev.cxml
 
+# Local properties
+application-local.properties
+application-local.yml

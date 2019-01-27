@@ -10,9 +10,7 @@ import java.util.List;
  */
 public class ValidationQueueStatus {
 
-    @JsonProperty
     private Long count;
-    @JsonProperty
     private List<ValidationJob> topDocuments;
 
     public ValidationQueueStatus() {

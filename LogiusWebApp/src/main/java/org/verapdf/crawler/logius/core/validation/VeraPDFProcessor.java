@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -39,7 +40,7 @@ import java.util.function.Supplier;
 
 @Component
 @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-public class VeraPDFProcessor implements Supplier<VeraPDFValidationResult> {
+public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
 
     private static final Logger logger = LoggerFactory.getLogger(VeraPDFProcessor.class);
 
@@ -234,7 +235,7 @@ public class VeraPDFProcessor implements Supplier<VeraPDFValidationResult> {
     }
 
     @Override
-    public VeraPDFValidationResult get() {
+    public VeraPDFValidationResult call() {
         VeraPDFValidationResult result;
         File report = null;
         File tempPdfFile = null;

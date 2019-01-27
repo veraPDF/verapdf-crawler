@@ -9,11 +9,8 @@ import java.util.List;
  */
 public class HeritrixCrawlJobStatus {
 
-    @JsonProperty
     private String statusDescription;
-    @JsonProperty
     private HeritrixURITotalsStatus uriTotalsStatus;
-    @JsonProperty
     private List<String> jobLogTail;
 
     public HeritrixCrawlJobStatus() {
@@ -50,11 +47,8 @@ public class HeritrixCrawlJobStatus {
     }
 
     public static class HeritrixURITotalsStatus {
-        @JsonProperty
         private long downloadedUriCount;
-        @JsonProperty
         private long queuedUriCount;
-        @JsonProperty
         private long totalUriCount;
 
         public HeritrixURITotalsStatus() {

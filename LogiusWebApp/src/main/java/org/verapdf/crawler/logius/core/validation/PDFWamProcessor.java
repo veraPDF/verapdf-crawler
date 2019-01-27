@@ -2,6 +2,8 @@ package org.verapdf.crawler.logius.core.validation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 
 import java.io.IOException;
@@ -15,6 +17,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Maksim Bezrukov
  */
+
+@Component
 public class PDFWamProcessor extends PDFProcessorAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(PDFWamProcessor.class);
@@ -47,11 +51,9 @@ public class PDFWamProcessor extends PDFProcessorAdapter {
         ERROR_PROPERTY_NAMES.add("pdfwam.error");
     }
 
-    private final String pdfwamPdfcheckerPath;
+    @Value("${logius.pdfProcessors.pdfwamChecker}")
+    private String pdfwamPdfcheckerPath;
 
-    public PDFWamProcessor(String pdfwamPdfcheckerPath) {
-        this.pdfwamPdfcheckerPath = pdfwamPdfcheckerPath;
-    }
 
     public static Set<String> getErrorPropertyNames() {
         return ERROR_PROPERTY_NAMES;

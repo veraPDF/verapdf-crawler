@@ -26,11 +26,9 @@ public class ValidationError {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    @JsonProperty
     private Integer id;
 
     @Column(name = "description")
-    @JsonProperty
     private String description;
 
     public ValidationError() {

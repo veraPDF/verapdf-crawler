@@ -7,8 +7,7 @@ public class VeraPDFServiceStatus {
     private final ProcessorStatus processorStatus;
     private final VeraPDFValidationResult validationResult;
     @JsonCreator
-    public VeraPDFServiceStatus(@JsonProperty("processorStatus") ProcessorStatus processorStatus,
-                                @JsonProperty("validationResult") VeraPDFValidationResult validationResult) {
+    public VeraPDFServiceStatus(ProcessorStatus processorStatus, VeraPDFValidationResult validationResult) {
         this.processorStatus = processorStatus;
         this.validationResult = validationResult;
     }

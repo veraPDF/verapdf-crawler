@@ -18,12 +18,10 @@ public class VeraPDFValidationResult {
         this.validationErrors.add(new ValidationError(validationErrorMessage));
     }
 
-    @JsonProperty
     public List<ValidationError> getValidationErrors() {
         return validationErrors;
     }
 
-    @JsonProperty
     public void setValidationErrors(List<ValidationError> validationErrors) {
         this.validationErrors = validationErrors == null ? Collections.emptyList() : new ArrayList<>(validationErrors);
     }
@@ -32,22 +30,18 @@ public class VeraPDFValidationResult {
         this.validationErrors.add(error);
     }
 
-    @JsonProperty
     public DomainDocument.BaseTestResult getTestResult() {
         return testResult;
     }
 
-    @JsonProperty
     public void setTestResult(DomainDocument.BaseTestResult testResult) {
         this.testResult = testResult;
     }
 
-    @JsonProperty
     public Map<String, String> getProperties() {
         return properties;
     }
 
-    @JsonProperty
     public void setProperties(Map<String, String> properties) {
         this.properties = properties == null ? Collections.emptyMap() : new HashMap<>(properties);
     }

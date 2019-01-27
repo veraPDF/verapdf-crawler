@@ -1,6 +1,5 @@
 package org.verapdf.crawler.logius.monitoring;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.CrawlRequest;
 
@@ -11,13 +10,9 @@ import java.util.List;
  */
 public class CrawlJobStatus {
 
-    @JsonProperty
     private CrawlJob crawlJob;
-    @JsonProperty
     private List<CrawlRequest> crawlRequests;
-    @JsonProperty
     private HeritrixCrawlJobStatus heritrixStatus;
-    @JsonProperty
     private ValidationQueueStatus validationQueueStatus;
 
     public CrawlJobStatus() {

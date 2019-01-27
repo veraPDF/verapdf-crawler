@@ -3,12 +3,14 @@ package org.verapdf.crawler.logius.core.validation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.verapdf.crawler.logius.service.ValidationSettingsService;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 import org.verapdf.crawler.logius.validation.VeraPDFServiceStatus;
 import org.verapdf.crawler.logius.validation.VeraPDFValidationResult;
 
+import javax.annotation.PostConstruct;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,7 +23,7 @@ public class VeraPDFValidator implements PDFValidator {
     private static final long GET_VALIDATION_RESULT_TIMEOUT = 5 * 60 * 1000;      // 5 min
     private static final long GET_VALIDATION_RESULT_CHECK_INTERVAL = 5 * 1000;    // 5 sec
     private static final int MAX_VALIDATION_RETRIES = 3;
-    private final ExecutorService service = Executors.newFixedThreadPool(1);
+    private ThreadPoolTaskExecutor service;
     private VeraPDFProcessor veraPDFProcessor;
     private VeraPDFValidationResult validationResult;
     private ObjectFactory<VeraPDFProcessor> veraPDFProcessorObjectFactory;
@@ -31,6 +33,13 @@ public class VeraPDFValidator implements PDFValidator {
                             ValidationSettingsService validationSettingsService) {
         this.veraPDFProcessorObjectFactory = veraPDFProcessorObjectFactory;
         this.validationSettingsService = validationSettingsService;
+    }
+
+    @PostConstruct
+    public void init(){
+        service = new ThreadPoolTaskExecutor();
+        service.setCorePoolSize(1);
+        service.initialize();
     }
 
     @Override
@@ -115,12 +124,10 @@ public class VeraPDFValidator implements PDFValidator {
         this.veraPDFProcessor = veraPDFProcessorObjectFactory.getObject();
         veraPDFProcessor.setFilePath(filename);
         veraPDFProcessor.setSettings(validationSettingsService.getValidationSettings());
-        CompletableFuture
-                .supplyAsync(veraPDFProcessor, service)
-                .thenAccept(result ->{
-                    this.validationResult = result;
-                    this.veraPDFProcessor = null;
-                });
+        service.submitListenable(veraPDFProcessor).completable().thenAccept(result ->{
+            this.validationResult = result;
+            this.veraPDFProcessor = null;
+        });
     }
 
     private VeraPDFServiceStatus.ProcessorStatus evaluateStatus() {

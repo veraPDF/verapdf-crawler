@@ -1,10 +1,8 @@
 package org.verapdf.crawler.logius.core.email;
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -12,24 +10,20 @@ import org.springframework.stereotype.Service;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.CrawlRequest;
 
-import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class SendEmail {
-    private static final Logger logger = LoggerFactory.getLogger(SendEmail.class);
     private static final String SUBJECT = "Crawling finished for %s";
     private static final String EMAIL_BODY = "Crawler finished verification of documents on the domain(s): %s";
     private final JavaMailSender emailSender;
-    @Qualifier("reportTargetEmails")
+    @Value("${logius.reports.notificationEmails}")
     private String[] reportTargetEmails;
 
     @Autowired
-    public SendEmail(JavaMailSender mailSender, String[] reportTargetEmails) {
+    public SendEmail(JavaMailSender mailSender) {
         this.emailSender = mailSender;
-        this.reportTargetEmails = reportTargetEmails;
     }
 
     @Async
@@ -51,21 +45,13 @@ public class SendEmail {
     }
 
     private void send(String subject, String text, String... recipientAddresses) {
-        try {
-            MimeMessage[] messages = new MimeMessage[recipientAddresses.length];
-            for (int i = 0; i < recipientAddresses.length; i++) {
-                MimeMessage message = emailSender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(message);
-                helper.setTo(recipientAddresses[i]);
+        for (String recipientAddress : recipientAddresses) {
+            emailSender.send(mimeMessage -> {
+                MimeMessageHelper helper = new MimeMessageHelper(mimeMessage);
+                helper.setTo(recipientAddress);
                 helper.setText(text);
                 helper.setSubject(subject);
-
-                messages[i] = message;
-            }
-            emailSender.send(messages);
-        } catch (MessagingException e) {
-            logger.error("Email sending error at addresses " + String.join(", ", recipientAddresses), e);
+            });
         }
-
     }
 }

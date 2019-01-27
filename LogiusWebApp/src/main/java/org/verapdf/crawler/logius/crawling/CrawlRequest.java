@@ -16,25 +16,20 @@ public class CrawlRequest {
     @Id
     @GeneratedValue(generator = "uuid2")
     @GenericGenerator(name = "uuid2", strategy = "uuid2")
-    @JsonProperty
     private String id;
 
     @NotNull
     @ManyToMany(mappedBy = "crawlRequests")
-    @JsonProperty
     private List<CrawlJob> crawlJobs;
 
     @Column(name = "is_finished")
-    @JsonProperty
     private boolean finished;
 
     @Column(name = "report_email")
-    @JsonProperty
     private String emailAddress;
 
     @Column(name = "crawl_since")
     @Temporal(TemporalType.DATE)
-    @JsonProperty
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date crawlSinceTime;
 

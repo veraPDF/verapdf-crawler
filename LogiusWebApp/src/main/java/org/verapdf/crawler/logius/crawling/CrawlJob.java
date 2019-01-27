@@ -2,10 +2,9 @@ package org.verapdf.crawler.logius.crawling;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -17,40 +16,32 @@ public class CrawlJob {
 
     @Id
     @NotEmpty
-    @JsonProperty
     private String domain;
 
     @Column(name = "heritrix_job_id")
-    @JsonProperty
     private String heritrixJobId;
 
     @Column(name = "job_url")
-    @JsonProperty
     private String jobURL;
 
     @Column(name = "start_time")
     @Temporal(TemporalType.TIMESTAMP)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    @JsonProperty
     private Date startTime;
 
     @Column(name = "finish_time")
     @Temporal(TemporalType.TIMESTAMP)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    @JsonProperty
     private Date finishTime;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "job_status")
-    @JsonProperty
     private Status status;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "crawl_service")
-    @JsonProperty
     private CrawlService crawlService;
 
-    @JsonProperty
     @Column(name = "is_finished")
     private boolean finished;
 

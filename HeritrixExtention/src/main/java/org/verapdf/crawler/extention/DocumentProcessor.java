@@ -32,32 +32,7 @@ public class DocumentProcessor extends MirrorWriterProcessor {
     private String jobId;
 
     private String logiusUrl;
-
-    public String getJobId() {
-        return jobId;
-    }
-
-    public void setJobId(String jobId) {
-        this.jobId = jobId;
-    }
-
-    public String getLogiusUrl() {
-        return logiusUrl;
-    }
-
-    public void setLogiusUrl(String logiusUrl) {
-        this.logiusUrl = logiusUrl;
-    }
-
     private Map<String, String> supportedContentTypes;
-
-    public Map<String, String> getSupportedContentTypes() {
-        return supportedContentTypes;
-    }
-
-    public void setSupportedContentTypes(Map<String, String> supportedContentTypes) {
-        this.supportedContentTypes = supportedContentTypes;
-    }
 
     public DocumentProcessor() {
         log("Initializing new document processor object");
@@ -163,5 +138,29 @@ public class DocumentProcessor extends MirrorWriterProcessor {
 
     private static void log(String message) {
         System.out.println(loggingDateFormat.format(new Date()) + " org.verapdf.crawler.extension.DocumentProcessor: " + message);
+    }
+
+    public String getJobId() {
+        return jobId;
+    }
+
+    public void setJobId(String jobId) {
+        this.jobId = jobId;
+    }
+
+    public String getLogiusUrl() {
+        return logiusUrl;
+    }
+
+    public void setLogiusUrl(String logiusUrl) {
+        this.logiusUrl = logiusUrl;
+    }
+
+    public Map<String, String> getSupportedContentTypes() {
+        return supportedContentTypes;
+    }
+
+    public void setSupportedContentTypes(Map<String, String> supportedContentTypes) {
+        this.supportedContentTypes = supportedContentTypes;
     }
 }

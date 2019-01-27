@@ -20,5 +20,10 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <mysql.connector>6.0.6</mysql.connector>
+        <verapdf.version>[0.12.0,0.13.0)</verapdf.version>
+        <hibernate.version>5.2.1.Final</hibernate.version>
+        <spring.version>2.1.1.RELEASE</spring.version>
+        <jopendocument.version>1.3b1</jopendocument.version>
     </properties>
 </project>

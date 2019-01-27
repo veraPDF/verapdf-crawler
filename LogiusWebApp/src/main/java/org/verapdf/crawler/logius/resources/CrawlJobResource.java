@@ -68,11 +68,8 @@ public class CrawlJobResource {
                                      @RequestParam("start") int startParam,
                                      @RequestParam("limit") int limitParam) {
 
-        long totalCount = crawlJobDAO.count(domainFilter, finished);
         List<CrawlJob> crawlJobs = crawlJobDAO.find(domainFilter, finished, startParam, limitParam);
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("X-Total-Count", String.valueOf(totalCount));
-        return ResponseEntity.ok().headers(headers).body(crawlJobs);
+        return ResponseEntity.ok().body(crawlJobs);
     }
 
     @PostMapping("/{domain}")

@@ -8,15 +8,12 @@ import javax.persistence.Embeddable;
 @Embeddable
 public class Rule {
     @Column(name = "specification")
-    @JsonProperty
     private String specification;
 
     @Column(name = "clause")
-    @JsonProperty
     private String clause;
 
     @Column(name = "test_number")
-    @JsonProperty
     private String testNumber;
 
     public Rule() {
