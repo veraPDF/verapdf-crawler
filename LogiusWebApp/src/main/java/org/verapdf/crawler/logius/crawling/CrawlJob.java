@@ -45,7 +45,7 @@ public class CrawlJob {
     @Column(name = "is_finished")
     private boolean finished;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany
     @JoinTable(
             name = "crawl_job_requests_crawl_jobs",
             joinColumns = @JoinColumn(name = "crawl_job_domain"),

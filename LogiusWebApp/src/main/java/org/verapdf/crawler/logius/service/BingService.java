@@ -37,7 +37,6 @@ public class BingService {
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
     private final CrawlJobService crawlJobService;
     private final DocumentResource documentResource;
-    @Qualifier("fileTypes")
     private final Map<String, String> fileTypes;
     private String apiKey;
     private File baseTempFolder;
@@ -47,7 +46,7 @@ public class BingService {
                        @Value("${logius.bing.apiKey}") String apiKey,
                        CrawlJobService crawlJobService,
                        DocumentResource documentResource,
-                       Map<String, String> fileTypes) {
+                       @Qualifier("fileTypes") Map<String, String> fileTypes) {
         this.apiKey = apiKey;
         this.crawlJobService = crawlJobService;
         this.documentResource = documentResource;
