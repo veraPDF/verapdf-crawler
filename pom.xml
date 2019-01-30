@@ -4,27 +4,26 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.verapdf.crawler</groupId>
+    <groupId>org.verapdf.crawler</groupId>
     <artifactId>Logius</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
+
     <modules>
         <module>LogiusWebApp</module>
-        <module>SampleWebApp</module>
         <module>HeritrixExtention</module>
-        <module>VeraPDFService</module>
         <module>Common</module>
+        <module>SampleWebApp</module>
     </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <dropwizard.version>1.2.0-rc5</dropwizard.version>
+        <mysql.connector>6.0.6</mysql.connector>
+        <verapdf.version>[0.12.0,0.13.0)</verapdf.version>
         <hibernate.version>5.2.1.Final</hibernate.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <spring.version>4.0.4.RELEASE</spring.version>
+        <spring.version>2.1.1.RELEASE</spring.version>
+        <jopendocument.version>1.3b1</jopendocument.version>
     </properties>
-
 </project>

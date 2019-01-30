@@ -1,0 +1,659 @@
+* {
+    padding: 0;
+    margin: 0;
+}
+
+html {
+    height: 100%;
+}
+
+body.container-fluid {
+    min-height: 100%;
+    padding: 0;
+}
+
+/* Common */
+.header {
+    top: 0;
+    position: relative;
+    height: 120px;
+    width: 100%;
+}
+
+.header .app-title {
+    color: #1550ad;
+    padding: 20px;
+}
+
+.header #menu_container {
+    float: right;
+    color: #000;
+}
+
+.header #menu_container #menu {
+    list-style: none;
+    padding-right: 10px;
+    margin-bottom: 0;
+}
+
+.header #menu_container #menu li {
+    display: inline-block;
+    padding: 3px 10px;
+    letter-spacing: 1px;
+}
+
+.header a, .header a:visited, .header a:active {
+    text-decoration: none;
+    color: #000;
+}
+
+.main {
+    background: #1550ad;
+    color: white;
+    position: relative;
+    padding: 20px;
+    width: 100%;
+}
+
+.main a {
+    color: white;
+}
+
+.main .form-control, .main .form-control:focus {
+    border-color: #1550ad;
+}
+
+.main .template {
+    display: none !important;
+}
+
+.footer {
+    /* position: absolute; */
+    bottom: 0;
+    width: 100%;
+    height: 5px;
+    background: #1550ad;
+}
+
+.hidden-element {
+    display: none;
+}
+
+.tooltip.error .tooltip-inner {
+    background-color: #fd5858;
+    color: white;
+}
+
+.tooltip.error .arrow::before {
+    border-top-color: #fd5858;
+}
+
+
+/* index.static */
+.main-form {
+    font-size: 22px;
+    display: inline-block;
+}
+
+.main-form p {
+    padding: 5px;
+    margin-bottom: 0;
+}
+
+.main-form .form-control {
+    display: inline;
+    width: 258px;
+}
+
+.main-form .form-label {
+    display: inline-block;
+    min-width: 250px;
+}
+
+.main-form .error-message-container {
+    display: inline-block;
+    width: 410px;
+    margin-top: 15px;
+    font-size: 16px;
+}
+
+.main-form .checkbox-input {
+    opacity: 0;
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    outline: none;
+    cursor: pointer;
+}
+
+.main-form .checkbox-input + .check-label {
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.main-form .checkbox-input + .check-label::before {
+    color: #000;
+    content: '';
+    background-color: #fff;
+    border-radius: 2px;
+    display: inline-block;
+    text-align: center;
+    vertical-align: middle;
+    height: 22px;
+    line-height: 22px;
+    min-width: 22px;
+    margin-top: -5px;
+    margin-right: 10px;
+}
+
+.main-form .checkbox-input:checked + .check-label::before {
+    display: inline-block;
+    content: '✔';
+}
+
+.input-button {
+    margin: 15px 0 15px 15px; /* 0 175px;*/
+    padding: 10px 20px;
+    min-width: 60px;
+    min-height: 30px;
+    height: auto;
+    width: auto;
+    cursor: pointer;
+    color: #1550ad;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 18px;
+    background-color: rgb(255, 255, 255);
+    border: 1px solid #1550ad;
+    text-align: center;
+    float: right;
+}
+
+.input-button:active {
+    box-shadow: inset 0 0 8px rgba(21, 80, 173, 0.5);
+}
+
+.input-button.a-btn {
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.input-button.back-btn {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+}
+
+.main-secondary-data {
+    padding: 10px 5px;
+    font-size: 20px;
+}
+
+.result-table {
+    border: 1px solid rgba(21, 80, 173, 0.5);
+    border-collapse: collapse;
+}
+
+.result-table td {
+    border: 1px solid rgba(21, 80, 173, 0.5);
+    text-align: center;
+    padding: 3px 10px;
+}
+
+.tooltip.error.plasement.right .arrow::before {
+    border-right-color: #fd5858;
+    border-top-color: #1550ad;
+}
+
+/* domains.static */
+
+.main h4 {
+    color: white;
+    margin-bottom: 30px;
+}
+
+.domains-list-title {
+    flex: 0 0 200px;
+}
+
+.domains-list-error {
+    color: #fd5858;
+    text-align: center;
+    margin-right: 20px;
+}
+
+.domain-filter {
+    flex: 0 0 220px;
+    margin: 10px 0 10px auto;
+}
+
+.domain-filter .input-group-addon {
+    border-color: #1550ad;
+    color: #1550ad;
+    background-color: white;
+}
+
+.domains-list {
+    color: white;
+}
+
+.domains-list td, .domains-list th {
+    border-top: none;
+    vertical-align: middle;
+}
+
+.domains-list .col-date {
+    width: 200px;
+}
+
+.domains-list .col-status {
+    width: 100px;
+}
+
+.domains-list th.col-actions {
+    width: 200px;
+}
+
+.domains-list td.col-actions {
+    width: 60px;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.domains-list td.col-actions.hide {
+    display: none;
+}
+
+.domains-list a, .domains-list a:active, .domains-list a:hover, .domains-list a:focus {
+    color: white;
+    text-decoration: none;
+}
+
+.domains-list tr.disabled a.action, .domains-list tr.disabled a.action:active,
+.domains-list tr.disabled a.action:hover, .domains-list tr.disabled a.action:focus {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.domains-list tr.running .empty-action, .domains-list tr.running .action-resume {
+    display: none !important;
+}
+
+.domains-list tr.paused .empty-action, .domains-list tr.paused .action-pause {
+    display: none !important;
+}
+
+.domains-list tr.finished .action-resume, .domains-list tr.finished .action-pause {
+    display: none !important;
+}
+
+.domains-list tr.failed .action-resume, .domains-list tr.failed .action-pause {
+    display: none !important;
+}
+
+a.action {
+    text-decoration: none;
+    align-items: center;
+    width: 50px;
+}
+
+a.action .label {
+    font-size: 12px;
+}
+
+a.action.disabled {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.pagination {
+    margin-bottom: 0;
+}
+
+.pagination .page-link {
+    color: #1550ad;
+}
+
+.pagination .active .page-link {
+    color: white;
+    background-color: #1550ad;
+    border-color: white;
+}
+
+.pagination .page-link, .pagination .disabled .page-link {
+    border-color: #1550ad;
+}
+
+.pagination .page-item.hide {
+    display: none;
+}
+
+/* Domain details */
+.status-paused .action.pause {
+    display: none !important;
+}
+
+.status-running .action.resume {
+    display: none !important;
+}
+
+.status-new .action.resume {
+    display: none !important;
+}
+
+.status-finished .action.pause, .status-finished .action.resume {
+    display: none !important;
+}
+
+.status-failed .action.pause, .status-failed .action.resume {
+    display: none !important;
+}
+
+.domain-name span {
+    text-decoration: underline;
+}
+
+.domain-error {
+    color: #fd5858;
+}
+
+.job-details span.job-date {
+    font-size: 14px;
+}
+
+.job-details .status-text {
+    text-transform: capitalize;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.job-details .action.disabled {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.job-mails {
+    padding-top: 10px;
+}
+
+.job-mails .label {
+    display: inline-block;
+    padding-right: 10px;
+    padding-top: 7px;
+}
+
+.job-mails .read-mode-view {
+    display: flex;
+    min-height: 66px;
+}
+
+.job-mails .edit-mode-view, .job-mails.edit-mode .read-mode-view {
+    display: none;
+}
+
+.job-mails.edit-mode .edit-mode-view {
+    display: flex;
+}
+
+.job-mails .action {
+    width: 25px;
+    padding: 2px 0;
+}
+
+.job-mails .action.edit {
+    margin-left: 10px;
+    margin-top: 6px;
+    visibility: hidden;
+}
+
+.job-mails.editable .action.edit {
+    visibility: visible;
+}
+
+.job-mails span.job-mails-list {
+    padding-top: 7px;
+}
+
+.job-mails textarea.job-mails-list {
+    width: 400px;
+}
+
+.job-mails textarea.job-mails-list.error {
+    background-color: #ffc9ca;
+}
+
+.nav-tabs .nav-link {
+    color: white;
+}
+
+.nav-tabs .nav-link.active {
+    color: white;
+    background: transparent;
+}
+
+.tab-pane {
+    padding-top: 20px;
+}
+
+.summary .summary-chart {
+    width: 200px;
+    height: 200px;
+    float: left;
+}
+
+.summary form {
+    padding-bottom: 15px;
+}
+
+.summary .good-documents, .summary .bad-documents {
+    margin: 0 0 5px 220px;
+    padding: 5px 10px;
+    border-radius: 2px;
+}
+
+.summary .good-documents {
+    background-color: #43c46f;
+}
+
+.summary .bad-documents {
+    background-color: #fd5858;
+}
+
+.summary .percent {
+    font-size: 2rem;
+    float: left;
+    padding-left: 5px;
+    padding-right: 15px;
+}
+
+.documents form {
+    padding-bottom: 15px;
+}
+
+.documents .col {
+    height: 600px;
+}
+
+.documents .col.col-sm-6 {
+    height: 400px;
+}
+
+.errors {
+    min-height: 330px;
+}
+
+.errors form {
+    padding-bottom: 15px;
+}
+
+.errors .errors-chart {
+    width: 300px;
+    height: 300px;
+    float: left;
+}
+
+.errors .custom-select {
+    border-color: #1550ad;
+}
+
+.errors .tt-menu {
+    background-color: white;
+    min-width: 176px;
+    color: #495057;
+    margin: -4px 0 0 0;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
+    border-bottom: 1px solid #1550ad;
+    border-left: 1px solid #1550ad;
+    border-right: 1px solid #1550ad;
+}
+
+.errors .tt-dataset {
+    border-top: 1px solid #b2b9c0;
+    margin: 2px 0 0 0;
+    padding: 1px 10px 3px;
+    cursor: pointer;
+    font-size: .875rem;
+}
+
+.errors .errors-list {
+    margin-left: 320px;
+}
+
+.errors .errors-list td {
+    vertical-align: top;
+}
+
+.errors .errors-list .count {
+    font-weight: bold;
+    border-radius: 12px;
+    padding: 0 8px 2px;
+    color: #1550ad;
+    text-align: center;
+}
+
+.errors .errors-list .error-description {
+    margin-left: 10px;
+    padding: 0 0 15px 10px;
+}
+
+.errors .errors-list .error-description .short {
+    font-weight: bold;
+}
+
+.errors .errors-list .error-description .full {
+    font-size: 14px;
+}
+
+.links {
+    padding-top: 20px;
+}
+
+.about a {
+    text-decoration: underline;
+}
+
+.about ul {
+    margin-left: 40px;
+}
+
+.important-notice {
+    border: 1px solid white;
+    padding: 10px;
+}
+
+/* Status page */
+.health-checks {
+    margin-bottom: 30px;
+}
+
+.health-checks h4 {
+    margin-bottom: 20px;
+}
+
+.health-checks .loading {
+    height: 144px;
+}
+
+.health-checks .loaded div {
+    display: flex;
+}
+
+.health-checks .check-name {
+    flex: 0 0 250px;
+}
+
+.health-checks .check-status {
+    flex: 0 0 100px;
+}
+
+.health-checks .healthy .check-status {
+    color: #43c46f;
+}
+
+.health-checks .unhealthy .check-status {
+    color: #fd5858;
+}
+
+.active-domains-list td, .active-domains-list th {
+    border-top: none;
+    vertical-align: middle;
+}
+
+.active-domains-list .col-date {
+    width: 200px;
+}
+
+.active-domains-list .col-status {
+    width: 100px;
+}
+
+.validation-queue td, .validation-queue th {
+    border-top: none;
+    vertical-align: middle;
+}
+
+.validation-queue .in-progress {
+    color: #43c46f;
+}
+
+.validation-queue .paused {
+    color: #fff90a;
+}
+
+/* Domain status page */
+.status-loaded {
+    display: none;
+}
+
+.job-requests td, .job-requests th {
+    border-top: none;
+    vertical-align: middle;
+}
+
+.job-requests .col-id {
+    width: 350px;
+}
+
+.job-requests .col-status {
+    width: 100px;
+}
+
+.heritrix {
+    margin: 40px 0;
+}
+
+.heritrix .title {
+    display: flex;
+    justify-content: space-between;
+}
+
+.heritrix .crawled-urls {
+    margin-bottom: 20px;
+}
+
+.heritrix td, .heritrix th {
+    border-top: none;
+    vertical-align: middle;
+}
+
+.heritrix td {
+    font-size: 14px;
+}

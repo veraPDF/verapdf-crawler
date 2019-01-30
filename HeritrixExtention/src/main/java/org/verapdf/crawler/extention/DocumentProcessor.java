@@ -2,7 +2,6 @@ package org.verapdf.crawler.extention;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.httpclient.Header;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
@@ -12,13 +11,10 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.archive.modules.CrawlURI;
 import org.archive.modules.writer.MirrorWriterProcessor;
 import org.verapdf.common.GracefulHttpClient;
-import org.verapdf.common.RetryFailedException;
 
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -36,32 +32,7 @@ public class DocumentProcessor extends MirrorWriterProcessor {
     private String jobId;
 
     private String logiusUrl;
-
-    public String getJobId() {
-        return jobId;
-    }
-
-    public void setJobId(String jobId) {
-        this.jobId = jobId;
-    }
-
-    public String getLogiusUrl() {
-        return logiusUrl;
-    }
-
-    public void setLogiusUrl(String logiusUrl) {
-        this.logiusUrl = logiusUrl;
-    }
-
     private Map<String, String> supportedContentTypes;
-
-    public Map<String, String> getSupportedContentTypes() {
-        return supportedContentTypes;
-    }
-
-    public void setSupportedContentTypes(Map<String, String> supportedContentTypes) {
-        this.supportedContentTypes = supportedContentTypes;
-    }
 
     public DocumentProcessor() {
         log("Initializing new document processor object");
@@ -127,10 +98,10 @@ public class DocumentProcessor extends MirrorWriterProcessor {
 
             // Set last modified
             log("Setting last modified date");
-            Header lastModifiedHeader = crawlURI.getHttpMethod().getResponseHeader("Last-Modified");
+            String lastModifiedHeader = crawlURI.getHttpResponseHeader("Last-Modified");
             if (lastModifiedHeader != null) {
                 try {
-                    document.setLastModified(dateFormat.parse(lastModifiedHeader.getValue()));
+                    document.setLastModified(dateFormat.parse(lastModifiedHeader));
                 } catch (ParseException e) {
                     log("Fail to parse " + lastModifiedHeader + " for " + uri + ", lastModified won't be set for this document.");
                     e.printStackTrace();
@@ -147,7 +118,7 @@ public class DocumentProcessor extends MirrorWriterProcessor {
 
             log("Sending request");
             try (CloseableHttpClient httpClient = new GracefulHttpClient(MAX_RETRIES, RETRY_INTERVAL)) {
-                try (CloseableHttpResponse response = httpClient.execute(request)){
+                try (CloseableHttpResponse response = httpClient.execute(request)) {
                     StatusLine statusLine = response.getStatusLine();
                     int statusCode = statusLine.getStatusCode();
                     log("Response obtained with status code " + statusCode);
@@ -167,5 +138,29 @@ public class DocumentProcessor extends MirrorWriterProcessor {
 
     private static void log(String message) {
         System.out.println(loggingDateFormat.format(new Date()) + " org.verapdf.crawler.extension.DocumentProcessor: " + message);
+    }
+
+    public String getJobId() {
+        return jobId;
+    }
+
+    public void setJobId(String jobId) {
+        this.jobId = jobId;
+    }
+
+    public String getLogiusUrl() {
+        return logiusUrl;
+    }
+
+    public void setLogiusUrl(String logiusUrl) {
+        this.logiusUrl = logiusUrl;
+    }
+
+    public Map<String, String> getSupportedContentTypes() {
+        return supportedContentTypes;
+    }
+
+    public void setSupportedContentTypes(Map<String, String> supportedContentTypes) {
+        this.supportedContentTypes = supportedContentTypes;
     }
 }

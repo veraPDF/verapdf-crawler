@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
+
+    <title>Crawl jobs</title>
+    <script crossorigin="anonymous" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script crossorigin="anonymous"
+            src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+    <script crossorigin="anonymous"
+            src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"></script>
+    <script src="assets/vendor/moment.min.js"></script>
+    <script src="assets/vendor/pikaday.min.js"></script>
+    <script src="assets/vendor/typeahead.bundle.min.js"></script>
+    <script crossorigin="anonymous" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
+
+    <script src="assets/js/common.js"></script>
+    <script src="assets/js/domain.js"></script>
+
+    <link crossorigin="anonymous" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css"
+          rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css"
+          rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="assets/vendor/pikaday.css" rel="stylesheet">
+
+
+    <!-- TODO: Set correct path -->
+    <link href="assets/css/main.css" rel="stylesheet" type="text/css">
+</head>
+<body class="container-fluid">
+<header class="header">
+    <h2 class="app-title">Does your site have documents in open formats?</h2>
+    <nav id="menu_container">
+        <ul id="menu">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="domains.html">Test results</a></li>
+            <li><a href="what-we-test.html">What we test</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+    <div class="d-flex flex-nowrap justify-content-between">
+        <h4 class="domain-name">Results for <span></span></h4>
+        <div class="domain-error"></div>
+    </div>
+
+    <div class="job-details d-flex justify-content-start">
+        <div class="mr-auto">
+            <span class="job-date mr-auto"></span>
+            <!--
+            <div class="job-mails d-flex justify-content-start">
+                <span class="label"></span>
+                <div class="read-mode-view align-items-start">
+                    <span class="job-mails-list"></span>
+                    <a href="#" class="action edit material-icons" title="Edit emails" data-toggle="tooltip" data-placement="right">create</a>
+                </div>
+                <div class="edit-mode-view">
+                    <label>
+                        <textarea class="form-control job-mails-list"></textarea>
+                    </label>
+                    <div class="d-flex flex-column">
+                        <a href="#" class="action done material-icons" title="Apply" data-toggle="tooltip" data-placement="right">done</a>
+                        <a href="#" class="action cancel material-icons" title="Cancel" data-toggle="tooltip" data-placement="right">clear</a>
+                    </div>
+                </div>
+            </div>
+            -->
+        </div>
+        <div class="d-flex flex-column align-items-center">
+            <b><a class="status-text" href="#"></a></b>
+            <div class="d-flex flex-row align-items-center">
+                <a class="action resume d-flex flex-column" href="#" id="action-resume">
+                    <span class="material-icons">play_arrow</span>
+                    <span class="label">Resume</span>
+                </a>
+                <a class="action pause d-flex flex-column" href="#" id="action-pause">
+                    <span class="material-icons">pause</span>
+                    <span class="label">Pause</span>
+                </a>
+                <a class="action restart d-flex flex-column" href="#" id="action-restart">
+                    <span class="material-icons">replay</span>
+                    <span class="label">Restart</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item">
+            <a aria-controls="summary" class="nav-link active" data-toggle="tab" href="#summary">Summary</a>
+        </li>
+        <li class="nav-item">
+            <a aria-controls="documents" class="nav-link" data-toggle="tab" href="#documents">Documents</a>
+        </li>
+        <li class="nav-item">
+            <a aria-controls="errors" class="nav-link" data-toggle="tab" href="#errors">Common PDF/A errors</a>
+        </li>
+        <li class="nav-item">
+            <a aria-controls="errors-pdfwam" class="nav-link" data-toggle="tab" href="#errors-pdfwam">Common PDF/UA
+                errors</a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+        <div class="summary tab-pane fade show active" id="summary" role="tabpanel">
+            <div class="summary-chart">
+                <canvas id="summary-chart"></canvas>
+            </div>
+            <form class="form-inline d-flex justify-content-end">
+                <input class="form-control form-control-sm" id="summary-date-input" placeholder="Documents from"
+                       type="text">
+            </form>
+            <div class="good-documents">
+                <div class="percent"></div>
+                <div><span class="pdf"></span> PDF/A-1a and PDF/A-2a documents</div>
+                <div><span class="office"></span> ODF documents</div>
+            </div>
+            <div class="bad-documents">
+                <div class="percent"></div>
+                <div><span class="pdf"></span> PDF documents that do not conform to PDF/A-1a or PDF/A-2a</div>
+                <div><span class="office"></span> documents with an application-based format</div>
+            </div>
+        </div>
+
+        <div class="documents tab-pane fade" id="documents" role="tabpanel">
+            <form class="form-inline d-flex justify-content-between">
+                <div class="documents-summary">
+                    <span class="total-count"></span> PDF documents found
+                    (<span class="open-count"></span> open, <span class="not-open-count"></span> not open)
+                </div>
+                <input class="form-control form-control-sm" id="documents-date-input" placeholder="Documents from"
+                       type="text">
+            </form>
+            <div class="row">
+                <div class="col col-sm-6">
+                    <canvas id="flavours-chart"></canvas>
+                </div>
+                <div class="col col-sm-6">
+                    <canvas id="versions-chart"></canvas>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <canvas id="producers-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="errors tab-pane fade" id="errors" role="tabpanel">
+            <form class="form-inline d-flex justify-content-end">
+                <!--div class="btn-group">
+                    <button class="btn btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Any PDF/A flavour
+                    </button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="#">Any PDF/A flavour</a>
+                        <a class="dropdown-item" href="#">PDF/A-1a</a>
+                        <a class="dropdown-item" href="#">PDF/A-1b</a>
+                        <a class="dropdown-item" href="#">PDF/A-2a</a>
+                        <a class="dropdown-item" href="#">PDF/A-2b</a>
+                        <a class="dropdown-item" href="#">PDF/A-2u</a>
+                        <a class="dropdown-item" href="#">PDF/A-3a</a>
+                        <a class="dropdown-item" href="#">PDF/A-3b</a>
+                        <a class="dropdown-item" href="#">PDF/A-3u</a>
+                    </div>
+                </div-->
+                <select class="form-control form-control-sm" id="errors-flavour-input" title="Flavour">
+                    <option selected value="">Any PDF/A flavour</option>
+                </select>
+                <select class="form-control form-control-sm" id="errors-version-input" title="Version">
+                    <option selected value="">Any PDF version</option>
+                </select>
+                <input class="form-control form-control-sm" id="errors-producer-input" placeholder="Any producer"
+                       type="text">
+                <input class="form-control form-control-sm" id="errors-date-input" placeholder="Documents from"
+                       type="text">
+            </form>
+            <div>
+                <div class="errors-chart">
+                    <canvas id="errors-chart"></canvas>
+                </div>
+                <table class="errors-list">
+                    <tbody>
+                    <tr class="template">
+                        <td>
+                            <div class="count"></div>
+                        </td>
+                        <td class="error-description">
+                            <div><a class="short"></a></div>
+                            <div class="full"></div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="errors tab-pane fade" id="errors-pdfwam" role="tabpanel">
+            <form class="form-inline d-flex justify-content-end">
+                <select class="form-control form-control-sm" id="errors-pdfwam-flavour-input" title="Flavour">
+                    <option selected value="">Any PDF/A flavour</option>
+                </select>
+                <select class="form-control form-control-sm" id="errors-pdfwam-version-input" title="Version">
+                    <option selected value="">Any PDF version</option>
+                </select>
+                <input class="form-control form-control-sm" id="errors-pdfwam-producer-input" placeholder="Any producer"
+                       type="text">
+                <input class="form-control form-control-sm" id="errors-pdfwam-date-input" placeholder="Documents from"
+                       type="text">
+            </form>
+            <div>
+                <div class="errors-chart">
+                    <canvas id="errors-pdfwam-chart"></canvas>
+                </div>
+                <table class="errors-list">
+                    <tbody>
+                    <tr class="template">
+                        <td>
+                            <div class="count"></div>
+                        </td>
+                        <td class="error-description">
+                            <div><a class="short"></a></div>
+                            <div class="full"></div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="links d-flex justify-content-end">
+        <a class="ods-report-link" href="#" target="_blank">download ODS</a>
+    </div>
+
+</main>
+<footer class="footer"></footer>
+</body>
+</html>

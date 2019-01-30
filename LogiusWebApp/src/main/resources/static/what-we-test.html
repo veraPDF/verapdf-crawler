@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
+
+    <title>Crawl jobs</title>
+
+    <link crossorigin="anonymous" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css"
+          integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" rel="stylesheet">
+    <link href="assets/vendor/pikaday.css" media="screen" rel="stylesheet" type="text/css"/>
+
+    <link href="assets/css/main.css" rel="stylesheet" type="text/css">
+
+    <script crossorigin="anonymous"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script crossorigin="anonymous"
+            integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4"
+            src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+    <script crossorigin="anonymous"
+            integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1"
+            src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js"></script>
+
+</head>
+<body>
+<header class="header">
+    <h2 class="app-title">Does your site have documents in open formats?</h2>
+    <nav id="menu_container">
+        <ul id="menu">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="domains.html">Test results</a></li>
+            <li><a href="what-we-test.html">What we test</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+    <div class="about">
+        <h1>What this tool tests</h1>
+        <p>This tool finds and analyses the documents on a given website and outputs the number of:</p>
+        <ul>
+            <li>documents in PDF/A format by accessibility level "a", "u" or "b"</li>
+            <li>documents formatted in other PDF versions such as PDF 1.4, 1.5, 1.6 or 1.7</li>
+            <li>documents in Open Document Format (ODF)</li>
+            <li>documents in vendor dependent formats</li>
+        </ul>
+        <h1>Results</h1>
+        <p>In the green bar we count the documents that comply with the open standards PDF/A or ODF. The red bar
+            contains the counts of the other document formats.</p>
+        <p>Under the Documents tab we present statistics by PDF/A version (1, 2, 3) and accessibility level ('a', 'u',
+            'b') and by PDF version (1.3, 1.4, 1.5, 1.6, 1.7, etc). The Common errors tab gives statistics for the most
+            frequently occurring issues that prevent PDF documents from being PDF/A compliant.</p>
+        <p>The tool uses the <a href="http://verapdf.org">VeraPDF checker</a> to test for PDF/A compliance. It
+            determines formats other than PDF/A by reading the version declaration in the file.</p>
+        <p>The downloadable report contains all statistics plus the URLs of all documents that were not found to be
+            PDF/A, PDF 1.7 or ODF compliant.</p>
+        <h1>Options</h1>
+        <p>By default, the tool will use the Heritrix crawler to find documents a given website. If you tick the "Use
+            Bing for Crawling" box, the tool will use the Bing&#8482; seach engine to find documents. This may give
+            somewhat faster results as the tool does not need to crawl the website, but the Bing search may not yield up
+            to date references to all documents on the site in a given moment.</p>
+        <p>The tool allows you to analyse and count documents younger than a specified date. We added this feature
+            because many organizations only recently have policies to publish documents in PDF/A or ODF format.</p>
+        <p>If you specify a date, the tool actually analyses all documents on the website but only counts those from the
+            date specified. If you launch another job for the same website but with another date, the tool will use the
+            data already stored in the internal database. This saves resources when launching different jobs for the
+            same website.</p>
+    </div>
+    <div class="important-notice">
+        <b>Important notice</b>
+        This tool uses open source software, notably the Heritrix crawler and the VeraPDF analyser.
+        We do not guarantee the correct and accurate functioning of this software.
+        It is possible that the crawler does not find all documents on a website.
+        The analysis may contain false positives and false negatives for the different document types and accessibility
+        levels.
+        We make this tool available 'as-is' without any warranties, and decline any liability for damage that may result
+        directly or indirectly from its use.
+    </div>
+</main>
+<footer class="footer"></footer>
+</body>
+</html>
