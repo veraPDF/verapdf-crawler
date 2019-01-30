@@ -9,6 +9,7 @@ import org.verapdf.crawler.logius.document.DomainDocument_;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 import org.verapdf.crawler.logius.validation.ValidationJob_;
 
+import javax.persistence.NoResultException;
 import javax.persistence.criteria.*;
 import java.util.List;
 
@@ -26,8 +27,8 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         return getValidationJobWithStatus(ValidationJob.Status.NOT_STARTED);
     }
 
-    public ValidationJob current() {
-        return getValidationJobWithStatus(ValidationJob.Status.IN_PROGRESS);
+    public List<ValidationJob> current() {
+        return getValidationJobWithStatus(ValidationJob.Status.IN_PROGRESS, null);
     }
 
     private ValidationJob getValidationJobWithStatus(ValidationJob.Status status) {
@@ -38,7 +39,27 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
                 builder.equal(jobRoot.get(ValidationJob_.status), status),
                 builder.isNotNull(jobRoot.get(ValidationJob_.document).get(DomainDocument_.url))
         ));
-        return currentSession().createQuery(criteriaQuery).setMaxResults(1).uniqueResult();
+        try {
+            return currentSession().createQuery(criteriaQuery).setMaxResults(1).getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
+    }
+
+    private List<ValidationJob> getValidationJobWithStatus(ValidationJob.Status status, Integer count) {
+
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<ValidationJob> criteriaQuery = builder.createQuery(ValidationJob.class);
+        Root<ValidationJob> jobRoot = criteriaQuery.from(ValidationJob.class);
+        criteriaQuery.where(builder.and(
+                builder.equal(jobRoot.get(ValidationJob_.status), status),
+                builder.isNotNull(jobRoot.get(ValidationJob_.document).get(DomainDocument_.url))
+        ));
+        if (count != null) {
+            return currentSession().createQuery(criteriaQuery).setMaxResults(count).getResultList();
+        }
+        return currentSession().createQuery(criteriaQuery).getResultList();
+
     }
 
     public void remove(ValidationJob validationJob) {
