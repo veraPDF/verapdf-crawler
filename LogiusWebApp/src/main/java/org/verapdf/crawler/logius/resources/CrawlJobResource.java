@@ -3,8 +3,6 @@ package org.verapdf.crawler.logius.resources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +17,7 @@ import org.verapdf.crawler.logius.monitoring.HeritrixCrawlJobStatus;
 import org.verapdf.crawler.logius.monitoring.ValidationQueueStatus;
 import org.verapdf.crawler.logius.service.BingService;
 import org.verapdf.crawler.logius.service.ValidationJobService;
+import org.verapdf.crawler.logius.service.ValidationManager;
 import org.verapdf.crawler.logius.service.ValidatorService;
 import org.verapdf.crawler.logius.tools.DomainUtils;
 import org.verapdf.crawler.logius.validation.ValidationJob;
@@ -46,17 +45,19 @@ public class CrawlJobResource {
     private final ValidationJobDAO validationJobDAO;
     private final ValidationJobService validationJobService;
     private final ValidatorService validatorService;
+    private final ValidationManager validationManager;
     private final HeritrixCleanerTask heritrixCleanerTask;
     private final BingService bingService;
 
     public CrawlJobResource(CrawlJobDAO crawlJobDAO, HeritrixClient heritrixClient, ValidationJobDAO validationJobDAO,
                             ValidationJobService validationJobService, ValidatorService validatorService,
-                            HeritrixCleanerTask heritrixCleanerTask, BingService bingService) {
+                            ValidationManager validationManager, HeritrixCleanerTask heritrixCleanerTask, BingService bingService) {
         this.crawlJobDAO = crawlJobDAO;
         this.heritrixClient = heritrixClient;
         this.validationJobDAO = validationJobDAO;
         this.validationJobService = validationJobService;
         this.validatorService = validatorService;
+        this.validationManager = validationManager;
         this.heritrixCleanerTask = heritrixCleanerTask;
         this.bingService = bingService;
     }
@@ -101,12 +102,7 @@ public class CrawlJobResource {
             crawlJobDAO.remove(crawlJob);
 
             // Stop validation job if it's related to this crawl job
-            synchronized (ValidationJobService.class) {
-                ValidationJob currentJob = validationJobService.getCurrentJob();
-                if (currentJob != null && currentJob.getDocument().getCrawlJob().getDomain().equals(domain)) {
-                    validatorService.abortCurrentJob();
-                }
-            }
+            // todo ???
         }
 
         // Create and start new crawl job
@@ -120,7 +116,6 @@ public class CrawlJobResource {
         }
         return newJob;
     }
-
 
     private CrawlJob getCrawlJob(String domain) {
         domain = DomainUtils.trimUrl(domain);
@@ -154,6 +149,7 @@ public class CrawlJobResource {
             }
             validationJobDAO.pause(domain);
             crawlJob.setStatus(CrawlJob.Status.PAUSED);
+
         }
         if (crawlJob.getStatus() == CrawlJob.Status.PAUSED && update.getStatus() == CrawlJob.Status.RUNNING) {
             if (service == CrawlJob.CrawlService.HERITRIX && !heritrixClient.isJobFinished(heritrixJobId)) {
@@ -161,6 +157,7 @@ public class CrawlJobResource {
             }
             validationJobDAO.unpause(domain);
             crawlJob.setStatus(CrawlJob.Status.RUNNING);
+            validationManager.updateState();
         }
         return ResponseEntity.ok(crawlJob);
     }
