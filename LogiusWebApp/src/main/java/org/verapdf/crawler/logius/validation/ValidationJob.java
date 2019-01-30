@@ -15,7 +15,7 @@ public class ValidationJob {
     @OneToOne(cascade = CascadeType.PERSIST, optional = false)
     @PrimaryKeyJoinColumn(name = "document_url", referencedColumnName = "document_url")
     private DomainDocument document;
-    @Column(name = "filepath")
+    @Transient
     private String filePath;
     @Enumerated(EnumType.STRING)
     @Column(name = "validation_status")
@@ -27,7 +27,6 @@ public class ValidationJob {
     public ValidationJob(DomainDocument document) {
         this.document = document;
         this.id = document.getUrl();
-        this.filePath = document.getFilePath();
         this.status = Status.NOT_STARTED;
     }
 
