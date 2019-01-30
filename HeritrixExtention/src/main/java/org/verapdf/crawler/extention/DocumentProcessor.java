@@ -28,9 +28,7 @@ public class DocumentProcessor extends MirrorWriterProcessor {
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
 
     private ObjectMapper mapper;
-
     private String jobId;
-
     private String logiusUrl;
     private Map<String, String> supportedContentTypes;
 
@@ -67,25 +65,10 @@ public class DocumentProcessor extends MirrorWriterProcessor {
         String uri = crawlURI.getURI();
         try {
             log("innerProcess method invocation with uri " + uri);
-            // Download file
-            log("Downloading file");
-            super.innerProcess(crawlURI);
 
             // Create document
             log("Creating document");
             DomainDocument document = new DomainDocument(jobId, uri);
-
-            // File path
-            log("Obtaining document path");
-            String baseDir = getPath().getFile().getCanonicalPath();
-            Object object = crawlURI.getData().get(A_MIRROR_PATH);
-            if (object == null) {
-                log("Can not obtain file name from crawlURI data object");
-                return;
-            }
-            String fileName = object.toString();
-            log("File name obtained: " + fileName + ". Setting file path");
-            document.setFilePath(FilenameUtils.concat(baseDir, fileName));
 
             // Content type
             log("Setting content type");
