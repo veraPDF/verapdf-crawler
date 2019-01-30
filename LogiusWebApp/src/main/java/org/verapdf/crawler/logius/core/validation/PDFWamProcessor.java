@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.verapdf.crawler.logius.validation.ValidationJob;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,9 +59,9 @@ public class PDFWamProcessor extends PDFProcessorAdapter {
     }
 
     @Override
-    public Map<String, String> evaluateProperties(ValidationJob job) {
+    public Map<String, String> evaluateProperties(String filePath) {
         if (this.pdfwamPdfcheckerPath != null && Files.isRegularFile(Paths.get(this.pdfwamPdfcheckerPath))) {
-            try (Scanner scanner = new Scanner(startProcess(job))) {
+            try (Scanner scanner = new Scanner(startProcess(filePath))) {
                 return parseResult(scanner);
             } catch (InterruptedException | IOException e) {
                 logger.error("Some error during pdfwam processing", e);
@@ -72,13 +71,13 @@ public class PDFWamProcessor extends PDFProcessorAdapter {
         return Collections.emptyMap();
     }
 
-    private InputStream startProcess(ValidationJob job) throws IOException, InterruptedException {
+    private InputStream startProcess(String filePath) throws IOException, InterruptedException {
         logger.info("Starting PDFWam process...");
-        String[] cmd = {"python", this.pdfwamPdfcheckerPath, "-q", "-r", "-l", "ERROR", job.getFilePath()};
+        String[] cmd = {"python", this.pdfwamPdfcheckerPath, "-q", "-r", "-l", "ERROR", filePath};
         ProcessBuilder pb = new ProcessBuilder();
         pb.command(cmd);
         Process process = pb.start();
-        if (!process.waitFor(30, TimeUnit.MINUTES)) {
+        if (!process.waitFor(1, TimeUnit.MINUTES)) {
             logger.info("PDFWam process reached timeout. Destroying...");
             process.destroy();
         }

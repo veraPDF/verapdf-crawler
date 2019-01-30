@@ -15,18 +15,15 @@ public class AbstractServiceConfiguration {
     private BingTask bingTask;
     private HeritrixCleanerTask heritrixCleanerTask;
     private MonitorCrawlJobStatusTask monitorCrawlJobStatusTask;
-    private ValidationTask validationTask;
 
     public AbstractServiceConfiguration(ODSCleanerTask odsCleanerTask,
                                         BingTask bingTask,
                                         HeritrixCleanerTask heritrixCleanerTask,
-                                        MonitorCrawlJobStatusTask monitorCrawlJobStatusTask,
-                                        ValidationTask validationTask) {
+                                        MonitorCrawlJobStatusTask monitorCrawlJobStatusTask) {
         this.odsCleanerTask = odsCleanerTask;
         this.bingTask = bingTask;
         this.heritrixCleanerTask = heritrixCleanerTask;
         this.monitorCrawlJobStatusTask = monitorCrawlJobStatusTask;
-        this.validationTask = validationTask;
     }
 
     @Bean
@@ -36,7 +33,6 @@ public class AbstractServiceConfiguration {
         availableServices.put(bingTask.getServiceName(), bingTask);
         availableServices.put(heritrixCleanerTask.getServiceName(), heritrixCleanerTask);
         availableServices.put(monitorCrawlJobStatusTask.getServiceName(), monitorCrawlJobStatusTask);
-        availableServices.put(validationTask.getServiceName(), validationTask);
         return availableServices;
     }
 }
