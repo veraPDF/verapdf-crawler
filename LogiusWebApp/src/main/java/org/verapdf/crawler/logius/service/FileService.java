@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,6 +33,10 @@ public class FileService {
         if (!this.baseTempFolder.isDirectory() || !this.baseTempFolder.exists()) {
             throw new IllegalStateException("Initialization fail on obtaining temp folder");
         }
+    }
+
+    @PostConstruct
+    public void init(){
         try {
             FileUtils.cleanDirectory(this.baseTempFolder);
         } catch (IOException e) {
