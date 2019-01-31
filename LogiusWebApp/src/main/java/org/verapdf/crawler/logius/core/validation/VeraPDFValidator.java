@@ -12,6 +12,7 @@ import org.verapdf.crawler.logius.validation.VeraPDFServiceStatus;
 import org.verapdf.crawler.logius.validation.VeraPDFValidationResult;
 
 import javax.annotation.PostConstruct;
+import java.io.File;
 
 
 @Service
@@ -42,19 +43,17 @@ public class VeraPDFValidator implements PDFValidator {
     }
 
     @Override
-    public void startValidation(ValidationJob job) throws ValidationDeadlockException {
-        String localFilename = job.getFilePath();
-        logger.info("Sending file " + localFilename + " to validator");
-        sendValidationRequest(localFilename);
+    public void startValidation(File job) throws ValidationDeadlockException {
+        logger.info("Sending file " + job.getAbsolutePath() + " to validator");
+        sendValidationRequest(job);
     }
 
-    public VeraPDFValidationResult getValidationResult(ValidationJob job) throws ValidationDeadlockException, InterruptedException {
+    public VeraPDFValidationResult getValidationResult(File job) throws ValidationDeadlockException, InterruptedException {
         try {
             int validationRetries = 0;
             if (job == null) {
                 return new VeraPDFValidationResult("Validation can't be performed for empty validation job");
             }
-            String filename = job.getFilePath();
 
             long endTime = System.currentTimeMillis() + GET_VALIDATION_RESULT_TIMEOUT;
             while (System.currentTimeMillis() < endTime) {
@@ -79,7 +78,7 @@ public class VeraPDFValidator implements PDFValidator {
                         if (++validationRetries == MAX_VALIDATION_RETRIES) {
                             throw new ValidationDeadlockException(ValidationDeadlockException.VALIDATOR_STATE_IDLE);
                         }
-                        sendValidationRequest(filename);
+                        sendValidationRequest(job);
                         endTime = System.currentTimeMillis() + GET_VALIDATION_RESULT_TIMEOUT; // Reset timeout cycle
                 }
             }
@@ -100,8 +99,8 @@ public class VeraPDFValidator implements PDFValidator {
         isAborted = true;
     }
 
-    private void sendValidationRequest(String filename) throws ValidationDeadlockException {
-        logger.info("Starting processing of " + filename);
+    private void sendValidationRequest(File file) throws ValidationDeadlockException {
+        logger.info("Starting processing of " + file.getAbsolutePath());
         synchronized (this) {
             if (evaluateStatus() == VeraPDFServiceStatus.ProcessorStatus.ACTIVE) {
                 logger.warn("Another validation job is already in progress.");
@@ -109,7 +108,7 @@ public class VeraPDFValidator implements PDFValidator {
             }
         }
         isAborted = false;
-        validate(filename);
+        validate(file);
         logger.info("Validation request have been sent");
     }
 
@@ -119,9 +118,9 @@ public class VeraPDFValidator implements PDFValidator {
         return new VeraPDFServiceStatus(processorStatus, validationResult);
     }
 
-    private void validate(String filename) {
+    private void validate(File job) {
         this.veraPDFProcessor = veraPDFProcessorObjectFactory.getObject();
-        veraPDFProcessor.setFilePath(filename);
+        veraPDFProcessor.setFilePath(job);
         veraPDFProcessor.setSettings(validationSettingsService.getValidationSettings());
         service.submitListenable(veraPDFProcessor).completable().thenAccept(result ->{
             this.validationResult = result;

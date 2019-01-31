@@ -52,7 +52,7 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
 
     private final String verapdfPath;
     private final File veraPDFErrorLog;
-    private String filePath;
+    private File filePath;
     private ValidationSettings settings;
     private Process process;
     private boolean stopped = false;
@@ -63,17 +63,17 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
         this.veraPDFErrorLog = new File(veraPDFErrorLog);
     }
 
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
+    public void setFilePath(File job) {
+        this.filePath = job;
     }
 
     public void setSettings(ValidationSettings settings) {
         this.settings = settings;
     }
 
-    private File getVeraPDFReport(String filename) throws IOException, InterruptedException {
+    private File getVeraPDFReport(File filename) throws IOException, InterruptedException {
         logger.info("Preparing veraPDF process...");
-        String[] cmd = {verapdfPath, "--extract", "--format", "mrr", "--maxfailuresdisplayed", "1", filename};
+        String[] cmd = {verapdfPath, "--extract", "--format", "mrr", "--maxfailuresdisplayed", "1", filename.getAbsolutePath()};
         ProcessBuilder pb = new ProcessBuilder();
         pb.redirectError(this.veraPDFErrorLog);
         Path outputPath = Files.createTempFile("veraPDFReport", ".xml");
@@ -92,9 +92,8 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
     }
 
 
-    private File checkExtension(String filePath) {
-        if (!filePath.endsWith(".pdf")) {
-            File cur = new File(filePath);
+    private File checkExtension(File cur) {
+        if (!cur.getName().endsWith(".pdf")) {
             if (cur.isFile()) {
                 try {
                     File res = File.createTempFile("tempPdf", ".pdf", cur.getParentFile());
@@ -241,7 +240,7 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
         File tempPdfFile = null;
         try {
             tempPdfFile = checkExtension(this.filePath);
-            String toValidatePath = tempPdfFile == null ? this.filePath : tempPdfFile.getAbsolutePath();
+            File toValidatePath = tempPdfFile == null ? this.filePath : tempPdfFile;
             report = getVeraPDFReport(toValidatePath);
             if (report != null && !stopped) {
                 logger.info("Obtaining result structure");

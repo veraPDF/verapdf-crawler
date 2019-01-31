@@ -11,6 +11,7 @@ import org.verapdf.crawler.logius.validation.ValidationJob;
 import org.verapdf.crawler.logius.validation.VeraPDFValidationResult;
 
 import javax.annotation.PostConstruct;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -51,9 +52,10 @@ public class ValidatorService {
         if (validationJobService.retrieveNextJob() != null) {
             logger.info("Validating " + validationJobService.getCurrentJob().getId());
             try {
-                fileService.save(validationJobService.getCurrentJob());
-                validator.startValidation(validationJobService.getCurrentJob());
-                processStartedJob();
+                File file = fileService.save(validationJobService.getCurrentJob().getId());
+                validator.startValidation(file);
+                processStartedJob(file);
+                fileService.removeFile(file);
             } catch (IOException e) {
                 saveErrorResult(e);
             }
@@ -63,10 +65,10 @@ public class ValidatorService {
     }
 
 
-    private void processStartedJob() throws IOException, ValidationDeadlockException, InterruptedException {
-        VeraPDFValidationResult result = validator.getValidationResult(validationJobService.getCurrentJob());
+    private void processStartedJob(File file) throws IOException, ValidationDeadlockException, InterruptedException {
+        VeraPDFValidationResult result = validator.getValidationResult(file);
         for (PDFProcessorAdapter pdfProcessor : this.pdfProcessors) {
-            Map<String, String> properties = pdfProcessor.evaluateProperties(validationJobService.getCurrentJob());
+            Map<String, String> properties = pdfProcessor.evaluateProperties(file.getPath());
             for (Map.Entry<String, String> property : properties.entrySet()) {
                 result.addProperty(property.getKey(), property.getValue());
             }

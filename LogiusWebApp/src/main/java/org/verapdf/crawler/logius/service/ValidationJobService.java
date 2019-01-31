@@ -150,11 +150,6 @@ public class ValidationJobService {
         if (job == null) {
             return;
         }
-        if (job.getFilePath() != null) {
-            if (!new File(job.getFilePath()).delete()) {
-                logger.warn("Failed to clean validation job file " + job.getFilePath());
-            }
-        }
         if (shouldCleanDB) {
             validationJobDAO.remove(job);
         }

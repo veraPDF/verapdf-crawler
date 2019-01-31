@@ -60,9 +60,9 @@ public class PDFWamProcessor extends PDFProcessorAdapter {
     }
 
     @Override
-    public Map<String, String> evaluateProperties(ValidationJob job) {
+    public Map<String, String> evaluateProperties(String filepath) {
         if (this.pdfwamPdfcheckerPath != null && Files.isRegularFile(Paths.get(this.pdfwamPdfcheckerPath))) {
-            try (Scanner scanner = new Scanner(startProcess(job))) {
+            try (Scanner scanner = new Scanner(startProcess(filepath))) {
                 return parseResult(scanner);
             } catch (InterruptedException | IOException e) {
                 logger.error("Some error during pdfwam processing", e);
@@ -72,9 +72,9 @@ public class PDFWamProcessor extends PDFProcessorAdapter {
         return Collections.emptyMap();
     }
 
-    private InputStream startProcess(ValidationJob job) throws IOException, InterruptedException {
+    private InputStream startProcess(String filepath) throws IOException, InterruptedException {
         logger.info("Starting PDFWam process...");
-        String[] cmd = {"python", this.pdfwamPdfcheckerPath, "-q", "-r", "-l", "ERROR", job.getFilePath()};
+        String[] cmd = {"python", this.pdfwamPdfcheckerPath, "-q", "-r", "-l", "ERROR", filepath};
         ProcessBuilder pb = new ProcessBuilder();
         pb.command(cmd);
         Process process = pb.start();

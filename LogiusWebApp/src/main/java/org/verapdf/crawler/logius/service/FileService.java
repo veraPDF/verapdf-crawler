@@ -44,10 +44,10 @@ public class FileService {
         }
     }
 
-    public void save(ValidationJob validationJob) {
+    public File save(String url) {
         try {
             try (CloseableHttpClient client = HttpClients.createDefault()) {
-                HttpGet get = new HttpGet(validationJob.getId());
+                HttpGet get = new HttpGet(url);
                 CloseableHttpResponse response = client.execute(get);
                 String contentType = null;
                 Header[] contentTypeHeaders = response.getHeaders("Content-Type");
@@ -55,7 +55,7 @@ public class FileService {
                     String value = contentTypeHeaders[0].getValue();
                     if (value != null) {
                         if (value.startsWith("text")) {
-                            return;
+                            return null;
                         } else if (fileTypes.containsKey(value)) {
                             contentType = fileTypes.get(value);
                         }
@@ -64,11 +64,22 @@ public class FileService {
                 File file = File.createTempFile("logius", "." + contentType, baseTempFolder);
                 FileOutputStream fileOutputStream = new FileOutputStream(file);
                 IOUtils.copy(response.getEntity().getContent(), fileOutputStream);
-                validationJob.setFilePath(file.getAbsolutePath());
                 fileOutputStream.close();
+
+                return file;
             }
         } catch (IOException e) {
-            logger.error("Can't create url: " + validationJob.getId(), e);
+            logger.error("Can't create url: " + url, e);
+        }
+
+        return null;
+    }
+
+    public void removeFile(File file) {
+        if (file != null) {
+            if (!file.delete()) {
+                logger.warn("Failed to clean validation job file " + file.getAbsolutePath());
+            }
         }
     }
 }
