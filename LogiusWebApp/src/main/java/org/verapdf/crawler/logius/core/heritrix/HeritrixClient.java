@@ -55,7 +55,8 @@ public class HeritrixClient {
     private static final String STATUS_DESCRIPTION_XPATH = "/job/statusDescription";
     private final CredentialsProvider credsProvider;
     private final SSLConnectionSocketFactory sslConnectionSocketFactory;
-    private File configTemplatePath;
+    @Value("${logius.heritrix.configTemplatePath}")
+    private String configTemplatePath;
     @Value("${logius.heritrix.logiusAppUrl}")
     private String logiusAppUrl;
     @Value("${logius.heritrix.jobsFolder}")
@@ -69,11 +70,6 @@ public class HeritrixClient {
     public HeritrixClient(CredentialsProvider credsProvider, SSLConnectionSocketFactory sslConnectionSocketFactory) {
         this.credsProvider = credsProvider;
         this.sslConnectionSocketFactory = sslConnectionSocketFactory;
-        try {
-            configTemplatePath = ResourceUtils.getFile("classpath:sample_configuration.cxml");
-        } catch (FileNotFoundException e) {
-            throw new IllegalStateException("incorrect configTemplatePath");
-        }
         logger.info("heritrix client created, url {s}", engineUrl);
     }
 
@@ -298,8 +294,9 @@ public class HeritrixClient {
             sb.append(surt);
         }
 
+        File source = new File(configTemplatePath);
         File destination = File.createTempFile(heritrixJobId, ".cxml");
-        Files.copy(configTemplatePath.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         Charset charset = StandardCharsets.UTF_8;
 

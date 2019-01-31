@@ -22,18 +22,14 @@ import java.util.Map;
 @Service
 public class ReportsGenerator {
 
-    private File odsTemplatePath;
     @Value("${logius.reports.notificationEmails}")
     private String notificationEmails;
     @Value("${logius.reports.odsTempFolder}")
     private String odsTempFolder;
-
+    @Value("${logius.reports.odsTemplatePath}")
+    private String odsTemplatePath;
     private ReportsGenerator() {
-        try {
-            odsTemplatePath = ResourceUtils.getFile("classpath:sample_report.ods");
-        } catch (FileNotFoundException e) {
-            throw new IllegalStateException("incorrect odsTemplatePath");
-        }
+
     }
 
     private static void fillSimpleSheet(List<String> documentsList,
@@ -144,7 +140,7 @@ public class ReportsGenerator {
             throw new IllegalStateException("Initialization fail on obtaining ods temp folder");
         }
 
-        File template = odsTemplatePath;
+        File template = new File(odsTemplatePath);
         SpreadSheet spreadSheet = SpreadSheet.createFromFile(template);
         fillSummary(documentsSince,
                 compliantPDFA12DocumentsCount,
