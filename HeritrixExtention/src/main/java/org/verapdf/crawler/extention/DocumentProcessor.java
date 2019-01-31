@@ -66,26 +66,9 @@ public class DocumentProcessor extends MirrorWriterProcessor {
     protected void innerProcess(CrawlURI crawlURI) {
         String uri = crawlURI.getURI();
         try {
-            log("innerProcess method invocation with uri " + uri);
-            // Download file
-            log("Downloading file");
-            super.innerProcess(crawlURI);
-
             // Create document
             log("Creating document");
             DomainDocument document = new DomainDocument(jobId, uri);
-
-            // File path
-            log("Obtaining document path");
-            String baseDir = getPath().getFile().getCanonicalPath();
-            Object object = crawlURI.getData().get(A_MIRROR_PATH);
-            if (object == null) {
-                log("Can not obtain file name from crawlURI data object");
-                return;
-            }
-            String fileName = object.toString();
-            log("File name obtained: " + fileName + ". Setting file path");
-            document.setFilePath(FilenameUtils.concat(baseDir, fileName));
 
             // Content type
             log("Setting content type");
