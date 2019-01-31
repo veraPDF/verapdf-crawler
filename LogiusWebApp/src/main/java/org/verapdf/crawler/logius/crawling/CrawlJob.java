@@ -45,6 +45,9 @@ public class CrawlJob {
     @Column(name = "is_finished")
     private boolean finished;
 
+    @Column(name = "is_validation_required")
+    private boolean isValidationRequired;
+
     @ManyToMany
     @JoinTable(
             name = "crawl_job_requests_crawl_jobs",
@@ -75,6 +78,14 @@ public class CrawlJob {
         this.domain = domain;
         this.startTime = startTime;
         this.crawlService = CrawlService.HERITRIX;
+    }
+
+    public boolean isValidationRequired() {
+        return isValidationRequired;
+    }
+
+    public void setValidationRequired(boolean validationRequired) {
+        isValidationRequired = validationRequired;
     }
 
     public String getDomain() {

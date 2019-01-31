@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 /**
  * @author Maksim Bezrukov
@@ -49,9 +48,9 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
     private static final String VALIDATION_REPORT_PATH = BASE_PATH + "validationReport/";
     private static final String FLAVOUR_PART_PROPERTY_NAME = "flavourPart";
     private static final String FLAVOUR_CONFORMANCE_PROPERTY_NAME = "flavourConformance";
-
     private final String verapdfPath;
     private final File veraPDFErrorLog;
+    private boolean isValidationRequired;
     private File filePath;
     private ValidationSettings settings;
     private Process process;
@@ -73,7 +72,12 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
 
     private File getVeraPDFReport(File filename) throws IOException, InterruptedException {
         logger.info("Preparing veraPDF process...");
-        String[] cmd = {verapdfPath, "--extract", "--format", "mrr", "--maxfailuresdisplayed", "1", filename.getAbsolutePath()};
+        String[] cmd;
+        if (isValidationRequired) {
+            cmd = new String[]{verapdfPath, "--extract", "--format", "mrr", "--maxfailuresdisplayed", "1", filename.getAbsolutePath()};
+        } else {
+            cmd = new String[]{verapdfPath, "--extract","--off", "--format", "mrr", "--maxfailuresdisplayed", "1", filename.getAbsolutePath()};
+        }
         ProcessBuilder pb = new ProcessBuilder();
         pb.redirectError(this.veraPDFErrorLog);
         Path outputPath = Files.createTempFile("veraPDFReport", ".xml");
@@ -279,5 +283,9 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
             return result;
         }
         return null;
+    }
+
+    public void setValidationRequired(boolean validationRequired) {
+        isValidationRequired = validationRequired;
     }
 }

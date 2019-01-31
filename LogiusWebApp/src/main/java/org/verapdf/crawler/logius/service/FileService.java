@@ -65,7 +65,6 @@ public class FileService {
                 FileOutputStream fileOutputStream = new FileOutputStream(file);
                 IOUtils.copy(response.getEntity().getContent(), fileOutputStream);
                 fileOutputStream.close();
-
                 return file;
             }
         } catch (IOException e) {

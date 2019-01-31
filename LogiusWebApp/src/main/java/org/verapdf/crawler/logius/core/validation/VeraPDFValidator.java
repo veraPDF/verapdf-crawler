@@ -43,12 +43,12 @@ public class VeraPDFValidator implements PDFValidator {
     }
 
     @Override
-    public void startValidation(File job) throws ValidationDeadlockException {
+    public void startValidation(File job, boolean validationRequired) throws ValidationDeadlockException {
         logger.info("Sending file " + job.getAbsolutePath() + " to validator");
-        sendValidationRequest(job);
+        sendValidationRequest(job, validationRequired);
     }
 
-    public VeraPDFValidationResult getValidationResult(File job) throws ValidationDeadlockException, InterruptedException {
+    public VeraPDFValidationResult getValidationResult(File job, boolean validationRequired) throws ValidationDeadlockException, InterruptedException {
         try {
             int validationRetries = 0;
             if (job == null) {
@@ -78,7 +78,7 @@ public class VeraPDFValidator implements PDFValidator {
                         if (++validationRetries == MAX_VALIDATION_RETRIES) {
                             throw new ValidationDeadlockException(ValidationDeadlockException.VALIDATOR_STATE_IDLE);
                         }
-                        sendValidationRequest(job);
+                        sendValidationRequest(job, validationRequired);
                         endTime = System.currentTimeMillis() + GET_VALIDATION_RESULT_TIMEOUT; // Reset timeout cycle
                 }
             }
@@ -99,7 +99,7 @@ public class VeraPDFValidator implements PDFValidator {
         isAborted = true;
     }
 
-    private void sendValidationRequest(File file) throws ValidationDeadlockException {
+    private void sendValidationRequest(File file, boolean validationRequired) throws ValidationDeadlockException {
         logger.info("Starting processing of " + file.getAbsolutePath());
         synchronized (this) {
             if (evaluateStatus() == VeraPDFServiceStatus.ProcessorStatus.ACTIVE) {
@@ -108,7 +108,7 @@ public class VeraPDFValidator implements PDFValidator {
             }
         }
         isAborted = false;
-        validate(file);
+        validate(file, validationRequired);
         logger.info("Validation request have been sent");
     }
 
@@ -118,10 +118,11 @@ public class VeraPDFValidator implements PDFValidator {
         return new VeraPDFServiceStatus(processorStatus, validationResult);
     }
 
-    private void validate(File job) {
+    private void validate(File job, boolean validationRequired) {
         this.veraPDFProcessor = veraPDFProcessorObjectFactory.getObject();
         veraPDFProcessor.setFilePath(job);
         veraPDFProcessor.setSettings(validationSettingsService.getValidationSettings());
+        veraPDFProcessor.setValidationRequired(validationRequired);
         service.submitListenable(veraPDFProcessor).completable().thenAccept(result ->{
             this.validationResult = result;
             this.veraPDFProcessor = null;

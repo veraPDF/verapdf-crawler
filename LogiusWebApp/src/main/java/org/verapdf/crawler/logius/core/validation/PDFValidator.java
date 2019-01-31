@@ -7,9 +7,9 @@ import java.io.File;
 import java.io.IOException;
 
 public interface PDFValidator {
-    void startValidation(File job) throws IOException, ValidationDeadlockException;
+    void startValidation(File job, boolean validationRequired) throws IOException, ValidationDeadlockException;
 
-    VeraPDFValidationResult getValidationResult(File job) throws IOException, ValidationDeadlockException, InterruptedException;
+    VeraPDFValidationResult getValidationResult(File job, boolean validationRequired) throws IOException, ValidationDeadlockException, InterruptedException;
 
     void terminateValidation() throws IOException;
 }

@@ -50,11 +50,17 @@ public class ValidatorService {
 
     public boolean processNextJob() throws InterruptedException, ValidationDeadlockException {
         if (validationJobService.retrieveNextJob() != null) {
-            logger.info("Validating " + validationJobService.getCurrentJob().getId());
+            ValidationJob validationJob = validationJobService.getCurrentJob();
+            logger.info("Validating " + validationJob.getId());
             try {
-                File file = fileService.save(validationJobService.getCurrentJob().getId());
-                validator.startValidation(file);
-                processStartedJob(file);
+                File file = fileService.save(validationJob.getId());
+                if (file != null){
+                    boolean isValidationRequired = validationJob.getDocument().getCrawlJob().isValidationRequired();
+                    validator.startValidation(file, isValidationRequired);
+                    processStartedJob(file, isValidationRequired);
+                }else {
+                    saveErrorResult("Can't create url: " + validationJob.getId());
+                }
                 fileService.removeFile(file);
             } catch (IOException e) {
                 saveErrorResult(e);
@@ -65,14 +71,19 @@ public class ValidatorService {
     }
 
 
-    private void processStartedJob(File file) throws IOException, ValidationDeadlockException, InterruptedException {
-        VeraPDFValidationResult result = validator.getValidationResult(file);
+    private void processStartedJob(File file, boolean isValidationRequired) throws IOException, ValidationDeadlockException, InterruptedException {
+        VeraPDFValidationResult result = validator.getValidationResult(file, isValidationRequired);
         for (PDFProcessorAdapter pdfProcessor : this.pdfProcessors) {
             Map<String, String> properties = pdfProcessor.evaluateProperties(file.getPath());
             for (Map.Entry<String, String> property : properties.entrySet()) {
                 result.addProperty(property.getKey(), property.getValue());
             }
         }
+        validationJobService.saveResult(result);
+    }
+
+    private void saveErrorResult(String e) {
+        VeraPDFValidationResult result = new VeraPDFValidationResult(e);
         validationJobService.saveResult(result);
     }
 
