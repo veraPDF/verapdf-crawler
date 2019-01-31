@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 import org.verapdf.common.GracefulHttpClient;
 import org.verapdf.crawler.logius.monitoring.HeritrixCrawlJobStatus;
 import org.w3c.dom.Document;
@@ -54,8 +55,7 @@ public class HeritrixClient {
     private static final String STATUS_DESCRIPTION_XPATH = "/job/statusDescription";
     private final CredentialsProvider credsProvider;
     private final SSLConnectionSocketFactory sslConnectionSocketFactory;
-    @Value("${logius.heritrix.configTemplatePath}")
-    private String configTemplatePath;
+    private File configTemplatePath;
     @Value("${logius.heritrix.logiusAppUrl}")
     private String logiusAppUrl;
     @Value("${logius.heritrix.jobsFolder}")
@@ -69,6 +69,11 @@ public class HeritrixClient {
     public HeritrixClient(CredentialsProvider credsProvider, SSLConnectionSocketFactory sslConnectionSocketFactory) {
         this.credsProvider = credsProvider;
         this.sslConnectionSocketFactory = sslConnectionSocketFactory;
+        try {
+            configTemplatePath = ResourceUtils.getFile("classpath:sample_configuration.cxml");
+        } catch (FileNotFoundException e) {
+            throw new IllegalStateException("incorrect configTemplatePath");
+        }
         logger.info("heritrix client created, url {s}", engineUrl);
     }
 
@@ -293,9 +298,8 @@ public class HeritrixClient {
             sb.append(surt);
         }
 
-        File source = new File(configTemplatePath);
         File destination = File.createTempFile(heritrixJobId, ".cxml");
-        Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(configTemplatePath.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         Charset charset = StandardCharsets.UTF_8;
 

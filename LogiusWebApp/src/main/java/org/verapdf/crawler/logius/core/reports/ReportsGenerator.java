@@ -5,10 +5,12 @@ import org.jopendocument.dom.spreadsheet.Sheet;
 import org.jopendocument.dom.spreadsheet.SpreadSheet;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.validation.error.ValidationError;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
@@ -20,14 +22,18 @@ import java.util.Map;
 @Service
 public class ReportsGenerator {
 
-    @Value("${logius.reports.odsTemplatePath}")
-    private String odsTemplatePath;
+    private File odsTemplatePath;
     @Value("${logius.reports.notificationEmails}")
     private String notificationEmails;
     @Value("${logius.reports.odsTempFolder}")
     private String odsTempFolder;
 
     private ReportsGenerator() {
+        try {
+            odsTemplatePath = ResourceUtils.getFile("classpath:sample_report.ods");
+        } catch (FileNotFoundException e) {
+            throw new IllegalStateException("incorrect odsTemplatePath");
+        }
     }
 
     private static void fillSimpleSheet(List<String> documentsList,
@@ -138,7 +144,7 @@ public class ReportsGenerator {
             throw new IllegalStateException("Initialization fail on obtaining ods temp folder");
         }
 
-        File template = new File(odsTemplatePath);
+        File template = odsTemplatePath;
         SpreadSheet spreadSheet = SpreadSheet.createFromFile(template);
         fillSummary(documentsSince,
                 compliantPDFA12DocumentsCount,

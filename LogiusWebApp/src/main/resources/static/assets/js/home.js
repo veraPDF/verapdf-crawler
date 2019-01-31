@@ -94,7 +94,6 @@ function main() {
         validForm = false;
     }
 
-    var isBing = document.getElementById("bing-crawl-service").checked;
     var URL = "/api/crawl-requests";
 
     // If there are validate errors do nothing
