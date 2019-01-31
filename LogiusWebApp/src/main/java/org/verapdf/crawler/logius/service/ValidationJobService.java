@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.db.DocumentDAO;
 import org.verapdf.crawler.logius.db.ValidationErrorDAO;
 import org.verapdf.crawler.logius.db.ValidationJobDAO;
@@ -60,6 +61,20 @@ public class ValidationJobService {
         } else {
             return null;
         }
+    }
+
+    @Transactional
+    public void clean() {
+        ValidationJob validationJob = validationJobDAO.current();
+        if (validationJob == null){
+            return;
+        }
+        if (validationJob.getDocument().getCrawlJob().getStatus() == CrawlJob.Status.PAUSED) {
+            validationJob.setStatus(ValidationJob.Status.PAUSED);
+        } else {
+            validationJob.setStatus(ValidationJob.Status.NOT_STARTED);
+        }
+
     }
 
     @Transactional

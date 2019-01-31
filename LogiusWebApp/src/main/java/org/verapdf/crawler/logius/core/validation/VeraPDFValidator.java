@@ -5,15 +5,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+import org.verapdf.crawler.logius.service.FileService;
 import org.verapdf.crawler.logius.service.ValidationSettingsService;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 import org.verapdf.crawler.logius.validation.VeraPDFServiceStatus;
 import org.verapdf.crawler.logius.validation.VeraPDFValidationResult;
 
 import javax.annotation.PostConstruct;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 
 @Service
@@ -29,6 +27,7 @@ public class VeraPDFValidator implements PDFValidator {
     private ObjectFactory<VeraPDFProcessor> veraPDFProcessorObjectFactory;
     private boolean isAborted = false;
     private final ValidationSettingsService validationSettingsService;
+
     public VeraPDFValidator(ObjectFactory<VeraPDFProcessor> veraPDFProcessorObjectFactory,
                             ValidationSettingsService validationSettingsService) {
         this.veraPDFProcessorObjectFactory = veraPDFProcessorObjectFactory;

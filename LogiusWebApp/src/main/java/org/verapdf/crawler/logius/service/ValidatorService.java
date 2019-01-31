@@ -10,6 +10,7 @@ import org.verapdf.crawler.logius.core.validation.ValidationDeadlockException;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 import org.verapdf.crawler.logius.validation.VeraPDFValidationResult;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -20,11 +21,19 @@ public class ValidatorService {
     private final ValidationJobService validationJobService;
     private final PDFValidator validator;
     private final List<PDFProcessorAdapter> pdfProcessors;
+    private final FileService fileService;
+
     public ValidatorService(ValidationJobService validationJobService, PDFValidator validator,
-                            List<PDFProcessorAdapter> pdfProcessors) {
+                            List<PDFProcessorAdapter> pdfProcessors, FileService fileService) {
         this.validationJobService = validationJobService;
         this.validator = validator;
         this.pdfProcessors = pdfProcessors;
+        this.fileService = fileService;
+    }
+
+    @PostConstruct
+    public void init() {
+        validationJobService.clean();
     }
 
     public void abortCurrentJob() {
@@ -38,20 +47,11 @@ public class ValidatorService {
     }
 
 
-    public void processCurrentJob() throws InterruptedException, ValidationDeadlockException {
-        if (validationJobService.retrieveCurrentJob() != null) {
-            try {
-                processStartedJob();
-            } catch (IOException e) {
-                saveErrorResult(e);
-            }
-        }
-    }
-
     public boolean processNextJob() throws InterruptedException, ValidationDeadlockException {
         if (validationJobService.retrieveNextJob() != null) {
             logger.info("Validating " + validationJobService.getCurrentJob().getId());
             try {
+                fileService.save(validationJobService.getCurrentJob());
                 validator.startValidation(validationJobService.getCurrentJob());
                 processStartedJob();
             } catch (IOException e) {

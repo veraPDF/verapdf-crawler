@@ -19,7 +19,7 @@ public class ValidationTask extends AbstractTask {
 
     @Override
     protected void onStart() throws ValidationDeadlockException, InterruptedException {
-        validatorService.processCurrentJob();
+        validatorService.processNextJob();
     }
 
     @Override

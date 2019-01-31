@@ -15,6 +15,8 @@ public class ValidationJob {
     @OneToOne(cascade = CascadeType.PERSIST, optional = false)
     @PrimaryKeyJoinColumn(name = "document_url", referencedColumnName = "document_url")
     private DomainDocument document;
+    @Transient
+    private String filePath;
     @Enumerated(EnumType.STRING)
     @Column(name = "validation_status")
     private Status status;
@@ -47,6 +49,14 @@ public class ValidationJob {
 
     public void setDocument(DomainDocument document) {
         this.document = document;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
     }
 
     public Status getStatus() {
