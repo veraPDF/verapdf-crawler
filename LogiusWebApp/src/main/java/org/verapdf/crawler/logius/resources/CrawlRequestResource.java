@@ -20,12 +20,10 @@ import java.util.stream.Collectors;
 public class CrawlRequestResource {
     private final CrawlRequestDAO crawlRequestDAO;
     private final CrawlJobDAO crawlJobDAO;
-    private final CrawlJobResource crawlJobResource;
 
     public CrawlRequestResource(CrawlRequestDAO crawlRequestDAO, CrawlJobDAO crawlJobDAO, CrawlJobResource crawlJobResource) {
         this.crawlRequestDAO = crawlRequestDAO;
         this.crawlJobDAO = crawlJobDAO;
-        this.crawlJobResource = crawlJobResource;
     }
 
     @PostMapping

@@ -46,7 +46,7 @@ public class ReportsGenerator {
     private static void fillNonPDFA12Documents(List<DomainDocument> documentsList, SpreadSheet spreadSheet) {
         Sheet sheet = spreadSheet.getSheet(1);
         sheet.ensureColumnCount(5);
-        sheet.ensureRowCount(getNonPDFA12DocumentsRowCount(documentsList));
+        sheet.ensureRowCount(getNonPDFA12DocumentsRowCount(documentsList) + 1);
         int i = 1;
         for (DomainDocument document : documentsList) {
             sheet.setValueAt(document.getUrl(), 0, i);

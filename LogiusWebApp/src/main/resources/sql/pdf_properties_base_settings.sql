@@ -1,13 +1,13 @@
 INSERT INTO pdf_properties (property_name, property_enabled)
 VALUES
-  ('flavourPart', 1),
-  ('flavourConformance', 1),
-  ('modDateXMP', 1),
-  ('modDateInfoDict', 1),
-  ('pdfVersion', 1),
-  ('producer', 1),
-  ('processingTime', 1),
-  ('veraPDFVersion', 1)
+  ('flavourPart', TRUE),
+  ('flavourConformance', TRUE),
+  ('modDateXMP', TRUE),
+  ('modDateInfoDict', TRUE),
+  ('pdfVersion', TRUE),
+  ('producer', TRUE),
+  ('processingTime', TRUE),
+  ('veraPDFVersion', TRUE)
 ;
 
 INSERT INTO pdf_properties_xpath (property_name, xpath_index, xpath)

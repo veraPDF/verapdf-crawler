@@ -41,6 +41,7 @@ public class HibernateConfiguration {
     public SessionFactory getSessionFactory(DataSource dataSource) throws Exception {
         Properties properties = new Properties();
         properties.put("hibernate.dialect", dialect);
+        properties.put("hibernate.temp.use_jdbc_metadata_defaults", false);
         LocalSessionFactoryBean factoryBean = new LocalSessionFactoryBean();
         factoryBean.setPackagesToScan("org.verapdf.crawler.logius");
         factoryBean.setDataSource(dataSource);
