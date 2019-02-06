@@ -9,16 +9,6 @@ DROP TABLE IF EXISTS documents;
 DROP TABLE IF EXISTS crawl_job_requests_crawl_jobs;
 DROP TABLE IF EXISTS crawl_jobs;
 DROP TABLE IF EXISTS crawl_job_requests;
-DROP
-TYPE
-IF
-EXISTS
-document_status;
-DROP
-TYPE
-IF
-EXISTS
-validation_status;
 CREATE TABLE crawl_job_requests
 (
   id           VARCHAR(36) NOT NULL,
@@ -30,12 +20,12 @@ CREATE TABLE crawl_job_requests
 CREATE TABLE crawl_jobs
 (
   domain                 VARCHAR(255) NOT NULL,
-  heritrix_job_id        VARCHAR(36)  NOT NULL UNIQUE,
+  heritrix_job_id        VARCHAR(36)  NOT NULL UNIQUE ,
   job_url                VARCHAR(255) DEFAULT NULL,
-  start_time             TIMESTAMP    DEFAULT NOW(),
-  finish_time            TIMESTAMP    DEFAULT NULL,
-  is_finished            BOOLEAN      DEFAULT FALSE,
-  is_validation_required BOOLEAN      DEFAULT FALSE,
+  start_time             TIMESTAMP     DEFAULT NOW(),
+  finish_time            TIMESTAMP     DEFAULT NULL,
+  is_finished            BOOLEAN   DEFAULT FALSE,
+  is_validation_required BOOLEAN   DEFAULT FALSE,
   job_status             VARCHAR(10)  DEFAULT NULL,
   crawl_service          VARCHAR(10)  NOT NULL,
   PRIMARY KEY (domain)
@@ -55,27 +45,14 @@ CREATE TABLE crawl_job_requests_crawl_jobs
     ON UPDATE CASCADE
 );
 
-CREATE
-TYPE
-document_status
-AS
-ENUM
-(
-''
-OPEN
-'',
-''
-NOT_OPEN
-''
-);
 
 CREATE TABLE documents
 (
   document_url     VARCHAR(255) NOT NULL,
   crawl_job_domain VARCHAR(255) NOT NULL,
-  last_modified    TIMESTAMP    DEFAULT NULL,
+  last_modified    TIMESTAMP     DEFAULT NULL,
   document_type    VARCHAR(127) DEFAULT NULL,
-  document_status document_status,
+  document_status  VARCHAR(16),
   PRIMARY KEY (document_url),
   CONSTRAINT documents_crawl_jobs_domain_fk FOREIGN KEY (crawl_job_domain) REFERENCES crawl_jobs (domain)
     ON DELETE CASCADE
@@ -91,29 +68,10 @@ CREATE TABLE document_properties
     ON DELETE CASCADE
     ON UPDATE CASCADE
 );
-CREATE
-TYPE
-validation_status
-AS
-ENUM
-(
-''
-IN_PROGRESS
-'',
-''
-NOT_STARTED
-'',
-''
-PAUSED
-'',
-''
-ABORTED
-''
-);
 CREATE TABLE pdf_validation_jobs_queue
 (
-  document_url VARCHAR(255) NOT NULL,
-  validation_status validation_status NOT NULL,
+  document_url      VARCHAR(255)      NOT NULL,
+  validation_status VARCHAR(16) NOT NULL,
   PRIMARY KEY (document_url),
   CONSTRAINT pdf_validation_jobs_queue_documents_document_url_fk FOREIGN KEY (document_url) REFERENCES documents (document_url)
     ON DELETE CASCADE
@@ -122,18 +80,18 @@ CREATE TABLE pdf_validation_jobs_queue
 CREATE TABLE validation_errors
 (
   id            SERIAL      NOT NULL,
-  type          VARCHAR(32) NOT NULL DEFAULT '' GENERIC '',
+  type          VARCHAR(32) NOT NULL DEFAULT 'GENERIC',
   specification VARCHAR(32)          DEFAULT NULL UNIQUE,
   clause        VARCHAR(16)          DEFAULT NULL UNIQUE,
   test_number   VARCHAR(4)           DEFAULT NULL UNIQUE,
-  description   VARCHAR(2048)        DEFAULT NULL,
+  description   VARCHAR(2048)        DEFAULT NULL ,
   PRIMARY KEY (id)
 );
 
 CREATE TABLE documents_validation_errors
 (
-  document_url VARCHAR(255) NOT NULL DEFAULT '''',
-  error_id     BIGINT       NOT NULL DEFAULT '' 0 '',
+  document_url VARCHAR(255) NOT NULL DEFAULT '',
+  error_id     BIGINT       NOT NULL DEFAULT '0',
   PRIMARY KEY (document_url, error_id),
   CONSTRAINT documents_validation_errors_documents_document_url_fk FOREIGN KEY (document_url) REFERENCES documents (document_url)
     ON DELETE CASCADE
@@ -151,7 +109,7 @@ CREATE TABLE pdf_properties
 CREATE TABLE pdf_properties_xpath
 (
   property_name VARCHAR(127) NOT NULL,
-  xpath_index   BIGINT       NOT NULL DEFAULT '' 0 '',
+  xpath_index   BIGINT       NOT NULL DEFAULT '0',
   xpath         VARCHAR(255) NOT NULL,
   PRIMARY KEY (property_name, xpath_index)
 );
