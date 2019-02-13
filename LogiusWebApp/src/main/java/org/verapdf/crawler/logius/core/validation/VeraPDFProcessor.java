@@ -1,6 +1,7 @@
 package org.verapdf.crawler.logius.core.validation;
 
 import javanet.staxutils.SimpleNamespaceContext;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +25,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -113,9 +115,24 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
             result.setTestResult(DomainDocument.BaseTestResult.NOT_OPEN);
         }
         List<String> conformanceXPaths = properties.get(FLAVOUR_CONFORMANCE_PROPERTY_NAME);
-        String conformance = getProperty(conformanceXPaths, document, xpath).toUpperCase();
-        String flavour = part + conformance;
-        if (!flavour.isEmpty()) {
+        if (!part.isEmpty()) {
+            String type;
+            String flavour;
+            if (part.contains("-")) {
+                String[] parts = part.split("-");
+                type = parts[0];
+                flavour = parts[1];
+            } else {
+                String conformance = getProperty(conformanceXPaths, document, xpath).toUpperCase();
+                if (conformance.isEmpty()){
+                    type = "PDF/UA";
+                    flavour = part;
+                } else {
+                    type = "PDF/A";
+                    flavour = part + conformance;
+                }
+            }
+            result.addProperty("type", type);
             result.addProperty("flavour", flavour);
         }
         properties.remove(FLAVOUR_PART_PROPERTY_NAME);
