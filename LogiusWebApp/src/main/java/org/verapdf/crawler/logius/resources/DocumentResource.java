@@ -61,7 +61,7 @@ public class DocumentResource {
         document.setCrawlJob(job);
         documentDAO.save(document);
 
-        switch (document.getContentType()) {
+        switch (document.getContentType().toLowerCase()) {
             case "pdf":
                 validatePdfFile(document, validationJobDAO);
                 break;

@@ -6,30 +6,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CrawlJobSummary {
+    private Map<DomainDocument.DocumentTypeGroup, Long> typeOfDocuments;
 
-    private Map<DomainDocument.DocumentTypeGroup, Long> openDocuments;
-
-    private Map<DomainDocument.DocumentTypeGroup, Long> notOpenDocuments;
-
-    public Map<DomainDocument.DocumentTypeGroup, Long> getOpenDocuments() {
-        if (openDocuments == null) {
-            openDocuments = new HashMap<>();
-        }
-        return openDocuments;
+    public CrawlJobSummary() {
+        this.typeOfDocuments =  new HashMap<>();
     }
 
-    public void setOpenDocuments(Map<DomainDocument.DocumentTypeGroup, Long> openDocuments) {
-        this.openDocuments = openDocuments;
+    public Map<DomainDocument.DocumentTypeGroup, Long> getTypeOfDocuments() {
+        return typeOfDocuments;
     }
 
-    public Map<DomainDocument.DocumentTypeGroup, Long> getNotOpenDocuments() {
-        if (notOpenDocuments == null) {
-            notOpenDocuments = new HashMap<>();
-        }
-        return notOpenDocuments;
-    }
-
-    public void setNotOpenDocuments(Map<DomainDocument.DocumentTypeGroup, Long> notOpenDocuments) {
-        this.notOpenDocuments = notOpenDocuments;
+    public void setTypeOfDocuments(Map<DomainDocument.DocumentTypeGroup, Long> typeOfDocuments) {
+        this.typeOfDocuments = typeOfDocuments;
     }
 }

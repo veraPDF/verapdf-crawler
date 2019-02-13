@@ -52,17 +52,24 @@ public class ReportResource {
     @Transactional
     public CrawlJobSummary getSummary(@RequestParam("domain") String domain,
                                       @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date documentsSince) {
-
-        Long openPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince);
-        Long notOpenPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
-        Long openOffice = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OFFICE.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince);
-        Long notOpenOffice = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OFFICE.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
+        // PDF
+        Long pdfCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince) +
+                documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
+        // Office Open XML
+        Long microsoftOfficeCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.MS_OFFICE.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince) +
+                documentDAO.count(domain, DomainDocument.DocumentTypeGroup.MS_OFFICE.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
+        // OO_XML_OFFICE
+        Long officeOpenXmlCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince) +
+                documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
+        // Open Document format (ODF)
+        Long odfCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OPEN_OFFICE.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince) +
+                documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OPEN_OFFICE.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
 
         CrawlJobSummary summary = new CrawlJobSummary();
-        summary.getOpenDocuments().put(DomainDocument.DocumentTypeGroup.PDF, openPdf);
-        summary.getOpenDocuments().put(DomainDocument.DocumentTypeGroup.OFFICE, openOffice);
-        summary.getNotOpenDocuments().put(DomainDocument.DocumentTypeGroup.PDF, notOpenPdf);
-        summary.getNotOpenDocuments().put(DomainDocument.DocumentTypeGroup.OFFICE, notOpenOffice);
+        summary.getTypeOfDocuments().put(DomainDocument.DocumentTypeGroup.PDF, pdfCount);
+        summary.getTypeOfDocuments().put(DomainDocument.DocumentTypeGroup.OO_XML_OFFICE, officeOpenXmlCount);
+        summary.getTypeOfDocuments().put(DomainDocument.DocumentTypeGroup.OPEN_OFFICE, odfCount);
+        summary.getTypeOfDocuments().put(DomainDocument.DocumentTypeGroup.MS_OFFICE, microsoftOfficeCount);
         return summary;
     }
 
@@ -76,7 +83,7 @@ public class ReportResource {
         Long total = openPdf + notOpenPdf;
 
         List<PdfPropertyStatistics.ValueCount> flavourStatistics = documentDAO.getPropertyStatistics(
-                domain, PdfPropertyStatistics.FLAVOUR_PROPERTY_NAME, documentsSince);
+                domain, PdfPropertyStatistics.TYPE_PROPERTY_NAME, documentsSince);
         List<PdfPropertyStatistics.ValueCount> versionStatistics = documentDAO.getPropertyStatistics(
                 domain, PdfPropertyStatistics.VERSION_PROPERTY_NAME, documentsSince);
         List<PdfPropertyStatistics.ValueCount> producerStatistics = documentDAO.getPropertyStatistics(
