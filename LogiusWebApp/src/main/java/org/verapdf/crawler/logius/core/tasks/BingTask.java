@@ -21,6 +21,7 @@ public class BingTask extends AbstractTask {
 
     @Override
     protected void onStart() {
+        bingService.checkNewJobs();
     }
 
     @Override

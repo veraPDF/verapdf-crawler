@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 public class ValidationSettingsService {
     private final PdfPropertyDAO pdfPropertyDAO;
     private final NamespaceDAO namespaceDAO;
+
     public ValidationSettingsService(PdfPropertyDAO pdfPropertyDAO, NamespaceDAO namespaceDAO) {
         this.pdfPropertyDAO = pdfPropertyDAO;
         this.namespaceDAO = namespaceDAO;
