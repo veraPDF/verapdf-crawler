@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.verapdf.crawler.logius.validation.ValidationJob;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
@@ -36,7 +35,7 @@ public class FileService {
     }
 
     @PostConstruct
-    public void init(){
+    public void init() {
         try {
             FileUtils.cleanDirectory(this.baseTempFolder);
         } catch (IOException e) {
@@ -45,6 +44,7 @@ public class FileService {
     }
 
     public File save(String url) {
+        File file = null;
         try {
             try (CloseableHttpClient client = HttpClients.createDefault()) {
                 HttpGet get = new HttpGet(url);
@@ -61,7 +61,7 @@ public class FileService {
                         }
                     }
                 }
-                File file = File.createTempFile("logius", "." + contentType, baseTempFolder);
+                file = File.createTempFile("logius", "." + contentType, baseTempFolder);
                 FileOutputStream fileOutputStream = new FileOutputStream(file);
                 IOUtils.copy(response.getEntity().getContent(), fileOutputStream);
                 fileOutputStream.close();
@@ -69,16 +69,15 @@ public class FileService {
             }
         } catch (IOException e) {
             logger.error("Can't create url: " + url, e);
+            removeFile(file);
         }
 
         return null;
     }
 
     public void removeFile(File file) {
-        if (file != null) {
-            if (!file.delete()) {
-                logger.warn("Failed to clean validation job file " + file.getAbsolutePath());
-            }
+        if (file != null && file.isFile() && !file.delete()) {
+            logger.warn("Failed to clean validation job file " + file.getAbsolutePath());
         }
     }
 }

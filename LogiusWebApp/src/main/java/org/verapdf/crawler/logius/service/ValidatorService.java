@@ -52,18 +52,21 @@ public class ValidatorService {
         if (validationJobService.retrieveNextJob() != null) {
             ValidationJob validationJob = validationJobService.getCurrentJob();
             logger.info("Validating " + validationJob.getId());
+            File file = null;
             try {
-                File file = fileService.save(validationJob.getId());
+                file = fileService.save(validationJob.getId());
                 if (file != null){
-                    boolean isValidationRequired = validationJob.getDocument().getCrawlJob().isValidationRequired();
-                    validator.startValidation(file, isValidationRequired);
-                    processStartedJob(file, isValidationRequired);
+                    boolean isValidationDisabled = validationJob.getDocument().getCrawlJob().isValidationDisabled();
+                    validator.startValidation(file, isValidationDisabled);
+                    processStartedJob(file, isValidationDisabled);
                 }else {
                     saveErrorResult("Can't create url: " + validationJob.getId());
                 }
                 fileService.removeFile(file);
             } catch (IOException e) {
                 saveErrorResult(e);
+            } finally {
+                fileService.removeFile(file);
             }
             return false;
         }
@@ -71,8 +74,8 @@ public class ValidatorService {
     }
 
 
-    private void processStartedJob(File file, boolean isValidationRequired) throws IOException, ValidationDeadlockException, InterruptedException {
-        VeraPDFValidationResult result = validator.getValidationResult(file, isValidationRequired);
+    private void processStartedJob(File file, boolean isValidationDisabled) throws IOException, ValidationDeadlockException, InterruptedException {
+        VeraPDFValidationResult result = validator.getValidationResult(file, isValidationDisabled);
         for (PDFProcessorAdapter pdfProcessor : this.pdfProcessors) {
             Map<String, String> properties = pdfProcessor.evaluateProperties(file.getPath());
             for (Map.Entry<String, String> property : properties.entrySet()) {

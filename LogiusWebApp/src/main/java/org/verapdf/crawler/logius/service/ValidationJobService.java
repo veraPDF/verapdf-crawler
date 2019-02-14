@@ -65,16 +65,14 @@ public class ValidationJobService {
 
     @Transactional
     public void clean() {
-        ValidationJob validationJob = validationJobDAO.current();
-        if (validationJob == null){
-            return;
-        }
-        if (validationJob.getDocument().getCrawlJob().getStatus() == CrawlJob.Status.PAUSED) {
-            validationJob.setStatus(ValidationJob.Status.PAUSED);
-        } else {
-            validationJob.setStatus(ValidationJob.Status.NOT_STARTED);
-        }
-
+        List<ValidationJob> validationJobs = validationJobDAO.currentJobs();
+        validationJobs.forEach(validationJob -> {
+            if (validationJob.getDocument().getCrawlJob().getStatus() == CrawlJob.Status.PAUSED) {
+                validationJob.setStatus(ValidationJob.Status.PAUSED);
+            } else {
+                validationJob.setStatus(ValidationJob.Status.NOT_STARTED);
+            }
+        });
     }
 
     @Transactional

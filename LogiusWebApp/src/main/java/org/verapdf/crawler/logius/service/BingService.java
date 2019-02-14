@@ -2,9 +2,7 @@ package org.verapdf.crawler.logius.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -23,8 +21,6 @@ import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.resources.DocumentResource;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
@@ -129,6 +125,7 @@ public class BingService {
                     "q=site%3a" + site + "+filetype%3a" + fileType +
                     "&count=50&offset=";
             int currentEstimations = offset + 1;
+            //todo bing can return only 1000 results
             while (currentEstimations > offset && this.currentJob != null && offset <= 1000) {
                 try {
                     currentEstimations = obtainResults(result, urlWithoutOffset, this.apiKey, offset);

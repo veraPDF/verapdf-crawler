@@ -524,7 +524,7 @@ $(function () {
         });
 
         $.each(versionStatistics, function (index, valueCount) {
-            var dataSetIndex = VERSIONS[valueCount['value'].replace(",", ".")].dataSetIndex;
+            var dataSetIndex = VERSIONS[valueCount['value']].dataSetIndex;
             versionsChartDataset.data[dataSetIndex] = valueCount['count'];
         });
         versionsChart.update();

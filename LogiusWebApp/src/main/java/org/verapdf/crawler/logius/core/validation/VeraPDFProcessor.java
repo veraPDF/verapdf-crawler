@@ -1,7 +1,6 @@
 package org.verapdf.crawler.logius.core.validation;
 
 import javanet.staxutils.SimpleNamespaceContext;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,9 +26,7 @@ import javax.xml.xpath.XPathFactory;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -50,7 +47,7 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
     private static final String FLAVOUR_CONFORMANCE_PROPERTY_NAME = "flavourConformance";
     private final String verapdfPath;
     private final File veraPDFErrorLog;
-    private boolean isValidationRequired;
+    private boolean isValidationDisabled;
     private File filePath;
     private ValidationSettings settings;
     private Process process;
@@ -72,12 +69,11 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
 
     private File getVeraPDFReport(File filename) throws IOException, InterruptedException {
         logger.info("Preparing veraPDF process...");
-        String[] cmd;
-        if (isValidationRequired) {
-            cmd = new String[]{verapdfPath, "--extract", "--format", "mrr", "--maxfailuresdisplayed", "1", filename.getAbsolutePath()};
-        } else {
-            cmd = new String[]{verapdfPath, "--extract","--off", "--format", "mrr", "--maxfailuresdisplayed", "1", filename.getAbsolutePath()};
+        List<String> cmd = new ArrayList<>(Arrays.asList(verapdfPath, "--extract", "--format", "mrr", "--maxfailuresdisplayed", "1"));
+        if (isValidationDisabled){
+            cmd.add("--off");
         }
+        cmd.add(filename.getAbsolutePath());
         ProcessBuilder pb = new ProcessBuilder();
         pb.redirectError(this.veraPDFErrorLog);
         Path outputPath = Files.createTempFile("veraPDFReport", ".xml");
@@ -93,25 +89,6 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
         }
         logger.info("VeraPDF process has been finished");
         return file;
-    }
-
-
-    private File checkExtension(File cur) {
-        if (!cur.getName().endsWith(".pdf")) {
-            if (cur.isFile()) {
-                try {
-                    File res = File.createTempFile("tempPdf", ".pdf", cur.getParentFile());
-                    try (InputStream is = new FileInputStream(cur);
-                         OutputStream os = new FileOutputStream(res)) {
-                        IOUtils.copy(is, os);
-                    }
-                    return res;
-                } catch (IOException e) {
-                    logger.error("Some problem during copy file " + filePath, e);
-                }
-            }
-        }
-        return null;
     }
 
     private void addNameSpaces(SimpleNamespaceContext nsc) {
@@ -241,11 +218,8 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
     public VeraPDFValidationResult call() {
         VeraPDFValidationResult result;
         File report = null;
-        File tempPdfFile = null;
         try {
-            tempPdfFile = checkExtension(this.filePath);
-            File toValidatePath = tempPdfFile == null ? this.filePath : tempPdfFile;
-            report = getVeraPDFReport(toValidatePath);
+            report = getVeraPDFReport(this.filePath);
             if (report != null && !stopped) {
                 logger.info("Obtaining result structure");
                 DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -275,9 +249,6 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
             if (report != null && !report.delete()) {
                 logger.info("Report has not been deleted manually");
             }
-            if (tempPdfFile != null && !tempPdfFile.delete()) {
-                logger.info("Temp pdf file has not been deleted manually");
-            }
         }
         if (!stopped) {
             return result;
@@ -285,7 +256,7 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
         return null;
     }
 
-    public void setValidationRequired(boolean validationRequired) {
-        isValidationRequired = validationRequired;
+    public void setValidationDisabled(boolean isValidationDisabled) {
+        this.isValidationDisabled = isValidationDisabled;
     }
 }

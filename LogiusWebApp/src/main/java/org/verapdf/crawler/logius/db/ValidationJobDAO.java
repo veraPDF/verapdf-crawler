@@ -26,11 +26,24 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         return getValidationJobWithStatus(ValidationJob.Status.NOT_STARTED);
     }
 
+    public List<ValidationJob> currentJobs() {
+        return getValidationJobsWithStatus(ValidationJob.Status.IN_PROGRESS);
+    }
+
     public ValidationJob current() {
         return getValidationJobWithStatus(ValidationJob.Status.IN_PROGRESS);
     }
 
+    private List<ValidationJob> getValidationJobsWithStatus(ValidationJob.Status status) {
+        return currentSession().createQuery(buildValidationJobWithStatusQuery(status)).getResultList();
+    }
+
     private ValidationJob getValidationJobWithStatus(ValidationJob.Status status) {
+        return currentSession().createQuery(buildValidationJobWithStatusQuery(status))
+                .setMaxResults(1).uniqueResult();
+    }
+
+    private CriteriaQuery<ValidationJob> buildValidationJobWithStatusQuery(ValidationJob.Status status){
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<ValidationJob> criteriaQuery = builder.createQuery(ValidationJob.class);
         Root<ValidationJob> jobRoot = criteriaQuery.from(ValidationJob.class);
@@ -38,7 +51,7 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
                 builder.equal(jobRoot.get(ValidationJob_.status), status),
                 builder.isNotNull(jobRoot.get(ValidationJob_.document).get(DomainDocument_.url))
         ));
-        return currentSession().createQuery(criteriaQuery).setMaxResults(1).uniqueResult();
+        return criteriaQuery;
     }
 
     public void remove(ValidationJob validationJob) {

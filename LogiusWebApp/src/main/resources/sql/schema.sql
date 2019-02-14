@@ -17,6 +17,7 @@ CREATE TABLE crawl_job_requests
   crawl_since  DATE         DEFAULT NULL,
   PRIMARY KEY (id)
 );
+
 CREATE TABLE crawl_jobs
 (
   domain                 VARCHAR(255) NOT NULL,
@@ -25,12 +26,11 @@ CREATE TABLE crawl_jobs
   start_time             TIMESTAMP     DEFAULT NOW(),
   finish_time            TIMESTAMP     DEFAULT NULL,
   is_finished            BOOLEAN   DEFAULT FALSE,
-  is_validation_required BOOLEAN   DEFAULT FALSE,
+  is_validation_enabled  BOOLEAN   DEFAULT FALSE,
   job_status             VARCHAR(10)  DEFAULT NULL,
   crawl_service          VARCHAR(10)  NOT NULL,
   PRIMARY KEY (domain)
 );
-
 
 CREATE TABLE crawl_job_requests_crawl_jobs
 (
