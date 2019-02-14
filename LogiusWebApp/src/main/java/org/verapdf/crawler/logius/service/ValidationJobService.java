@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.db.DocumentDAO;
 import org.verapdf.crawler.logius.db.ValidationErrorDAO;
 import org.verapdf.crawler.logius.db.ValidationJobDAO;
@@ -60,6 +61,18 @@ public class ValidationJobService {
         } else {
             return null;
         }
+    }
+
+    @Transactional
+    public void clean() {
+        List<ValidationJob> validationJobs = validationJobDAO.currentJobs();
+        validationJobs.forEach(validationJob -> {
+            if (validationJob.getDocument().getCrawlJob().getStatus() == CrawlJob.Status.PAUSED) {
+                validationJob.setStatus(ValidationJob.Status.PAUSED);
+            } else {
+                validationJob.setStatus(ValidationJob.Status.NOT_STARTED);
+            }
+        });
     }
 
     @Transactional
@@ -134,11 +147,6 @@ public class ValidationJobService {
         logger.debug("Cleanup validation job");
         if (job == null) {
             return;
-        }
-        if (job.getFilePath() != null) {
-            if (!new File(job.getFilePath()).delete()) {
-                logger.warn("Failed to clean validation job file " + job.getFilePath());
-            }
         }
         if (shouldCleanDB) {
             validationJobDAO.remove(job);

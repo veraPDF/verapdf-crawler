@@ -78,9 +78,6 @@ public class MonitoringCrawlJobStatusService {
             job.setFinished(true);
             job.setStatus(CrawlJob.Status.FINISHED);
             job.setFinishTime(new Date());
-            if (service == CrawlJob.CrawlService.BING) {
-                bingService.deleteTempFolder(job);
-            }
             logger.info("Crawling complete for " + job.getDomain());
             return true;
         } catch (Exception e) {

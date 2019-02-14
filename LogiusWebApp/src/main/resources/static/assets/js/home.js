@@ -94,13 +94,7 @@ function main() {
         validForm = false;
     }
 
-    var isBing = document.getElementById("bing-crawl-service").checked;
     var URL = "/api/crawl-requests";
-    if (isBing) {
-        URL += "?crawlService=BING"
-    } else {
-        URL += "?crawlService=HERITRIX"
-    }
 
     // If there are validate errors do nothing
     if (!validForm) {

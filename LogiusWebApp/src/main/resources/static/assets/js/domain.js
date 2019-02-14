@@ -1,4 +1,9 @@
 $(function () {
+    if (!localStorage['token']){
+        $( "#error-nav-pdfwam" ).css( "display", "none" );
+        $( "#error-nav" ).css( "display", "none" );
+    }
+
     var FLAVOURS = {
         '1A': {
             displayName: 'PDF/A-1A',

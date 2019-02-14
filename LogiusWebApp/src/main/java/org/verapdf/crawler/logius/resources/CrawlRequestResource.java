@@ -20,18 +20,15 @@ import java.util.stream.Collectors;
 public class CrawlRequestResource {
     private final CrawlRequestDAO crawlRequestDAO;
     private final CrawlJobDAO crawlJobDAO;
-    private final CrawlJobResource crawlJobResource;
 
     public CrawlRequestResource(CrawlRequestDAO crawlRequestDAO, CrawlJobDAO crawlJobDAO, CrawlJobResource crawlJobResource) {
         this.crawlRequestDAO = crawlRequestDAO;
         this.crawlJobDAO = crawlJobDAO;
-        this.crawlJobResource = crawlJobResource;
     }
 
     @PostMapping
     @Transactional
-    public CrawlRequest createCrawlRequest(@Valid @RequestBody CrawlRequest crawlRequest,
-                                           @RequestParam("crawlService") CrawlJob.CrawlService service) {
+    public CrawlRequest createBingCrawlRequest(@Valid @RequestBody CrawlRequest crawlRequest) {
         // Validate and pre-process input
         List<String> domains = crawlRequest.getCrawlJobs().stream()
                 .map(CrawlJob::getDomain)
@@ -42,20 +39,14 @@ public class CrawlRequestResource {
         // Find jobs for domains requested earlier and link with this request
         List<CrawlJob> existingJobs = crawlJobDAO.findByDomain(domains);
         for (CrawlJob existingJob : existingJobs) {
-            if (service != existingJob.getCrawlService()) {
-                existingJob = crawlJobResource.restartCrawlJob(existingJob, existingJob.getDomain(), service);
-            }
             domains.remove(existingJob.getDomain());
             existingJob.getCrawlRequests().add(crawlRequest);
         }
 
         // For domains that are left start new crawl jobs
         for (String domain : domains) {
-            CrawlJob newJob = crawlJobDAO.save(new CrawlJob(domain, service));
+            CrawlJob newJob = crawlJobDAO.save(new CrawlJob(domain, CrawlJob.CrawlService.BING));
             newJob.getCrawlRequests().add(crawlRequest);
-            if (service == CrawlJob.CrawlService.HERITRIX) {
-                crawlJobResource.startCrawlJob(newJob);
-            }
         }
         return crawlRequest;
     }

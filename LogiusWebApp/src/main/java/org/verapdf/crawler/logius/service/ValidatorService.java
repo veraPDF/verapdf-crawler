@@ -10,6 +10,8 @@ import org.verapdf.crawler.logius.core.validation.ValidationDeadlockException;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 import org.verapdf.crawler.logius.validation.VeraPDFValidationResult;
 
+import javax.annotation.PostConstruct;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -20,11 +22,19 @@ public class ValidatorService {
     private final ValidationJobService validationJobService;
     private final PDFValidator validator;
     private final List<PDFProcessorAdapter> pdfProcessors;
+    private final FileService fileService;
+
     public ValidatorService(ValidationJobService validationJobService, PDFValidator validator,
-                            List<PDFProcessorAdapter> pdfProcessors) {
+                            List<PDFProcessorAdapter> pdfProcessors, FileService fileService) {
         this.validationJobService = validationJobService;
         this.validator = validator;
         this.pdfProcessors = pdfProcessors;
+        this.fileService = fileService;
+    }
+
+    @PostConstruct
+    public void init() {
+        validationJobService.clean();
     }
 
     public void abortCurrentJob() {
@@ -38,24 +48,24 @@ public class ValidatorService {
     }
 
 
-    public void processCurrentJob() throws InterruptedException, ValidationDeadlockException {
-        if (validationJobService.retrieveCurrentJob() != null) {
-            try {
-                processStartedJob();
-            } catch (IOException e) {
-                saveErrorResult(e);
-            }
-        }
-    }
-
     public boolean processNextJob() throws InterruptedException, ValidationDeadlockException {
         if (validationJobService.retrieveNextJob() != null) {
-            logger.info("Validating " + validationJobService.getCurrentJob().getId());
+            ValidationJob validationJob = validationJobService.getCurrentJob();
+            logger.info("Validating " + validationJob.getId());
+            File file = null;
             try {
-                validator.startValidation(validationJobService.getCurrentJob());
-                processStartedJob();
+                file = fileService.save(validationJob.getId());
+                if (file != null){
+                    boolean isValidationDisabled = validationJob.getDocument().getCrawlJob().isValidationDisabled();
+                    validator.startValidation(file, isValidationDisabled);
+                    processStartedJob(file, isValidationDisabled);
+                }else {
+                    saveErrorResult("Can't create url: " + validationJob.getId());
+                }
             } catch (IOException e) {
                 saveErrorResult(e);
+            } finally {
+                fileService.removeFile(file);
             }
             return false;
         }
@@ -63,14 +73,19 @@ public class ValidatorService {
     }
 
 
-    private void processStartedJob() throws IOException, ValidationDeadlockException, InterruptedException {
-        VeraPDFValidationResult result = validator.getValidationResult(validationJobService.getCurrentJob());
+    private void processStartedJob(File file, boolean isValidationDisabled) throws IOException, ValidationDeadlockException, InterruptedException {
+        VeraPDFValidationResult result = validator.getValidationResult(file, isValidationDisabled);
         for (PDFProcessorAdapter pdfProcessor : this.pdfProcessors) {
-            Map<String, String> properties = pdfProcessor.evaluateProperties(validationJobService.getCurrentJob());
+            Map<String, String> properties = pdfProcessor.evaluateProperties(file.getPath());
             for (Map.Entry<String, String> property : properties.entrySet()) {
                 result.addProperty(property.getKey(), property.getValue());
             }
         }
+        validationJobService.saveResult(result);
+    }
+
+    private void saveErrorResult(String e) {
+        VeraPDFValidationResult result = new VeraPDFValidationResult(e);
         validationJobService.saveResult(result);
     }
 

@@ -5,10 +5,12 @@ import org.jopendocument.dom.spreadsheet.Sheet;
 import org.jopendocument.dom.spreadsheet.SpreadSheet;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.validation.error.ValidationError;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
@@ -20,14 +22,14 @@ import java.util.Map;
 @Service
 public class ReportsGenerator {
 
-    @Value("${logius.reports.odsTemplatePath}")
-    private String odsTemplatePath;
     @Value("${logius.reports.notificationEmails}")
     private String notificationEmails;
     @Value("${logius.reports.odsTempFolder}")
     private String odsTempFolder;
-
+    @Value("${logius.reports.odsTemplatePath}")
+    private String odsTemplatePath;
     private ReportsGenerator() {
+
     }
 
     private static void fillSimpleSheet(List<String> documentsList,
@@ -44,7 +46,7 @@ public class ReportsGenerator {
     private static void fillNonPDFA12Documents(List<DomainDocument> documentsList, SpreadSheet spreadSheet) {
         Sheet sheet = spreadSheet.getSheet(1);
         sheet.ensureColumnCount(5);
-        sheet.ensureRowCount(getNonPDFA12DocumentsRowCount(documentsList));
+        sheet.ensureRowCount(getNonPDFA12DocumentsRowCount(documentsList) + 1);
         int i = 1;
         for (DomainDocument document : documentsList) {
             sheet.setValueAt(document.getUrl(), 0, i);

@@ -2,9 +2,7 @@ package org.verapdf.crawler.logius.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -23,8 +21,6 @@ import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.resources.DocumentResource;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
@@ -39,54 +35,44 @@ public class BingService {
     private final DocumentResource documentResource;
     private final Map<String, String> fileTypes;
     private String apiKey;
-    private File baseTempFolder;
     private CrawlJob currentJob = null;
 
-    public BingService(@Value("${logius.bing.baseTempFolder}") String baseTempUrl,
-                       @Value("${logius.bing.apiKey}") String apiKey,
+    public BingService(@Value("${logius.bing.apiKey}") String apiKey,
                        CrawlJobService crawlJobService,
                        DocumentResource documentResource,
                        @Qualifier("fileTypes") Map<String, String> fileTypes) {
         this.apiKey = apiKey;
         this.crawlJobService = crawlJobService;
         this.documentResource = documentResource;
-        this.baseTempFolder = new File(baseTempUrl);
         this.fileTypes = fileTypes;
-        if (!this.baseTempFolder.isDirectory() && (this.baseTempFolder.exists() || !this.baseTempFolder.mkdirs())) {
-            throw new IllegalStateException("Initialization fail on obtaining temp folder");
-        }
     }
 
     @Transactional
     public boolean checkNewJobs() {
         this.currentJob = crawlJobService.getNewBingJob();
         if (this.currentJob != null) {
-            File tempFolder = new File(this.baseTempFolder, this.currentJob.getHeritrixJobId());
-            if (!tempFolder.isDirectory() && (tempFolder.exists() || !tempFolder.mkdirs())) {
-                throw new IllegalStateException("Initialization fail on obtaining job temp folder");
-            }
-            processFileType("pdf", tempFolder);
-            processFileType("odt", null);
-            processFileType("ods", null);
-            processFileType("odp", null);
-            processFileType("doc", null);
-            processFileType("xls", null);
-            processFileType("ppt", null);
+            processFileType("pdf");
+            processFileType("odt");
+            processFileType("ods");
+            processFileType("odp");
+            processFileType("doc");
+            processFileType("xls");
+            processFileType("ppt");
             this.currentJob = null;
             return false;
         }
         return true;
     }
 
-    private void processFileType(String fileType, File tempFolder) {
+    private void processFileType(String fileType) {
         Set<String> pdfs = obtainURLs(fileType);
         for (String url : pdfs) {
-            processFile(url, fileType, tempFolder);
+            processFile(url, fileType);
         }
     }
 
 
-    public void processFile(String url, String fileType, File tempFolder) {
+    public void processFile(String url, String fileType) {
         try {
             try (CloseableHttpClient client = HttpClients.createDefault()) {
                 HttpGet get = new HttpGet(url);
@@ -121,11 +107,6 @@ public class BingService {
                         logger.info("Fail to parse last modified date for " + url + ", lastModified won't be set for this document.");
                     }
                 }
-                if (tempFolder != null) {
-                    File file = File.createTempFile("logius", "." + contentType, tempFolder);
-                    IOUtils.copy(response.getEntity().getContent(), new FileOutputStream(file));
-                    domainDocument.setFilePath(file.getAbsolutePath());
-                }
                 if (this.currentJob != null) {
                     documentResource.saveDocument(domainDocument, this.currentJob);
                 }
@@ -144,7 +125,8 @@ public class BingService {
                     "q=site%3a" + site + "+filetype%3a" + fileType +
                     "&count=50&offset=";
             int currentEstimations = offset + 1;
-            while (currentEstimations > offset && this.currentJob != null) {
+            // bing can return only 1000 results
+            while (currentEstimations > offset && this.currentJob != null && offset <= 1000) {
                 try {
                     currentEstimations = obtainResults(result, urlWithoutOffset, this.apiKey, offset);
                     offset += 50;
@@ -194,17 +176,6 @@ public class BingService {
     public void discardJob(CrawlJob job) {
         if (this.currentJob != null && this.currentJob.getDomain().equals(job.getDomain())) {
             this.currentJob = null;
-        }
-        deleteTempFolder(job);
-    }
-
-    public boolean deleteTempFolder(CrawlJob job) {
-        try {
-            FileUtils.deleteDirectory(new File(this.baseTempFolder, job.getHeritrixJobId()));
-            return true;
-        } catch (IOException e) {
-            logger.error("Can't delete bing job folder", e);
-            return false;
         }
     }
 }

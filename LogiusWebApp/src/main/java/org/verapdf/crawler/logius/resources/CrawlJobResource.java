@@ -202,6 +202,7 @@ public class CrawlJobResource {
         String crawlJobDomain = crawlJob.getDomain();
         Long count = validationJobDAO.count(crawlJobDomain);
         List<ValidationJob> topDocuments = validationJobDAO.getDocuments(crawlJobDomain, GET_STATUS_MAX_DOCUMENT_COUNT);
+        crawlJob.getCrawlRequests().forEach(crawlRequest -> crawlRequest.getCrawlJobs().size());
         return ResponseEntity.ok(new CrawlJobStatus(crawlJob, heritrixStatus, new ValidationQueueStatus(count, topDocuments)));
     }
 

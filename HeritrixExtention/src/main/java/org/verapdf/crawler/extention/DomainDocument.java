@@ -31,8 +31,6 @@ public class DomainDocument {
 
     private String contentType;
 
-    private String filePath;
-
     public DomainDocument() {
     }
 
@@ -73,11 +71,4 @@ public class DomainDocument {
         this.contentType = contentType;
     }
 
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
 }

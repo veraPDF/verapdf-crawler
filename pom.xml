@@ -25,5 +25,6 @@
         <hibernate.version>5.2.1.Final</hibernate.version>
         <spring.version>2.1.1.RELEASE</spring.version>
         <jopendocument.version>1.3b1</jopendocument.version>
+        <postgres.connector.version>9.1-901-1.jdbc4</postgres.connector.version>
     </properties>
 </project>

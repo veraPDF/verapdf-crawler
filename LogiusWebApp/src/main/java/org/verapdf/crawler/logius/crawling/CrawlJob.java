@@ -45,6 +45,9 @@ public class CrawlJob {
     @Column(name = "is_finished")
     private boolean finished;
 
+    @Column(name = "is_validation_enabled")
+    private boolean isValidationEnabled;
+
     @ManyToMany
     @JoinTable(
             name = "crawl_job_requests_crawl_jobs",
@@ -75,6 +78,14 @@ public class CrawlJob {
         this.domain = domain;
         this.startTime = startTime;
         this.crawlService = CrawlService.HERITRIX;
+    }
+
+    public boolean isValidationEnabled() {
+        return isValidationEnabled;
+    }
+
+    public void setValidationEnabled(boolean validationEnabled) {
+        isValidationEnabled = validationEnabled;
     }
 
     public String getDomain() {
@@ -139,6 +150,10 @@ public class CrawlJob {
 
     public void setFinished(boolean finished) {
         this.finished = finished;
+    }
+
+    public boolean isValidationDisabled(){
+        return !this.isValidationEnabled;
     }
 
     public List<CrawlRequest> getCrawlRequests() {
