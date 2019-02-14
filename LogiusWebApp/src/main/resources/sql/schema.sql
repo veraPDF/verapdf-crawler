@@ -85,7 +85,7 @@ CREATE TABLE validation_errors
   specification VARCHAR(32)          DEFAULT NULL,
   clause        VARCHAR(16)          DEFAULT NULL,
   test_number   VARCHAR(4)           DEFAULT NULL,
-  description   VARCHAR(2048)        DEFAULT NULL,
+  description   VARCHAR(2048)        DEFAULT NULL ,
   PRIMARY KEY (id),
   UNIQUE (specification, clause, test_number)
 );
