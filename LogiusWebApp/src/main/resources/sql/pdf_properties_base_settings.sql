@@ -2,6 +2,9 @@ INSERT INTO pdf_properties (property_name, property_enabled)
 VALUES
   ('flavourPart', TRUE),
   ('flavourConformance', TRUE),
+  ('PDF/E', TRUE),
+  ('PDF/X', TRUE),
+  ('PDF/UA', TRUE),
   ('modDateXMP', TRUE),
   ('modDateInfoDict', TRUE),
   ('pdfVersion', TRUE),
