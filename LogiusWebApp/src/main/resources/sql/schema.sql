@@ -81,9 +81,9 @@ CREATE TABLE validation_errors
 (
   id            SERIAL      NOT NULL,
   type          VARCHAR(32) NOT NULL DEFAULT 'GENERIC',
-  specification VARCHAR(32)          DEFAULT NULL UNIQUE,
-  clause        VARCHAR(16)          DEFAULT NULL UNIQUE,
-  test_number   VARCHAR(4)           DEFAULT NULL UNIQUE,
+  specification VARCHAR(32)          DEFAULT NULL,
+  clause        VARCHAR(16)          DEFAULT NULL,
+  test_number   VARCHAR(4)           DEFAULT NULL,
   description   VARCHAR(2048)        DEFAULT NULL,
   PRIMARY KEY (id),
   UNIQUE (specification, clause, test_number)
