@@ -62,7 +62,6 @@ public class ValidatorService {
                 }else {
                     saveErrorResult("Can't create url: " + validationJob.getId());
                 }
-                fileService.removeFile(file);
             } catch (IOException e) {
                 saveErrorResult(e);
             } finally {
