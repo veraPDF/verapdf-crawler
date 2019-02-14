@@ -3,7 +3,6 @@ package org.verapdf.crawler.logius.report;
 import java.util.List;
 
 public class PdfPropertyStatistics {
-    public static final String FLAVOUR_PROPERTY_NAME = "flavour";
     public static final String VERSION_PROPERTY_NAME = "pdfVersion";
     public static final String PRODUCER_PROPERTY_NAME = "producer";
 

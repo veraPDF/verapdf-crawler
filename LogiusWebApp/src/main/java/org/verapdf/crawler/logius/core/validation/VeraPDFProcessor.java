@@ -43,8 +43,8 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
     private static final int MAX_PREFERRED_PROPERTY_LENGTH = 255;
     private static final String BASE_PATH = "/report/jobs/job/";
     private static final String VALIDATION_REPORT_PATH = BASE_PATH + "validationReport/";
-    private static final String FLAVOUR_PART_PROPERTY_NAME = "flavourPart";
-    private static final String FLAVOUR_CONFORMANCE_PROPERTY_NAME = "flavourConformance";
+    private static final String FLAVOUR_PART_PROPERTY_NAME = "PDF/A_part";
+    private static final String FLAVOUR_CONFORMANCE_PROPERTY_NAME = "PDF/A_conformance";
     private final String verapdfPath;
     private final File veraPDFErrorLog;
     private boolean isValidationDisabled;

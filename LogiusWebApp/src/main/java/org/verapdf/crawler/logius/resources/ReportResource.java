@@ -42,7 +42,6 @@ public class ReportResource {
     private static final int ODS_MAX_DOCUMENTS_SHOW = 100;
     private final DocumentDAO documentDAO;
     private final ReportsGenerator reportsGenerator;
-    private final List<String> pdfTypes = Arrays.asList("PDF/A", "PDF/UA", "PDF/X", "PDF/E");
     @Autowired
     public ReportResource(DocumentDAO documentDAO, ReportsGenerator reportsGenerator) {
         this.documentDAO = documentDAO;
@@ -80,7 +79,7 @@ public class ReportResource {
         Long total = openPdf + notOpenPdf;
 
         List<PdfPropertyStatistics.ValueCount> flavourStatistics = documentDAO.getPropertyStatistic(
-                domain, pdfTypes, documentsSince);
+                domain, documentsSince);
         List<PdfPropertyStatistics.ValueCount> versionStatistics = documentDAO.getPropertyStatistics(
                 domain, PdfPropertyStatistics.VERSION_PROPERTY_NAME, documentsSince);
         List<PdfPropertyStatistics.ValueCount> producerStatistics = documentDAO.getPropertyStatistics(

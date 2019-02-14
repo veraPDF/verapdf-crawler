@@ -13,16 +13,14 @@ import org.verapdf.crawler.logius.report.PdfPropertyStatistics;
 import org.verapdf.crawler.logius.validation.error.ValidationError;
 
 import javax.persistence.criteria.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Repository
 public class DocumentDAO extends AbstractDAO<DomainDocument> {
 
     public static final String NONE = "None"; // used to indicate that some property should be missing, since null means absence of the filter
     private static final int PROPERTY_VALUE_LENGTH = 255;
+    private final List<String> pdfTypes = Arrays.asList("PDF/A", "PDF/UA", "PDF/X", "PDF/E");
 
     public DocumentDAO(SessionFactory sessionFactory) {
         super(sessionFactory);
@@ -128,7 +126,7 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         return query.list();
     }
 
-    public List<PdfPropertyStatistics.ValueCount> getPropertyStatistic(String domain, List<String> propertyNames, Date startDate) {
+    public List<PdfPropertyStatistics.ValueCount> getPropertyStatistic(String domain, Date startDate) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<PdfPropertyStatistics.ValueCount> criteriaQuery = builder.createQuery(PdfPropertyStatistics.ValueCount.class);
         Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
@@ -143,7 +141,7 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         List<Predicate> restrictions = new ArrayList<>();
 
         restrictions.add(builder.equal(document.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain));
-        restrictions.add(properties.key().in(propertyNames));
+        restrictions.add(properties.key().in(pdfTypes));
         if (startDate != null) {
             restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
         }
@@ -220,11 +218,10 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         if (flavour != null) {
             // AND document.properties['flavour'] = <flavour>
             MapJoin<DomainDocument, String, String> flavourProperty = document.join(DomainDocument_.properties, JoinType.LEFT);
-            flavourProperty.on(builder.equal(flavourProperty.key(), PdfPropertyStatistics.FLAVOUR_PROPERTY_NAME));
             if (flavour.equals(NONE)) {
-                restrictions.add(builder.isNull(flavourProperty.value()));
+                restrictions.add(builder.not(flavourProperty.key().in(pdfTypes)));
             } else {
-                restrictions.add(builder.equal(flavourProperty.value(), flavour));
+                restrictions.add(builder.equal(flavourProperty.key(), flavour));
             }
         }
 
@@ -280,11 +277,10 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         if (flavour != null) {
             // AND document.properties['flavour'] = <flavour>
             MapJoin<DomainDocument, String, String> flavourProperty = document.join(DomainDocument_.properties, JoinType.LEFT);
-            flavourProperty.on(builder.equal(flavourProperty.key(), PdfPropertyStatistics.FLAVOUR_PROPERTY_NAME));
             if (flavour.equals(NONE)) {
-                restrictions.add(builder.isNull(flavourProperty.value()));
+                restrictions.add(builder.not(flavourProperty.key().in(pdfTypes)));
             } else {
-                restrictions.add(builder.equal(flavourProperty.value(), flavour));
+                restrictions.add(builder.equal(flavourProperty.key(), flavour));
             }
         }
 

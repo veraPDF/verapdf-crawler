@@ -1,9 +1,4 @@
 $(function () {
-    if (!localStorage['token']){
-        $( "#error-nav-pdfwam" ).css( "display", "none" );
-        $( "#error-nav" ).css( "display", "none" );
-    }
-
     var FLAVOURS = {
         'PDF/A': {
             displayName: 'PDF/A',
@@ -408,17 +403,15 @@ $(function () {
                 var pdfCount = result['pdf'];
                 var ooxOfficeCount = result['oo_xml_office'];
                 var msOfficeCount = result['ms_office'];
-                var openOfficeCount =  result['open_office'];
+                var openOfficeCount = result['open_office'];
                 var totalCount = pdfCount + ooxOfficeCount + msOfficeCount + openOfficeCount;
-                if (totalCount === 0){
-                    totalCount += 1;
-                }
+                totalCount = totalCount === 0 ? 1 : totalCount;
 
                 // todo tuta
                 $('.summary .pdf-documents .percent').text((pdfCount / totalCount * 100).toFixed(1) + '%');
-                $('.summary .oox-office-documents .percent').text((ooxOfficeCount / totalCount * 100).toFixed(1)  + '%');
-                $('.summary .ms-office-documents .percent').text((msOfficeCount / totalCount * 100).toFixed(1)  + '%');
-                $('.summary .odf-documents .percent').text((openOfficeCount / totalCount * 100).toFixed(1)  + '%');
+                $('.summary .oox-office-documents .percent').text((ooxOfficeCount / totalCount * 100).toFixed(1) + '%');
+                $('.summary .ms-office-documents .percent').text((msOfficeCount / totalCount * 100).toFixed(1) + '%');
+                $('.summary .odf-documents .percent').text((openOfficeCount / totalCount * 100).toFixed(1) + '%');
 
                 summaryChart.data.datasets[0].data[0] = pdfCount;
                 summaryChart.data.datasets[0].data[1] = ooxOfficeCount;
