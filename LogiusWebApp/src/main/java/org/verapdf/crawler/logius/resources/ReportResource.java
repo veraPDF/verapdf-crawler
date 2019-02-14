@@ -53,17 +53,13 @@ public class ReportResource {
     public CrawlJobSummary getSummary(@RequestParam("domain") String domain,
                                       @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date documentsSince) {
         // PDF
-        Long pdfCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince) +
-                documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
+        Long pdfCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), null, documentsSince);
         // Office Open XML
-        Long microsoftOfficeCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.MS_OFFICE.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince) +
-                documentDAO.count(domain, DomainDocument.DocumentTypeGroup.MS_OFFICE.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
+        Long microsoftOfficeCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.MS_OFFICE.getTypes(),null, documentsSince);
         // OO_XML_OFFICE
-        Long officeOpenXmlCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince) +
-                documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
+        Long officeOpenXmlCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), null, documentsSince);
         // Open Document format (ODF)
-        Long odfCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OPEN_OFFICE.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince) +
-                documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OPEN_OFFICE.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
+        Long odfCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OPEN_OFFICE.getTypes(), null, documentsSince);
 
         CrawlJobSummary summary = new CrawlJobSummary();
         summary.getTypeOfDocuments().put(DomainDocument.DocumentTypeGroup.PDF, pdfCount);
