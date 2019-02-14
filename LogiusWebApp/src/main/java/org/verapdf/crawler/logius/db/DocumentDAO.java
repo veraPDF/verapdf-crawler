@@ -128,6 +128,32 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         return query.list();
     }
 
+    public List<PdfPropertyStatistics.ValueCount> getPropertyStatistic(String domain, List<String> propertyNames, Date startDate) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<PdfPropertyStatistics.ValueCount> criteriaQuery = builder.createQuery(PdfPropertyStatistics.ValueCount.class);
+        Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
+        MapJoin<DomainDocument, String, String> properties = document.join(DomainDocument_.properties);
+        Expression<Long> documentCount = builder.count(document);
+        criteriaQuery.select(builder.construct(
+                PdfPropertyStatistics.ValueCount.class,
+                properties.key(),
+                documentCount
+        ));
+
+        List<Predicate> restrictions = new ArrayList<>();
+
+        restrictions.add(builder.equal(document.get(DomainDocument_.crawlJob).get(CrawlJob_.domain), domain));
+        restrictions.add(properties.key().in(propertyNames));
+        if (startDate != null) {
+            restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
+        }
+        criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
+
+        criteriaQuery.groupBy(properties.key());
+        Query<PdfPropertyStatistics.ValueCount> query = currentSession().createQuery(criteriaQuery);
+        return query.list();
+    }
+
     public List<PdfPropertyStatistics.ValueCount> getPropertyStatistics(String domain, String propertyName, Date startDate) {
         return getPropertyStatistics(domain, propertyName, startDate, false, null);
     }

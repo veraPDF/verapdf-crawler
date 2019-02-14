@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -36,12 +38,11 @@ import java.util.List;
 @RequestMapping("api/report")
 public class ReportResource {
     // todo: clarify if we need multi-domain statistics (even if not, we use domain as a query param rather than path param to easy migrate in the future)
-
     private static final Logger logger = LoggerFactory.getLogger(ReportResource.class);
     private static final int ODS_MAX_DOCUMENTS_SHOW = 100;
     private final DocumentDAO documentDAO;
     private final ReportsGenerator reportsGenerator;
-
+    private final List<String> pdfTypes = Arrays.asList("PDF/A", "PDF/UA", "PDF/X", "PDF/E");
     @Autowired
     public ReportResource(DocumentDAO documentDAO, ReportsGenerator reportsGenerator) {
         this.documentDAO = documentDAO;
@@ -62,10 +63,10 @@ public class ReportResource {
         Long odfCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OPEN_OFFICE.getTypes(), null, documentsSince);
 
         CrawlJobSummary summary = new CrawlJobSummary();
-        summary.getTypeOfDocuments().put(DomainDocument.DocumentTypeGroup.PDF, pdfCount);
-        summary.getTypeOfDocuments().put(DomainDocument.DocumentTypeGroup.OO_XML_OFFICE, officeOpenXmlCount);
-        summary.getTypeOfDocuments().put(DomainDocument.DocumentTypeGroup.OPEN_OFFICE, odfCount);
-        summary.getTypeOfDocuments().put(DomainDocument.DocumentTypeGroup.MS_OFFICE, microsoftOfficeCount);
+        summary.addTypeOfDocumentCount(DomainDocument.DocumentTypeGroup.PDF, pdfCount);
+        summary.addTypeOfDocumentCount(DomainDocument.DocumentTypeGroup.OO_XML_OFFICE, officeOpenXmlCount);
+        summary.addTypeOfDocumentCount(DomainDocument.DocumentTypeGroup.OPEN_OFFICE, odfCount);
+        summary.addTypeOfDocumentCount(DomainDocument.DocumentTypeGroup.MS_OFFICE, microsoftOfficeCount);
         return summary;
     }
 
@@ -78,8 +79,7 @@ public class ReportResource {
         Long notOpenPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
         Long total = openPdf + notOpenPdf;
 
-        List<PdfPropertyStatistics.ValueCount> flavourStatistics = documentDAO.getPropertyStatistics(
-                domain, PdfPropertyStatistics.TYPE_PROPERTY_NAME, documentsSince);
+        List<PdfPropertyStatistics.ValueCount> flavourStatistics = documentDAO.getPropertyStatistic(domain, pdfTypes, documentsSince);
         List<PdfPropertyStatistics.ValueCount> versionStatistics = documentDAO.getPropertyStatistics(
                 domain, PdfPropertyStatistics.VERSION_PROPERTY_NAME, documentsSince);
         List<PdfPropertyStatistics.ValueCount> producerStatistics = documentDAO.getPropertyStatistics(

@@ -113,25 +113,10 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
             result.setTestResult(DomainDocument.BaseTestResult.NOT_OPEN);
         }
         List<String> conformanceXPaths = properties.get(FLAVOUR_CONFORMANCE_PROPERTY_NAME);
-        if (!part.isEmpty()) {
-            String type;
-            String flavour;
-            if (part.contains("-")) {
-                String[] parts = part.split("-");
-                type = parts[0];
-                flavour = parts[1];
-            } else {
-                String conformance = getProperty(conformanceXPaths, document, xpath).toUpperCase();
-                if (conformance.isEmpty()){
-                    type = "PDF/UA";
-                    flavour = part;
-                } else {
-                    type = "PDF/A";
-                    flavour = part + conformance;
-                }
-            }
-            result.addProperty("type", type);
-            result.addProperty("flavour", flavour);
+        String conformance = getProperty(conformanceXPaths, document, xpath).toUpperCase();
+        String flavour = part + conformance;
+        if (!flavour.isEmpty()) {
+            result.addProperty("PDF/A", flavour);
         }
         properties.remove(FLAVOUR_PART_PROPERTY_NAME);
         properties.remove(FLAVOUR_CONFORMANCE_PROPERTY_NAME);

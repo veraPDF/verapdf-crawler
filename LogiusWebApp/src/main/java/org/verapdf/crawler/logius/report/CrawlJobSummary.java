@@ -19,4 +19,8 @@ public class CrawlJobSummary {
     public void setTypeOfDocuments(Map<DomainDocument.DocumentTypeGroup, Long> typeOfDocuments) {
         this.typeOfDocuments = typeOfDocuments;
     }
+
+    public void addTypeOfDocumentCount(DomainDocument.DocumentTypeGroup documentTypeGroup, long count){
+        this.typeOfDocuments.put(documentTypeGroup, count);
+    }
 }
