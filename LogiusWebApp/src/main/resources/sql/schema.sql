@@ -49,7 +49,7 @@ CREATE TABLE crawl_job_requests_crawl_jobs
 
 CREATE TABLE documents
 (
-  document_url     VARCHAR(1024) NOT NULL,
+  document_url     VARCHAR(2048) NOT NULL,
   crawl_job_domain VARCHAR(255) NOT NULL,
   last_modified    TIMESTAMP     DEFAULT NULL,
   document_type    VARCHAR(127) DEFAULT NULL,
@@ -61,7 +61,7 @@ CREATE TABLE documents
 );
 CREATE TABLE document_properties
 (
-  document_url   VARCHAR(1024) NOT NULL,
+  document_url   VARCHAR(2048) NOT NULL,
   property_name  VARCHAR(255) NOT NULL,
   property_value VARCHAR(255) DEFAULT NULL,
   PRIMARY KEY (document_url, property_name),
@@ -71,7 +71,7 @@ CREATE TABLE document_properties
 );
 CREATE TABLE pdf_validation_jobs_queue
 (
-  document_url      VARCHAR(1024)      NOT NULL,
+  document_url      VARCHAR(2048)      NOT NULL,
   validation_status VARCHAR(16) NOT NULL,
   PRIMARY KEY (document_url),
   CONSTRAINT pdf_validation_jobs_queue_documents_document_url_fk FOREIGN KEY (document_url) REFERENCES documents (document_url)
