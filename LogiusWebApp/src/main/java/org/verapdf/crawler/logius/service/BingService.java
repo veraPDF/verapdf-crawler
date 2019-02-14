@@ -129,7 +129,7 @@ public class BingService {
                     "q=site%3a" + site + "+filetype%3a" + fileType +
                     "&count=50&offset=";
             int currentEstimations = offset + 1;
-            while (currentEstimations > offset && this.currentJob != null && currentEstimations <= 1000) {
+            while (currentEstimations > offset && this.currentJob != null && offset <= 1000) {
                 try {
                     currentEstimations = obtainResults(result, urlWithoutOffset, this.apiKey, offset);
                     offset += 50;
