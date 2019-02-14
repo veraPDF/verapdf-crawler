@@ -104,14 +104,6 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
         String part = getProperty(partXPaths, document, xpath);
         // if document is valid, then we have already placed OPEN result, but we need to remove it
         // in case, when flavour part is not 1 or 2
-        try {
-            int partInt = Integer.parseInt(part);
-            if (partInt != 1 && partInt != 2) {
-                result.setTestResult(DomainDocument.BaseTestResult.NOT_OPEN);
-            }
-        } catch (NumberFormatException e) {
-            result.setTestResult(DomainDocument.BaseTestResult.NOT_OPEN);
-        }
         List<String> conformanceXPaths = properties.get(FLAVOUR_CONFORMANCE_PROPERTY_NAME);
         String conformance = getProperty(conformanceXPaths, document, xpath).toUpperCase();
         String flavour = part + conformance;
