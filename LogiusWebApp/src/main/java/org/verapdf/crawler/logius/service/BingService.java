@@ -125,7 +125,7 @@ public class BingService {
                     "q=site%3a" + site + "+filetype%3a" + fileType +
                     "&count=50&offset=";
             int currentEstimations = offset + 1;
-            //todo bing can return only 1000 results
+            // bing can return only 1000 results
             while (currentEstimations > offset && this.currentJob != null && offset <= 1000) {
                 try {
                     currentEstimations = obtainResults(result, urlWithoutOffset, this.apiKey, offset);

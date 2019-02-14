@@ -46,7 +46,7 @@ public class VeraPDFValidator implements PDFValidator {
         sendValidationRequest(job, isValidationDisabled);
     }
 
-    public VeraPDFValidationResult getValidationResult(File job, boolean validationRequired) throws ValidationDeadlockException, InterruptedException {
+    public VeraPDFValidationResult getValidationResult(File job, boolean isValidationDisabled) throws ValidationDeadlockException, InterruptedException {
         try {
             int validationRetries = 0;
             if (job == null) {
@@ -76,7 +76,7 @@ public class VeraPDFValidator implements PDFValidator {
                         if (++validationRetries == MAX_VALIDATION_RETRIES) {
                             throw new ValidationDeadlockException(ValidationDeadlockException.VALIDATOR_STATE_IDLE);
                         }
-                        sendValidationRequest(job, validationRequired);
+                        sendValidationRequest(job, isValidationDisabled);
                         endTime = System.currentTimeMillis() + GET_VALIDATION_RESULT_TIMEOUT; // Reset timeout cycle
                 }
             }
