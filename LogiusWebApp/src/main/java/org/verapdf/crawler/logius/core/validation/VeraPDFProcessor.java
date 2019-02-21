@@ -3,6 +3,7 @@ package org.verapdf.crawler.logius.core.validation;
 import javanet.staxutils.SimpleNamespaceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -23,7 +24,8 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -70,7 +72,7 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
     private File getVeraPDFReport(File filename) throws IOException, InterruptedException {
         logger.info("Preparing veraPDF process...");
         List<String> cmd = new ArrayList<>(Arrays.asList(verapdfPath, "--extract", "--format", "mrr", "--maxfailuresdisplayed", "1"));
-        if (isValidationDisabled){
+        if (isValidationDisabled) {
             cmd.add("--off");
         }
         cmd.add(filename.getAbsolutePath());

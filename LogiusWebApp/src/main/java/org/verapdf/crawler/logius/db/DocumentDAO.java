@@ -2,6 +2,7 @@ package org.verapdf.crawler.logius.db;
 
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 import org.verapdf.crawler.logius.core.validation.PDFWamProcessor;
 import org.verapdf.crawler.logius.crawling.CrawlJob_;
@@ -13,17 +14,21 @@ import org.verapdf.crawler.logius.report.PdfPropertyStatistics;
 import org.verapdf.crawler.logius.validation.error.ValidationError;
 
 import javax.persistence.criteria.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 public class DocumentDAO extends AbstractDAO<DomainDocument> {
 
-    public static final String NONE = "None"; // used to indicate that some property should be missing, since null means absence of the filter
     private static final int PROPERTY_VALUE_LENGTH = 255;
-    private final List<String> pdfTypes = Arrays.asList("PDF/A", "PDF/UA", "PDF/X", "PDF/E");
+    private final List<String> pdfTypes;
 
-    public DocumentDAO(SessionFactory sessionFactory) {
+    public DocumentDAO(SessionFactory sessionFactory, @Qualifier("pdfTypes") List<String> pdfTypes) {
         super(sessionFactory);
+        this.pdfTypes = pdfTypes;
     }
 
     @SuppressWarnings("UnusedReturnValue")
@@ -217,12 +222,8 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
 
         if (flavour != null) {
             // AND document.properties['flavour'] = <flavour>
-            MapJoin<DomainDocument, String, String> flavourProperty = document.join(DomainDocument_.properties, JoinType.LEFT);
-            if (flavour.equals(NONE)) {
-                restrictions.add(builder.not(flavourProperty.key().in(pdfTypes)));
-            } else {
-                restrictions.add(builder.equal(flavourProperty.key(), flavour));
-            }
+            restrictions.add(getPredicateByFlavour(flavour, document, builder, criteriaQuery));
+
         }
 
         if (version != null) {
@@ -276,12 +277,7 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
 
         if (flavour != null) {
             // AND document.properties['flavour'] = <flavour>
-            MapJoin<DomainDocument, String, String> flavourProperty = document.join(DomainDocument_.properties, JoinType.LEFT);
-            if (flavour.equals(NONE)) {
-                restrictions.add(builder.not(flavourProperty.key().in(pdfTypes)));
-            } else {
-                restrictions.add(builder.equal(flavourProperty.key(), flavour));
-            }
+            restrictions.add(getPredicateByFlavour(flavour, document, builder, criteriaQuery));
         }
 
         if (version != null) {
@@ -311,5 +307,32 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         criteriaQuery.orderBy(builder.desc(documentCount));
 
         return currentSession().createQuery(criteriaQuery).setMaxResults(limit).list();
+    }
+
+
+    private <T> Predicate getPredicateByFlavour(String flavour,
+                                            Root<DomainDocument> document,
+                                            CriteriaBuilder builder,
+                                            CriteriaQuery<T> criteriaQuery) {
+        if (!flavour.equals("None")) {
+            MapJoin<DomainDocument, String, String> flavourProperty = document.join(DomainDocument_.properties, JoinType.INNER);
+            return getPredicateBySpecifiedFlavour(flavour, flavourProperty, builder);
+        } else {
+            Subquery<String> subquery = criteriaQuery.subquery(String.class);
+            Root<DomainDocument> root = subquery.from(DomainDocument.class);
+            subquery.select(root.get(DomainDocument_.url));
+            MapJoin<DomainDocument, String, String> join = root.join(DomainDocument_.properties, JoinType.INNER);
+            subquery.where(builder.or(pdfTypes.stream()
+                    .map(type -> getPredicateBySpecifiedFlavour(type, join, builder))
+                    .collect(Collectors.toList()).toArray(new Predicate[pdfTypes.size()])));
+
+            return builder.not(document.get(DomainDocument_.url).in(subquery));
+        }
+    }
+
+    private Predicate getPredicateBySpecifiedFlavour(String flavour,
+                                                     MapJoin<DomainDocument, String, String> flavourProperty,
+                                                     CriteriaBuilder builder) {
+        return builder.equal(flavourProperty.key(), flavour);
     }
 }

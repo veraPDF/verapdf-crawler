@@ -42,6 +42,8 @@ public class HibernateConfiguration {
         Properties properties = new Properties();
         properties.put("hibernate.dialect", dialect);
         properties.put("hibernate.temp.use_jdbc_metadata_defaults", false);
+        properties.put("hibernate.show_sql", false);
+        properties.put("hibernate.format_sql", false);
         LocalSessionFactoryBean factoryBean = new LocalSessionFactoryBean();
         factoryBean.setPackagesToScan("org.verapdf.crawler.logius");
         factoryBean.setDataSource(dataSource);
