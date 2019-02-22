@@ -21,7 +21,7 @@ public class CrawlRequestResource {
     private final CrawlRequestDAO crawlRequestDAO;
     private final CrawlJobDAO crawlJobDAO;
 
-    public CrawlRequestResource(CrawlRequestDAO crawlRequestDAO, CrawlJobDAO crawlJobDAO, CrawlJobResource crawlJobResource) {
+    public CrawlRequestResource(CrawlRequestDAO crawlRequestDAO, CrawlJobDAO crawlJobDAO) {
         this.crawlRequestDAO = crawlRequestDAO;
         this.crawlJobDAO = crawlJobDAO;
     }

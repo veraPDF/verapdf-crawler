@@ -3,6 +3,7 @@ package org.verapdf.crawler.logius.core.validation;
 import javanet.staxutils.SimpleNamespaceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
@@ -23,7 +24,8 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -43,8 +45,8 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
     private static final int MAX_PREFERRED_PROPERTY_LENGTH = 255;
     private static final String BASE_PATH = "/report/jobs/job/";
     private static final String VALIDATION_REPORT_PATH = BASE_PATH + "validationReport/";
-    private static final String FLAVOUR_PART_PROPERTY_NAME = "flavourPart";
-    private static final String FLAVOUR_CONFORMANCE_PROPERTY_NAME = "flavourConformance";
+    private static final String FLAVOUR_PART_PROPERTY_NAME = "PDF/A_part";
+    private static final String FLAVOUR_CONFORMANCE_PROPERTY_NAME = "PDF/A_conformance";
     private final String verapdfPath;
     private final File veraPDFErrorLog;
     private boolean isValidationDisabled;
@@ -70,7 +72,7 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
     private File getVeraPDFReport(File filename) throws IOException, InterruptedException {
         logger.info("Preparing veraPDF process...");
         List<String> cmd = new ArrayList<>(Arrays.asList(verapdfPath, "--extract", "--format", "mrr", "--maxfailuresdisplayed", "1"));
-        if (isValidationDisabled){
+        if (isValidationDisabled) {
             cmd.add("--off");
         }
         cmd.add(filename.getAbsolutePath());
@@ -104,19 +106,11 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
         String part = getProperty(partXPaths, document, xpath);
         // if document is valid, then we have already placed OPEN result, but we need to remove it
         // in case, when flavour part is not 1 or 2
-        try {
-            int partInt = Integer.parseInt(part);
-            if (partInt != 1 && partInt != 2) {
-                result.setTestResult(DomainDocument.BaseTestResult.NOT_OPEN);
-            }
-        } catch (NumberFormatException e) {
-            result.setTestResult(DomainDocument.BaseTestResult.NOT_OPEN);
-        }
         List<String> conformanceXPaths = properties.get(FLAVOUR_CONFORMANCE_PROPERTY_NAME);
         String conformance = getProperty(conformanceXPaths, document, xpath).toUpperCase();
         String flavour = part + conformance;
         if (!flavour.isEmpty()) {
-            result.addProperty("flavour", flavour);
+            result.addProperty("PDF/A", flavour);
         }
         properties.remove(FLAVOUR_PART_PROPERTY_NAME);
         properties.remove(FLAVOUR_CONFORMANCE_PROPERTY_NAME);

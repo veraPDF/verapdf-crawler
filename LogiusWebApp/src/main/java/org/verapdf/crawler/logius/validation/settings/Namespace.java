@@ -11,7 +11,6 @@ public class Namespace {
     @Id
     @Column(name = "namespace_prefix")
     private String prefix;
-
     @Column(name = "namespace_url")
     private String url;
 

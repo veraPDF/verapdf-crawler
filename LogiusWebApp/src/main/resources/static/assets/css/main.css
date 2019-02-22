@@ -442,22 +442,28 @@ a.action.disabled {
     padding-bottom: 15px;
 }
 
-.summary .good-documents, .summary .bad-documents {
+.summary .pdf-documents, .summary .ms-office-documents, .summary .odf-documents, .summary .oox-office-documents {
     margin: 0 0 5px 220px;
     padding: 5px 10px;
     border-radius: 2px;
 }
 
-.summary .good-documents {
-    background-color: #43c46f;
+.summary .pdf-documents {
+    background-color: #2F7395;
 }
 
-.summary .bad-documents {
-    background-color: #fd5858;
+.summary .ms-office-documents {
+     background-color: #CB86A2;
+ }
+
+.summary .odf-documents {
+    background-color: #767D92;
+}
+.summary .oox-office-documents {
+    background-color: #9CC0E7;
 }
 
 .summary .percent {
-    font-size: 2rem;
     float: left;
     padding-left: 5px;
     padding-right: 15px;

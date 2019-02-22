@@ -1,45 +1,24 @@
 $(function () {
-    if (!localStorage['token']){
-        $( "#error-nav-pdfwam" ).css( "display", "none" );
-        $( "#error-nav" ).css( "display", "none" );
-    }
-
     var FLAVOURS = {
-        '1A': {
-            displayName: 'PDF/A-1A',
+        'PDF/A': {
+            displayName: 'PDF/A',
             dataSetIndex: 0
         },
-        '1B': {
-            displayName: 'PDF/A-1B',
+        'PDF/UA': {
+            displayName: 'PDF/UA',
             dataSetIndex: 1
         },
-        '2A': {
-            displayName: 'PDF/A-2A',
+        'PDF/X': {
+            displayName: 'PDF/X',
             dataSetIndex: 2
         },
-        '2B': {
-            displayName: 'PDF/A-2B',
+        'PDF/E': {
+            displayName: 'PDF/E',
             dataSetIndex: 3
-        },
-        '2U': {
-            displayName: 'PDF/A-2U',
-            dataSetIndex: 4
-        },
-        '3A': {
-            displayName: 'PDF/A-3A',
-            dataSetIndex: 5
-        },
-        '3B': {
-            displayName: 'PDF/A-3B',
-            dataSetIndex: 6
-        },
-        '3U': {
-            displayName: 'PDF/A-3U',
-            dataSetIndex: 7
         },
         'None': {
             displayName: 'None',
-            dataSetIndex: 8
+            dataSetIndex: 4
         }
     };
     var VERSIONS = {
@@ -387,12 +366,14 @@ $(function () {
     var summaryChart = new Chart(summaryChartContext, {
         type: 'pie',
         data: {
-            labels: ["To improve", "Compliant"],
+            labels: ["PDF documents", "Office Open XML documents", "Microsoft Office documents", "ODF documents"],
             datasets: [{
                 data: [0, 0],
                 backgroundColor: [
-                    '#fd5858',
-                    '#43c46f'
+                    '#2F7395',
+                    '#9CC0E7',
+                    '#CB86A2',
+                    '#767D92',
                 ],
                 borderWidth: 0
             }]
@@ -409,25 +390,33 @@ $(function () {
             url: url,
             type: "GET",
             success: function (result) {
-                $('.summary .good-documents .pdf').text(result['openDocuments']['pdf']);
-                $('.summary .good-documents .office').text(result['openDocuments']['office']);
-                $('.summary .bad-documents .pdf').text(result['notOpenDocuments']['pdf']);
-                $('.summary .bad-documents .office').text(result['notOpenDocuments']['office']);
+                result = result['typeOfDocuments'];
+                $('.summary .pdf-documents .pdf').text(result['pdf']);
+                $('.summary .oox-office-documents .office').text(result['oo_xml_office']);
+                $('.summary .ms-office-documents .office').text(result['ms_office']);
+                $('.summary .odf-documents .office').text(result['open_office']);
 
-                var openCount = result['openDocuments']['pdf'] + result['openDocuments']['office'];
-                var notOpenCount = result['notOpenDocuments']['pdf'] + result['notOpenDocuments']['office'];
-                var totalCount = openCount + notOpenCount;
-                var openPercent = totalCount === 0 ? 0 : Math.round(openCount * 1000 / totalCount) / 10;
-                if (openPercent === 0 && openCount > 0) {
-                    openPercent = 0.1;
-                }
-                var notOpenPercent = totalCount === 0 ? 0 : 100 - openPercent;
+                // var openCount = result['openDocuments']['pdf'] + result['openDocuments']['office'];
+                // var notOpenCount = result['notOpenDocuments']['pdf'] + result['notOpenDocuments']['office'];
+                // var totalCount = openCount + notOpenCount;
 
-                $('.summary .good-documents .percent').text(openPercent + '%');
-                $('.summary .bad-documents .percent').text(notOpenPercent + '%');
+                var pdfCount = result['pdf'];
+                var ooxOfficeCount = result['oo_xml_office'];
+                var msOfficeCount = result['ms_office'];
+                var openOfficeCount = result['open_office'];
+                var totalCount = pdfCount + ooxOfficeCount + msOfficeCount + openOfficeCount;
+                totalCount = totalCount === 0 ? 1 : totalCount;
 
-                summaryChart.data.datasets[0].data[0] = notOpenCount;
-                summaryChart.data.datasets[0].data[1] = openCount;
+                // todo tuta
+                $('.summary .pdf-documents .percent').text((pdfCount / totalCount * 100).toFixed(1) + '%');
+                $('.summary .oox-office-documents .percent').text((ooxOfficeCount / totalCount * 100).toFixed(1) + '%');
+                $('.summary .ms-office-documents .percent').text((msOfficeCount / totalCount * 100).toFixed(1) + '%');
+                $('.summary .odf-documents .percent').text((openOfficeCount / totalCount * 100).toFixed(1) + '%');
+
+                summaryChart.data.datasets[0].data[0] = pdfCount;
+                summaryChart.data.datasets[0].data[1] = ooxOfficeCount;
+                summaryChart.data.datasets[0].data[2] = msOfficeCount;
+                summaryChart.data.datasets[0].data[3] = openOfficeCount;
                 summaryChart.update()
             },
             error: reportError
@@ -470,7 +459,7 @@ $(function () {
         options: {
             title: {
                 display: true,
-                text: 'PDF/A flavours'
+                text: 'PDF types'
             }
         }
     });
