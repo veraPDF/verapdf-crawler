@@ -2,10 +2,7 @@ package org.verapdf.crawler.logius.resources;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.verapdf.crawler.logius.core.tasks.AbstractTask;
 
 import java.util.Map;
@@ -32,5 +29,10 @@ public class AdminResource {
         }
         service.start();
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/ping")
+    public ResponseEntity ping() {
+        return ResponseEntity.ok().body("ping");
     }
 }

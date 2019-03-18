@@ -3,8 +3,6 @@ package org.verapdf.crawler.logius.resources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -68,15 +66,16 @@ public class CrawlJobResource {
                                      @RequestParam("start") int startParam,
                                      @RequestParam("limit") int limitParam) {
 
+        long totalCount = crawlJobDAO.count(domainFilter, finished);
         List<CrawlJob> crawlJobs = crawlJobDAO.find(domainFilter, finished, startParam, limitParam);
-        return ResponseEntity.ok().body(crawlJobs);
+        return ResponseEntity.ok().header("X-Total-Count", String.valueOf(totalCount)).body(crawlJobs);
     }
 
     @PostMapping("/{domain}")
     @Transactional
     public CrawlJob restartCrawlJob(@PathVariable("domain") String domain) {
         domain = DomainUtils.trimUrl(domain);
-
+        //todo refactor, potentially can be throw NPE on crawlJob.getCrawlService()
         CrawlJob crawlJob = crawlJobDAO.getByDomain(domain);
         CrawlJob.CrawlService service = crawlJob.getCrawlService();
         return restartCrawlJob(crawlJob, domain, service);
@@ -110,7 +109,7 @@ public class CrawlJobResource {
         }
 
         // Create and start new crawl job
-        CrawlJob newJob = new CrawlJob(domain, service);
+        CrawlJob newJob = new CrawlJob(domain, service, crawlJob.isValidationEnabled());
         if (crawlRequests != null) {
             newJob.setCrawlRequests(crawlRequests);
         }
