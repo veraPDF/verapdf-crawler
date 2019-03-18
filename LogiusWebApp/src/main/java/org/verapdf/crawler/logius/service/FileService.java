@@ -6,12 +6,12 @@ import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.verapdf.crawler.logius.tools.HttpClientUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
@@ -46,7 +46,7 @@ public class FileService {
     public File save(String url) {
         File file = null;
         try {
-            try (CloseableHttpClient client = HttpClients.createDefault()) {
+            try (CloseableHttpClient client = HttpClientUtils.createTrustAllHttpClient()) {
                 HttpGet get = new HttpGet(url);
                 CloseableHttpResponse response = client.execute(get);
                 String contentType = null;
@@ -67,7 +67,7 @@ public class FileService {
                 fileOutputStream.close();
                 return file;
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Can't create url: " + url, e);
             removeFile(file);
         }
