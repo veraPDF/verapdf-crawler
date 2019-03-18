@@ -144,7 +144,7 @@ $(function () {
     function loadCrawlJob() {
         $.get("api/crawl-jobs/" + normalizedDomain).done(function (result) {
             crawlJobLoaded(result);
-            loadSummaryData();
+            //loadSummaryData();
         }).fail(reportError);
     }
 
@@ -157,6 +157,10 @@ $(function () {
         crawlJob = job;
 
         main.addClass('status-' + crawlJob.status.toLowerCase());
+        if (crawlJob.validationEnabled){
+            $("#error-nav-pdfwam").removeAttr("style");
+            $("#error-nav").removeAttr("style");
+        }
 
         $('.domain-name span').text(crawlJob.domain);
 
@@ -221,18 +225,23 @@ $(function () {
     });
 
     $("#action-restart").on('click', function () {
-        if (!crawlJob || $("#action-restart").hasClass('disabled')) return;
+        if (!crawlJob || $("#action-restart").hasClass('disabled')) {
+            return;
+        }
 
         oldStatus = crawlJob.status;
-
         disableActions();
-
-        $.ajax({
+        var params = {
             url: "api/crawl-jobs/" + normalizedDomain,
             type: "POST",
             success: crawlJobLoaded,
             error: reportError
-        });
+        };
+        if (localStorage['token']){
+            params['headers'] = {'Authorization': 'Bearer ' + localStorage['token']};
+        }
+        console.log(params);
+        $.ajax(params);
     });
     //endregion
 
@@ -407,7 +416,6 @@ $(function () {
                 var totalCount = pdfCount + ooxOfficeCount + msOfficeCount + openOfficeCount;
                 totalCount = totalCount === 0 ? 1 : totalCount;
 
-                // todo tuta
                 $('.summary .pdf-documents .percent').text((pdfCount / totalCount * 100).toFixed(1) + '%');
                 $('.summary .oox-office-documents .percent').text((ooxOfficeCount / totalCount * 100).toFixed(1) + '%');
                 $('.summary .ms-office-documents .percent').text((msOfficeCount / totalCount * 100).toFixed(1) + '%');
@@ -459,7 +467,7 @@ $(function () {
         options: {
             title: {
                 display: true,
-                text: 'PDF types'
+                text: 'PDF substandards'
             }
         }
     });
@@ -558,9 +566,8 @@ $(function () {
             type: "GET",
             success: function (result) {
                 // Counts
+                //todo delete open and not open?
                 $('.documents .total-count').text(result['totalPdfDocumentsCount']);
-                $('.documents .open-count').text(result['openPdfDocumentsCount']);
-                $('.documents .not-open-count').text(result['notOpenPdfDocumentsCount']);
 
                 // Charts
                 updateFlavourStatistics(result['flavourStatistics'], result['totalPdfDocumentsCount']);

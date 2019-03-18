@@ -57,7 +57,7 @@ function main() {
     $('#date_input').tooltip('hide');
     $('#email_input').tooltip('hide');
     $('#urlinput').tooltip("hide");
-
+    console.log($("#validation-required").is(':checked'));
     var validForm = true;
 
     // Read and validate domains
@@ -110,15 +110,12 @@ function main() {
     if (crawlSinceTime) {
         postData.crawlSinceTime = crawlSinceTime;
     }
-
-    $.ajax({
-        url: URL,
+    var params = {
+        headers: {},
+        url: URL + "?isValidationRequired=" + $("#validation-required").is(':checked') + "&crawlService=" + ($("#bing-crawl-service").is(':checked') ? 'HERITRIX' : 'BING'),
         type: "POST",
         data: JSON.stringify(postData),
         async: false,
-        headers: {
-            "content-type": "application/json"
-        },
         success: function (result) {
             window.location.href = "domains.html";
         },
@@ -126,7 +123,13 @@ function main() {
             reportError(result.responseJSON.message);
             $("input:button").attr("disabled", false);
         }
-    });
+    };
+    if (localStorage['token']) {
+        params['headers']['Authorization'] = 'Bearer ' + localStorage['token'];
+    }
+    params['headers']['content-type'] = 'application/json';
+
+    $.ajax(params);
 }
 
 function reportError(text) {
