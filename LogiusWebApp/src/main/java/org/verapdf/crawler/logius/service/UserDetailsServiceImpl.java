@@ -7,29 +7,31 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.verapdf.crawler.logius.db.UserDao;
 import org.verapdf.crawler.logius.dto.TokenUserDetails;
 import org.verapdf.crawler.logius.model.User;
 
-@Service
+@Service("UserDetailsServiceImpl")
 public class UserDetailsServiceImpl implements UserDetailsService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private UserService userService;
+    private UserDao userDao;
     private TokenService tokenService;
 
     @Autowired
-    public UserDetailsServiceImpl(UserService userService, TokenService tokenService) {
-        this.userService = userService;
+    public UserDetailsServiceImpl(UserDao userDao, TokenService tokenService) {
+        this.userDao = userDao;
         this.tokenService = tokenService;
     }
 
     @Override
+    @Transactional
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         logger.debug("Trying to authenticate ", email);
-        try {
-            User user = userService.findUserByEmail(email);
-            return new TokenUserDetails(user, tokenService.encode(user));
-        } catch (UsernameNotFoundException ex) {
-            throw new UsernameNotFoundException("Account for '" + email + "' not found", ex);
+        User user = userDao.getByEmail(email);
+        if (user == null) {
+            throw new UsernameNotFoundException("Account for '" + email + "' not found");
         }
+        return new TokenUserDetails(user.getEmail(), user.getPassword(), user.isEnabled(), user.getRole(), tokenService.encode(user));
     }
 }

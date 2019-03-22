@@ -15,7 +15,7 @@ $(document).ready(function () {
         };
         $.ajax({
             type: "POST",
-            url: "/api/auth/signup",
+            url: "/api/user/signup",
             data: JSON.stringify(j),
             headers: {"Content-type": "application/json"},
             success: function (response) {

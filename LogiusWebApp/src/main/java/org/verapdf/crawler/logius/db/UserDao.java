@@ -39,7 +39,6 @@ public class UserDao extends AbstractDAO<User> {
     }
 
 
-    //todo apply full PDF/A validation
     public List<User> getUsers(String emailFilter, Integer start, Integer limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<User> criteriaQuery = builder.createQuery(User.class);

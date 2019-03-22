@@ -24,10 +24,11 @@ public class CrawlRequestResource {
     @Transactional
     public CrawlRequest createCrawlRequest(@AuthenticationPrincipal TokenUserDetails principal,
                                            @RequestBody CrawlRequest crawlRequest,
-                                           @RequestParam(value = "isValidationRequired", required = false) boolean isValidationRequired,
-                                           @RequestParam(value = "crawlService", required = false, defaultValue = "BING") CrawlJob.CrawlService crawlService) {
+                                           @RequestParam(value = "isValidationRequired", defaultValue = "false") boolean isValidationRequired,
+                                           @RequestParam(value = "crawlService", defaultValue = "BING") CrawlJob.CrawlService crawlService) {
         if (principal == null) {
-            return crawlRequestService.createCrawlRequest(crawlRequest, CrawlJob.CrawlService.BING, false);
+            isValidationRequired = false;
+            crawlService = CrawlJob.CrawlService.BING;
         }
         return crawlRequestService.createCrawlRequest(crawlRequest, crawlService, isValidationRequired);
 

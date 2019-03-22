@@ -1,6 +1,6 @@
 $(function () {
     var USER_LIST_URL = "/api/user";
-    var USER_CHANGE_STATUS_URL = "/api/user/update-status";
+    var USER_CHANGE_STATUS_URL = "/api/user/status";
     var rowTemplate = $("#user_list").children('tbody').children('tr').clone();
     var totalPagesAmount = 1;
     var limit = 10;

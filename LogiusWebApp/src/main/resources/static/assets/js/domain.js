@@ -366,7 +366,7 @@ $(function () {
         onSelect: loadSummaryData
     }));
     summaryDateInput.on("keydown", function (e) {
-        if (e.keyCode === 13) {
+        if (summaryDateInput.is(":focus") && e.keyCode === 13) {
             loadSummaryData();
         }
     });

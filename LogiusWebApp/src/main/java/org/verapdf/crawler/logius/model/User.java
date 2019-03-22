@@ -19,7 +19,7 @@ public class User {
     @Column
     private boolean enabled;
     @Column
-    private String secret;
+    private byte[] secret;
     @Column
     @Enumerated(EnumType.STRING)
     private Roles role;
@@ -65,11 +65,11 @@ public class User {
         this.enabled = enabled;
     }
 
-    public String getSecret() {
+    public byte[] getSecret() {
         return secret;
     }
 
-    public void setSecret(String secret) {
+    public void setSecret(byte[] secret) {
         this.secret = secret;
     }
 

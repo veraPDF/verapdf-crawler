@@ -1,6 +1,7 @@
 package org.verapdf.crawler.logius.service;
 
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,7 @@ public class UserService {
     public void updatePassword(String username, PasswordUpdateDto passwordUpdateDto) {
         User user = findUserByEmail(username);
         if (!passwordEncoder.matches(passwordUpdateDto.getOldPassword(), user.getPassword())) {
-            throw new IncorrectPasswordException("incorrect password");
+            throw new IncorrectPasswordException("Incorrect password");
         }
         user.setPassword(passwordEncoder.encode(passwordUpdateDto.getNewPassword()));
         saveUserWithUpdateSecret(user);
@@ -39,17 +40,13 @@ public class UserService {
 
     @Transactional
     public UserInfoDto save(UserDto dto) {
-        if (isExists(dto.getEmail())) {
+        try {
+            User user = new User(dto.getEmail(), passwordEncoder.encode(dto.getPassword()));
+            user.setRole(User.Roles.USER);
+            return saveUserWithUpdateSecret(user);
+        } catch (ConstraintViolationException e) {
             throw new AlreadyExistsException(String.format("user with email %s already exists", dto.getEmail()));
         }
-        User user = new User(dto.getEmail(), passwordEncoder.encode(dto.getPassword()));
-        user.setRole(User.Roles.USER);
-        return saveUserWithUpdateSecret(user);
-    }
-
-    @Transactional
-    public boolean isExists(String email) {
-        return userDao.getByEmail(email) != null;
     }
 
     @Transactional
@@ -63,11 +60,6 @@ public class UserService {
         User user = findUserByEmail(email);
         user.setEnabled(status);
         saveUserWithUpdateSecret(user);
-    }
-
-    @Transactional
-    public String getUserSecretByEmail(String email){
-        return findUserByEmail(email).getSecret();
     }
 
     private UserInfoDto saveUserWithUpdateSecret(User user) {

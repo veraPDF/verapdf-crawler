@@ -1,42 +1,47 @@
 package org.verapdf.crawler.logius.configurations.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.config.BeanIds;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider;
 import org.springframework.security.web.authentication.preauth.RequestHeaderAuthenticationFilter;
 import org.verapdf.crawler.logius.service.TokenAuthenticationUserDetailsService;
-import org.verapdf.crawler.logius.service.UserDetailsServiceImpl;
+
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(
-        prePostEnabled = true
-)
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecureConfig {
+    @Bean
+    public AuthHandler authHandler(ObjectMapper mapper) {
+        return new AuthHandler(mapper);
+    }
+
 
     @Configuration
     @Order(1)
     public class BasicAuthConfig extends WebSecurityConfigurerAdapter {
-        private final UserDetailsServiceImpl userDetailsServiceImpl;
+        private final UserDetailsService userDetailsService;
+        private final AuthHandler authHandler;
         private final PasswordEncoder passwordEncoder;
-        private final AuthEntryPoint authEntryPoint;
 
-        public BasicAuthConfig(UserDetailsServiceImpl userDetailsServiceImpl, PasswordEncoder passwordEncoder, AuthEntryPoint authEntryPoint) {
-            this.userDetailsServiceImpl = userDetailsServiceImpl;
-            this.passwordEncoder = passwordEncoder;
-            this.authEntryPoint = authEntryPoint;
+        public BasicAuthConfig(@Qualifier("UserDetailsServiceImpl") UserDetailsService userDetailsService, AuthHandler authHandler, PasswordEncoder passwordEncoder1) {
+            this.userDetailsService = userDetailsService;
+            this.authHandler = authHandler;
+            this.passwordEncoder = passwordEncoder1;
         }
 
         @Override
@@ -47,15 +52,16 @@ public class SecureConfig {
                     .anyRequest().authenticated()
                     .and()
                     .httpBasic()
-                    .authenticationEntryPoint(authEntryPoint)
+                    .authenticationEntryPoint(authHandler)
                     .and()
                     .sessionManagement()
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    .and().csrf().disable();
         }
 
         @Override
         protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-            auth.userDetailsService(userDetailsServiceImpl).passwordEncoder(passwordEncoder);
+            auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
         }
     }
 
@@ -63,13 +69,12 @@ public class SecureConfig {
     @Configuration
     @Order(2)
     public class TokenAuthConfig extends WebSecurityConfigurerAdapter {
-        private final AuthEntryPoint authEntryPoint;
-        private TokenAuthenticationUserDetailsService service;
-
+        private final TokenAuthenticationUserDetailsService service;
+        private final AuthHandler authHandler;
         @Autowired
-        public TokenAuthConfig(TokenAuthenticationUserDetailsService service, AuthEntryPoint authEntryPoint) {
+        public TokenAuthConfig(TokenAuthenticationUserDetailsService service, AuthHandler authHandler) {
             this.service = service;
-            this.authEntryPoint = authEntryPoint;
+            this.authHandler = authHandler;
         }
 
         @Override
@@ -78,8 +83,8 @@ public class SecureConfig {
                     .authorizeRequests().antMatchers("/api/admin/**").hasAuthority("ADMIN")
                     .and()
                     .addFilterBefore(authFilter(), RequestHeaderAuthenticationFilter.class)
-                    .authenticationProvider(preAuthProvider()).exceptionHandling()
-                    .authenticationEntryPoint(authEntryPoint)
+                    .authenticationProvider(preAuthProvider()).exceptionHandling().accessDeniedHandler(authHandler)
+                    .authenticationEntryPoint(authHandler)
                     .and()
                     .sessionManagement()
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -101,7 +106,7 @@ public class SecureConfig {
             return provider;
         }
 
-        @Bean(BeanIds.AUTHENTICATION_MANAGER)
+        @Bean
         @Override
         public AuthenticationManager authenticationManagerBean() throws Exception {
             return super.authenticationManagerBean();

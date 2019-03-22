@@ -73,46 +73,46 @@ public class CrawlJobResource {
 
     @PostMapping("/{domain}")
     @Transactional
-    public CrawlJob restartCrawlJob(@PathVariable("domain") String domain) {
+    public ResponseEntity restartCrawlJob(@PathVariable("domain") String domain) {
         domain = DomainUtils.trimUrl(domain);
-        //todo refactor, potentially can be throw NPE on crawlJob.getCrawlService()
         CrawlJob crawlJob = crawlJobDAO.getByDomain(domain);
+        if (crawlJob == null) {
+            return ResponseEntity.notFound().build();
+        }
         CrawlJob.CrawlService service = crawlJob.getCrawlService();
-        return restartCrawlJob(crawlJob, domain, service);
+        return ResponseEntity.ok(restartCrawlJob(crawlJob, domain, service));
     }
 
     public CrawlJob restartCrawlJob(CrawlJob crawlJob, String domain, CrawlJob.CrawlService service) {
-        List<CrawlRequest> crawlRequests = null;
-        if (crawlJob != null) {
-            String heritrixJobId = crawlJob.getHeritrixJobId();
-            CrawlJob.CrawlService currentService = crawlJob.getCrawlService();
-            // Keep requests list to link to new job
-            crawlRequests = new ArrayList<>(crawlJob.getCrawlRequests());
+        List<CrawlRequest> crawlRequests;
 
-            // Tear crawl service
-            if (currentService == CrawlJob.CrawlService.HERITRIX) {
-                heritrixCleanerTask.teardownAndClearHeritrixJob(heritrixJobId);
-            } else if (currentService == CrawlJob.CrawlService.BING) {
-                bingService.discardJob(crawlJob);
-            }
+        String heritrixJobId = crawlJob.getHeritrixJobId();
+        CrawlJob.CrawlService currentService = crawlJob.getCrawlService();
+        // Keep requests list to link to new job
+        crawlRequests = new ArrayList<>(crawlJob.getCrawlRequests());
 
-            // Remove job from DB
-            crawlJobDAO.remove(crawlJob);
+        // Tear crawl service
+        if (currentService == CrawlJob.CrawlService.HERITRIX) {
+            heritrixCleanerTask.teardownAndClearHeritrixJob(heritrixJobId);
+        } else if (currentService == CrawlJob.CrawlService.BING) {
+            bingService.discardJob(crawlJob);
+        }
 
-            // Stop validation job if it's related to this crawl job
-            synchronized (ValidationJobService.class) {
-                ValidationJob currentJob = validationJobService.getCurrentJob();
-                if (currentJob != null && currentJob.getDocument().getCrawlJob().getDomain().equals(domain)) {
-                    validatorService.abortCurrentJob();
-                }
+        // Remove job from DB
+        crawlJobDAO.remove(crawlJob);
+
+        // Stop validation job if it's related to this crawl job
+        synchronized (ValidationJobService.class) {
+            ValidationJob currentJob = validationJobService.getCurrentJob();
+            if (currentJob != null && currentJob.getDocument().getCrawlJob().getDomain().equals(domain)) {
+                validatorService.abortCurrentJob();
             }
         }
+
 
         // Create and start new crawl job
         CrawlJob newJob = new CrawlJob(domain, service, crawlJob.isValidationEnabled());
-        if (crawlRequests != null) {
-            newJob.setCrawlRequests(crawlRequests);
-        }
+        newJob.setCrawlRequests(crawlRequests);
         crawlJobDAO.save(newJob);
         if (service == CrawlJob.CrawlService.HERITRIX) {
             startCrawlJob(newJob);

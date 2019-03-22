@@ -16,7 +16,7 @@ $(document).ready(function () {
         };
         $.ajax({
             type: "PUT",
-            url: "/api/user/update-password",
+            url: "/api/user/password",
             data: JSON.stringify(j),
             headers: {
                 "Content-type": "application/json",

@@ -12,6 +12,7 @@ public class UserDto {
     @Email
     @NotNull
     private String email;
+
     @Pattern(regexp = "(^[0-9a-zA-Z]{8,20}$)", message = "password must be between 8 and 20 characters and include 0-9 a-z A-Z symbols")
     @NotNull
     private String password;

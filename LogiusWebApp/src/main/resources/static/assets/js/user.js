@@ -15,14 +15,14 @@ $(document).ready(function () {
             console.log("user not authentificated");
         } else {
             $.ajax({
-                url: "/api/user/current",
+                url: "/api/user/me",
                 type: "GET",
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('token'));
                 },
                 success: function (accountInfo) {
-                    $("<li>{}({})</li>".format(accountInfo.email, accountInfo.roles[0])).appendTo(div);
-                    if (accountInfo.roles[0] === 'ADMIN') {
+                    $("<li>{}({})</li>".format(accountInfo.email, accountInfo.role)).appendTo(div);
+                    if (accountInfo.role === 'ADMIN') {
                         $("<li><a href=\"/admin-dashboard.html\">Admin dashboard</a></li>").appendTo(div);
                     }
                     $("<li><a id=\"update-password\" href=\"/update-password.html\">Update password</a></li>").appendTo(div);

@@ -30,9 +30,4 @@ public class AdminResource {
         service.start();
         return ResponseEntity.ok().build();
     }
-
-    @GetMapping("/ping")
-    public ResponseEntity ping() {
-        return ResponseEntity.ok().body("ping");
-    }
 }

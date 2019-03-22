@@ -17,17 +17,10 @@ CREATE TABLE client
   id           UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
   email        VARCHAR(128)  UNIQUE NOT NULL,
   password     VARCHAR(128)  NOT NULL,
-  secret       VARCHAR(128)  NOT NULL,
+  secret       bytea         NOT NULL,
   role         VARCHAR(128)  NOT NULL,
   enabled      BOOLEAN       DEFAULT true
 );
-
-insert into client values('d0415eb5-2e8f-43c9-8aca-c1552892e26f',
-                          'admin@gmail.com',
-                          '$2a$10$VNR4h1nelGuz27P4uNpwWOXEc76euZzY1u0sfitEGWfnw7F..rIxi',
-                          'AD23EB1E070AFF2554AAFD1F82A7D45C',
-                          'ADMIN',
-                          true);
 
 CREATE TABLE crawl_job_requests
 (
@@ -43,10 +36,10 @@ CREATE TABLE crawl_jobs
   domain                 VARCHAR(255) NOT NULL,
   heritrix_job_id        VARCHAR(36)  NOT NULL UNIQUE ,
   job_url                VARCHAR(255) DEFAULT NULL,
-  start_time             TIMESTAMP     DEFAULT NOW(),
-  finish_time            TIMESTAMP     DEFAULT NULL,
-  is_finished            BOOLEAN   DEFAULT FALSE,
-  is_validation_enabled  BOOLEAN   DEFAULT FALSE,
+  start_time             TIMESTAMP    DEFAULT NOW(),
+  finish_time            TIMESTAMP    DEFAULT NULL,
+  is_finished            BOOLEAN      DEFAULT FALSE,
+  is_validation_enabled  BOOLEAN      DEFAULT FALSE,
   job_status             VARCHAR(10)  DEFAULT NULL,
   crawl_service          VARCHAR(10)  NOT NULL,
   PRIMARY KEY (domain)
