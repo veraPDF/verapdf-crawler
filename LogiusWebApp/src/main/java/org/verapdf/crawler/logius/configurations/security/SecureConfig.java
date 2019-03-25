@@ -15,6 +15,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider;
 import org.springframework.security.web.authentication.preauth.RequestHeaderAuthenticationFilter;
@@ -30,18 +31,20 @@ public class SecureConfig {
         return new AuthHandler(mapper);
     }
 
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     @Configuration
     @Order(1)
     public class BasicAuthConfig extends WebSecurityConfigurerAdapter {
         private final UserDetailsService userDetailsService;
         private final AuthHandler authHandler;
-        private final PasswordEncoder passwordEncoder;
 
-        public BasicAuthConfig(@Qualifier("UserDetailsServiceImpl") UserDetailsService userDetailsService, AuthHandler authHandler, PasswordEncoder passwordEncoder1) {
+        public BasicAuthConfig(@Qualifier("UserDetailsServiceImpl") UserDetailsService userDetailsService, AuthHandler authHandler) {
             this.userDetailsService = userDetailsService;
             this.authHandler = authHandler;
-            this.passwordEncoder = passwordEncoder1;
         }
 
         @Override
@@ -61,7 +64,7 @@ public class SecureConfig {
 
         @Override
         protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-            auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
+            auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
         }
     }
 
