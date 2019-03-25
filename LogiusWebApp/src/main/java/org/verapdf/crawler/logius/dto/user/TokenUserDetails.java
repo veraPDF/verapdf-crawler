@@ -18,7 +18,7 @@ public class TokenUserDetails extends User {
         this.token = token;
     }
 
-    public TokenUserDetails(UUID id, String username, String password, boolean enabled, org.verapdf.crawler.logius.model.User.Roles role, String token) {
+    public TokenUserDetails(UUID id, String username, String password, boolean enabled, Role role, String token) {
         super(username, password, enabled, true, true, true,
                 Collections.singletonList(new SimpleGrantedAuthority(role.toString())));
         this.token = token;

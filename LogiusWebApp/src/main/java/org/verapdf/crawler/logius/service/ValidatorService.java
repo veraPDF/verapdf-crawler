@@ -51,16 +51,16 @@ public class ValidatorService {
     public boolean processNextJob() throws InterruptedException, ValidationDeadlockException {
         if (validationJobService.retrieveNextJob() != null) {
             ValidationJob validationJob = validationJobService.getCurrentJob();
-            logger.info("Validating " + validationJob.getId());
+            logger.info("Validating " + validationJob.getDocumentId().getDocumentUrl());
             File file = null;
             try {
-                file = fileService.save(validationJob.getDocument().getUrl());
+                file = fileService.save(validationJob.getDocument().getDocumentId().getDocumentUrl());
                 if (file != null){
                     boolean isValidationDisabled = validationJob.getDocument().getCrawlJob().isValidationDisabled();
                     validator.startValidation(file, isValidationDisabled);
                     processStartedJob(file, isValidationDisabled);
                 }else {
-                    saveErrorResult("Can't create url: " + validationJob.getId());
+                    saveErrorResult("Can't create url: " + validationJob.getDocumentId().getDocumentUrl());
                 }
             } catch (IOException e) {
                 saveErrorResult(e);

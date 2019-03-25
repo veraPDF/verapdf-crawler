@@ -97,7 +97,7 @@ public class BingService {
                     contentType = fileType;
                 }
                 DomainDocument domainDocument = new DomainDocument();
-                domainDocument.setUrl(url);
+                domainDocument.getDocumentId().setDocumentUrl(url);
                 domainDocument.setCrawlJob(this.currentJob);
                 domainDocument.setContentType(contentType);
                 Header[] lastModHeaders = response.getHeaders("Last-Modified");

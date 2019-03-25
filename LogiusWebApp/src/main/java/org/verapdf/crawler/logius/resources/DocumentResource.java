@@ -79,7 +79,7 @@ public class DocumentResource {
                 validateMSOfficeFile(document);
                 break;
             default:
-                logger.warn("Unknown document type " + document.getContentType() + ". Document " + document.getUrl() + " won't be tested.");
+                logger.warn("Unknown document type " + document.getContentType() + ". Document " + document.getDocumentId().getDocumentUrl() + " won't be tested.");
         }
 
         return document;

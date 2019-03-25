@@ -63,7 +63,8 @@ CREATE TABLE crawl_job_requests_crawl_jobs
 
 CREATE TABLE documents
 (
-  id           UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  document_id      UUID NOT NULL,
   document_url     VARCHAR(2048) NOT NULL,
   crawl_job_id     UUID NOT NULL,
   last_modified    TIMESTAMP     DEFAULT NULL,
@@ -71,24 +72,27 @@ CREATE TABLE documents
   document_status  VARCHAR(16),
   CONSTRAINT documents_crawl_jobs_domain_fk FOREIGN KEY (crawl_job_id) REFERENCES crawl_jobs (id)
     ON DELETE CASCADE
-    ON UPDATE CASCADE
+    ON UPDATE CASCADE,
+  PRIMARY KEY (document_id, document_url)
 );
 CREATE TABLE document_properties
 (
-  document_id           UUID         NOT NULL,
+  document_id    UUID         NOT NULL,
+  document_url   VARCHAR(2048) NOT NULL,
   property_name  VARCHAR(255) NOT NULL,
   property_value VARCHAR(255) DEFAULT NULL,
-  PRIMARY KEY (document_id, property_name),
-  CONSTRAINT document_properties_documents_document_url_fk FOREIGN KEY (document_id) REFERENCES documents (id)
+  PRIMARY KEY (document_id, document_url, property_name),
+  CONSTRAINT document_properties_documents_document_url_fk FOREIGN KEY (document_id, document_url) REFERENCES documents (document_id, document_url)
     ON DELETE CASCADE
     ON UPDATE CASCADE
 );
 CREATE TABLE pdf_validation_jobs_queue
 (
   document_id           UUID         NOT NULL,
+  document_url   VARCHAR(2048) NOT NULL,
   validation_status VARCHAR(16) NOT NULL,
   PRIMARY KEY (document_id),
-  CONSTRAINT pdf_validation_jobs_queue_documents_document_url_fk FOREIGN KEY (document_id) REFERENCES documents (id)
+  CONSTRAINT pdf_validation_jobs_queue_documents_document_url_fk FOREIGN KEY (document_id, document_url) REFERENCES documents (document_id, document_url)
     ON DELETE CASCADE
     ON UPDATE CASCADE
 );
@@ -107,9 +111,10 @@ CREATE TABLE validation_errors
 CREATE TABLE documents_validation_errors
 (
   document_id           UUID         NOT NULL,
+  document_url   VARCHAR(2048) NOT NULL,
   error_id     BIGINT       NOT NULL DEFAULT '0',
-  PRIMARY KEY (document_id, error_id),
-  CONSTRAINT documents_validation_errors_documents_document_url_fk FOREIGN KEY (document_id) REFERENCES documents (id)
+  PRIMARY KEY (document_id, document_url, error_id),
+  CONSTRAINT documents_validation_errors_documents_document_url_fk FOREIGN KEY (document_id, document_url) REFERENCES documents (document_id, document_url)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT documents_validation_errors_validation_errors_id_fk FOREIGN KEY (error_id) REFERENCES validation_errors (id)

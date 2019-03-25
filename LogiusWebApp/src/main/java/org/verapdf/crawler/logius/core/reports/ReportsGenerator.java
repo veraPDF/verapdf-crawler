@@ -49,7 +49,7 @@ public class ReportsGenerator {
         sheet.ensureRowCount(getNonPDFA12DocumentsRowCount(documentsList) + 1);
         int i = 1;
         for (DomainDocument document : documentsList) {
-            sheet.setValueAt(document.getUrl(), 0, i);
+            sheet.setValueAt(document.getDocumentId().getDocumentUrl(), 0, i);
             Map<String, String> properties = document.getProperties();
             if (properties != null) {
                 setProperty("flavour", 1, i, properties, sheet);

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import org.verapdf.crawler.logius.crawling.CrawlJob_;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.document.DomainDocument_;
+import org.verapdf.crawler.logius.model.DocumentId_;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 import org.verapdf.crawler.logius.validation.ValidationJob_;
 
