@@ -67,7 +67,7 @@ public class FileService {
                 fileOutputStream.close();
                 return file;
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Can't create url: " + url, e);
             removeFile(file);
         }

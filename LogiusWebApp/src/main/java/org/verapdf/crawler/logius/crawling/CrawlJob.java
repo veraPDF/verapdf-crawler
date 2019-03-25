@@ -80,6 +80,11 @@ public class CrawlJob {
         this.crawlService = CrawlService.HERITRIX;
     }
 
+    public CrawlJob(String domain, CrawlService bing, boolean isValidationRequired) {
+        this(domain, bing);
+        this.isValidationEnabled = isValidationRequired;
+    }
+
     public boolean isValidationEnabled() {
         return isValidationEnabled;
     }

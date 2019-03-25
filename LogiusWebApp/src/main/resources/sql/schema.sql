@@ -9,6 +9,18 @@ DROP TABLE IF EXISTS documents;
 DROP TABLE IF EXISTS crawl_job_requests_crawl_jobs;
 DROP TABLE IF EXISTS crawl_jobs;
 DROP TABLE IF EXISTS crawl_job_requests;
+DROP TABLE IF EXISTS client;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE TABLE client
+(
+  id           UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
+  email        VARCHAR(128)  UNIQUE NOT NULL,
+  password     VARCHAR(128)  NOT NULL,
+  secret       bytea         NOT NULL,
+  role         VARCHAR(128)  NOT NULL,
+  enabled      BOOLEAN       DEFAULT true
+);
 
 CREATE TABLE crawl_job_requests
 (
@@ -24,10 +36,10 @@ CREATE TABLE crawl_jobs
   domain                 VARCHAR(255) NOT NULL,
   heritrix_job_id        VARCHAR(36)  NOT NULL UNIQUE ,
   job_url                VARCHAR(255) DEFAULT NULL,
-  start_time             TIMESTAMP     DEFAULT NOW(),
-  finish_time            TIMESTAMP     DEFAULT NULL,
-  is_finished            BOOLEAN   DEFAULT FALSE,
-  is_validation_enabled  BOOLEAN   DEFAULT FALSE,
+  start_time             TIMESTAMP    DEFAULT NOW(),
+  finish_time            TIMESTAMP    DEFAULT NULL,
+  is_finished            BOOLEAN      DEFAULT FALSE,
+  is_validation_enabled  BOOLEAN      DEFAULT FALSE,
   job_status             VARCHAR(10)  DEFAULT NULL,
   crawl_service          VARCHAR(10)  NOT NULL,
   PRIMARY KEY (domain)

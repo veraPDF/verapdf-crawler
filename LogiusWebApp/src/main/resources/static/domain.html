@@ -5,7 +5,8 @@
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
 
-    <title>Crawl jobs</title>
+    <title>veraPDF crawler</title>
+    <link rel="icon" href="favicon.ico">
     <script crossorigin="anonymous" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script crossorigin="anonymous"
             src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
@@ -16,7 +17,7 @@
     <script src="assets/vendor/pikaday.min.js"></script>
     <script src="assets/vendor/typeahead.bundle.min.js"></script>
     <script crossorigin="anonymous" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.min.js"></script>
-
+    <script src="assets/js/user.js"></script>
     <script src="assets/js/common.js"></script>
     <script src="assets/js/domain.js"></script>
 
@@ -34,6 +35,11 @@
 <body class="container-fluid">
 <header class="header">
     <h2 class="app-title">Does your site have documents in open formats?</h2>
+    <nav id="user_info_container">
+        <ul id="user-menu">
+
+        </ul>
+    </nav>
     <nav id="menu_container">
         <ul id="menu">
             <li><a href="index.html">Home</a></li>
@@ -99,12 +105,11 @@
         <li class="nav-item">
             <a aria-controls="documents" class="nav-link" data-toggle="tab" href="#documents">Documents</a>
         </li>
-        <li class="nav-item" id="error-nav">
+        <li class="nav-item" id="error-nav" style="display: none">
             <a aria-controls="errors" class="nav-link" data-toggle="tab" href="#errors">Common PDF/A errors</a>
         </li>
-        <li class="nav-item" id="error-nav-pdfwam">
-            <a aria-controls="errors-pdfwam" class="nav-link" data-toggle="tab" href="#errors-pdfwam">Common PDF/UA
-                errors</a>
+        <li class="nav-item" id="error-nav-pdfwam" style="display: none">
+            <a aria-controls="errors-pdfwam" class="nav-link" data-toggle="tab" href="#errors-pdfwam">Common PDF/UA errors</a>
         </li>
     </ul>
 
@@ -128,11 +133,11 @@
             </div>
             <div class="oox-office-documents">
                 <div class="percent"></div>
-                <div><span class="office"></span> Office Open XML documents</div>
+                <div><span class="office"></span> Office Open XML documents (.docx, .xlsx, .pptx)</div>
             </div>
             <div class="ms-office-documents">
                 <div class="percent"></div>
-                <div><span class="office"></span> Microsoft Office documents</div>
+                <div><span class="office"></span> Microsoft Office documents (.doc, .xls, .ppt)</div>
             </div>
         </div>
 
@@ -140,7 +145,6 @@
             <form class="form-inline d-flex justify-content-between">
                 <div class="documents-summary">
                     <span class="total-count"></span> PDF documents found
-                    (<span class="open-count"></span> open, <span class="not-open-count"></span> not open)
                 </div>
                 <input class="form-control form-control-sm" id="documents-date-input" placeholder="Documents from"
                        type="text">
@@ -179,7 +183,7 @@
                     </div>
                 </div-->
                 <select class="form-control form-control-sm" id="errors-flavour-input" title="Flavour">
-                    <option selected value="">Any PDF/A flavour</option>
+                    <option selected value="">Any PDF flavour</option>
                 </select>
                 <select class="form-control form-control-sm" id="errors-version-input" title="Version">
                     <option selected value="">Any PDF version</option>
@@ -188,6 +192,8 @@
                        type="text">
                 <input class="form-control form-control-sm" id="errors-date-input" placeholder="Documents from"
                        type="text">
+
+                <!--todo  <input type="reset"><i class="material-icons">clear</i></input>-->
             </form>
             <div>
                 <div class="errors-chart">
@@ -212,7 +218,7 @@
         <div class="errors tab-pane fade" id="errors-pdfwam" role="tabpanel">
             <form class="form-inline d-flex justify-content-end">
                 <select class="form-control form-control-sm" id="errors-pdfwam-flavour-input" title="Flavour">
-                    <option selected value="">Any PDF/A flavour</option>
+                    <option selected value="">Any PDF flavour</option>
                 </select>
                 <select class="form-control form-control-sm" id="errors-pdfwam-version-input" title="Version">
                     <option selected value="">Any PDF version</option>

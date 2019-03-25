@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.resources.DocumentResource;
+import org.verapdf.crawler.logius.tools.HttpClientUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -111,7 +112,7 @@ public class BingService {
                     documentResource.saveDocument(domainDocument, this.currentJob);
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Can't create url: " + url, e);
         }
     }

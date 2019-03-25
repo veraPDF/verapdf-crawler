@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>veraPDF crawler</title>
+    <link rel="icon" href="favicon.ico">
+
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
+
+    <title>veraPDF crawler</title>
+    <link rel="icon" href="favicon.ico">
+    <script crossorigin="anonymous" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script crossorigin="anonymous"
+            src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+    <script crossorigin="anonymous"
+            src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js"></script>
+    <link crossorigin="anonymous" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css"
+          integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" rel="stylesheet">
+    <script src="assets/js/user.js"></script>
+    <script src="assets/js/admin-dashboard.js"></script>
+    <script src="assets/vendor/jquery.twbsPagination.min.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- TODO: Set correct path -->
+    <link href="assets/css/main.css" rel="stylesheet" type="text/css">
+</head>
+
+<body class="container-fluid">
+<header class="header">
+    <h2 class="app-title">Does your site have documents in open formats?</h2>
+    <nav id="user_info_container">
+        <ul id="user-menu">
+
+        </ul>
+    </nav>
+    <nav id="menu_container">
+        <ul id="menu">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="domains.html">Test results</a></li>
+            <li><a href="what-we-test.html">What we test</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item">
+            <a aria-controls="users" class="nav-link active" data-toggle="tab" href="#users">Users</a>
+        </li>
+        <li class="nav-item">
+            <a aria-controls="healtcheck" class="nav-link" data-toggle="tab" href="#healthcheck">Health check</a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+        <div class="tab-pane active" id="users" role="tabpanel">
+            <table class="table user-list" id="user_list">
+                <thead>
+                <tr>
+                    <th class="col-user col-status" style="width:90%">Email</th>
+                    <th class="col-enabled col-status">Enabled</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td class="email status"></td>
+                    <td class="enabled status">
+                        <input class="checkbox-input" type="checkbox">
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <nav>
+                <ul class="pagination pagination-sm justify-content-center" id="pagination-container"></ul>
+            </nav>
+        </div>
+
+        <div class="errors tab-pane fade" id="healthcheck" role="tabpanel">
+            HealthCheck tab panel
+        </div>
+    </div>
+</main>
+<footer class="footer"></footer>
+</body>
+</html>

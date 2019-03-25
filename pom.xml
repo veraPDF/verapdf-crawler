@@ -26,5 +26,7 @@
         <spring.version>2.1.1.RELEASE</spring.version>
         <jopendocument.version>1.3b1</jopendocument.version>
         <postgres.connector.version>9.1-901-1.jdbc4</postgres.connector.version>
+        <auth0.jwt.version>3.7.0</auth0.jwt.version>
+        <commons-codec.version>1.9</commons-codec.version>
     </properties>
 </project>

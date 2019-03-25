@@ -6,7 +6,6 @@
 html {
     height: 100%;
 }
-
 body.container-fluid {
     min-height: 100%;
     padding: 0;
@@ -31,7 +30,7 @@ body.container-fluid {
 }
 
 .header #menu_container #menu {
-    list-style: none;
+    list-style:none;
     padding-right: 10px;
     margin-bottom: 0;
 }
@@ -42,7 +41,7 @@ body.container-fluid {
     letter-spacing: 1px;
 }
 
-.header a, .header a:visited, .header a:active {
+.header a, .header a:visited, .header a:active  {
     text-decoration: none;
     color: #000;
 }
@@ -64,7 +63,7 @@ body.container-fluid {
 }
 
 .main .template {
-    display: none !important;
+    display: none!important;
 }
 
 .footer {
@@ -89,7 +88,7 @@ body.container-fluid {
 }
 
 
-/* index.static */
+/* index.html */
 .main-form {
     font-size: 22px;
     display: inline-block;
@@ -109,8 +108,7 @@ body.container-fluid {
     display: inline-block;
     min-width: 250px;
 }
-
-.main-form .error-message-container {
+.main-form .error-message-container{
     display: inline-block;
     width: 410px;
     margin-top: 15px;
@@ -149,6 +147,38 @@ body.container-fluid {
 .main-form .checkbox-input:checked + .check-label::before {
     display: inline-block;
     content: '✔';
+}
+
+.header #user_info_container {
+    float: left;
+    color: #000;
+}
+
+.header #user_info_container #user-menu {
+    list-style: none;
+    padding-right: 10px;
+    margin-bottom: 0;
+}
+
+
+.header #user_info_container #user-menu li {
+    display: inline-block;
+    padding: 3px 10px;
+    letter-spacing: 1px;
+}
+
+.checkbox-input {
+    background-color: #fff;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    content: '✔';
+    border: 0;
+}
+
+.checkbox-input{
+    cursor: pointer;
+    white-space: nowrap;
 }
 
 .input-button {
@@ -233,8 +263,13 @@ body.container-fluid {
     background-color: white;
 }
 
-.domains-list {
+.domains-list, .user-list{
     color: white;
+}
+
+.user-list td, .user-list th {
+    border-top: none;
+    vertical-align: middle;
 }
 
 .domains-list td, .domains-list th {
@@ -453,8 +488,8 @@ a.action.disabled {
 }
 
 .summary .ms-office-documents {
-     background-color: #CB86A2;
- }
+    background-color: #CB86A2;
+}
 
 .summary .odf-documents {
     background-color: #767D92;

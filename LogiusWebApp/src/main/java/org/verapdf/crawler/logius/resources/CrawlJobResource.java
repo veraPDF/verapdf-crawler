@@ -3,8 +3,6 @@ package org.verapdf.crawler.logius.resources;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -68,52 +66,53 @@ public class CrawlJobResource {
                                      @RequestParam("start") int startParam,
                                      @RequestParam("limit") int limitParam) {
 
+        long totalCount = crawlJobDAO.count(domainFilter, finished);
         List<CrawlJob> crawlJobs = crawlJobDAO.find(domainFilter, finished, startParam, limitParam);
-        return ResponseEntity.ok().body(crawlJobs);
+        return ResponseEntity.ok().header("X-Total-Count", String.valueOf(totalCount)).body(crawlJobs);
     }
 
     @PostMapping("/{domain}")
     @Transactional
-    public CrawlJob restartCrawlJob(@PathVariable("domain") String domain) {
+    public ResponseEntity restartCrawlJob(@PathVariable("domain") String domain) {
         domain = DomainUtils.trimUrl(domain);
-
         CrawlJob crawlJob = crawlJobDAO.getByDomain(domain);
+        if (crawlJob == null) {
+            return ResponseEntity.notFound().build();
+        }
         CrawlJob.CrawlService service = crawlJob.getCrawlService();
-        return restartCrawlJob(crawlJob, domain, service);
+        return ResponseEntity.ok(restartCrawlJob(crawlJob, domain, service));
     }
 
     public CrawlJob restartCrawlJob(CrawlJob crawlJob, String domain, CrawlJob.CrawlService service) {
-        List<CrawlRequest> crawlRequests = null;
-        if (crawlJob != null) {
-            String heritrixJobId = crawlJob.getHeritrixJobId();
-            CrawlJob.CrawlService currentService = crawlJob.getCrawlService();
-            // Keep requests list to link to new job
-            crawlRequests = new ArrayList<>(crawlJob.getCrawlRequests());
+        List<CrawlRequest> crawlRequests;
 
-            // Tear crawl service
-            if (currentService == CrawlJob.CrawlService.HERITRIX) {
-                heritrixCleanerTask.teardownAndClearHeritrixJob(heritrixJobId);
-            } else if (currentService == CrawlJob.CrawlService.BING) {
-                bingService.discardJob(crawlJob);
-            }
+        String heritrixJobId = crawlJob.getHeritrixJobId();
+        CrawlJob.CrawlService currentService = crawlJob.getCrawlService();
+        // Keep requests list to link to new job
+        crawlRequests = new ArrayList<>(crawlJob.getCrawlRequests());
 
-            // Remove job from DB
-            crawlJobDAO.remove(crawlJob);
+        // Tear crawl service
+        if (currentService == CrawlJob.CrawlService.HERITRIX) {
+            heritrixCleanerTask.teardownAndClearHeritrixJob(heritrixJobId);
+        } else if (currentService == CrawlJob.CrawlService.BING) {
+            bingService.discardJob(crawlJob);
+        }
 
-            // Stop validation job if it's related to this crawl job
-            synchronized (ValidationJobService.class) {
-                ValidationJob currentJob = validationJobService.getCurrentJob();
-                if (currentJob != null && currentJob.getDocument().getCrawlJob().getDomain().equals(domain)) {
-                    validatorService.abortCurrentJob();
-                }
+        // Remove job from DB
+        crawlJobDAO.remove(crawlJob);
+
+        // Stop validation job if it's related to this crawl job
+        synchronized (ValidationJobService.class) {
+            ValidationJob currentJob = validationJobService.getCurrentJob();
+            if (currentJob != null && currentJob.getDocument().getCrawlJob().getDomain().equals(domain)) {
+                validatorService.abortCurrentJob();
             }
         }
+
 
         // Create and start new crawl job
-        CrawlJob newJob = new CrawlJob(domain, service);
-        if (crawlRequests != null) {
-            newJob.setCrawlRequests(crawlRequests);
-        }
+        CrawlJob newJob = new CrawlJob(domain, service, crawlJob.isValidationEnabled());
+        newJob.setCrawlRequests(crawlRequests);
         crawlJobDAO.save(newJob);
         if (service == CrawlJob.CrawlService.HERITRIX) {
             startCrawlJob(newJob);
