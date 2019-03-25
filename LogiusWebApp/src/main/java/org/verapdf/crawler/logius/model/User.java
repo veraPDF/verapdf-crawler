@@ -1,7 +1,5 @@
 package org.verapdf.crawler.logius.model;
 
-import org.hibernate.annotations.Type;
-
 import javax.persistence.*;
 import java.util.UUID;
 
@@ -10,7 +8,7 @@ import java.util.UUID;
 public class User {
     @Id
     @GeneratedValue
-    @Column(columnDefinition = "uuid", updatable = false )
+    @Column(columnDefinition = "uuid", updatable = false)
     private UUID id;
     @Column(unique = true)
     private String email;
@@ -22,7 +20,7 @@ public class User {
     private byte[] secret;
     @Column
     @Enumerated(EnumType.STRING)
-    private Roles role;
+    private Role role;
 
     public User() {
     }
@@ -73,16 +71,11 @@ public class User {
         this.secret = secret;
     }
 
-    public Roles getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(Roles role) {
+    public void setRole(Role role) {
         this.role = role;
-    }
-
-
-    public enum Roles{
-        ADMIN, USER
     }
 }

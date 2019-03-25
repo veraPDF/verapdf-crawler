@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider;
 import org.springframework.security.web.authentication.preauth.RequestHeaderAuthenticationFilter;
 import org.verapdf.crawler.logius.service.TokenAuthenticationUserDetailsService;
+import org.verapdf.crawler.logius.service.TokenUserDetailsService;
 
 
 @Configuration
@@ -39,10 +40,10 @@ public class SecureConfig {
     @Configuration
     @Order(1)
     public class BasicAuthConfig extends WebSecurityConfigurerAdapter {
-        private final UserDetailsService userDetailsService;
+        private final TokenUserDetailsService userDetailsService;
         private final AuthHandler authHandler;
 
-        public BasicAuthConfig(@Qualifier("UserDetailsServiceImpl") UserDetailsService userDetailsService, AuthHandler authHandler) {
+        public BasicAuthConfig(TokenUserDetailsService userDetailsService, AuthHandler authHandler) {
             this.userDetailsService = userDetailsService;
             this.authHandler = authHandler;
         }

@@ -3,6 +3,7 @@ package org.verapdf.crawler.logius.dto;
 
 
 import org.verapdf.crawler.logius.model.User;
+import org.verapdf.crawler.logius.tools.Constants;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
@@ -13,7 +14,7 @@ public class UserDto {
     @NotNull
     private String email;
 
-    @Pattern(regexp = "(^[0-9a-zA-Z]{8,20}$)", message = "password must be between 8 and 20 characters and include 0-9 a-z A-Z symbols")
+    @Pattern(regexp = Constants.PASSWORD_PATTERN, message = "password must be between 8 and 20 characters and include 0-9 a-z A-Z symbols")
     @NotNull
     private String password;
 

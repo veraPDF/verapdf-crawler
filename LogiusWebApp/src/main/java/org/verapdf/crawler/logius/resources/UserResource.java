@@ -12,6 +12,7 @@ import org.verapdf.crawler.logius.dto.UserInfoDto;
 import org.verapdf.crawler.logius.service.UserService;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Email;
 
 
 @RestController
@@ -40,7 +41,7 @@ public class UserResource {
 
     @PutMapping("/{email}/status")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public ResponseEntity updateStatus(@PathVariable("email") String email,
+    public ResponseEntity updateStatus(@PathVariable("email") @Email String email,
                                        @RequestParam("status") boolean status) {
         userService.updateStatus(email, status);
         return ResponseEntity.ok().build();
@@ -60,7 +61,7 @@ public class UserResource {
 
     @PostMapping("/signup")
     public ResponseEntity registerUser(@Valid @RequestBody UserDto signUpRequest) {
-        UserInfoDto result = userService.save(signUpRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(result);
+        userService.save(signUpRequest);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

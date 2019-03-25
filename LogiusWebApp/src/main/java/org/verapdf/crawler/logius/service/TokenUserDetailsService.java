@@ -12,14 +12,13 @@ import org.verapdf.crawler.logius.db.UserDao;
 import org.verapdf.crawler.logius.dto.TokenUserDetails;
 import org.verapdf.crawler.logius.model.User;
 
-@Service("UserDetailsServiceImpl")
-public class UserDetailsServiceImpl implements UserDetailsService {
+@Service
+public class TokenUserDetailsService implements UserDetailsService {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private UserDao userDao;
     private TokenService tokenService;
 
-    @Autowired
-    public UserDetailsServiceImpl(UserDao userDao, TokenService tokenService) {
+    public TokenUserDetailsService(UserDao userDao, TokenService tokenService) {
         this.userDao = userDao;
         this.tokenService = tokenService;
     }

@@ -45,7 +45,7 @@ public class TokenService {
         }
     }
 
-    public String getUserEmailFromJWT(String token) {
+    public String getSubject(String token) {
         return JWT.decode(token).getSubject();
     }
 

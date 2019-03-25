@@ -29,9 +29,9 @@ public class TokenAuthenticationUserDetailsService implements AuthenticationUser
         if (authentication.getPrincipal() != null && authentication.getPrincipal() instanceof String && authentication.getCredentials() instanceof String) {
             try {
                 String token = (String) authentication.getPrincipal();
-                User user = userDao.getByEmail(tokenService.getUserEmailFromJWT(token));
+                User user = userDao.getByEmail(tokenService.getSubject(token));
                 tokenService.verify(token, user.getSecret());
-                return new TokenUserDetails(user.getEmail(), user.getPassword(), user.isEnabled(), user.getRole(), tokenService.encode(user));
+                return new TokenUserDetails(user.getEmail(), user.getPassword(), user.isEnabled(), user.getRole(), token);
 
             } catch (Exception ex) {
                 throw new UsernameNotFoundException("Token has been expired", ex);

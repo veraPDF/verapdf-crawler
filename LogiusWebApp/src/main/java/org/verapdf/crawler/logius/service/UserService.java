@@ -12,6 +12,7 @@ import org.verapdf.crawler.logius.dto.UserInfoDto;
 import org.verapdf.crawler.logius.exception.AlreadyExistsException;
 import org.verapdf.crawler.logius.exception.IncorrectPasswordException;
 import org.verapdf.crawler.logius.exception.NotFoundException;
+import org.verapdf.crawler.logius.model.Role;
 import org.verapdf.crawler.logius.model.User;
 import org.verapdf.crawler.logius.tools.SecretKeyUtils;
 
@@ -42,7 +43,7 @@ public class UserService {
     public UserInfoDto save(UserDto dto) {
         try {
             User user = new User(dto.getEmail(), passwordEncoder.encode(dto.getPassword()));
-            user.setRole(User.Roles.USER);
+            user.setRole(Role.USER);
             return saveUserWithUpdateSecret(user);
         } catch (ConstraintViolationException e) {
             throw new AlreadyExistsException(String.format("user with email %s already exists", dto.getEmail()));
