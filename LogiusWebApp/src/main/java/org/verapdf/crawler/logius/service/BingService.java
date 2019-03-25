@@ -10,6 +10,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -74,7 +75,7 @@ public class BingService {
 
     public void processFile(String url, String fileType) {
         try {
-            try (CloseableHttpClient client = HttpClientUtils.createTrustAllHttpClient()) {
+            try (CloseableHttpClient client = HttpClients.createDefault()) {
                 HttpGet get = new HttpGet(url);
                 CloseableHttpResponse response = client.execute(get);
                 String contentType = null;
