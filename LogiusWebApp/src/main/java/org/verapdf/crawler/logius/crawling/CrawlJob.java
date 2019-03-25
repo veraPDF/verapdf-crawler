@@ -2,6 +2,7 @@ package org.verapdf.crawler.logius.crawling;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.verapdf.crawler.logius.model.User;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
@@ -15,6 +16,10 @@ import java.util.UUID;
 public class CrawlJob {
 
     @Id
+    @GeneratedValue
+    @Column(columnDefinition = "uuid", updatable = false)
+    private UUID id;
+
     @NotEmpty
     private String domain;
 
@@ -48,10 +53,15 @@ public class CrawlJob {
     @Column(name = "is_validation_enabled")
     private boolean isValidationEnabled;
 
+    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @ManyToMany
     @JoinTable(
             name = "crawl_job_requests_crawl_jobs",
-            joinColumns = @JoinColumn(name = "crawl_job_domain"),
+            joinColumns = @JoinColumn(name = "crawl_job_id"),
             inverseJoinColumns = @JoinColumn(name = "crawl_job_request_id")
     )
     @JsonIgnore
@@ -83,6 +93,14 @@ public class CrawlJob {
     public CrawlJob(String domain, CrawlService bing, boolean isValidationRequired) {
         this(domain, bing);
         this.isValidationEnabled = isValidationRequired;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public boolean isValidationEnabled() {
@@ -157,7 +175,7 @@ public class CrawlJob {
         this.finished = finished;
     }
 
-    public boolean isValidationDisabled(){
+    public boolean isValidationDisabled() {
         return !this.isValidationEnabled;
     }
 
@@ -170,6 +188,14 @@ public class CrawlJob {
 
     public void setCrawlRequests(List<CrawlRequest> crawlRequests) {
         this.crawlRequests = crawlRequests;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
     }
 
     public enum Status {

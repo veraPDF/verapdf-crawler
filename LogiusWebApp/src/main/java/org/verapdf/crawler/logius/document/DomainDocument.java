@@ -16,10 +16,14 @@ import java.util.stream.Stream;
 public class DomainDocument {
 
     @Id
+    @GeneratedValue
+    @Column(columnDefinition = "uuid", updatable = false)
+    private UUID id;
+
     @Column(name = "document_url")
     private String url;
     @ManyToOne
-    @JoinColumn(name = "crawl_job_domain")
+    @JoinColumn(name = "crawl_job_id")
     private CrawlJob crawlJob;
     @Column(name = "last_modified")
     @Temporal(TemporalType.TIMESTAMP)
@@ -35,7 +39,7 @@ public class DomainDocument {
     @ElementCollection
     @CollectionTable(
             name = "document_properties",
-            joinColumns = @JoinColumn(name = "document_url")
+            joinColumns = @JoinColumn(name = "id")
     )
     @MapKeyColumn(name = "property_name")
     @Column(name = "property_value")
@@ -43,7 +47,7 @@ public class DomainDocument {
     @ManyToMany
     @JoinTable(
             name = "documents_validation_errors",
-            joinColumns = @JoinColumn(name = "document_url"),
+            joinColumns = @JoinColumn(name = "id"),
             inverseJoinColumns = @JoinColumn(name = "error_id")
     )
     private List<ValidationError> validationErrors;
@@ -110,6 +114,14 @@ public class DomainDocument {
 
     public void setValidationErrors(List<ValidationError> validationErrors) {
         this.validationErrors = validationErrors;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
     }
 
     public enum DocumentTypeGroup {

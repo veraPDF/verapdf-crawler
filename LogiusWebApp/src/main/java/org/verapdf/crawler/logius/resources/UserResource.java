@@ -5,23 +5,27 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.verapdf.crawler.logius.dto.PasswordUpdateDto;
-import org.verapdf.crawler.logius.dto.TokenUserDetails;
-import org.verapdf.crawler.logius.dto.UserDto;
-import org.verapdf.crawler.logius.dto.UserInfoDto;
+import org.verapdf.crawler.logius.crawling.CrawlJob;
+import org.verapdf.crawler.logius.db.CrawlJobDAO;
+import org.verapdf.crawler.logius.dto.user.PasswordUpdateDto;
+import org.verapdf.crawler.logius.dto.user.TokenUserDetails;
+import org.verapdf.crawler.logius.dto.user.UserDto;
+import org.verapdf.crawler.logius.dto.user.UserInfoDto;
 import org.verapdf.crawler.logius.service.UserService;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Email;
+import java.util.List;
 
 
 @RestController
 @RequestMapping("api/user")
 public class UserResource {
     private final UserService userService;
-
-    public UserResource(UserService userService) {
+    private final CrawlJobDAO crawlJobDAO;
+    public UserResource(UserService userService, CrawlJobDAO crawlJobDAO) {
         this.userService = userService;
+        this.crawlJobDAO = crawlJobDAO;
     }
 
 
@@ -37,6 +41,12 @@ public class UserResource {
                                          @Valid @RequestBody PasswordUpdateDto passwordUpdateDto) {
         userService.updatePassword(principal.getUsername(), passwordUpdateDto);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/crawlJobs")
+    @PreAuthorize("isFullyAuthenticated()")
+    public List<CrawlJob> getCrawlJobs(@AuthenticationPrincipal TokenUserDetails principal) {
+        return crawlJobDAO.findByUserId(principal.getUuid());
     }
 
     @PutMapping("/{email}/status")

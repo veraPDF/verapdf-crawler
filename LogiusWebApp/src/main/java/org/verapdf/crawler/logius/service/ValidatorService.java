@@ -54,7 +54,7 @@ public class ValidatorService {
             logger.info("Validating " + validationJob.getId());
             File file = null;
             try {
-                file = fileService.save(validationJob.getId());
+                file = fileService.save(validationJob.getDocument().getUrl());
                 if (file != null){
                     boolean isValidationDisabled = validationJob.getDocument().getCrawlJob().isValidationDisabled();
                     validator.startValidation(file, isValidationDisabled);

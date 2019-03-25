@@ -5,19 +5,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.verapdf.crawler.logius.core.heritrix.HeritrixClient;
-import org.verapdf.crawler.logius.core.tasks.HeritrixCleanerTask;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.CrawlRequest;
 import org.verapdf.crawler.logius.db.CrawlJobDAO;
 import org.verapdf.crawler.logius.db.ValidationJobDAO;
+import org.verapdf.crawler.logius.dto.user.TokenUserDetails;
 import org.verapdf.crawler.logius.monitoring.CrawlJobStatus;
 import org.verapdf.crawler.logius.monitoring.HeritrixCrawlJobStatus;
 import org.verapdf.crawler.logius.monitoring.ValidationQueueStatus;
-import org.verapdf.crawler.logius.service.BingService;
-import org.verapdf.crawler.logius.service.ValidationJobService;
-import org.verapdf.crawler.logius.service.ValidatorService;
+import org.verapdf.crawler.logius.service.CrawlJobService;
+import org.verapdf.crawler.logius.service.CrawlService;
 import org.verapdf.crawler.logius.tools.DomainUtils;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 import org.xml.sax.SAXException;
@@ -27,8 +27,6 @@ import javax.validation.constraints.NotNull;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -42,21 +40,16 @@ public class CrawlJobResource {
     private final CrawlJobDAO crawlJobDAO;
     private final HeritrixClient heritrixClient;
     private final ValidationJobDAO validationJobDAO;
-    private final ValidationJobService validationJobService;
-    private final ValidatorService validatorService;
-    private final HeritrixCleanerTask heritrixCleanerTask;
-    private final BingService bingService;
+    private final CrawlJobService crawlJobService;
+    private final CrawlService crawlService;
 
     public CrawlJobResource(CrawlJobDAO crawlJobDAO, HeritrixClient heritrixClient, ValidationJobDAO validationJobDAO,
-                            ValidationJobService validationJobService, ValidatorService validatorService,
-                            HeritrixCleanerTask heritrixCleanerTask, BingService bingService) {
+                            CrawlJobService crawlJobService, CrawlService crawlService) {
         this.crawlJobDAO = crawlJobDAO;
         this.heritrixClient = heritrixClient;
         this.validationJobDAO = validationJobDAO;
-        this.validationJobService = validationJobService;
-        this.validatorService = validatorService;
-        this.heritrixCleanerTask = heritrixCleanerTask;
-        this.bingService = bingService;
+        this.crawlJobService = crawlJobService;
+        this.crawlService = crawlService;
     }
 
     @GetMapping
@@ -65,61 +58,28 @@ public class CrawlJobResource {
                                      @RequestParam(value = "finished", required = false) Boolean finished,
                                      @RequestParam("start") int startParam,
                                      @RequestParam("limit") int limitParam) {
-
-        long totalCount = crawlJobDAO.count(domainFilter, finished);
-        List<CrawlJob> crawlJobs = crawlJobDAO.find(domainFilter, finished, startParam, limitParam);
-        return ResponseEntity.ok().header("X-Total-Count", String.valueOf(totalCount)).body(crawlJobs);
+        try {
+            long totalCount = crawlJobDAO.count(domainFilter, finished);
+            List<CrawlJob> crawlJobs = crawlJobDAO.find(domainFilter, finished, startParam, limitParam);
+            return ResponseEntity.ok().header("X-Total-Count", String.valueOf(totalCount)).body(crawlJobs);
+        }catch (Throwable e){
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @PostMapping("/{domain}")
     @Transactional
-    public ResponseEntity restartCrawlJob(@PathVariable("domain") String domain) {
+    public ResponseEntity restartCrawlJob(@AuthenticationPrincipal TokenUserDetails principal, @PathVariable("domain") String domain) {
         domain = DomainUtils.trimUrl(domain);
         CrawlJob crawlJob = crawlJobDAO.getByDomain(domain);
         if (crawlJob == null) {
             return ResponseEntity.notFound().build();
         }
         CrawlJob.CrawlService service = crawlJob.getCrawlService();
-        return ResponseEntity.ok(restartCrawlJob(crawlJob, domain, service));
+
+        return ResponseEntity.ok(crawlService.restartCrawlJob(crawlJob, domain, service));
     }
-
-    public CrawlJob restartCrawlJob(CrawlJob crawlJob, String domain, CrawlJob.CrawlService service) {
-        List<CrawlRequest> crawlRequests;
-
-        String heritrixJobId = crawlJob.getHeritrixJobId();
-        CrawlJob.CrawlService currentService = crawlJob.getCrawlService();
-        // Keep requests list to link to new job
-        crawlRequests = new ArrayList<>(crawlJob.getCrawlRequests());
-
-        // Tear crawl service
-        if (currentService == CrawlJob.CrawlService.HERITRIX) {
-            heritrixCleanerTask.teardownAndClearHeritrixJob(heritrixJobId);
-        } else if (currentService == CrawlJob.CrawlService.BING) {
-            bingService.discardJob(crawlJob);
-        }
-
-        // Remove job from DB
-        crawlJobDAO.remove(crawlJob);
-
-        // Stop validation job if it's related to this crawl job
-        synchronized (ValidationJobService.class) {
-            ValidationJob currentJob = validationJobService.getCurrentJob();
-            if (currentJob != null && currentJob.getDocument().getCrawlJob().getDomain().equals(domain)) {
-                validatorService.abortCurrentJob();
-            }
-        }
-
-
-        // Create and start new crawl job
-        CrawlJob newJob = new CrawlJob(domain, service, crawlJob.isValidationEnabled());
-        newJob.setCrawlRequests(crawlRequests);
-        crawlJobDAO.save(newJob);
-        if (service == CrawlJob.CrawlService.HERITRIX) {
-            startCrawlJob(newJob);
-        }
-        return newJob;
-    }
-
 
     private CrawlJob getCrawlJob(String domain) {
         domain = DomainUtils.trimUrl(domain);
@@ -216,22 +176,5 @@ public class CrawlJobResource {
 
         crawlJob.getCrawlRequests().removeIf(request -> email.equals(request.getEmailAddress()));
         return ResponseEntity.ok(crawlJob.getCrawlRequests());
-    }
-
-
-    public void startCrawlJob(CrawlJob crawlJob) {
-        try {
-            String heritrixJobId = crawlJob.getHeritrixJobId();
-            heritrixClient.createJob(heritrixJobId, crawlJob.getDomain());
-            heritrixClient.buildJob(heritrixJobId);
-            heritrixClient.launchJob(heritrixJobId);
-            crawlJob.setStatus(CrawlJob.Status.RUNNING);
-        } catch (Exception e) {
-            logger.error("Failed to start crawling job for domain " + crawlJob.getDomain(), e);
-            crawlJob.setFinished(true);
-            crawlJob.setFinishTime(new Date());
-            crawlJob.setStatus(CrawlJob.Status.FAILED);
-        }
-        // TODO: cleanup heritrix in finally
     }
 }

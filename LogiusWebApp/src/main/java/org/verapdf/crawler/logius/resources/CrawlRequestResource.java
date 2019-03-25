@@ -5,10 +5,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.CrawlRequest;
-import org.verapdf.crawler.logius.dto.TokenUserDetails;
+import org.verapdf.crawler.logius.dto.user.TokenUserDetails;
 import org.verapdf.crawler.logius.service.CrawlRequestService;
 
 import javax.transaction.Transactional;
+import java.util.UUID;
 
 
 @RestController
@@ -26,11 +27,14 @@ public class CrawlRequestResource {
                                            @RequestBody CrawlRequest crawlRequest,
                                            @RequestParam(value = "isValidationRequired", defaultValue = "false") boolean isValidationRequired,
                                            @RequestParam(value = "crawlService", defaultValue = "BING") CrawlJob.CrawlService crawlService) {
-        if (principal == null) {
+        UUID userId = null;
+        if (principal != null) {
+            userId = principal.getUuid();
+        } else {
             isValidationRequired = false;
             crawlService = CrawlJob.CrawlService.BING;
         }
-        return crawlRequestService.createCrawlRequest(crawlRequest, crawlService, isValidationRequired);
+        return crawlRequestService.createCrawlRequest(crawlRequest, userId, crawlService, isValidationRequired);
 
     }
 }

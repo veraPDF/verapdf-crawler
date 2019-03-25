@@ -3,18 +3,22 @@ package org.verapdf.crawler.logius.validation;
 import org.verapdf.crawler.logius.document.DomainDocument;
 
 import javax.persistence.*;
+import java.util.UUID;
 
 @Entity
 @Table(name = "pdf_validation_jobs_queue")
 public class ValidationJob {
 
     @Id
-    @Column(name = "document_url")
-    private String id;
-    @MapsId("document_url")
+    @GeneratedValue
+    @Column(columnDefinition = "uuid", name = "document_id", updatable = false)
+    private UUID id;
+
+    @MapsId("document_id")
     @OneToOne(cascade = CascadeType.PERSIST, optional = false)
-    @PrimaryKeyJoinColumn(name = "document_url", referencedColumnName = "document_url")
+    @PrimaryKeyJoinColumn(name = "document_id", referencedColumnName = "id")
     private DomainDocument document;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "validation_status")
     private Status status;
@@ -24,20 +28,20 @@ public class ValidationJob {
 
     public ValidationJob(DomainDocument document) {
         this.document = document;
-        this.id = document.getUrl();
+        this.id = document.getId();
         this.status = Status.NOT_STARTED;
     }
 
-    public ValidationJob(String id, Status status) {
+    public ValidationJob(UUID id, Status status) {
         this.id = id;
         this.status = status;
     }
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

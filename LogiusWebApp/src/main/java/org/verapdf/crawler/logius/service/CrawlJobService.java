@@ -10,7 +10,6 @@ import java.util.List;
 
 @Service
 public class CrawlJobService {
-
     private final CrawlJobDAO crawlJobDAO;
 
     public CrawlJobService(CrawlJobDAO crawlJobDAO) {

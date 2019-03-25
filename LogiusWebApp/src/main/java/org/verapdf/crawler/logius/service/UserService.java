@@ -6,9 +6,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.db.UserDao;
-import org.verapdf.crawler.logius.dto.PasswordUpdateDto;
-import org.verapdf.crawler.logius.dto.UserDto;
-import org.verapdf.crawler.logius.dto.UserInfoDto;
+import org.verapdf.crawler.logius.dto.user.PasswordUpdateDto;
+import org.verapdf.crawler.logius.dto.user.UserDto;
+import org.verapdf.crawler.logius.dto.user.UserInfoDto;
 import org.verapdf.crawler.logius.exception.AlreadyExistsException;
 import org.verapdf.crawler.logius.exception.IncorrectPasswordException;
 import org.verapdf.crawler.logius.exception.NotFoundException;
@@ -17,6 +17,7 @@ import org.verapdf.crawler.logius.model.User;
 import org.verapdf.crawler.logius.tools.SecretKeyUtils;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -71,6 +72,16 @@ public class UserService {
     private UserInfoDto saveUserWithoutUpdateSecret(User user) {
         return new UserInfoDto(userDao.save(user));
     }
+
+    @Transactional
+    public User findUserById(UUID uuid) {
+        User user = userDao.getById(uuid);
+        if (user == null) {
+            throw new NotFoundException(String.format("user with uuid %s not exists", uuid));
+        }
+        return user;
+    }
+
 
     @Transactional
     public User findUserByEmail(String email) {

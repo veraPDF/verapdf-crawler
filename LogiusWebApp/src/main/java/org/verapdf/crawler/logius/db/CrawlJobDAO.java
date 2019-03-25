@@ -3,6 +3,7 @@ package org.verapdf.crawler.logius.db;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.CrawlJob_;
 
@@ -12,6 +13,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
@@ -90,15 +92,25 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         return list(query);
     }
 
-    public List<CrawlJob> findByDomain(List<String> domains) {
+    public List<CrawlJob> findByDomainAndUserId(List<String> domains, UUID uuid) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<CrawlJob> criteriaQuery = builder.createQuery(CrawlJob.class);
         Root<CrawlJob> crawlJob = criteriaQuery.from(CrawlJob.class);
 
         criteriaQuery.where(crawlJob.get(CrawlJob_.domain).in(domains));
-
+        criteriaQuery.where(builder.equal(crawlJob.get("user").get("id"), uuid));
         return list(criteriaQuery);
     }
+
+    @Transactional
+    public List<CrawlJob> findByUserId(UUID uuid) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<CrawlJob> criteriaQuery = builder.createQuery(CrawlJob.class);
+        Root<CrawlJob> crawlJob = criteriaQuery.from(CrawlJob.class);
+        criteriaQuery.where(builder.equal(crawlJob.get("user").get("id"), uuid));
+        return list(criteriaQuery);
+    }
+
 
     public List<CrawlJob> findByStatus(CrawlJob.Status status, CrawlJob.CrawlService crawlService, String afterDomain, int limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();

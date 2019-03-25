@@ -9,7 +9,7 @@ import org.springframework.security.web.authentication.preauth.PreAuthenticatedA
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.db.UserDao;
-import org.verapdf.crawler.logius.dto.TokenUserDetails;
+import org.verapdf.crawler.logius.dto.user.TokenUserDetails;
 import org.verapdf.crawler.logius.model.User;
 
 @Service
@@ -31,7 +31,7 @@ public class TokenAuthenticationUserDetailsService implements AuthenticationUser
                 String token = (String) authentication.getPrincipal();
                 User user = userDao.getByEmail(tokenService.getSubject(token));
                 tokenService.verify(token, user.getSecret());
-                return new TokenUserDetails(user.getEmail(), user.getPassword(), user.isEnabled(), user.getRole(), token);
+                return new TokenUserDetails(user.getId(), user.getEmail(), user.getPassword(), user.isEnabled(), user.getRole(), token);
 
             } catch (Exception ex) {
                 throw new UsernameNotFoundException("Token has been expired", ex);
