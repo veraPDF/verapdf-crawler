@@ -36,6 +36,9 @@ $(document).ready(function () {
                         $("#bing-crawl-service-elem").removeAttr('style');
                         $("#validation-required-elem").removeAttr('style');
                     }
+                    if (window.location.pathname === '/domains.html'){
+                        $("#job-list-checkbox").removeAttr('style');
+                    }
                 },
                 error: function (error) {
                     localStorage.removeItem('token');

@@ -63,14 +63,12 @@ CREATE TABLE crawl_job_requests_crawl_jobs
 
 CREATE TABLE documents
 (
-
   document_id      UUID NOT NULL,
   document_url     VARCHAR(2048) NOT NULL,
-  crawl_job_id     UUID NOT NULL,
   last_modified    TIMESTAMP     DEFAULT NULL,
   document_type    VARCHAR(127) DEFAULT NULL,
   document_status  VARCHAR(16),
-  CONSTRAINT documents_crawl_jobs_domain_fk FOREIGN KEY (crawl_job_id) REFERENCES crawl_jobs (id)
+  CONSTRAINT documents_crawl_jobs_domain_fk FOREIGN KEY (document_id) REFERENCES crawl_jobs (id)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   PRIMARY KEY (document_id, document_url)
@@ -91,7 +89,7 @@ CREATE TABLE pdf_validation_jobs_queue
   document_id           UUID         NOT NULL,
   document_url   VARCHAR(2048) NOT NULL,
   validation_status VARCHAR(16) NOT NULL,
-  PRIMARY KEY (document_id),
+  PRIMARY KEY (document_id, document_url),
   CONSTRAINT pdf_validation_jobs_queue_documents_document_url_fk FOREIGN KEY (document_id, document_url) REFERENCES documents (document_id, document_url)
     ON DELETE CASCADE
     ON UPDATE CASCADE

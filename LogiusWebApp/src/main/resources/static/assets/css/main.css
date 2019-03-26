@@ -115,7 +115,7 @@ body.container-fluid {
     font-size: 16px;
 }
 
-.main-form .checkbox-input {
+.checkbox-input {
     opacity: 0;
     position: absolute;
     width: 22px;
@@ -124,12 +124,12 @@ body.container-fluid {
     cursor: pointer;
 }
 
-.main-form .checkbox-input + .check-label {
+.checkbox-input + .check-label {
     cursor: pointer;
     white-space: nowrap;
 }
 
-.main-form .checkbox-input + .check-label::before {
+.checkbox-input + .check-label::before {
     color: #000;
     content: '';
     background-color: #fff;
@@ -144,7 +144,7 @@ body.container-fluid {
     margin-right: 10px;
 }
 
-.main-form .checkbox-input:checked + .check-label::before {
+.checkbox-input:checked + .check-label::before {
     display: inline-block;
     content: '✔';
 }
@@ -165,20 +165,6 @@ body.container-fluid {
     display: inline-block;
     padding: 3px 10px;
     letter-spacing: 1px;
-}
-
-.checkbox-input {
-    background-color: #fff;
-    width: 22px;
-    height: 22px;
-    cursor: pointer;
-    content: '✔';
-    border: 0;
-}
-
-.checkbox-input{
-    cursor: pointer;
-    white-space: nowrap;
 }
 
 .input-button {

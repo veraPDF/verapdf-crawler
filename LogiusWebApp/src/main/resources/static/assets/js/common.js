@@ -1,3 +1,5 @@
+
+//todo refactor?
 function getUrlParameter(sParam) {
     var sPageURL = decodeURIComponent(window.location.search.substring(1)),
         sURLVariables = sPageURL.split('&'),
@@ -11,6 +13,12 @@ function getUrlParameter(sParam) {
             return sParameterName[1] === undefined ? true : sParameterName[1];
         }
     }
+}
+
+function getUrlParam(param) {
+    var urlParams = new URLSearchParams(window.location.search);
+    console.log(urlParams.get(param));
+    return urlParams.get(param);
 }
 
 function normalizeURL(url) {

@@ -17,14 +17,23 @@ $(function () {
         return url.replace(':', '%3A');
     }
 
+    function getUserJobs(){
+        return $("#job-list-checkbox").is(':checked') && localStorage['token']
+    }
+
     function loadAllJobs(limit, start, domainFilter, redrawPagintion) {
         var filter = "";
         if (domainFilter) {
             filter = '&domainFilter=' + domainFilter;
         }
+        var headers = {};
+        if (getUserJobs()){
+            headers = {'Authorization': 'Bearer ' + localStorage['token']};
+        }
         $.ajax({
             url: URL + '?limit=' + limit + '&start=' + start + filter,
             type: "GET",
+            headers: headers,
             success: function (result, textStatus, request) {
                 $("#crawl_job_list").children('tbody').empty();
                 if (Array.isArray(result)) {
@@ -56,7 +65,7 @@ $(function () {
     function appendCrawlJob(crawlJob) {
         var row = rowTemplate.clone();
         row.find('.domain').text(crawlJob.domain);
-        row.find('.domain').attr("href", "domain.html?domain=" + crawlJob.domain);
+        row.find('.domain').attr("href", "domain.html?domain=" + crawlJob.domain + (getUserJobs()? '&isGeneralJob=false':'&isGeneralJob=true'));
         row.children('.start').text(crawlJob.startTime);
         if (crawlJob.finishTime) {
             row.children('.end').text(crawlJob.finishTime);
@@ -137,6 +146,11 @@ $(function () {
             }
         });
 
+    });
+
+    $("#job-list-checkbox").on("click", function (e) {
+        console.log($("#job-list-checkbox").is(':checked'));
+        loadAllJobs(limit, 0, '', true);
     });
 
     $("#crawl_job_list").on("click", 'a.action-restart', function (e) {

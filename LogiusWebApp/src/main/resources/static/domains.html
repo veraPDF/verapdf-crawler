@@ -51,10 +51,16 @@
     <form class="form-inline d-flex flex-nowrap justify-content-between">
         <h4 class="domains-list-title">Tested domains</h4>
         <div class="domains-list-error"></div>
-        <div class="input-group input-group-sm align-self-end domain-filter">
-            <input aria-label="Search domain" class="form-control" id="serch-domain" placeholder="Search domain"
-                   type="text">
-            <span class="input-group-addon material-icons" id="serch-domain-action">search</span>
+        <div>
+            <p class="input-group input-group-sm align-self-end domain-filter">
+                <input class="checkbox-input" type="checkbox" style="display: none" id="job-list-checkbox">
+                <label class="check-label" for="job-list-checkbox" style="font-size: 22px; text-align: center;">My results</label>
+            </p>
+            <div class="input-group input-group-sm align-self-end domain-filter">
+                <input aria-label="Search domain" class="form-control" id="serch-domain" placeholder="Search domain"
+                       type="text">
+                <span class="input-group-addon material-icons" id="serch-domain-action">search</span>
+            </div>
         </div>
     </form>
 

@@ -34,7 +34,19 @@ $(function () {
             callback();
         });
     }
+    function isGeneralJob() {
+        var urlParams = new URLSearchParams(window.location.search);
+        console.log(urlParams.get('isGeneralJob'));
+        return urlParams.get('isGeneralJob');
+    }
 
+    function createHeaders() {
+        var headers = {"Content-type": "application/json"};
+        if (isGeneralJob() === 'false'){
+            headers['Authorization'] =  'Bearer ' + localStorage.getItem('token')
+        }
+        return headers
+    }
     function loadJobStatus() {
         if (loadStatusTimeout) {
             clearTimeout(loadStatusTimeout);
@@ -43,6 +55,7 @@ $(function () {
         $.ajax({
             url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain") + "/status"),
             type: "GET",
+            headers: createHeaders(),
             success: function (result) {
                 jobStatusLoaded(result);
             },
