@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.CrawlJob_;
+import org.verapdf.crawler.logius.model.User_;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -22,9 +23,9 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         super(sessionFactory);
     }
 
-    public CrawlJob getByDomain(String domain) {
-        return get(domain);
-    }
+//    public CrawlJob getByDomain(String domain) {
+//        return get(domain);
+//    }
 
     public CrawlJob getByHeritrixJobId(String heritrixJobId) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
@@ -40,7 +41,7 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         return persist(crawlJob);
     }
 
-    public long count(String domainFilter, Boolean finished) {
+    public long count(String domainFilter, UUID uuid, Boolean finished) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<Long> criteriaQuery = builder.createQuery(Long.class);
         Root<CrawlJob> crawlJob = criteriaQuery.from(CrawlJob.class);
@@ -53,6 +54,11 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         if (finished != null) {
             restrictions.add(builder.equal(crawlJob.get(CrawlJob_.finished), finished));
         }
+        if (uuid != null) {
+            restrictions.add(builder.equal(crawlJob.get(CrawlJob_.user).get(User_.id), uuid));
+        }else {
+            restrictions.add(builder.isNull(crawlJob.get(CrawlJob_.user).get(User_.id)));
+        }
         if (restrictions.size() == 1) {
             criteriaQuery.where(restrictions.get(0));
         } else if (!restrictions.isEmpty()) {
@@ -62,7 +68,7 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         return this.currentSession().createQuery(criteriaQuery).getSingleResult();
     }
 
-    public List<CrawlJob> find(String domainFilter, Boolean finished, Integer start, Integer limit) {
+    public List<CrawlJob> find(String domainFilter, UUID uuid, Boolean finished, Integer start, Integer limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<CrawlJob> criteriaQuery = builder.createQuery(CrawlJob.class);
         Root<CrawlJob> crawlJob = criteriaQuery.from(CrawlJob.class);
@@ -74,7 +80,11 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         if (finished != null) {
             restrictions.add(builder.equal(crawlJob.get(CrawlJob_.finished), finished));
         }
-
+        if (uuid != null) {
+            restrictions.add(builder.equal(crawlJob.get(CrawlJob_.user).get(User_.id), uuid));
+        }else {
+            restrictions.add(builder.isNull(crawlJob.get(CrawlJob_.user).get(User_.id)));
+        }
         if (restrictions.size() == 1) {
             criteriaQuery.where(restrictions.get(0));
         } else if (!restrictions.isEmpty()) {
@@ -92,15 +102,46 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         return list(query);
     }
 
-    public List<CrawlJob> findByDomainAndUserId(List<String> domains, UUID uuid) {
+    public List<CrawlJob> findByDomainsAndUserId(List<String> domains, UUID uuid) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<CrawlJob> criteriaQuery = builder.createQuery(CrawlJob.class);
         Root<CrawlJob> crawlJob = criteriaQuery.from(CrawlJob.class);
 
         criteriaQuery.where(crawlJob.get(CrawlJob_.domain).in(domains));
-        criteriaQuery.where(builder.equal(crawlJob.get("user").get("id"), uuid));
+        if (uuid == null) {
+            criteriaQuery.where(builder.and(builder.isNull(crawlJob.get("user").get("id"))));
+        } else {
+            criteriaQuery.where(builder.and(builder.equal(crawlJob.get("user").get("id"), uuid)));
+        }
+
+        List<Predicate> predicates = new ArrayList<>();
+        predicates.add(crawlJob.get(CrawlJob_.domain).in(domains));
+        if (uuid == null) {
+            predicates.add(builder.isNull(crawlJob.get("user").get("id")));
+        } else {
+            predicates.add(builder.equal(crawlJob.get("user").get("id"), uuid));
+        }
+        criteriaQuery.where(predicates.toArray(new Predicate[0]));
         return list(criteriaQuery);
     }
+
+    public CrawlJob findByDomainAndUserId(String domain, UUID uuid) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<CrawlJob> criteriaQuery = builder.createQuery(CrawlJob.class);
+        Root<CrawlJob> crawlJob = criteriaQuery.from(CrawlJob.class);
+
+        List<Predicate> predicates = new ArrayList<>();
+        predicates.add(builder.equal(crawlJob.get(CrawlJob_.domain), domain));
+        if (uuid == null) {
+            predicates.add(builder.isNull(crawlJob.get("user").get("id")));
+        } else {
+            predicates.add(builder.equal(crawlJob.get("user").get("id"), uuid));
+        }
+        criteriaQuery.where(predicates.toArray(new Predicate[0]));
+        List<CrawlJob> crawlJobs = this.currentSession().createQuery(criteriaQuery).getResultList();
+        return crawlJobs.isEmpty() ? null : crawlJobs.get(0);
+    }
+
 
     @Transactional
     public List<CrawlJob> findByUserId(UUID uuid) {

@@ -36,7 +36,7 @@ public class CrawlRequestService {
         List<String> domains = extractDomains(crawlRequest);
         crawlRequest = crawlRequestDAO.save(crawlRequest);
 
-        for (CrawlJob existingJob : crawlJobDAO.findByDomainAndUserId(domains, userId)) {
+        for (CrawlJob existingJob : crawlJobDAO.findByDomainsAndUserId(domains, userId)) {
             restartIfHasChanges(existingJob, crawlService, isValidationRequared);
             domains.remove(existingJob.getDomain());
             existingJob.getCrawlRequests().add(crawlRequest);

@@ -49,7 +49,7 @@ public class DocumentResource {
     @PostMapping
     @Transactional
     public DomainDocument saveDocument(@RequestBody DomainDocument document) {
-        CrawlJob job = crawlJobDAO.getByHeritrixJobId(document.getCrawlJob().getHeritrixJobId());
+        CrawlJob job = crawlJobDAO.getByHeritrixJobId(document.getDocumentId().getCrawlJob().getHeritrixJobId());
         if (job == null) {
             return null;
         }
@@ -58,7 +58,7 @@ public class DocumentResource {
 
     @Transactional
     public DomainDocument saveDocument(DomainDocument document, CrawlJob job) {
-        document.setCrawlJob(job);
+        document.getDocumentId().setCrawlJob(job);
         documentDAO.save(document);
 
         switch (document.getContentType().toLowerCase()) {

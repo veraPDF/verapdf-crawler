@@ -6,9 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.verapdf.crawler.logius.core.reports.ReportsGenerator;
 import org.verapdf.crawler.logius.db.DocumentDAO;
 import org.verapdf.crawler.logius.document.DomainDocument;
+import org.verapdf.crawler.logius.dto.user.TokenUserDetails;
 import org.verapdf.crawler.logius.report.CrawlJobSummary;
 import org.verapdf.crawler.logius.report.ErrorStatistics;
 import org.verapdf.crawler.logius.report.PDFWamErrorStatistics;
@@ -29,10 +30,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("api/report")
@@ -42,6 +42,7 @@ public class ReportResource {
     private static final int ODS_MAX_DOCUMENTS_SHOW = 100;
     private final DocumentDAO documentDAO;
     private final ReportsGenerator reportsGenerator;
+
     @Autowired
     public ReportResource(DocumentDAO documentDAO, ReportsGenerator reportsGenerator) {
         this.documentDAO = documentDAO;
@@ -50,16 +51,17 @@ public class ReportResource {
 
     @GetMapping(value = "/summary", produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional
-    public CrawlJobSummary getSummary(@RequestParam("domain") String domain,
+    public CrawlJobSummary getSummary(@AuthenticationPrincipal TokenUserDetails principal, @RequestParam("domain") String domain,
                                       @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date documentsSince) {
+        UUID userId = principal == null ? null : principal.getUuid();
         // PDF
-        Long pdfCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), null, documentsSince);
+        Long pdfCount = documentDAO.count(domain, userId, DomainDocument.DocumentTypeGroup.PDF.getTypes(), null, documentsSince);
         // Office Open XML
-        Long microsoftOfficeCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.MS_OFFICE.getTypes(),null, documentsSince);
+        Long microsoftOfficeCount = documentDAO.count(domain, userId, DomainDocument.DocumentTypeGroup.MS_OFFICE.getTypes(), null, documentsSince);
         // OO_XML_OFFICE
-        Long officeOpenXmlCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), null, documentsSince);
+        Long officeOpenXmlCount = documentDAO.count(domain, userId, DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), null, documentsSince);
         // Open Document format (ODF)
-        Long odfCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OPEN_OFFICE.getTypes(), null, documentsSince);
+        Long odfCount = documentDAO.count(domain, userId, DomainDocument.DocumentTypeGroup.OPEN_OFFICE.getTypes(), null, documentsSince);
 
         CrawlJobSummary summary = new CrawlJobSummary();
         summary.addTypeOfDocumentCount(DomainDocument.DocumentTypeGroup.PDF, pdfCount);
@@ -74,8 +76,10 @@ public class ReportResource {
     public PdfPropertyStatistics getDocumentStatistics(@RequestParam("domain") String domain,
                                                        @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date documentsSince) {
 
-        Long openPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince);
-        Long notOpenPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
+
+       //todo fix???????????????????
+        Long openPdf = documentDAO.count(domain, null, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince);
+        Long notOpenPdf = documentDAO.count(domain, null, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
         Long total = openPdf + notOpenPdf;
 
         List<PdfPropertyStatistics.ValueCount> flavourStatistics = documentDAO.getPropertyStatistic(
@@ -170,7 +174,7 @@ public class ReportResource {
     private long getDocumentsCount(String domain, DomainDocument.DocumentTypeGroup documentGroup,
                                    DomainDocument.BaseTestResult testResult,
                                    Date start) {
-        Long count = documentDAO.count(domain, documentGroup.getTypes(),
+        Long count = documentDAO.count(domain, null, documentGroup.getTypes(),
                 testResult, start);
         return count == null ? 0 : count;
     }

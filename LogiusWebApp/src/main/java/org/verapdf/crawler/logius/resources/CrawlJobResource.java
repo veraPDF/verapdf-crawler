@@ -28,6 +28,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping(value = "api/crawl-jobs", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -54,25 +55,22 @@ public class CrawlJobResource {
 
     @GetMapping
     @Transactional
-    public ResponseEntity getJobList(@RequestParam(value = "domainFilter", required = false) String domainFilter,
+    public ResponseEntity getJobList(@AuthenticationPrincipal TokenUserDetails principal,
+                                     @RequestParam(value = "domainFilter", required = false) String domainFilter,
                                      @RequestParam(value = "finished", required = false) Boolean finished,
                                      @RequestParam("start") int startParam,
                                      @RequestParam("limit") int limitParam) {
-        try {
-            long totalCount = crawlJobDAO.count(domainFilter, finished);
-            List<CrawlJob> crawlJobs = crawlJobDAO.find(domainFilter, finished, startParam, limitParam);
-            return ResponseEntity.ok().header("X-Total-Count", String.valueOf(totalCount)).body(crawlJobs);
-        }catch (Throwable e){
-            e.printStackTrace();
-            return null;
-        }
+
+        UUID id = principal == null ? null : principal.getUuid();
+        long totalCount = crawlJobDAO.count(domainFilter, id, finished);
+        List<CrawlJob> crawlJobs = crawlJobDAO.find(domainFilter, id, finished, startParam, limitParam);
+        return ResponseEntity.ok().header("X-Total-Count", String.valueOf(totalCount)).body(crawlJobs);
     }
 
     @PostMapping("/{domain}")
     @Transactional
     public ResponseEntity restartCrawlJob(@AuthenticationPrincipal TokenUserDetails principal, @PathVariable("domain") String domain) {
-        domain = DomainUtils.trimUrl(domain);
-        CrawlJob crawlJob = crawlJobDAO.getByDomain(domain);
+        CrawlJob crawlJob = getCrawlJob(domain, principal);
         if (crawlJob == null) {
             return ResponseEntity.notFound().build();
         }
@@ -81,15 +79,15 @@ public class CrawlJobResource {
         return ResponseEntity.ok(crawlService.restartCrawlJob(crawlJob, domain, service));
     }
 
-    private CrawlJob getCrawlJob(String domain) {
+    private CrawlJob getCrawlJob(String domain, TokenUserDetails principal) {
         domain = DomainUtils.trimUrl(domain);
-        return crawlJobDAO.getByDomain(domain);
+        return crawlJobDAO.findByDomainAndUserId(domain, principal == null ? null : principal.getUuid());
     }
 
     @GetMapping("/{domain}")
     @Transactional
-    public ResponseEntity<CrawlJob> getCrawl(@PathVariable("domain") String domain) {
-        CrawlJob crawlJob = getCrawlJob(domain);
+    public ResponseEntity<CrawlJob> getCrawl(@AuthenticationPrincipal TokenUserDetails principal, @PathVariable("domain") String domain) {
+        CrawlJob crawlJob = getCrawlJob(domain, principal);
         if (crawlJob == null) {
             return ResponseEntity.notFound().build();
         }
@@ -98,9 +96,9 @@ public class CrawlJobResource {
 
     @PutMapping("/{domain}")
     @Transactional
-    public ResponseEntity updateCrawlJob(@PathVariable("domain") String domain, @RequestBody @NotNull CrawlJob update) throws IOException,
+    public ResponseEntity updateCrawlJob(@AuthenticationPrincipal TokenUserDetails principal, @PathVariable("domain") String domain, @RequestBody @NotNull CrawlJob update) throws IOException,
             XPathExpressionException, SAXException, ParserConfigurationException {
-        CrawlJob crawlJob = getCrawlJob(domain);
+        CrawlJob crawlJob = getCrawlJob(domain, principal);
         if (crawlJob == null) {
             return ResponseEntity.notFound().build();
         }
@@ -111,14 +109,14 @@ public class CrawlJobResource {
             if (service == CrawlJob.CrawlService.HERITRIX && !heritrixClient.isJobFinished(heritrixJobId)) {
                 heritrixClient.pauseJob(heritrixJobId);
             }
-            validationJobDAO.pause(domain);
+            validationJobDAO.pause(crawlJob.getId());
             crawlJob.setStatus(CrawlJob.Status.PAUSED);
         }
         if (crawlJob.getStatus() == CrawlJob.Status.PAUSED && update.getStatus() == CrawlJob.Status.RUNNING) {
             if (service == CrawlJob.CrawlService.HERITRIX && !heritrixClient.isJobFinished(heritrixJobId)) {
                 heritrixClient.unpauseJob(heritrixJobId);
             }
-            validationJobDAO.unpause(domain);
+            validationJobDAO.unpause(crawlJob.getId());
             crawlJob.setStatus(CrawlJob.Status.RUNNING);
         }
         return ResponseEntity.ok(crawlJob);
@@ -127,8 +125,8 @@ public class CrawlJobResource {
 
     @GetMapping("/{domain}/requests")
     @Transactional
-    public ResponseEntity getCrawlJobRequests(@PathVariable("domain") String domain) {
-        CrawlJob crawlJob = getCrawlJob(domain);
+    public ResponseEntity getCrawlJobRequests(@AuthenticationPrincipal TokenUserDetails principal, @PathVariable("domain") String domain) {
+        CrawlJob crawlJob = getCrawlJob(domain, principal);
         if (crawlJob == null) {
             return ResponseEntity.notFound().build();
         }
@@ -139,8 +137,8 @@ public class CrawlJobResource {
 
     @GetMapping("/{domain}/status")
     @Transactional
-    public ResponseEntity getFullJobStatus(@PathVariable("domain") String domain) {
-        CrawlJob crawlJob = getCrawlJob(domain);
+    public ResponseEntity getFullJobStatus(@AuthenticationPrincipal TokenUserDetails principal, @PathVariable("domain") String domain) {
+        CrawlJob crawlJob = getCrawlJob(domain, principal);
         if (crawlJob == null) {
             return ResponseEntity.notFound().build();
         }
@@ -158,9 +156,9 @@ public class CrawlJobResource {
             heritrixStatus = null;
         }
 
-        String crawlJobDomain = crawlJob.getDomain();
-        Long count = validationJobDAO.count(crawlJobDomain);
-        List<ValidationJob> topDocuments = validationJobDAO.getDocuments(crawlJobDomain, GET_STATUS_MAX_DOCUMENT_COUNT);
+        UUID crawlJobId = crawlJob.getId();
+        Long count = validationJobDAO.count(crawlJobId);
+        List<ValidationJob> topDocuments = validationJobDAO.getDocuments(crawlJobId, GET_STATUS_MAX_DOCUMENT_COUNT);
         crawlJob.getCrawlRequests().forEach(crawlRequest -> crawlRequest.getCrawlJobs().size());
         return ResponseEntity.ok(new CrawlJobStatus(crawlJob, heritrixStatus, new ValidationQueueStatus(count, topDocuments)));
     }
@@ -168,8 +166,8 @@ public class CrawlJobResource {
 
     @DeleteMapping("/{domain}/requests")
     @Transactional
-    public ResponseEntity unlinkCrawlRequests(@PathVariable("domain") String domain, @RequestParam("email") @NotNull String email) {
-        CrawlJob crawlJob = getCrawlJob(domain);
+    public ResponseEntity unlinkCrawlRequests(@AuthenticationPrincipal TokenUserDetails principal, @PathVariable("domain") String domain, @RequestParam("email") @NotNull String email) {
+        CrawlJob crawlJob = getCrawlJob(domain, principal);
         if (crawlJob == null) {
             return ResponseEntity.notFound().build();
         }

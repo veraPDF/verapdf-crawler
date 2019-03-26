@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.verapdf.crawler.logius.tools.HttpClientUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
@@ -46,7 +47,7 @@ public class FileService {
     public File save(String url) {
         File file = null;
         try {
-            try (CloseableHttpClient client = HttpClients.createDefault()) {
+            try (CloseableHttpClient client = HttpClientUtils.createTrustAllHttpClient()) {
                 HttpGet get = new HttpGet(url);
                 CloseableHttpResponse response = client.execute(get);
                 String contentType = null;

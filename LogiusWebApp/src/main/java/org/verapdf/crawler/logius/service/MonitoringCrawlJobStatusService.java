@@ -69,7 +69,7 @@ public class MonitoringCrawlJobStatusService {
             }
 
             // Check if we have pending validation jobs
-            Long validationJobsCount = validationJobDAO.count(job.getDomain());
+            Long validationJobsCount = validationJobDAO.count(job.getId());
             if (validationJobsCount > 0) {
                 return false;
             }

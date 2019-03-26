@@ -8,16 +8,15 @@ import javax.persistence.*;
 @Entity
 @Table(name = "pdf_validation_jobs_queue")
 public class ValidationJob {
-
+    //todo asf
     @EmbeddedId
+    @Column(insertable = false, updatable = false)
     private DocumentId documentId;
 
     @OneToOne
     @JoinColumns({
-            @JoinColumn(name="document_id",
-                    referencedColumnName="document_id"),
-            @JoinColumn(name="document_url",
-                    referencedColumnName="document_url"),
+            @JoinColumn(name="document_id", referencedColumnName = "document_id", insertable=false, updatable=false),
+            @JoinColumn(name="document_url", referencedColumnName = "document_url", insertable=false, updatable=false)
     })
     private DomainDocument document;
 
@@ -32,6 +31,11 @@ public class ValidationJob {
         this.document = document;
         this.documentId = document.getDocumentId();
         this.status = Status.NOT_STARTED;
+    }
+
+    public ValidationJob(DocumentId documentId, Status status) {
+        this.documentId = documentId;
+        this.status = status;
     }
 
     public DocumentId getDocumentId() {

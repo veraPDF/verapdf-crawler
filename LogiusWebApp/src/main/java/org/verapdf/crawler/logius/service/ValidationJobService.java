@@ -67,7 +67,7 @@ public class ValidationJobService {
     public void clean() {
         List<ValidationJob> validationJobs = validationJobDAO.currentJobs();
         validationJobs.forEach(validationJob -> {
-            if (validationJob.getDocument().getCrawlJob().getStatus() == CrawlJob.Status.PAUSED) {
+            if (validationJob.getDocument().getDocumentId().getCrawlJob().getStatus() == CrawlJob.Status.PAUSED) {
                 validationJob.setStatus(ValidationJob.Status.PAUSED);
             } else {
                 validationJob.setStatus(ValidationJob.Status.NOT_STARTED);
@@ -104,7 +104,7 @@ public class ValidationJobService {
         try {
             if (!currentJob.getStatus().equals(ValidationJob.Status.ABORTED)) {
                 shouldCleanDB = true;
-                logger.debug("Saving validation job results");
+                logger.info("Saving validation job results");
                 DomainDocument document = currentJob.getDocument();
                 document.setBaseTestResult(result.getTestResult());
 

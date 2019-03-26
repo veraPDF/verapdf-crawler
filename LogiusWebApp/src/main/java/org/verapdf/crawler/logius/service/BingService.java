@@ -75,7 +75,7 @@ public class BingService {
 
     public void processFile(String url, String fileType) {
         try {
-            try (CloseableHttpClient client = HttpClients.createDefault()) {
+            try (CloseableHttpClient client = HttpClientUtils.createTrustAllHttpClient()) {
                 HttpGet get = new HttpGet(url);
                 CloseableHttpResponse response = client.execute(get);
                 String contentType = null;
@@ -98,7 +98,7 @@ public class BingService {
                 }
                 DomainDocument domainDocument = new DomainDocument();
                 domainDocument.getDocumentId().setDocumentUrl(url);
-                domainDocument.setCrawlJob(this.currentJob);
+                domainDocument.getDocumentId().setCrawlJob(this.currentJob);
                 domainDocument.setContentType(contentType);
                 Header[] lastModHeaders = response.getHeaders("Last-Modified");
                 if (lastModHeaders != null && lastModHeaders.length > 0) {
@@ -113,6 +113,7 @@ public class BingService {
                 }
             }
         } catch (Exception e) {
+            //todo uncomment
             logger.error("Can't create url: " + url, e);
         }
     }

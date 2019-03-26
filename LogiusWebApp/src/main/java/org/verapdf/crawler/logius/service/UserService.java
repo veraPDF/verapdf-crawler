@@ -46,7 +46,7 @@ public class UserService {
             User user = new User(dto.getEmail(), passwordEncoder.encode(dto.getPassword()));
             user.setRole(Role.USER);
             return saveUserWithUpdateSecret(user);
-        } catch (ConstraintViolationException e) {
+        } catch (Throwable e) {
             throw new AlreadyExistsException(String.format("user with email %s already exists", dto.getEmail()));
         }
     }

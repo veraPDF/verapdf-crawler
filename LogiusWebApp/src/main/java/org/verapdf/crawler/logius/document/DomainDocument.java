@@ -16,9 +16,6 @@ import java.util.stream.Stream;
 public class DomainDocument {
     @EmbeddedId
     private DocumentId documentId;
-    @ManyToOne
-    @JoinColumn(name = "crawl_job_id")
-    private CrawlJob crawlJob;
     @Column(name = "last_modified")
     @Temporal(TemporalType.TIMESTAMP)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -40,15 +37,19 @@ public class DomainDocument {
     private Map<String, String> properties;
 
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinTable(name = "validation_errors",
+    @JoinTable(name = "documents_validation_errors",
             joinColumns = {
                     @JoinColumn(name = "document_id", nullable = false),
                     @JoinColumn(name = "document_url", nullable = false)
             },
             inverseJoinColumns = {
-                    @JoinColumn(name = "id", nullable = false)
+                    @JoinColumn(name = "error_id", nullable = false)
     })
     private List<ValidationError> validationErrors;
+
+    public DomainDocument() {
+        this.documentId = new DocumentId();
+    }
 
     public DocumentId getDocumentId() {
         return documentId;
@@ -56,14 +57,6 @@ public class DomainDocument {
 
     public void setDocumentId(DocumentId documentId) {
         this.documentId = documentId;
-    }
-
-    public CrawlJob getCrawlJob() {
-        return crawlJob;
-    }
-
-    public void setCrawlJob(CrawlJob crawlJob) {
-        this.crawlJob = crawlJob;
     }
 
     public Date getLastModified() {

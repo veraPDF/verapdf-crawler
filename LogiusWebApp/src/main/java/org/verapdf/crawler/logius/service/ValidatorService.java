@@ -55,11 +55,11 @@ public class ValidatorService {
             File file = null;
             try {
                 file = fileService.save(validationJob.getDocument().getDocumentId().getDocumentUrl());
-                if (file != null){
-                    boolean isValidationDisabled = validationJob.getDocument().getCrawlJob().isValidationDisabled();
+                if (file != null) {
+                    boolean isValidationDisabled = validationJob.getDocument().getDocumentId().getCrawlJob().isValidationDisabled();
                     validator.startValidation(file, isValidationDisabled);
                     processStartedJob(file, isValidationDisabled);
-                }else {
+                } else {
                     saveErrorResult("Can't create url: " + validationJob.getDocumentId().getDocumentUrl());
                 }
             } catch (IOException e) {

@@ -57,7 +57,7 @@ public class CrawlService {
         // Stop validation job if it's related to this crawl job
         synchronized (ValidationJobService.class) {
             ValidationJob currentJob = validationJobService.getCurrentJob();
-            if (currentJob != null && currentJob.getDocument().getCrawlJob().getDomain().equals(domain)) {
+            if (currentJob != null && currentJob.getDocument().getDocumentId().getCrawlJob().getDomain().equals(domain)) {
                 validatorService.abortCurrentJob();
             }
         }
@@ -66,6 +66,7 @@ public class CrawlService {
         // Create and start new crawl job
         CrawlJob newJob = new CrawlJob(domain, service, crawlJob.isValidationEnabled());
         newJob.setCrawlRequests(crawlRequests);
+        newJob.setUser(crawlJob.getUser());
         crawlJobDAO.save(newJob);
         if (service == CrawlJob.CrawlService.HERITRIX) {
             startCrawlJob(newJob);
