@@ -2,7 +2,6 @@ package org.verapdf.crawler.logius.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -31,6 +30,6 @@ public class TokenUserDetailsService implements UserDetailsService {
         if (user == null) {
             throw new UsernameNotFoundException("Account for '" + email + "' not found");
         }
-        return new TokenUserDetails(user.getEmail(), user.getPassword(), user.isEnabled(), user.getRole(), tokenService.encode(user));
+        return new TokenUserDetails(user.getId(), user.getEmail(), user.getPassword(), user.isEnabled(), user.isActivated(), tokenService.encode(user), user.getRole());
     }
 }

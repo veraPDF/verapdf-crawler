@@ -26,4 +26,14 @@ public class CrawlJobService {
         }
         return null;
     }
+
+    @Transactional
+    public List<CrawlJob> findNotFinishedJobs(String domainFilter, int start, int limit) {
+        return crawlJobDAO.findNotFinishedJobs(domainFilter, start, limit);
+    }
+
+    @Transactional
+    public long count(String domainFilter, boolean isFinished){
+        return crawlJobDAO.count(domainFilter, isFinished);
+    }
 }

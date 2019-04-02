@@ -16,10 +16,17 @@ import java.util.stream.Collectors;
 @Service
 public class SendEmail {
     private static final String SUBJECT = "Crawling finished for %s";
+    private static final String EMAIL_VERIFICATION_SUBJECT = "Email verification";
+    private static final String EMAIL_VERIFICATION_BODY = "Email verification\nLink: %s";
+    private static final String PASSWORD_RESET_SUBJECT = "Password reset";
+    private static final String PASSWORD_RESET_BODY = "Password reset\nLink: %s";
     private static final String EMAIL_BODY = "Crawler finished verification of documents on the domain(s): %s";
     private final JavaMailSender emailSender;
+
     @Value("${logius.reports.notificationEmails}")
     private String[] reportTargetEmails;
+    @Value("${logius.http.path}")
+    private String httpPath;
 
     @Autowired
     public SendEmail(JavaMailSender mailSender) {
@@ -29,6 +36,16 @@ public class SendEmail {
     @Async
     public void sendReportNotification(String subject, String text) {
         send(subject, text, reportTargetEmails);
+    }
+
+    @Async
+    public void sendEmailConfirm(String token, String email) {
+        send(EMAIL_VERIFICATION_SUBJECT, String.format(EMAIL_VERIFICATION_BODY, httpPath + "/email-confirm.html?token=" + token), email);
+    }
+
+    @Async
+    public void sendPasswordResetToken(String token, String email) {
+        send(PASSWORD_RESET_SUBJECT, String.format(PASSWORD_RESET_BODY, httpPath + "/password-reset.html?token=" + token), email);
     }
 
     @Async

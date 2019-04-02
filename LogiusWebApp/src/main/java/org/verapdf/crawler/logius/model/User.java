@@ -24,14 +24,16 @@ public class User {
     private boolean enabled;
 
     @Column
+    private boolean activated;
+
+    @Column
     private byte[] secret;
 
     @Column
     @Enumerated(EnumType.STRING)
     private Role role;
-
     @OneToMany
-    @JoinColumn(name="user_id")
+    @JoinColumn(name = "user_id")
     private List<CrawlJob> crawlJobs;
 
     public User() {
@@ -97,5 +99,13 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public boolean isActivated() {
+        return activated;
+    }
+
+    public void setActivated(boolean activated) {
+        this.activated = activated;
     }
 }

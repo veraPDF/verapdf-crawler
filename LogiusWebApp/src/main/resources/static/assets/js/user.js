@@ -5,13 +5,16 @@ String.prototype.format = function () {
     });
 };
 
-
 $(document).ready(function () {
     function loadUserInfo() {
+
         var div = "#user-menu";
+
         if (!localStorage.getItem('token')) {
             $("<li><a href=\"/sign-in.html\">Sign in</a></li>" +
-                "<li><a href=\"/sign-up.html\">Sign Up</a></li>").appendTo(div);
+                "<li><a href=\"/sign-up.html\">Sign Up</a></li>" +
+                "<li><a href=\"/password-reset-email.html\">Password reset</a></li>"
+            ).appendTo(div);
             console.log("user not authentificated");
         } else {
             $.ajax({

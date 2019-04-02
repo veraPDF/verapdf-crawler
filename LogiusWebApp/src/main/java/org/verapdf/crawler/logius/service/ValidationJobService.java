@@ -12,6 +12,7 @@ import org.verapdf.crawler.logius.db.DocumentDAO;
 import org.verapdf.crawler.logius.db.ValidationErrorDAO;
 import org.verapdf.crawler.logius.db.ValidationJobDAO;
 import org.verapdf.crawler.logius.document.DomainDocument;
+import org.verapdf.crawler.logius.monitoring.ValidationQueueStatus;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 import org.verapdf.crawler.logius.validation.VeraPDFValidationResult;
 import org.verapdf.crawler.logius.validation.error.ValidationError;
@@ -19,7 +20,6 @@ import org.verapdf.crawler.logius.validation.error.ValidationError;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-import java.io.File;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +61,13 @@ public class ValidationJobService {
         } else {
             return null;
         }
+    }
+
+    @Transactional
+    public ValidationQueueStatus getValidationJobStatus(int limit) {
+        Long count = validationJobDAO.count(null);
+        List<ValidationJob> documents = validationJobDAO.getDocuments(null, limit);
+        return new ValidationQueueStatus(count, documents);
     }
 
     @Transactional

@@ -1,7 +1,6 @@
 package org.verapdf.crawler.logius.service;
 
 
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,10 +23,12 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
+    private final TokenService tokenService;
 
-    public UserService(UserDao userDao, PasswordEncoder passwordEncoder) {
+    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenService tokenService) {
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
+        this.tokenService = tokenService;
     }
 
     @Transactional
@@ -41,14 +42,14 @@ public class UserService {
     }
 
     @Transactional
-    public UserInfoDto save(UserDto dto) {
-        try {
-            User user = new User(dto.getEmail(), passwordEncoder.encode(dto.getPassword()));
-            user.setRole(Role.USER);
-            return saveUserWithUpdateSecret(user);
-        } catch (Throwable e) {
+    public User save(UserDto dto) {
+        if (userDao.getByEmail(dto.getEmail()) != null) {
             throw new AlreadyExistsException(String.format("user with email %s already exists", dto.getEmail()));
         }
+        User user = new User(dto.getEmail(), passwordEncoder.encode(dto.getPassword()));
+        user.setRole(Role.USER);
+        return saveUserWithUpdateSecret(user);
+
     }
 
     @Transactional
@@ -64,13 +65,9 @@ public class UserService {
         saveUserWithUpdateSecret(user);
     }
 
-    private UserInfoDto saveUserWithUpdateSecret(User user) {
+    private User saveUserWithUpdateSecret(User user) {
         user.setSecret(SecretKeyUtils.generateSecret());
-        return new UserInfoDto(userDao.save(user));
-    }
-
-    private UserInfoDto saveUserWithoutUpdateSecret(User user) {
-        return new UserInfoDto(userDao.save(user));
+        return userDao.save(user);
     }
 
     @Transactional
@@ -81,7 +78,6 @@ public class UserService {
         }
         return user;
     }
-
 
     @Transactional
     public User findUserByEmail(String email) {
@@ -97,4 +93,20 @@ public class UserService {
         return userDao.count(emailFilter);
     }
 
+    @Transactional
+    public String confirmUserEmail(String token) {
+        String email = tokenService.getSubject(tokenService.decode(token));
+        User user = findUserByEmail(email);
+        tokenService.verify(token, user.getSecret());
+        user.setActivated(true);
+        saveUserWithUpdateSecret(user);
+        return tokenService.encode(user);
+    }
+
+    @Transactional
+    public void confirmPasswordReset(UUID uuid, String password) {
+        User user = findUserById(uuid);
+        user.setPassword(passwordEncoder.encode(password));
+        saveUserWithUpdateSecret(user);
+    }
 }

@@ -57,12 +57,7 @@ public class UserDao extends AbstractDAO<User> {
             criteriaQuery.where(builder.like(rootEntry.get(User_.email), "%" + emailFilter + "%"));
         }
         Query<User> query = this.currentSession().createQuery(criteriaQuery);
-        if (start != null) {
-            query.setFirstResult(start);
-        }
-        if (limit != null) {
-            query.setMaxResults(limit);
-        }
+        setOffset(query, start, limit);
         return list(query);
     }
 

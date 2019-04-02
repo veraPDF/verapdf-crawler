@@ -73,21 +73,19 @@ public class ReportResource {
 
     @GetMapping(value = "/document-statistics", produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional
-    public PdfPropertyStatistics getDocumentStatistics(@RequestParam("domain") String domain,
+    public PdfPropertyStatistics getDocumentStatistics(@AuthenticationPrincipal TokenUserDetails principal, @RequestParam("domain") String domain,
                                                        @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date documentsSince) {
-
-
-       //todo fix???????????????????
-        Long openPdf = documentDAO.count(domain, null, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince);
-        Long notOpenPdf = documentDAO.count(domain, null, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
+        UUID userId = principal == null ? null : principal.getUuid();
+        Long openPdf = documentDAO.count(domain, userId, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince);
+        Long notOpenPdf = documentDAO.count(domain, userId, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
         Long total = openPdf + notOpenPdf;
 
         List<PdfPropertyStatistics.ValueCount> flavourStatistics = documentDAO.getPropertyStatistic(
-                domain, documentsSince);
+                domain, userId, documentsSince);
         List<PdfPropertyStatistics.ValueCount> versionStatistics = documentDAO.getPropertyStatistics(
-                domain, PdfPropertyStatistics.VERSION_PROPERTY_NAME, documentsSince);
+                domain, userId, PdfPropertyStatistics.VERSION_PROPERTY_NAME, documentsSince);
         List<PdfPropertyStatistics.ValueCount> producerStatistics = documentDAO.getPropertyStatistics(
-                domain, PdfPropertyStatistics.PRODUCER_PROPERTY_NAME, documentsSince, true, PdfPropertyStatistics.TOP_PRODUCERS_COUNT);
+                domain, userId, PdfPropertyStatistics.PRODUCER_PROPERTY_NAME, documentsSince, true, PdfPropertyStatistics.TOP_PRODUCERS_COUNT);
 
         PdfPropertyStatistics statistics = new PdfPropertyStatistics();
         statistics.setOpenPdfDocumentsCount(openPdf);
@@ -102,14 +100,17 @@ public class ReportResource {
 
     @GetMapping(value = "/error-statistics", produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional
-    public ErrorStatistics getErrorStatistics(@RequestParam("domain") String domain,
+    public ErrorStatistics getErrorStatistics(@AuthenticationPrincipal TokenUserDetails principal,
+                                              @RequestParam("domain") String domain,
                                               @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date documentsSince,
                                               @RequestParam(value = "flavour", required = false) String flavour,
                                               @RequestParam(value = "version", required = false) String version,
                                               @RequestParam(value = "producer", required = false) String producer) {
 
+        UUID userId = principal == null ? null : principal.getUuid();
+
         List<ErrorStatistics.ErrorCount> errorCounts = documentDAO.getErrorsStatistics(
-                domain, documentsSince, flavour, version, producer, ErrorStatistics.TOP_ERRORS_COUNT);
+                domain, userId, documentsSince, flavour, version, producer, ErrorStatistics.TOP_ERRORS_COUNT);
 
         ErrorStatistics errorStatistics = new ErrorStatistics();
         errorStatistics.setTopErrorStatistics(errorCounts);
@@ -119,12 +120,14 @@ public class ReportResource {
 
     @GetMapping("/pdfwam-statistics")
     @Transactional
-    public List<PDFWamErrorStatistics.ErrorCount> getDocumentPropertyStatistics(@RequestParam("domain") @NotNull String domain,
+    public List<PDFWamErrorStatistics.ErrorCount> getDocumentPropertyStatistics(@AuthenticationPrincipal TokenUserDetails principal,
+                                                                                @RequestParam("domain") @NotNull String domain,
                                                                                 @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate,
                                                                                 @RequestParam(value = "flavour", required = false) String flavour,
                                                                                 @RequestParam(value = "version", required = false) String version,
                                                                                 @RequestParam(value = "producer", required = false) String producer) {
-        return documentDAO.getPDFWamErrorsStatistics(domain, startDate, flavour, version, producer);
+        UUID userId = principal == null ? null : principal.getUuid();
+        return documentDAO.getPDFWamErrorsStatistics(domain, userId, startDate, flavour, version, producer);
     }
 
 

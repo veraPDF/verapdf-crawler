@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.verapdf.crawler.logius.dto.ApiErrorDto;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 public class ExceptionHander extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({NotFoundException.class, AlreadyExistsException.class, IncorrectPasswordException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity handleBadRequest(Exception ex) {
         return ResponseEntity.badRequest().body(new ApiErrorDto(ex.getMessage()));
     }

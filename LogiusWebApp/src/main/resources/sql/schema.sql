@@ -14,17 +14,19 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE client
 (
-  id           UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
-  email        VARCHAR(128)  UNIQUE NOT NULL,
-  password     VARCHAR(128)  NOT NULL,
-  secret       bytea         NOT NULL,
-  role         VARCHAR(128)  NOT NULL,
-  enabled      BOOLEAN       DEFAULT true
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email                 VARCHAR(128) UNIQUE NOT NULL,
+  password              VARCHAR(128)        NOT NULL,
+  secret                bytea               NOT NULL,
+  password_reset_secret bytea               ,
+  role                  VARCHAR(128)        NOT NULL,
+  enabled               BOOLEAN          DEFAULT true,
+  activated             BOOLEAN          DEFAULT false
 );
 
 CREATE TABLE crawl_job_requests
 (
-  id           VARCHAR(36)  NOT NULL,
+  id           VARCHAR(36) NOT NULL,
   is_finished  BOOLEAN      DEFAULT false,
   report_email VARCHAR(255) DEFAULT NULL,
   crawl_since  DATE         DEFAULT NULL,
@@ -33,24 +35,24 @@ CREATE TABLE crawl_job_requests
 
 CREATE TABLE crawl_jobs
 (
-  id           UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
-  domain                 VARCHAR(255) NOT NULL,
-  heritrix_job_id        VARCHAR(36)  NOT NULL UNIQUE ,
-  job_url                VARCHAR(255) DEFAULT NULL,
-  start_time             TIMESTAMP    DEFAULT NOW(),
-  finish_time            TIMESTAMP    DEFAULT NULL,
-  is_finished            BOOLEAN      DEFAULT FALSE,
-  is_validation_enabled  BOOLEAN      DEFAULT FALSE,
-  job_status             VARCHAR(10)  DEFAULT NULL,
-  crawl_service          VARCHAR(10)  NOT NULL,
-  user_id                UUID,
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  domain                VARCHAR(255) NOT NULL,
+  heritrix_job_id       VARCHAR(36)  NOT NULL UNIQUE,
+  job_url               VARCHAR(255)     DEFAULT NULL,
+  start_time            TIMESTAMP        DEFAULT NOW(),
+  finish_time           TIMESTAMP        DEFAULT NULL,
+  is_finished           BOOLEAN          DEFAULT FALSE,
+  is_validation_enabled BOOLEAN          DEFAULT FALSE,
+  job_status            VARCHAR(10)      DEFAULT NULL,
+  crawl_service         VARCHAR(10)  NOT NULL,
+  user_id               UUID,
   CONSTRAINT crawl_jobs_user_id_fk FOREIGN KEY (user_id) REFERENCES client (id)
 );
 
 CREATE TABLE crawl_job_requests_crawl_jobs
 (
-  crawl_job_request_id VARCHAR(36)  NOT NULL,
-  crawl_job_id    UUID NOT NULL,
+  crawl_job_request_id VARCHAR(36) NOT NULL,
+  crawl_job_id         UUID        NOT NULL,
   PRIMARY KEY (crawl_job_request_id, crawl_job_id),
   CONSTRAINT crawl_job_requests_crawl_jobs_crawl_jobs_domain_fk FOREIGN KEY (crawl_job_id) REFERENCES crawl_jobs (id)
     ON DELETE CASCADE
@@ -63,11 +65,11 @@ CREATE TABLE crawl_job_requests_crawl_jobs
 
 CREATE TABLE documents
 (
-  document_id      UUID NOT NULL,
-  document_url     VARCHAR(2048) NOT NULL,
-  last_modified    TIMESTAMP     DEFAULT NULL,
-  document_type    VARCHAR(127) DEFAULT NULL,
-  document_status  VARCHAR(16),
+  document_id     UUID          NOT NULL,
+  document_url    VARCHAR(2048) NOT NULL,
+  last_modified   TIMESTAMP    DEFAULT NULL,
+  document_type   VARCHAR(127) DEFAULT NULL,
+  document_status VARCHAR(16),
   CONSTRAINT documents_crawl_jobs_domain_fk FOREIGN KEY (document_id) REFERENCES crawl_jobs (id)
     ON DELETE CASCADE
     ON UPDATE CASCADE,
@@ -75,9 +77,9 @@ CREATE TABLE documents
 );
 CREATE TABLE document_properties
 (
-  document_id    UUID         NOT NULL,
+  document_id    UUID          NOT NULL,
   document_url   VARCHAR(2048) NOT NULL,
-  property_name  VARCHAR(255) NOT NULL,
+  property_name  VARCHAR(255)  NOT NULL,
   property_value VARCHAR(255) DEFAULT NULL,
   PRIMARY KEY (document_id, document_url, property_name),
   CONSTRAINT document_properties_documents_document_url_fk FOREIGN KEY (document_id, document_url) REFERENCES documents (document_id, document_url)
@@ -86,9 +88,10 @@ CREATE TABLE document_properties
 );
 CREATE TABLE pdf_validation_jobs_queue
 (
-  document_id           UUID         NOT NULL,
-  document_url   VARCHAR(2048) NOT NULL,
-  validation_status VARCHAR(16) NOT NULL,
+  document_id       UUID          NOT NULL,
+  document_url      VARCHAR(2048) NOT NULL,
+  creation_date     TIMESTAMP DEFAULT NOW(),
+  validation_status VARCHAR(16)   NOT NULL,
   PRIMARY KEY (document_id, document_url),
   CONSTRAINT pdf_validation_jobs_queue_documents_document_url_fk FOREIGN KEY (document_id, document_url) REFERENCES documents (document_id, document_url)
     ON DELETE CASCADE
@@ -101,16 +104,16 @@ CREATE TABLE validation_errors
   specification VARCHAR(32)          DEFAULT NULL,
   clause        VARCHAR(16)          DEFAULT NULL,
   test_number   VARCHAR(4)           DEFAULT NULL,
-  description   VARCHAR(2048)        DEFAULT NULL ,
+  description   VARCHAR(2048)        DEFAULT NULL,
   PRIMARY KEY (id),
   UNIQUE (specification, clause, test_number)
 );
 
 CREATE TABLE documents_validation_errors
 (
-  document_id           UUID         NOT NULL,
-  document_url   VARCHAR(2048) NOT NULL,
-  error_id     BIGINT       NOT NULL DEFAULT '0',
+  document_id  UUID          NOT NULL,
+  document_url VARCHAR(2048) NOT NULL,
+  error_id     BIGINT        NOT NULL DEFAULT '0',
   PRIMARY KEY (document_id, document_url, error_id),
   CONSTRAINT documents_validation_errors_documents_document_url_fk FOREIGN KEY (document_id, document_url) REFERENCES documents (document_id, document_url)
     ON DELETE CASCADE

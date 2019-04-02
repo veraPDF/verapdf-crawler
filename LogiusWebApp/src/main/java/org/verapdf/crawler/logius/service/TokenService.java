@@ -14,11 +14,14 @@ import org.verapdf.crawler.logius.model.User;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class TokenService {
     @Value("${logius.jwtExpirationInMs}")
     private int jwtExpirationInMs;
+    @Value("${logius.jwtPasswordResetExpirationInMs}")
+    private int jwtPasswordResetExpirationInMs;
     private byte[] jwtSecret;
 
     @Autowired
@@ -31,7 +34,8 @@ public class TokenService {
         return JWT.require(algorithm).build().verify(token);
     }
 
-    public String encode(User user) {
+
+    private String encode(User user, int jwtExpirationInMs, String... scopes){
         try {
             Instant now = Instant.now();
             Algorithm algorithm = Algorithm.HMAC256(mergeSecrets(jwtSecret, user.getSecret()));
@@ -39,14 +43,31 @@ public class TokenService {
                     .withSubject(user.getEmail())
                     .withIssuedAt(Date.from(now))
                     .withExpiresAt(Date.from(now.plusSeconds(jwtExpirationInMs)))
+                    .withArrayClaim("scope", scopes)
                     .sign(algorithm);
         } catch (JWTCreationException ex) {
             throw new IllegalArgumentException("Cannot properly create token", ex);
         }
     }
 
-    public String getSubject(String token) {
-        return JWT.decode(token).getSubject();
+    public String encode(User user) {
+        return encode(user, jwtExpirationInMs);
+    }
+
+    public String encodePasswordToken(User user) {
+        return encode(user, jwtExpirationInMs, "RESET_PASSWORD");
+    }
+
+    public DecodedJWT decode(String token){
+        return JWT.decode(token);
+    }
+
+    public String getSubject(DecodedJWT token) {
+        return token.getSubject();
+    }
+
+    public String[] getScopes(String token) {
+        return JWT.decode(token).getClaim("scope").asArray(String.class);
     }
 
     private byte[] mergeSecrets(byte[] secret, byte[] userSecret) {

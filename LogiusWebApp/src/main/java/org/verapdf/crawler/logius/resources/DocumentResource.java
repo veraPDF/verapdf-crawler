@@ -16,6 +16,8 @@ import org.verapdf.crawler.logius.db.ValidationJobDAO;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 @RestController

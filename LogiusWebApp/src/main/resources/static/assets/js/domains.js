@@ -1,5 +1,5 @@
 $(function () {
-    var URL = "/api/crawl-jobs"
+    var URL = "/api/crawl-jobs";
     var rowTemplate = $("#crawl_job_list").children('tbody').children('tr').clone();
     var totalPagesAmount = 1;
     var limit = 10;
@@ -12,6 +12,14 @@ $(function () {
             loadAllJobs(limit, (page - 1) * limit, filter);
         }
     };
+
+    function createHeaders() {
+        var headers = {"Content-type": "application/json"};
+        if (getUserJobs()){
+            headers['Authorization'] =  'Bearer ' + localStorage.getItem('token')
+        }
+        return headers
+    }
 
     function normalizeURL(url) {
         return url.replace(':', '%3A');
@@ -26,14 +34,11 @@ $(function () {
         if (domainFilter) {
             filter = '&domainFilter=' + domainFilter;
         }
-        var headers = {};
-        if (getUserJobs()){
-            headers = {'Authorization': 'Bearer ' + localStorage['token']};
-        }
+
         $.ajax({
             url: URL + '?limit=' + limit + '&start=' + start + filter,
             type: "GET",
-            headers: headers,
+            headers: createHeaders(),
             success: function (result, textStatus, request) {
                 $("#crawl_job_list").children('tbody').empty();
                 if (Array.isArray(result)) {
@@ -99,7 +104,7 @@ $(function () {
             url: URL + "/" + normalizeURL(link.parent().siblings().first().text()),
             type: "PUT",
             data: JSON.stringify(putData),
-            headers: {"Content-type": "application/json"},
+            headers: createHeaders(),
             success: function (result) {
                 currRow.removeClass('disabled');
                 currRow.removeClass(oldStatus.toLowerCase());
@@ -133,7 +138,7 @@ $(function () {
             url: URL + "/" + normalizeURL(link.parent().siblings().first().text()),
             type: "PUT",
             data: JSON.stringify(putData),
-            headers: {"Content-type": "application/json"},
+            headers: createHeaders(),
             success: function (result) {
                 currRow.removeClass('disabled');
                 currRow.removeClass(oldStatus.toLowerCase());
@@ -164,6 +169,7 @@ $(function () {
         $.ajax({
             url: URL + "/" + normalizeURL($($(this).parent().siblings()[0]).children().text()),
             type: "POST",
+            headers: createHeaders(),
             success: function (result) {
                 currRow.removeClass('disabled');
                 currRow.removeClass(oldStatus.toLowerCase());

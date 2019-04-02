@@ -54,6 +54,7 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         List<Predicate> restrictions = new ArrayList<>();
         restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.domain), domain));
         restrictions.add(document.get(DomainDocument_.contentType).in(documentTypes));
+
         if (testResult != null) {
             restrictions.add(builder.equal(document.get(DomainDocument_.baseTestResult), testResult));
         }
@@ -136,7 +137,7 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         return query.list();
     }
 
-    public List<PdfPropertyStatistics.ValueCount> getPropertyStatistic(String domain, Date startDate) {
+    public List<PdfPropertyStatistics.ValueCount> getPropertyStatistic(String domain, UUID uuid, Date startDate) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<PdfPropertyStatistics.ValueCount> criteriaQuery = builder.createQuery(PdfPropertyStatistics.ValueCount.class);
         Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
@@ -149,7 +150,11 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         ));
 
         List<Predicate> restrictions = new ArrayList<>();
-
+        if (uuid != null) {
+            restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id), uuid));
+        } else {
+            restrictions.add(builder.isNull(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id)));
+        }
         restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.domain), domain));
         restrictions.add(properties.key().in(pdfTypes));
         if (startDate != null) {
@@ -162,11 +167,11 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         return query.list();
     }
 
-    public List<PdfPropertyStatistics.ValueCount> getPropertyStatistics(String domain, String propertyName, Date startDate) {
-        return getPropertyStatistics(domain, propertyName, startDate, false, null);
+    public List<PdfPropertyStatistics.ValueCount> getPropertyStatistics(String domain, UUID userId, String propertyName, Date startDate) {
+        return getPropertyStatistics(domain, userId, propertyName, startDate, false, null);
     }
 
-    public List<PdfPropertyStatistics.ValueCount> getPropertyStatistics(String domain, String propertyName, Date startDate, boolean orderByCount, Integer limit) {
+    public List<PdfPropertyStatistics.ValueCount> getPropertyStatistics(String domain, UUID userId, String propertyName, Date startDate, boolean orderByCount, Integer limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<PdfPropertyStatistics.ValueCount> criteriaQuery = builder.createQuery(PdfPropertyStatistics.ValueCount.class);
         Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
@@ -182,13 +187,17 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         List<Predicate> restrictions = new ArrayList<>();
         restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.domain), domain));
         restrictions.add(builder.equal(properties.key(), propertyName));
+        if (userId != null) {
+            restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id), userId));
+        } else {
+            restrictions.add(builder.isNull(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id)));
+        }
         if (startDate != null) {
             restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
         }
         criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
 
         criteriaQuery.groupBy(properties.value());
-
         if (orderByCount) {
             criteriaQuery.orderBy(builder.desc(documentCount));
         }
@@ -201,7 +210,7 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         return query.list();
     }
 
-    public List<PDFWamErrorStatistics.ErrorCount> getPDFWamErrorsStatistics(String domain, Date startDate, String flavour, String version, String producer) {
+    public List<PDFWamErrorStatistics.ErrorCount> getPDFWamErrorsStatistics(String domain, UUID userId, Date startDate, String flavour, String version, String producer) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<PDFWamErrorStatistics.ErrorCount> criteriaQuery = builder.createQuery(PDFWamErrorStatistics.ErrorCount.class);
         Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
@@ -220,7 +229,11 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         restrictions.add(properties.key().in(PDFWamProcessor.getErrorPropertyNames()));
         restrictions.add(builder.like(properties.value(), "%fail%"));
         restrictions.add(builder.not(builder.like(properties.value(), "%fail:0%")));
-
+        if (userId != null) {
+            restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id), userId));
+        } else {
+            restrictions.add(builder.isNull(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id)));
+        }
         if (startDate != null) {
             restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
         }
@@ -255,7 +268,7 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         return query.list();
     }
 
-    public List<ErrorStatistics.ErrorCount> getErrorsStatistics(String domain, Date startDate, String flavour, String version, String producer, int limit) {
+    public List<ErrorStatistics.ErrorCount> getErrorsStatistics(String domain, UUID userId, Date startDate, String flavour, String version, String producer, int limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<ErrorStatistics.ErrorCount> criteriaQuery = builder.createQuery(ErrorStatistics.ErrorCount.class);
 
@@ -274,7 +287,11 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         // WHERE document.job.domain = <domain>
         List<Predicate> restrictions = new ArrayList<>();
         restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.domain), domain));
-
+        if (userId != null) {
+            restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id), userId));
+        } else {
+            restrictions.add(builder.isNull(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id)));
+        }
         if (startDate != null) {
             // AND document.lastModified >= startDate
             restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
@@ -316,9 +333,9 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
 
 
     private <T> Predicate getPredicateByFlavour(String flavour,
-                                            Root<DomainDocument> document,
-                                            CriteriaBuilder builder,
-                                            CriteriaQuery<T> criteriaQuery) {
+                                                Root<DomainDocument> document,
+                                                CriteriaBuilder builder,
+                                                CriteriaQuery<T> criteriaQuery) {
         if (!flavour.equals("None")) {
             MapJoin<DomainDocument, String, String> flavourProperty = document.join(DomainDocument_.properties, JoinType.INNER);
             return getPredicateBySpecifiedFlavour(flavour, flavourProperty, builder);
