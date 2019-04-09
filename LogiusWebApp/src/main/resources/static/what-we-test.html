@@ -12,7 +12,8 @@
 
     <link href="assets/css/main.css" rel="stylesheet" type="text/css">
     <script crossorigin="anonymous"
-            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
     <script crossorigin="anonymous"
             integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4"
             src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
@@ -41,46 +42,82 @@
     </nav>
 </header>
 <main class="main">
-    <div class="about">
-        <h1>What this tool tests</h1>
-        <p>This tool finds and analyses the documents on a given website and outputs the number of:</p>
+    <div style="padding-left: 15px">
+
+        <h1>What this web application tests</h1>
+        <p>The purpose of this application is to give statistics on the document formats published on a given
+            website.</p>
+        <p>When you enter a domain the application takes a sample of documents that are published on the corresponding
+            website.
+            Within the sample it finds and counts the number of PDF, ODF, OOXML and Microsoft Ofice files found.
+            It also gives detailed information about the PDF versions and standards found.</p>
+        <p>This application has two levels of use:
         <ul>
-            <li>documents in PDF/A format by accessibility level "a", "u" or "b"</li>
-            <li>documents formatted in other PDF versions such as PDF 1.4, 1.5, 1.6 or 1.7</li>
-            <li>documents in Open Document Format (ODF)</li>
-            <li>documents in vendor dependent formats</li>
+            <li><em>Simple:</em> without registration the application uses <a href="https://www.bing.com/">Bing
+                search</a> to acquire a sample of maximum 1000 documents and does basic document analysis.
+            <li><em>Advanced:</em> if you register you have the option to use the <a
+                    href="http://www.crawler.archive.org">Heritrix crawler</a> to acquire a larger sample.
+                Heritrix usually finds most of the documents on a website but uses more resources and takes longer to
+                complete.
+                The advanced application also offers the option to do an extended check of PDF/A formats using <a
+                        href="https://verapdf.org/">VeraPDF</a>.
         </ul>
+        </p>
+
         <h1>Results</h1>
-        <p>In the green bar we count the documents that comply with the open standards PDF/A or ODF. The red bar
-            contains the counts of the other document formats.</p>
-        <p>Under the Documents tab we present statistics by PDF/A version (1, 2, 3) and accessibility level ('a', 'u',
-            'b') and by PDF version (1.3, 1.4, 1.5, 1.6, 1.7, etc). The Common errors tab gives statistics for the most
-            frequently occurring issues that prevent PDF documents from being PDF/A compliant.</p>
-        <p>The tool uses the <a href="http://verapdf.org">VeraPDF checker</a> to test for PDF/A compliance. It
-            determines formats other than PDF/A by reading the version declaration in the file.</p>
-        <p>The downloadable report contains all statistics plus the URLs of all documents that were not found to be
-            PDF/A, PDF 1.7 or ODF compliant.</p>
+        <p>When you launch a query for a domain your job appears under the tab <a
+                href="https://documentcheck.org/domains.html">test results</a> where you can see its status.
+            Jobs can take time to complete. How long depends on the size of the website and the amount of documents
+            found. When your job finishes you will receive a notification at the e-mail address you provided with your
+            query.</p>
+        <p>You can see the results of your job by clicking it in the list of jobs under <a
+                href="https://documentcheck.org/domains.html">test results</a>.
+            The <em>summary</em> gives the global count of documents found in PDF, ODF, OOXML and Microsoft Office
+            formats. Under the <em>documents</em> tab you will find details on:
+        <ul>
+            <li>PDF documents by standard (PDF/A, PDF/UA, PDF/X, PDF/E).
+            <li>PDF documents by version (1.X, 2.0).
+            <li>Applications that have produced the PDF documents found.
+        </ul>
+        </p>
+        <p>You can download a report of the results in ODF format by clicking the <em>download report</em> link at the
+            bottom right of the results pages.
+            This report also contains the URLs of all documents found, organised by file type.</p>
+
         <h1>Options</h1>
-        <p>By default, the tool will use the Heritrix crawler to find documents a given website. If you tick the "Use
-            Bing for Crawling" box, the tool will use the Bing&#8482; seach engine to find documents. This may give
-            somewhat faster results as the tool does not need to crawl the website, but the Bing search may not yield up
-            to date references to all documents on the site in a given moment.</p>
-        <p>The tool allows you to analyse and count documents younger than a specified date. We added this feature
-            because many organizations only recently have policies to publish documents in PDF/A or ODF format.</p>
-        <p>If you specify a date, the tool actually analyses all documents on the website but only counts those from the
-            date specified. If you launch another job for the same website but with another date, the tool will use the
-            data already stored in the internal database. This saves resources when launching different jobs for the
-            same website.</p>
-    </div>
-    <div class="important-notice">
-        <b>Important notice</b>
-        This tool uses open source software, notably the Heritrix crawler and the VeraPDF analyser.
-        We do not guarantee the correct and accurate functioning of this software.
-        It is possible that the crawler does not find all documents on a website.
-        The analysis may contain false positives and false negatives for the different document types and accessibility
-        levels.
-        We make this tool available 'as-is' without any warranties, and decline any liability for damage that may result
-        directly or indirectly from its use.
+        <p>By default the application will search for documents published on January 1, 2015 or later. You have the
+            option to specify any other date.</p>
+        <p>The advanced version of the application provides you with two additional options:
+        <ul>
+            <li>Use Heritrix for crawling. Heritrix is slower than the default Bing search but generally yields more
+                complete samples.
+            <li>Use VeraPDF for document analysis. VeraPDF checks whether a PDF/A document really complies with the
+                PDF/A standard.
+                Checking with VeraPDF can take significantly more time.
+        </ul>
+        </p>
+
+        <h1>Future extensions</h1>
+        <p>This is a living project. In the future we're keen on extending the application with new functionality, for
+            example:
+        <ul>
+            <li>Finding and counting documents in EPUB format.
+            <li>PDF/UA and accessibility analysis. In the future we'd like to include testing for WCAG 2.1 accessibility
+                and for compliance with the PDF/UA standard.
+        </ul>
+        If you have suggestions or feature requests please contact us.
+        </p>
+
+        <h1>Important notice</h1>
+        <p>This tool uses third party and open source software, notably Bing search, the Heritrix crawler and VeraPDF
+            analyser.
+            We do not guarantee the correct and accurate functioning of this software.<br>
+            It is possible that the crawler does not find all documents on a website.<br>
+            The results may contain false positives and false negatives for the different document types and
+            accessibility levels.<br>
+            We make this tool available 'as-is' without any warranties, and decline any liability for damage that may
+            result directly
+            or indirectly from its use.</p>
     </div>
 </main>
 <footer class="footer"></footer>

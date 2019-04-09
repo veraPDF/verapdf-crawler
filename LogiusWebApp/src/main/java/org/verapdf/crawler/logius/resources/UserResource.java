@@ -7,6 +7,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.verapdf.crawler.logius.core.email.SendEmail;
 import org.verapdf.crawler.logius.db.CrawlJobDAO;
+import org.verapdf.crawler.logius.dto.ApiErrorDto;
 import org.verapdf.crawler.logius.dto.user.*;
 import org.verapdf.crawler.logius.model.User;
 import org.verapdf.crawler.logius.service.TokenService;
@@ -76,6 +77,16 @@ public class UserResource {
     @PostMapping("/email-confirm")
     public String emailConfirm(@RequestParam(value = "token") String token) {
         return userService.confirmUserEmail(token);
+    }
+
+    @PostMapping("/{email}/email-resend")
+    public ResponseEntity emailResend(@Email @PathVariable(value = "email") String email) {
+        User user = userService.findUserByEmail(email);
+        if (user.isActivated()){
+            return ResponseEntity.badRequest().body(new ApiErrorDto("user already activated"));
+        }
+        sendEmail.sendEmailConfirm(tokenService.encode(user), email);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{email}/password-reset")
