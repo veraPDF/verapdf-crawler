@@ -174,7 +174,7 @@ $(function () {
             url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
             type: "PUT",
             data: JSON.stringify(putData),
-            headers: {"Content-type": "application/json"},
+            headers: createHeaders(),
             success: function (result) {
                 enableActions();
                 updateCrawlJob(result);
@@ -203,7 +203,7 @@ $(function () {
             type: "PUT",
             // async:false,
             data: JSON.stringify(putData),
-            headers: {"Content-type": "application/json"},
+            headers: createHeaders(),
             success: function (result) {
                 enableActions();
                 updateCrawlJob(result);
@@ -224,6 +224,7 @@ $(function () {
         $.ajax({
             url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
             type: "POST",
+            headers: createHeaders(),
             success: function (result) {
                 enableActions();
                 updateCrawlJob(result);

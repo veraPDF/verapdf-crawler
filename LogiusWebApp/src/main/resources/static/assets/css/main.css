@@ -25,12 +25,12 @@ body.container-fluid {
 }
 
 .header #menu_container {
-    float: right;
+    float: left;
     color: #000;
 }
 
 .header #menu_container #menu {
-    list-style:none;
+    list-style: none;
     padding-right: 10px;
     margin-bottom: 0;
 }
@@ -41,7 +41,7 @@ body.container-fluid {
     letter-spacing: 1px;
 }
 
-.header a, .header a:visited, .header a:active  {
+.header a, .header a:visited, .header a:active {
     text-decoration: none;
     color: #000;
 }
@@ -63,7 +63,7 @@ body.container-fluid {
 }
 
 .main .template {
-    display: none!important;
+    display: none !important;
 }
 
 .footer {
@@ -108,7 +108,8 @@ body.container-fluid {
     display: inline-block;
     min-width: 250px;
 }
-.main-form .error-message-container{
+
+.main-form .error-message-container {
     display: inline-block;
     width: 410px;
     margin-top: 15px;
@@ -149,8 +150,13 @@ body.container-fluid {
     content: '✔';
 }
 
+.check-box-user-list {
+    font-size: 22px;
+    text-align: center;
+}
+
 .header #user_info_container {
-    float: left;
+    float: right;
     color: #000;
 }
 

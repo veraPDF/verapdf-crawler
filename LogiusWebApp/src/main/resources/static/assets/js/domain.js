@@ -183,7 +183,7 @@ $(function () {
 
         $('.job-date').text(crawlJob.finished ? 'Tested on ' + crawlJob.startTime + ' - ' + crawlJob.finishTime : 'Test started on ' + crawlJob.startTime);
 
-        $('.status-text').text(crawlJob.status).attr('href', 'domain-status.html?domain=' + crawlJob.domain);
+        $('.status-text').text(crawlJob.status).attr('href', 'domain-status.html?domain=' + crawlJob.domain+ "&isGeneralJob=" + isGeneralJob());
 
         // TODO: uncomment when emails edit is implemented
         // if (!crawlJob.finished) {

@@ -40,8 +40,9 @@ $(document).ready(function () {
                         $("#validation-required-elem").removeAttr('style');
                     }
                     if (window.location.pathname === '/domains.html'){
-                        $("#job-list-checkbox").removeAttr('style');
+                        $("#job-list-checkbox-p").removeAttr('style');
                     }
+
                 },
                 error: function (error) {
                     localStorage.removeItem('token');
