@@ -1,7 +1,5 @@
 package org.verapdf.crawler.logius.service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -10,14 +8,13 @@ import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 
 import javax.annotation.PostConstruct;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Service
 public class QueueManager {
-    private final static int THREAD_COUNT = 4;
-    private final static long initDelay = 1000 * 60;
+    private final static int THREAD_COUNT = 10;
+    private static final long SLEEP_DURATION = 60 * 1000;
     private final Set<ValidatorTask> jobQueue = new LinkedHashSet<>();
     private ThreadPoolTaskExecutor service;
     private ValidationJobService validationJobService;
@@ -44,14 +41,13 @@ public class QueueManager {
                         validationJobService.saveResult(result, current.getValidationJob());
                     }
                     jobQueue.remove(current);
-                    retirieveNextJob();
-                    process(next());
+                    process(retrieveNextJob());
                 }
             });
         }
     }
 
-    public boolean retirieveNextJob() {
+    public ValidatorTask retrieveNextJob() {
         synchronized (jobQueue) {
             if (jobQueue.size() < THREAD_COUNT) {
                 ValidationJob job = validationJobService.retrieveNextJob();
@@ -59,21 +55,10 @@ public class QueueManager {
                     ValidatorTask task = validatorTaskObjectFactory.getObject();
                     task.setValidationJob(job);
                     jobQueue.add(task);
-                    return true;
+                    return task;
                 }
-                return false;
             }
-            return false;
-        }
-    }
-
-    private ValidatorTask next() {
-        synchronized (jobQueue) {
-            Iterator<ValidatorTask> iterator = jobQueue.iterator();
-            if (!iterator.hasNext()) {
-                return null;
-            }
-            return iterator.next();
+            return null;
         }
     }
 
@@ -85,10 +70,14 @@ public class QueueManager {
         }
     }
 
-    @Scheduled(fixedDelay = initDelay)
+    @Scheduled(fixedDelay = SLEEP_DURATION)
     public void initValidationQueue() {
-        while (retirieveNextJob()) {
-            process(next());
+        while (retrieveNextJob() != null) {
+            ValidatorTask task = retrieveNextJob();
+            if (task == null){
+                break;
+            }
+            process(task);
         }
     }
 }

@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
@@ -24,6 +25,7 @@ import java.util.*;
 @Service
 public class BingService {
     private static final Logger logger = LoggerFactory.getLogger(BingService.class);
+    private static final long SLEEP_DURATION = 60 * 1000;
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
     private final CrawlJobService crawlJobService;
     private final DocumentResource documentResource;
@@ -137,5 +139,10 @@ public class BingService {
         if (this.currentJob != null && this.currentJob.getDomain().equals(job.getDomain())) {
             this.currentJob = null;
         }
+    }
+
+    @Scheduled(fixedDelay = SLEEP_DURATION)
+    public void initValidationQueue() {
+        checkNewJobs();
     }
 }
