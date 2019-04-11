@@ -7,6 +7,7 @@ import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.db.CrawlJobDAO;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class CrawlJobService {
@@ -35,5 +36,23 @@ public class CrawlJobService {
     @Transactional
     public long count(String domainFilter, boolean isFinished){
         return crawlJobDAO.count(domainFilter, isFinished);
+    }
+
+    @Transactional
+    public boolean isCanRestartJob(UUID userId, CrawlJob crawlJob) {
+        List<CrawlJob> startedCrawlJobs = crawlJobDAO.findByStatusAndUserId(CrawlJob.Status.RUNNING, userId);
+        if (startedCrawlJobs.isEmpty()) {
+            return true;
+        } else {
+            return startedCrawlJobs.stream()
+                    .filter(crawl -> crawl.getId()
+                            .equals(crawlJob.getId())).limit(1).findFirst().isPresent();
+        }
+    }
+
+    @Transactional
+    public boolean isCanStartJob(UUID userId) {
+        List<CrawlJob> startedCrawlJobs = crawlJobDAO.findByStatusAndUserId(CrawlJob.Status.RUNNING, userId);
+        return (userId == null && startedCrawlJobs.size() < 2) || (userId != null && startedCrawlJobs.isEmpty());
     }
 }

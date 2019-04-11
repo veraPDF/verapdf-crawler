@@ -192,10 +192,34 @@ $(function () {
 
         $('.job-mails .label').text(crawlJob.finished ? 'Report sent to:' : 'Send report to:');
 
-        $('a.ods-report-link').attr('href', '/api/report/full.ods?domain=' + crawlJob.domain);
+        //$('a.ods-report-link').attr('href', '/api/report/full.ods?domain=' + crawlJob.domain);
 
         enableActions();
     }
+
+    $("button.ods-report-link").on('click', function () {
+        console.log(123123);
+        $.ajax({
+            url: '/api/report/full.ods?domain=' + crawlJob.domain,
+            type: "GET",
+            xhrFields: {
+                responseType: 'blob'
+            },
+            headers: createHeaders(),
+            success: function (data, status, xhr) {
+                var a = document.createElement('a');
+                var url = window.URL.createObjectURL(data);
+                a.href = url;
+                var header =  xhr.getResponseHeader('Content-Disposition');
+                var startIndex = header.indexOf("filename=") + 9;
+                var endIndex = header.length;
+                a.download = header.substring(startIndex, endIndex);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            },
+            error: reportError
+        });
+    });
 
     function disableActions() {
         $('.action').addClass('disabled');
@@ -255,9 +279,6 @@ $(function () {
             success: crawlJobLoaded,
             error: reportError
         };
-        if (localStorage['token']) {
-            params['headers'] = {'Authorization': 'Bearer ' + localStorage['token']};
-        }
         console.log(params);
         $.ajax(params);
     });

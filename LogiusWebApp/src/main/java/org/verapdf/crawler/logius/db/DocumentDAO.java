@@ -10,6 +10,7 @@ import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.document.DomainDocument_;
 import org.verapdf.crawler.logius.model.DocumentId;
 import org.verapdf.crawler.logius.model.DocumentId_;
+import org.verapdf.crawler.logius.model.Role;
 import org.verapdf.crawler.logius.model.User_;
 import org.verapdf.crawler.logius.report.ErrorStatistics;
 import org.verapdf.crawler.logius.report.PDFWamErrorStatistics;
@@ -64,14 +65,14 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         if (uuid != null) {
             restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id), uuid));
         } else {
-            restrictions.add(builder.isNull(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id)));
+            restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.role), Role.ANONYMOUS));
         }
         criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[0])));
 
         return currentSession().createQuery(criteriaQuery).getSingleResult();
     }
 
-    public List<DomainDocument> getDocuments(String domain, List<String> documentTypes, DomainDocument.BaseTestResult testResult, Date startDate, Integer limit) {
+    public List<DomainDocument> getDocuments(String domain, UUID id, List<String> documentTypes, DomainDocument.BaseTestResult testResult, Date startDate, Integer limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<DomainDocument> criteriaQuery = builder.createQuery(DomainDocument.class);
         Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
@@ -85,6 +86,11 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         if (startDate != null) {
             restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
         }
+        if (id != null) {
+            restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id), id));
+        } else {
+            restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.role), Role.ANONYMOUS));
+        }
         criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
 
         Query<DomainDocument> query = currentSession().createQuery(criteriaQuery);
@@ -94,7 +100,7 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         return query.list();
     }
 
-    public List<String> getDocumentsUrls(String domain, List<String> documentTypes, DomainDocument.BaseTestResult testResult, Date startDate, Integer limit) {
+    public List<String> getDocumentsUrls(String domain, UUID id, List<String> documentTypes, DomainDocument.BaseTestResult testResult, Date startDate, Integer limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<DocumentId> criteriaQuery = builder.createQuery(DocumentId.class);
         Root<DomainDocument> document = criteriaQuery.from(DomainDocument.class);
@@ -108,6 +114,11 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         }
         if (startDate != null) {
             restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
+        }
+        if (id != null) {
+            restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id), id));
+        } else {
+            restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.role), Role.ANONYMOUS));
         }
         criteriaQuery.where(builder.and(restrictions.toArray(new Predicate[restrictions.size()])));
 
@@ -153,7 +164,7 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         if (uuid != null) {
             restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id), uuid));
         } else {
-            restrictions.add(builder.isNull(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id)));
+            restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.role), Role.ANONYMOUS));
         }
         restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.domain), domain));
         restrictions.add(properties.key().in(pdfTypes));
@@ -190,7 +201,7 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         if (userId != null) {
             restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id), userId));
         } else {
-            restrictions.add(builder.isNull(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id)));
+            restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.role), Role.ANONYMOUS));
         }
         if (startDate != null) {
             restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));
@@ -232,7 +243,7 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         if (userId != null) {
             restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id), userId));
         } else {
-            restrictions.add(builder.isNull(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id)));
+            restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.role), Role.ANONYMOUS));
         }
         if (startDate != null) {
             restrictions.add(builder.greaterThanOrEqualTo(document.get(DomainDocument_.lastModified), startDate));

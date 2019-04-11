@@ -6,6 +6,7 @@
 html {
     height: 100%;
 }
+
 body.container-fluid {
     min-height: 100%;
     padding: 0;
@@ -255,7 +256,7 @@ body.container-fluid {
     background-color: white;
 }
 
-.domains-list, .user-list{
+.domains-list, .user-list {
     color: white;
 }
 
@@ -486,6 +487,7 @@ a.action.disabled {
 .summary .odf-documents {
     background-color: #767D92;
 }
+
 .summary .oox-office-documents {
     background-color: #9CC0E7;
 }
@@ -689,4 +691,20 @@ a.action.disabled {
 
 .heritrix td {
     font-size: 14px;
+}
+
+.ods-report-link {
+    background-color: transparent;
+    border: 0 white;
+    font-size: 15px;
+    color: white;
+}
+
+.ods-report-link:hover {
+    border: 3px white;
+    border-bottom: 3px;
+}
+
+.ods-report-link:focus {
+    border: 0 white;
 }

@@ -8,6 +8,7 @@ import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.document.DomainDocument_;
 import org.verapdf.crawler.logius.model.DocumentId;
 import org.verapdf.crawler.logius.model.DocumentId_;
+import org.verapdf.crawler.logius.model.User_;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 import org.verapdf.crawler.logius.validation.ValidationJob_;
 
@@ -42,8 +43,7 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
     }
 
     private ValidationJob getValidationJobWithStatus(ValidationJob.Status status) {
-        System.out.println(123);
-        return currentSession().createQuery(buildValidationJobWithStatusQuery(status))
+        return currentSession().createQuery(buildValidationJobWithStatusQueryAndMaxPriority(status))
                 .setMaxResults(1).uniqueResult();
     }
 
@@ -55,6 +55,18 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
                 builder.equal(jobRoot.get(ValidationJob_.status), status),
                 builder.isNotNull(jobRoot.get(ValidationJob_.documentId).get(DocumentId_.documentUrl))
         ));
+        return criteriaQuery;
+    }
+
+    private CriteriaQuery<ValidationJob> buildValidationJobWithStatusQueryAndMaxPriority(ValidationJob.Status status){
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<ValidationJob> criteriaQuery = builder.createQuery(ValidationJob.class);
+        Root<ValidationJob> jobRoot = criteriaQuery.from(ValidationJob.class);
+        criteriaQuery.where(builder.and(
+                builder.equal(jobRoot.get(ValidationJob_.status), status),
+                builder.isNotNull(jobRoot.get(ValidationJob_.documentId).get(DocumentId_.documentUrl))
+        ));
+        criteriaQuery.orderBy(builder.asc(jobRoot.get(ValidationJob_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.priority)));
         return criteriaQuery;
     }
 

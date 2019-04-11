@@ -133,26 +133,29 @@ public class ReportResource {
 
     @GetMapping(value = "/full.ods")
     @Transactional
-    public ResponseEntity getFullReportAsOds(@RequestParam("domain") String domain,
+    public ResponseEntity getFullReportAsOds(@AuthenticationPrincipal TokenUserDetails principal,
+                                             @RequestParam("domain") String domain,
                                              @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate) {
+        UUID userId = principal == null ? null : principal.getUuid();
+
         domain = DomainUtils.trimUrl(domain);
-        long compliantPDFA12Count = getDocumentsCount(domain, DomainDocument.DocumentTypeGroup.PDF,
+        long compliantPDFA12Count = getDocumentsCount(domain, userId, DomainDocument.DocumentTypeGroup.PDF,
                 DomainDocument.BaseTestResult.OPEN, startDate);
-        long odfCount = getDocumentsCount(domain, DomainDocument.DocumentTypeGroup.OPEN_OFFICE,
+        long odfCount = getDocumentsCount(domain, userId, DomainDocument.DocumentTypeGroup.OPEN_OFFICE,
                 null, startDate);
-        long invalidPDFA12Count = getDocumentsCount(domain, DomainDocument.DocumentTypeGroup.PDF,
+        long invalidPDFA12Count = getDocumentsCount(domain, userId, DomainDocument.DocumentTypeGroup.PDF,
                 DomainDocument.BaseTestResult.NOT_OPEN, startDate);
-        long msCount = getDocumentsCount(domain, DomainDocument.DocumentTypeGroup.MS_OFFICE,
+        long msCount = getDocumentsCount(domain, userId, DomainDocument.DocumentTypeGroup.MS_OFFICE,
                 null, startDate);
-        long ooXMLCount = getDocumentsCount(domain, DomainDocument.DocumentTypeGroup.OO_XML_OFFICE,
+        long ooXMLCount = getDocumentsCount(domain, userId, DomainDocument.DocumentTypeGroup.OO_XML_OFFICE,
                 null, startDate);
-        List<DomainDocument> invalidPDFDocuments = documentDAO.getDocuments(domain,
+        List<DomainDocument> invalidPDFDocuments = documentDAO.getDocuments(domain, userId,
                 DomainDocument.DocumentTypeGroup.PDF.getTypes(),
                 DomainDocument.BaseTestResult.NOT_OPEN, startDate, ODS_MAX_DOCUMENTS_SHOW);
-        List<String> microsoftDocuments = documentDAO.getDocumentsUrls(domain,
+        List<String> microsoftDocuments = documentDAO.getDocumentsUrls(domain, userId,
                 DomainDocument.DocumentTypeGroup.MS_OFFICE.getTypes(),
                 null, startDate, ODS_MAX_DOCUMENTS_SHOW);
-        List<String> openOfficeXMLDocuments = documentDAO.getDocumentsUrls(domain,
+        List<String> openOfficeXMLDocuments = documentDAO.getDocumentsUrls(domain, userId,
                 DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), null, startDate, ODS_MAX_DOCUMENTS_SHOW);
         try {
             File tempODS = reportsGenerator.generateODSReport(domain, startDate,
@@ -165,7 +168,7 @@ public class ReportResource {
             ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(path));
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType("application/octet-stream"))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + tempODS.getName() + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + tempODS.getName())
                     .body(resource);
 
         } catch (IOException e) {
@@ -174,10 +177,10 @@ public class ReportResource {
         return ResponseEntity.badRequest().build();
     }
 
-    private long getDocumentsCount(String domain, DomainDocument.DocumentTypeGroup documentGroup,
+    private long getDocumentsCount(String domain, UUID uuid, DomainDocument.DocumentTypeGroup documentGroup,
                                    DomainDocument.BaseTestResult testResult,
                                    Date start) {
-        Long count = documentDAO.count(domain, null, documentGroup.getTypes(),
+        Long count = documentDAO.count(domain, uuid, documentGroup.getTypes(),
                 testResult, start);
         return count == null ? 0 : count;
     }

@@ -15,6 +15,7 @@ import org.verapdf.crawler.logius.model.Role;
 import org.verapdf.crawler.logius.model.User;
 import org.verapdf.crawler.logius.tools.SecretKeyUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -48,6 +49,7 @@ public class UserService {
         }
         User user = new User(dto.getEmail(), passwordEncoder.encode(dto.getPassword()));
         user.setRole(Role.USER);
+        user.setPriority(LocalDateTime.now());
         return saveUserWithUpdateSecret(user);
 
     }

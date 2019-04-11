@@ -191,7 +191,7 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
         }
     }
 
-    void stopProcess() {
+    public void stopProcess() {
         this.stopped = true;
         if (this.process != null && this.process.isAlive()) {
             this.process.destroy();

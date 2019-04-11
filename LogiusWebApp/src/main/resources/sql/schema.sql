@@ -14,15 +14,23 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE client
 (
-  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email                 VARCHAR(128) UNIQUE NOT NULL,
-  password              VARCHAR(128)        NOT NULL,
-  secret                bytea               NOT NULL,
-  password_reset_secret bytea               ,
-  role                  VARCHAR(128)        NOT NULL,
-  enabled               BOOLEAN          DEFAULT true,
-  activated             BOOLEAN          DEFAULT false
+  id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email     VARCHAR(128) UNIQUE NOT NULL,
+  password  VARCHAR(128)        NOT NULL,
+  secret    bytea               NOT NULL,
+  role      VARCHAR(128)        NOT NULL,
+  enabled   BOOLEAN          DEFAULT true,
+  activated BOOLEAN          DEFAULT false,
+  priority  TIMESTAMP        DEFAULT now()
 );
+
+
+INSERT INTO client (id, email, password, secret, role, enabled, activated, priority)
+VALUES ('4bc0cfe4-19e4-462a-8616-941467df17f7', 'ANONYMOUS',
+        '$2a$10$LsgDYJpgaG0OhjCyqj8.sOWUjFgZHWOwNpvJTbikrKh68vjzKQ3w2',
+        E'\\x371CB7DB8D6B09733742830C9A9F5F644A80E36188AAF015235162492D5AC7E1', 'ANONYMOUS', true, true,
+        '2019-04-11 08:17:04.340755');
+
 
 CREATE TABLE crawl_job_requests
 (
@@ -45,7 +53,7 @@ CREATE TABLE crawl_jobs
   is_validation_enabled BOOLEAN          DEFAULT FALSE,
   job_status            VARCHAR(10)      DEFAULT NULL,
   crawl_service         VARCHAR(10)  NOT NULL,
-  user_id               UUID,
+  user_id               UUID             DEFAULT gen_random_uuid(),
   CONSTRAINT crawl_jobs_user_id_fk FOREIGN KEY (user_id) REFERENCES client (id)
 );
 
@@ -141,3 +149,22 @@ CREATE TABLE pdf_properties_namespaces
   namespace_url    VARCHAR(255) NOT NULL,
   PRIMARY KEY (namespace_prefix)
 );
+
+CREATE OR REPLACE FUNCTION befo_insert()
+  RETURNS trigger AS
+$$
+BEGIN
+  if new.user_id is null then
+    new.user_id := '4bc0cfe4-19e4-462a-8616-941467df17f7';
+  end if;
+  RETURN new;
+END;
+$$
+language plpgsql;
+
+CREATE TRIGGER insert_user_if_not_exists
+  BEFORE insert
+  ON crawl_jobs
+  FOR EACH ROW
+execute procedure befo_insert();
+

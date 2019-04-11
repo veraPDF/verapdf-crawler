@@ -3,6 +3,7 @@ package org.verapdf.crawler.logius.model;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,9 +33,13 @@ public class User {
     @Column
     @Enumerated(EnumType.STRING)
     private Role role;
+
     @OneToMany
     @JoinColumn(name = "user_id")
     private List<CrawlJob> crawlJobs;
+
+    @Column
+    private LocalDateTime priority;
 
     public User() {
     }
@@ -107,5 +112,13 @@ public class User {
 
     public void setActivated(boolean activated) {
         this.activated = activated;
+    }
+
+    public LocalDateTime getPriority() {
+        return priority;
+    }
+
+    public void setPriority(LocalDateTime priority) {
+        this.priority = priority;
     }
 }

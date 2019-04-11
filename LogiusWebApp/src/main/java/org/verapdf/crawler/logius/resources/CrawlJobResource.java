@@ -18,6 +18,7 @@ import org.verapdf.crawler.logius.monitoring.HeritrixCrawlJobStatus;
 import org.verapdf.crawler.logius.monitoring.ValidationQueueStatus;
 import org.verapdf.crawler.logius.service.CrawlJobService;
 import org.verapdf.crawler.logius.service.CrawlService;
+import org.verapdf.crawler.logius.service.QueueManager;
 import org.verapdf.crawler.logius.tools.DomainUtils;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 import org.xml.sax.SAXException;
@@ -41,15 +42,13 @@ public class CrawlJobResource {
     private final CrawlJobDAO crawlJobDAO;
     private final HeritrixClient heritrixClient;
     private final ValidationJobDAO validationJobDAO;
-    private final CrawlJobService crawlJobService;
     private final CrawlService crawlService;
 
     public CrawlJobResource(CrawlJobDAO crawlJobDAO, HeritrixClient heritrixClient, ValidationJobDAO validationJobDAO,
-                            CrawlJobService crawlJobService, CrawlService crawlService) {
+                            CrawlService crawlService) {
         this.crawlJobDAO = crawlJobDAO;
         this.heritrixClient = heritrixClient;
         this.validationJobDAO = validationJobDAO;
-        this.crawlJobService = crawlJobService;
         this.crawlService = crawlService;
     }
 
@@ -75,7 +74,6 @@ public class CrawlJobResource {
             return ResponseEntity.notFound().build();
         }
         CrawlJob.CrawlService service = crawlJob.getCrawlService();
-
         return ResponseEntity.ok(crawlService.restartCrawlJob(crawlJob, domain, service));
     }
 

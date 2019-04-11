@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.CrawlJob_;
+import org.verapdf.crawler.logius.model.Role;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -154,6 +155,21 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         return currentSession().createQuery(criteriaQuery).setMaxResults(limit).list();
     }
 
+    public List<CrawlJob> findByStatusAndUserId(CrawlJob.Status status, UUID id) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<CrawlJob> criteriaQuery = builder.createQuery(CrawlJob.class);
+        Root<CrawlJob> job = criteriaQuery.from(CrawlJob.class);
+        List<Predicate> restrictions = new ArrayList<>();
+
+        restrictions.add(builder.equal(job.get(CrawlJob_.status), status));
+        restrictions.add(builder.equal(job.get(CrawlJob_.status), CrawlJob.Status.NEW));
+        isHasUser(id, job, builder, restrictions);
+        setRestrictions(restrictions, criteriaQuery, builder);
+        criteriaQuery.orderBy(builder.asc(job.get(CrawlJob_.domain)));
+
+        return currentSession().createQuery(criteriaQuery).list();
+    }
+
     public void remove(CrawlJob crawlJob) {
         currentSession().delete(crawlJob);
         currentSession().flush();
@@ -161,7 +177,7 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
 
     public void isHasUser(UUID userId, Root<CrawlJob> crawlJob, CriteriaBuilder builder, List<Predicate> predicates) {
         if (userId == null) {
-            predicates.add(builder.isNull(crawlJob.get("user").get("id")));
+            predicates.add(builder.equal(crawlJob.get("user").get("role"), Role.ANONYMOUS));
         } else {
             predicates.add(builder.equal(crawlJob.get("user").get("id"), userId));
         }

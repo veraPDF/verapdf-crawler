@@ -2,6 +2,7 @@ package org.verapdf.crawler.logius.crawling;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.hibernate.annotations.ColumnDefault;
 import org.verapdf.crawler.logius.model.User;
 
 import javax.persistence.*;
@@ -203,7 +204,8 @@ public class CrawlJob {
         RUNNING,
         PAUSED,
         FINISHED,
-        FAILED
+        FAILED,
+        QUEUE
     }
 
     public enum CrawlService {

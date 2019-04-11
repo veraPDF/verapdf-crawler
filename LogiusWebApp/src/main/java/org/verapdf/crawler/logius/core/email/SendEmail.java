@@ -68,6 +68,7 @@ public class SendEmail {
                 helper.setTo(recipientAddress);
                 helper.setText(text);
                 helper.setSubject(subject);
+                helper.setFrom("noreply@documentcheck.org");
             });
         }
     }

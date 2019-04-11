@@ -9,7 +9,6 @@ import org.verapdf.crawler.logius.core.tasks.HeritrixCleanerTask;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.CrawlRequest;
 import org.verapdf.crawler.logius.db.CrawlJobDAO;
-import org.verapdf.crawler.logius.validation.ValidationJob;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -19,21 +18,19 @@ import java.util.List;
 public class CrawlService {
     private static final Logger logger = LoggerFactory.getLogger(CrawlJobService.class);
 
-    private final ValidationJobService validationJobService;
-    private final ValidatorService validatorService;
     private final HeritrixCleanerTask heritrixCleanerTask;
     private final BingService bingService;
     private final HeritrixClient heritrixClient;
     private final CrawlJobDAO crawlJobDAO;
+    private final QueueManager queueManager;
 
-    public CrawlService(ValidationJobService validationJobService, ValidatorService validatorService,
-                        HeritrixCleanerTask heritrixCleanerTask, BingService bingService, HeritrixClient heritrixClient, CrawlJobDAO crawlJobDAO) {
-        this.validationJobService = validationJobService;
-        this.validatorService = validatorService;
+    public CrawlService(HeritrixCleanerTask heritrixCleanerTask, BingService bingService, HeritrixClient heritrixClient,
+                        CrawlJobDAO crawlJobDAO, QueueManager queueManager) {
         this.heritrixCleanerTask = heritrixCleanerTask;
         this.bingService = bingService;
         this.heritrixClient = heritrixClient;
         this.crawlJobDAO = crawlJobDAO;
+        this.queueManager = queueManager;
     }
 
     public CrawlJob restartCrawlJob(CrawlJob crawlJob, String domain, CrawlJob.CrawlService service) {
@@ -51,17 +48,8 @@ public class CrawlService {
             bingService.discardJob(crawlJob);
         }
 
-        // Remove job from DB
+        queueManager.abortTasks(crawlJob);
         crawlJobDAO.remove(crawlJob);
-
-        // Stop validation job if it's related to this crawl job
-        synchronized (ValidationJobService.class) {
-            ValidationJob currentJob = validationJobService.getCurrentJob();
-            if (currentJob != null && currentJob.getDocument().getDocumentId().getCrawlJob().getDomain().equals(domain)) {
-                validatorService.abortCurrentJob();
-            }
-        }
-
 
         // Create and start new crawl job
         CrawlJob newJob = new CrawlJob(domain, service, crawlJob.isValidationEnabled());
@@ -89,4 +77,6 @@ public class CrawlService {
         }
         // TODO: cleanup heritrix in finally
     }
+
+
 }
