@@ -3,6 +3,7 @@ package org.verapdf.crawler.logius.db;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
 import org.springframework.stereotype.Repository;
+import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.CrawlJob_;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.document.DomainDocument_;
@@ -47,7 +48,7 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
                 .setMaxResults(1).uniqueResult();
     }
 
-    private CriteriaQuery<ValidationJob> buildValidationJobWithStatusQuery(ValidationJob.Status status){
+    private CriteriaQuery<ValidationJob> buildValidationJobWithStatusQuery(ValidationJob.Status status) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<ValidationJob> criteriaQuery = builder.createQuery(ValidationJob.class);
         Root<ValidationJob> jobRoot = criteriaQuery.from(ValidationJob.class);
@@ -58,7 +59,7 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         return criteriaQuery;
     }
 
-    private CriteriaQuery<ValidationJob> buildValidationJobWithStatusQueryAndMaxPriority(ValidationJob.Status status){
+    private CriteriaQuery<ValidationJob> buildValidationJobWithStatusQueryAndMaxPriority(ValidationJob.Status status) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<ValidationJob> criteriaQuery = builder.createQuery(ValidationJob.class);
         Root<ValidationJob> jobRoot = criteriaQuery.from(ValidationJob.class);
@@ -66,7 +67,8 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
                 builder.equal(jobRoot.get(ValidationJob_.status), status),
                 builder.isNotNull(jobRoot.get(ValidationJob_.documentId).get(DocumentId_.documentUrl))
         ));
-        criteriaQuery.orderBy(builder.asc(jobRoot.get(ValidationJob_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.priority)));
+        criteriaQuery.orderBy(builder.asc(jobRoot.get(ValidationJob_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.validationJobPriority)),
+                builder.asc(jobRoot.get(ValidationJob_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.startTime)));
         return criteriaQuery;
     }
 

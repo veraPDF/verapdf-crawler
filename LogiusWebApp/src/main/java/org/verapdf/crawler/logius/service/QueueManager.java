@@ -13,7 +13,7 @@ import java.util.Set;
 
 @Service
 public class QueueManager {
-    private final static int THREAD_COUNT = 10;
+    private final static int THREAD_COUNT = 4;
     private static final long SLEEP_DURATION = 60 * 1000;
     private final Set<ValidatorTask> jobQueue = new LinkedHashSet<>();
     private ThreadPoolTaskExecutor service;
@@ -34,10 +34,11 @@ public class QueueManager {
     }
 
     public void process(ValidatorTask current) {
-        if (current != null && service.getActiveCount() < THREAD_COUNT) {
-            service.submitListenable(current).completable().thenAccept(result -> {
+        if (current != null) {
+            service.submitListenable(current)
+                    .completable().thenAccept(result -> {
                 synchronized (jobQueue) {
-                    if (!current.getValidationJob().getStatus().equals(ValidationJob.Status.ABORTED)) {
+                    if (!ValidationJob.Status.ABORTED.equals(current.getValidationJob().getStatus())) {
                         validationJobService.saveResult(result, current.getValidationJob());
                     }
                     jobQueue.remove(current);
@@ -72,9 +73,9 @@ public class QueueManager {
 
     @Scheduled(fixedDelay = SLEEP_DURATION)
     public void initValidationQueue() {
-        while (retrieveNextJob() != null) {
+        while (true) {
             ValidatorTask task = retrieveNextJob();
-            if (task == null){
+            if (task == null) {
                 break;
             }
             process(task);

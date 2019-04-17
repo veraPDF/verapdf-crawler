@@ -36,7 +36,7 @@ $(document).ready(function () {
             data: JSON.stringify(j),
             headers: {"Content-type": "application/json"},
             success: function (response) {
-                $(location).attr('href', '/sign-in.html')
+                $(location).attr('href', '/signup-success.html')
             },
             error: function (error) {
                 requestSubmit.attr('data-original-title',  JSON.parse(error.responseText).errors.join('\n')).tooltip('show')

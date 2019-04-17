@@ -18,9 +18,9 @@ import java.util.List;
 
 @Service
 public class TokenService {
-    @Value("${logius.jwtExpirationInMs}")
+    @Value("${logius.jwtExpirationInSeconds}")
     private int jwtExpirationInMs;
-    @Value("${logius.jwtPasswordResetExpirationInMs}")
+    @Value("${logius.jwtPasswordResetExpirationInSeconds}")
     private int jwtPasswordResetExpirationInMs;
     private byte[] jwtSecret;
 
@@ -33,7 +33,6 @@ public class TokenService {
         Algorithm algorithm = Algorithm.HMAC256(mergeSecrets(jwtSecret, userSecret));
         return JWT.require(algorithm).build().verify(token);
     }
-
 
     private String encode(User user, int jwtExpirationInMs, String... scopes){
         try {
@@ -56,6 +55,10 @@ public class TokenService {
 
     public String encodePasswordToken(User user) {
         return encode(user, jwtExpirationInMs, "RESET_PASSWORD");
+    }
+
+    public String encodeEmailVerificationToken(User user) {
+        return encode(user, jwtExpirationInMs, "EMAIL_VERIFICATION");
     }
 
     public DecodedJWT decode(String token){

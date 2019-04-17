@@ -27,10 +27,10 @@ $(document).ready(function () {
         }
         $.ajax({
             type: "POST",
-            url: "/api/user/"+ json[0]['value'] + "/password-reset",
+            url: "/api/user/password-reset?email=" + json[0]['value'] ,
             headers: {"Content-type": "application/json"},
             success: function (response) {
-                $(location).attr('href', '/index.html')
+                $(location).attr('href', '/reset-success.html')
             },
             error: function (error) {
                 requestSubmit.attr('data-original-title',  JSON.parse(error.responseText).errors.join('\n')).tooltip('show')

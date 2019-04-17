@@ -7,10 +7,11 @@ function getActivateToken() {
 $(document).ready(function () {
     function activateAccount() {
         $.ajax({
-            url: "/api/user/email-confirm?token=" + getActivateToken(),
+            url: "/api/user/email-confirm",
             type: "POST",
+            headers: {Authorization: 'Bearer ' + getActivateToken()},
             success: function (accountInfo) {
-                localStorage.setItem('token', accountInfo);
+                localStorage.setItem('token', accountInfo['token']);
                 $(location).attr('href', '/index.html')
             },
             error: function (error) {
@@ -19,5 +20,6 @@ $(document).ready(function () {
             }
         });
     }
+
     activateAccount();
 });

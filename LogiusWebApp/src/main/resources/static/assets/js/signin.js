@@ -30,7 +30,7 @@ $(document).ready(function () {
             url: "/api/auth/token",
             headers: {"Content-type": "application/json"},
             success: function (response) {
-                localStorage.setItem('token', response);
+                localStorage.setItem('token', response['token']);
                 $(location).attr('href', '/')
             },
             error: function (error) {

@@ -1,14 +1,19 @@
 package org.verapdf.crawler.logius.service;
 
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
+import org.verapdf.crawler.logius.core.email.SendEmail;
 import org.verapdf.crawler.logius.db.UserDao;
+import org.verapdf.crawler.logius.dto.ApiErrorDto;
 import org.verapdf.crawler.logius.dto.user.PasswordUpdateDto;
 import org.verapdf.crawler.logius.dto.user.UserDto;
 import org.verapdf.crawler.logius.dto.user.UserInfoDto;
 import org.verapdf.crawler.logius.exception.AlreadyExistsException;
+import org.verapdf.crawler.logius.exception.BadRequestException;
 import org.verapdf.crawler.logius.exception.IncorrectPasswordException;
 import org.verapdf.crawler.logius.exception.NotFoundException;
 import org.verapdf.crawler.logius.model.Role;
@@ -25,11 +30,13 @@ public class UserService {
     private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
+    private final SendEmail sendEmail;
 
-    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenService tokenService) {
+    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenService tokenService, SendEmail sendEmail) {
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
+        this.sendEmail = sendEmail;
     }
 
     @Transactional
@@ -43,14 +50,16 @@ public class UserService {
     }
 
     @Transactional
-    public User save(UserDto dto) {
+    public User register(UserDto dto) {
         if (userDao.getByEmail(dto.getEmail()) != null) {
             throw new AlreadyExistsException(String.format("user with email %s already exists", dto.getEmail()));
         }
         User user = new User(dto.getEmail(), passwordEncoder.encode(dto.getPassword()));
         user.setRole(Role.USER);
-        user.setPriority(LocalDateTime.now());
-        return saveUserWithUpdateSecret(user);
+        user.setValidationJobPriority(LocalDateTime.now());
+        user = saveUserWithUpdateSecret(user);
+        sendEmail.sendEmailConfirm(tokenService.encodeEmailVerificationToken(user), user.getEmail());
+        return user;
 
     }
 
@@ -106,9 +115,26 @@ public class UserService {
     }
 
     @Transactional
-    public void confirmPasswordReset(UUID uuid, String password) {
+    public void confirmResetPassword(UUID uuid, String password) {
         User user = findUserById(uuid);
         user.setPassword(passwordEncoder.encode(password));
         saveUserWithUpdateSecret(user);
+    }
+
+    @Transactional
+    public void resetPassword(String email) {
+        User user = findUserByEmail(email);
+        String token = tokenService.encodePasswordToken(user);
+        sendEmail.sendPasswordResetToken(token, user.getEmail());
+    }
+
+    @Transactional
+    public void resendVerificationEmail(String email) {
+        User user = findUserByEmail(email);
+        if (user.isActivated()){
+            throw new BadRequestException("user already activated");
+        }
+        saveUserWithUpdateSecret(user);
+        sendEmail.sendEmailConfirm(tokenService.encodeEmailVerificationToken(user), user.getEmail());
     }
 }

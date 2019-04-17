@@ -38,8 +38,8 @@ public class User {
     @JoinColumn(name = "user_id")
     private List<CrawlJob> crawlJobs;
 
-    @Column
-    private LocalDateTime priority;
+    @Column(name = "validation_job_priority")
+    private LocalDateTime validationJobPriority;
 
     public User() {
     }
@@ -114,11 +114,11 @@ public class User {
         this.activated = activated;
     }
 
-    public LocalDateTime getPriority() {
-        return priority;
+    public LocalDateTime getValidationJobPriority() {
+        return validationJobPriority;
     }
 
-    public void setPriority(LocalDateTime priority) {
-        this.priority = priority;
+    public void setValidationJobPriority(LocalDateTime validationJobPriority) {
+        this.validationJobPriority = validationJobPriority;
     }
 }

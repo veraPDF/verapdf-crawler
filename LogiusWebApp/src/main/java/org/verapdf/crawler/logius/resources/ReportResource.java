@@ -21,6 +21,7 @@ import org.verapdf.crawler.logius.report.CrawlJobSummary;
 import org.verapdf.crawler.logius.report.ErrorStatistics;
 import org.verapdf.crawler.logius.report.PDFWamErrorStatistics;
 import org.verapdf.crawler.logius.report.PdfPropertyStatistics;
+import org.verapdf.crawler.logius.resources.util.ControllerHelper;
 import org.verapdf.crawler.logius.tools.DomainUtils;
 
 import javax.transaction.Transactional;
@@ -41,11 +42,13 @@ public class ReportResource {
     private static final Logger logger = LoggerFactory.getLogger(ReportResource.class);
     private static final int ODS_MAX_DOCUMENTS_SHOW = 100;
     private final DocumentDAO documentDAO;
+    private final ControllerHelper controllerHelper;
     private final ReportsGenerator reportsGenerator;
 
     @Autowired
-    public ReportResource(DocumentDAO documentDAO, ReportsGenerator reportsGenerator) {
+    public ReportResource(DocumentDAO documentDAO, ControllerHelper controllerHelper, ReportsGenerator reportsGenerator) {
         this.documentDAO = documentDAO;
+        this.controllerHelper = controllerHelper;
         this.reportsGenerator = reportsGenerator;
     }
 
@@ -53,7 +56,7 @@ public class ReportResource {
     @Transactional
     public CrawlJobSummary getSummary(@AuthenticationPrincipal TokenUserDetails principal, @RequestParam("domain") String domain,
                                       @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date documentsSince) {
-        UUID userId = principal == null ? null : principal.getUuid();
+        UUID userId = controllerHelper.getUserUUID(principal);
         // PDF
         Long pdfCount = documentDAO.count(domain, userId, DomainDocument.DocumentTypeGroup.PDF.getTypes(), null, documentsSince);
         // Office Open XML
@@ -75,7 +78,7 @@ public class ReportResource {
     @Transactional
     public PdfPropertyStatistics getDocumentStatistics(@AuthenticationPrincipal TokenUserDetails principal, @RequestParam("domain") String domain,
                                                        @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date documentsSince) {
-        UUID userId = principal == null ? null : principal.getUuid();
+        UUID userId = controllerHelper.getUserUUID(principal);
         Long openPdf = documentDAO.count(domain, userId, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince);
         Long notOpenPdf = documentDAO.count(domain, userId, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
         Long total = openPdf + notOpenPdf;
@@ -107,7 +110,7 @@ public class ReportResource {
                                               @RequestParam(value = "version", required = false) String version,
                                               @RequestParam(value = "producer", required = false) String producer) {
 
-        UUID userId = principal == null ? null : principal.getUuid();
+        UUID userId = controllerHelper.getUserUUID(principal);
 
         List<ErrorStatistics.ErrorCount> errorCounts = documentDAO.getErrorsStatistics(
                 domain, userId, documentsSince, flavour, version, producer, ErrorStatistics.TOP_ERRORS_COUNT);
@@ -126,7 +129,7 @@ public class ReportResource {
                                                                                 @RequestParam(value = "flavour", required = false) String flavour,
                                                                                 @RequestParam(value = "version", required = false) String version,
                                                                                 @RequestParam(value = "producer", required = false) String producer) {
-        UUID userId = principal == null ? null : principal.getUuid();
+        UUID userId = controllerHelper.getUserUUID(principal);
         return documentDAO.getPDFWamErrorsStatistics(domain, userId, startDate, flavour, version, producer);
     }
 
@@ -136,7 +139,7 @@ public class ReportResource {
     public ResponseEntity getFullReportAsOds(@AuthenticationPrincipal TokenUserDetails principal,
                                              @RequestParam("domain") String domain,
                                              @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate) {
-        UUID userId = principal == null ? null : principal.getUuid();
+        UUID userId = controllerHelper.getUserUUID(principal);
 
         domain = DomainUtils.trimUrl(domain);
         long compliantPDFA12Count = getDocumentsCount(domain, userId, DomainDocument.DocumentTypeGroup.PDF,

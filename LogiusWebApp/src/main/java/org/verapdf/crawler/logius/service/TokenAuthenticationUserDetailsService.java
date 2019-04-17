@@ -27,15 +27,17 @@ public class TokenAuthenticationUserDetailsService implements AuthenticationUser
 
     @Transactional
     @Override
-    public UserDetails loadUserDetails(PreAuthenticatedAuthenticationToken authentication) throws UsernameNotFoundException {
-        if (authentication.getPrincipal() != null && authentication.getPrincipal() instanceof String && authentication.getCredentials() instanceof String) {
+    public UserDetails loadUserDetails(PreAuthenticatedAuthenticationToken authentication) {
+        if (authentication.getPrincipal() != null
+                && authentication.getPrincipal() instanceof String
+                && authentication.getCredentials() instanceof String) {
             try {
                 String token = (String) authentication.getPrincipal();
                 DecodedJWT decodedToken = tokenService.decode(token);
                 User user = userDao.getByEmail(tokenService.getSubject(decodedToken));
                 tokenService.verify(token, user.getSecret());
                 return new TokenUserDetails(user.getId(), user.getEmail(), user.getPassword(),
-                        user.isEnabled(), user.isActivated(), token, user.getRole(), tokenService.getScopes(token));
+                        user.isEnabled(), true, token, user.getRole(), tokenService.getScopes(token));
 
             } catch (Exception ex) {
                 throw new UsernameNotFoundException("Token has been expired", ex);

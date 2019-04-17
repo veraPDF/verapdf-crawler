@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -83,10 +84,10 @@ public class SecureConfig {
 
         @Override
         protected void configure(HttpSecurity http) throws Exception {
-            http
-                    .authorizeRequests().antMatchers("/api/admin/**").hasAuthority("ADMIN")
+            http.authorizeRequests().antMatchers("/api/admin/**").hasAuthority("ADMIN")
                     .antMatchers("/api/user/password-reset-confirm").hasAuthority("RESET_PASSWORD")
-                    .antMatchers("/api/**").not().hasAuthority("RESET_PASSWORD")
+                    .antMatchers(HttpMethod.POST, "/api/user/email-confirm").hasAuthority("EMAIL_VERIFICATION")
+                    .antMatchers("/api/**").not().hasAnyAuthority("RESET_PASSWORD", "EMAIL_VERIFICATION")
                     .and()
                     .addFilterBefore(authFilter(), RequestHeaderAuthenticationFilter.class)
                     .authenticationProvider(preAuthProvider()).exceptionHandling().accessDeniedHandler(authHandler)

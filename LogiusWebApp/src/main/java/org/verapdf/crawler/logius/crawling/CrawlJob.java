@@ -204,8 +204,7 @@ public class CrawlJob {
         RUNNING,
         PAUSED,
         FINISHED,
-        FAILED,
-        QUEUE
+        FAILED
     }
 
     public enum CrawlService {

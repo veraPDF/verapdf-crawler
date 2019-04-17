@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.verapdf.crawler.logius.core.email.SendEmail;
 import org.verapdf.crawler.logius.db.CrawlJobDAO;
 import org.verapdf.crawler.logius.dto.ApiErrorDto;
+import org.verapdf.crawler.logius.dto.TokenDto;
 import org.verapdf.crawler.logius.dto.user.*;
 import org.verapdf.crawler.logius.model.User;
 import org.verapdf.crawler.logius.service.TokenService;
@@ -21,15 +22,9 @@ import javax.validation.constraints.Email;
 @RequestMapping("api/user")
 public class UserResource {
     private final UserService userService;
-    private final CrawlJobDAO crawlJobDAO;
-    private final TokenService tokenService;
-    private final SendEmail sendEmail;
 
-    public UserResource(UserService userService, CrawlJobDAO crawlJobDAO, TokenService tokenService, SendEmail sendEmail) {
+    public UserResource(UserService userService) {
         this.userService = userService;
-        this.crawlJobDAO = crawlJobDAO;
-        this.tokenService = tokenService;
-        this.sendEmail = sendEmail;
     }
 
 
@@ -69,36 +64,29 @@ public class UserResource {
 
     @PostMapping("/signup")
     public ResponseEntity registerUser(@RequestBody @Valid UserDto signUpRequest) {
-        User user = userService.save(signUpRequest);
-        sendEmail.sendEmailConfirm(tokenService.encode(user), user.getEmail());
+        userService.register(signUpRequest);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @PostMapping("/email-confirm")
-    public String emailConfirm(@RequestParam(value = "token") String token) {
-        return userService.confirmUserEmail(token);
+    public TokenDto emailConfirm(@AuthenticationPrincipal TokenUserDetails principal) {
+        return new TokenDto(userService.confirmUserEmail(principal.getToken()));
     }
 
-    @PostMapping("/{email}/email-resend")
-    public ResponseEntity emailResend(@Email @PathVariable(value = "email") String email) {
-        User user = userService.findUserByEmail(email);
-        if (user.isActivated()){
-            return ResponseEntity.badRequest().body(new ApiErrorDto("user already activated"));
-        }
-        sendEmail.sendEmailConfirm(tokenService.encode(user), email);
+    @PostMapping("/email-resend")
+    public ResponseEntity emailResend(@Email @RequestParam(value = "email") String email) {
+        userService.resendVerificationEmail(email);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/{email}/password-reset")
-    public void resetPassword(@Email @PathVariable(value = "email") String email) {
-        User user = userService.findUserByEmail(email);
-        sendEmail.sendPasswordResetToken(tokenService.encodePasswordToken(user), user.getEmail());
+    @PostMapping("/password-reset")
+    public void resetPassword(@Email @RequestParam(value = "email") String email) {
+        userService.resetPassword(email);
     }
 
-    @PreAuthorize("hasAuthority('RESET_PASSWORD')")
     @PostMapping("/password-reset-confirm")
     public void passwordResetConfirm(@AuthenticationPrincipal TokenUserDetails principal,
                                                @RequestBody @Valid PasswordResetDto passwordResetDto){
-        userService.confirmPasswordReset(principal.getUuid(), passwordResetDto.getNewPassword());
+        userService.confirmResetPassword(principal.getUuid(), passwordResetDto.getNewPassword());
     }
 }

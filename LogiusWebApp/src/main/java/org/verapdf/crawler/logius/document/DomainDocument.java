@@ -103,6 +103,11 @@ public class DomainDocument {
         return validationErrors;
     }
 
+    public String getDocumentUrl() {
+        return documentId.getDocumentUrl();
+    }
+
+
     public void setValidationErrors(List<ValidationError> validationErrors) {
         this.validationErrors = validationErrors;
     }

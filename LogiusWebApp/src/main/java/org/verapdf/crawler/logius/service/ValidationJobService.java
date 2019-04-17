@@ -88,7 +88,7 @@ public class ValidationJobService {
         ValidationJob job = validationJobDAO.next();
         if (job != null) {
             job.setStatus(ValidationJob.Status.IN_PROGRESS);
-            job.getDocument().getDocumentId().getCrawlJob().getUser().setPriority(LocalDateTime.now());
+            job.getDocument().getDocumentId().getCrawlJob().getUser().setValidationJobPriority(LocalDateTime.now());
         }
         return job;
     }
@@ -99,7 +99,7 @@ public class ValidationJobService {
         try {
             if (!currentJob.getStatus().equals(ValidationJob.Status.ABORTED)) {
                 shouldCleanDB = true;
-                logger.info("Saving validation job results");
+                logger.debug("Saving validation job results");
                 DomainDocument document = currentJob.getDocument();
                 document.setBaseTestResult(result.getTestResult());
 

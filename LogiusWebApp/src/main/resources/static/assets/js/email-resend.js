@@ -27,7 +27,7 @@ $(document).ready(function () {
         }
         $.ajax({
             type: "POST",
-            url: "/api/user/"+ json[0]['value'] + "/email-resend",
+            url: "/api/user/email-resend?email=" + json[0]['value'] ,
             headers: {"Content-type": "application/json"},
             success: function (response) {
                 $(location).attr('href', '/index.html')

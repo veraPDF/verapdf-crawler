@@ -2,6 +2,7 @@ package org.verapdf.crawler.logius.resources;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.verapdf.crawler.logius.core.tasks.AbstractTask;
 
@@ -13,6 +14,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping(value = "api/admin")
+@PreAuthorize("hasAuthority('ADMIN')")
 public class AdminResource {
     private final Map<String, AbstractTask> availableServices;
 

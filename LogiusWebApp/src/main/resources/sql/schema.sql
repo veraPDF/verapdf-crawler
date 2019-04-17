@@ -21,15 +21,22 @@ CREATE TABLE client
   role      VARCHAR(128)        NOT NULL,
   enabled   BOOLEAN          DEFAULT true,
   activated BOOLEAN          DEFAULT false,
-  priority  TIMESTAMP        DEFAULT now()
+  validation_job_priority  TIMESTAMP        DEFAULT now()
 );
 
 
-INSERT INTO client (id, email, password, secret, role, enabled, activated, priority)
+INSERT INTO client (id, email, password, secret, role, enabled, activated, validation_job_priority)
 VALUES ('4bc0cfe4-19e4-462a-8616-941467df17f7', 'ANONYMOUS',
         '$2a$10$LsgDYJpgaG0OhjCyqj8.sOWUjFgZHWOwNpvJTbikrKh68vjzKQ3w2',
         E'\\x371CB7DB8D6B09733742830C9A9F5F644A80E36188AAF015235162492D5AC7E1', 'ANONYMOUS', true, true,
         '2019-04-11 08:17:04.340755');
+
+INSERT INTO client (id, email, password, secret, role, enabled, activated, validation_job_priority)
+VALUES ('d59dff68-580a-4f43-9252-604ed24f90f1', 'noreply@documentcheck.org',
+        '$2a$10$LsgDYJpgaG0OhjCyqj8.sOWUjFgZHWOwNpvJTbikrKh68vjzKQ3w2',
+        E'\\x371CB7DB8D6B09733742830C9A9F5F644A80E36188AAF015235162492D5AC7E1', 'ADMIN', true, true,
+        '2019-04-11 08:17:04.340755');
+
 
 
 CREATE TABLE crawl_job_requests

@@ -4,6 +4,9 @@ $(document).ready(function () {
     $('[data-toggle="tooltip"]').tooltip();
 
 
+    if (localStorage.getItem('token')){
+        $('#email_input').val(localStorage.getItem('email'))
+    }
     var errorDomainMessage = 'Incorrect Domain';
     var errorMailMessage = 'Incorrect Email';
     var errorDateMessage = 'Incorrect Date';

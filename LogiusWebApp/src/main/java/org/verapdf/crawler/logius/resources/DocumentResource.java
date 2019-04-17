@@ -38,6 +38,7 @@ public class DocumentResource {
 
     private static void validatePdfFile(DomainDocument document, ValidationJobDAO validationJobDAO) {
         ValidationJob validationJob = new ValidationJob(document);
+        validationJob.setCreationDate(LocalDateTime.now());
         validationJobDAO.save(validationJob);
     }
 
@@ -82,7 +83,7 @@ public class DocumentResource {
                 validateMSOfficeFile(document);
                 break;
             default:
-                logger.warn("Unknown document type " + document.getContentType() + ". Document " + document.getDocumentId().getDocumentUrl() + " won't be tested.");
+                logger.warn("Unknown document type " + document.getContentType() + ". Document " + document.getDocumentUrl() + " won't be tested.");
         }
 
         return document;

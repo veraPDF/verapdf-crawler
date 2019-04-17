@@ -32,6 +32,14 @@ public class CrawlRequestService {
     }
 
     @Transactional
+    public List<CrawlRequest> getCrawlRequests(String domain, UUID id){
+        CrawlJob crawlJob = crawlJobService.getCrawlJob(domain, id);
+        List<CrawlRequest> crawlRequests = crawlJob.getCrawlRequests();
+        crawlRequests.forEach(crawlRequest -> crawlRequest.getCrawlJobs().size());
+        return crawlRequests;
+    }
+
+    @Transactional
     public CrawlRequest createCrawlRequest(CrawlRequest crawlRequest, UUID userId, CrawlJob.CrawlService crawlService, boolean isValidationRequared) {
         List<String> domains = extractDomains(crawlRequest);
         crawlRequest = crawlRequestDAO.save(crawlRequest);
@@ -60,7 +68,7 @@ public class CrawlRequestService {
 
     public void restartIfHasChanges(CrawlJob existingJob, CrawlJob.CrawlService crawlService, boolean isValidationRequared) {
         if (crawlService != existingJob.getCrawlService() || existingJob.isValidationEnabled() != isValidationRequared) {
-            this.crawlService.restartCrawlJob(existingJob, existingJob.getDomain(), crawlService);
+            this.crawlService.restartCrawlJob(existingJob);
         }
     }
 }

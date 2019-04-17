@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "pdf_validation_jobs_queue")
 public class ValidationJob {
-    //todo asf
     @EmbeddedId
     @Column(insertable = false, updatable = false)
     private DocumentId documentId;
@@ -74,6 +73,10 @@ public class ValidationJob {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public String getDocumentUrl() {
+        return documentId.getDocumentUrl();
     }
 
     public enum Status {

@@ -25,8 +25,10 @@ public class SendEmail {
 
     @Value("${logius.reports.notificationEmails}")
     private String[] reportTargetEmails;
-    @Value("${logius.http.path}")
+    @Value("${logius.uri.path}")
     private String httpPath;
+    @Value("${logius.email.from}")
+    private String emailFrom;
 
     @Autowired
     public SendEmail(JavaMailSender mailSender) {
@@ -68,7 +70,7 @@ public class SendEmail {
                 helper.setTo(recipientAddress);
                 helper.setText(text);
                 helper.setSubject(subject);
-                helper.setFrom("noreply@documentcheck.org");
+                helper.setFrom(emailFrom);
             });
         }
     }

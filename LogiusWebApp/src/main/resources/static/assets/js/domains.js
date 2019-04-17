@@ -4,6 +4,7 @@ $(function () {
     var totalPagesAmount = 1;
     var limit = 10;
     var filter = "";
+    $("#job-list-checkbox").prop('checked', true);
     var paginationOpts = {
         totalPages: 1,
         visiblePages: 5,

@@ -301,7 +301,7 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         if (userId != null) {
             restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id), userId));
         } else {
-            restrictions.add(builder.isNull(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.id)));
+            restrictions.add(builder.equal(document.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.role), Role.ANONYMOUS));
         }
         if (startDate != null) {
             // AND document.lastModified >= startDate

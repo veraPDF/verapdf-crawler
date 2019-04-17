@@ -8,7 +8,7 @@ public class ValidationJobDto {
 
     public ValidationJobDto(ValidationJob job) {
         this.status = job.getStatus();
-        this.id = job.getDocumentId().getDocumentUrl();
+        this.id = job.getDocumentUrl();
     }
 
     public ValidationJob.Status getStatus() {
