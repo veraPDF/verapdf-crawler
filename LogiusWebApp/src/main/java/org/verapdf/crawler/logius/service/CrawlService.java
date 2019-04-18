@@ -33,19 +33,23 @@ public class CrawlService {
         this.queueManager = queueManager;
     }
 
-    public CrawlJob restartCrawlJob(CrawlJob crawlJob, String domain, CrawlJob.CrawlService service) {
+    public CrawlJob restartCrawlJob(CrawlJob crawlJob) {
         List<CrawlRequest> crawlRequests;
-
+        String domain = crawlJob.getDomain();
+        CrawlJob.CrawlService service = crawlJob.getCrawlService();
         String heritrixJobId = crawlJob.getHeritrixJobId();
         CrawlJob.CrawlService currentService = crawlJob.getCrawlService();
         // Keep requests list to link to new job
         crawlRequests = new ArrayList<>(crawlJob.getCrawlRequests());
 
         // Tear crawl service
-        if (currentService == CrawlJob.CrawlService.HERITRIX) {
-            heritrixCleanerTask.teardownAndClearHeritrixJob(heritrixJobId);
-        } else if (currentService == CrawlJob.CrawlService.BING) {
-            bingService.discardJob(crawlJob);
+        switch (currentService){
+            case HERITRIX:
+                heritrixCleanerTask.teardownAndClearHeritrixJob(heritrixJobId);
+                break;
+            case BING:
+                bingService.discardJob(crawlJob);
+                break;
         }
 
         queueManager.abortTasks(crawlJob);
@@ -77,6 +81,4 @@ public class CrawlService {
         }
         // TODO: cleanup heritrix in finally
     }
-
-
 }

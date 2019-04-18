@@ -4,6 +4,7 @@ package org.verapdf.crawler.logius.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -62,9 +63,9 @@ public class ValidatorTask implements Callable<VeraPDFValidationResult> {
                 file = fileService.save(job.getDocumentUrl());
                 if (file != null) {
                     return processJob(file, job);
-                } else {
-                    return saveErrorResult("Can't create url: " + job.getDocumentUrl());
                 }
+                return saveErrorResult("Can't create url: " + job.getDocumentUrl());
+
             } finally {
                 fileService.removeFile(file);
             }
@@ -79,6 +80,7 @@ public class ValidatorTask implements Callable<VeraPDFValidationResult> {
         veraPDFProcessor.setSettings(validationSettingsService.getValidationSettings());
         veraPDFProcessor.setValidationDisabled(job.getDocument().getDocumentId().getCrawlJob().isValidationDisabled());
         VeraPDFValidationResult result = veraPDFProcessor.call();
+
         for (PDFProcessorAdapter pdfProcessor : this.pdfProcessors) {
             Map<String, String> properties = pdfProcessor.evaluateProperties(file.getPath());
             for (Map.Entry<String, String> property : properties.entrySet()) {
