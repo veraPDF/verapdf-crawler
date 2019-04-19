@@ -33,7 +33,7 @@ public class CrawlService {
         this.queueManager = queueManager;
     }
 
-    public CrawlJob restartCrawlJob(CrawlJob crawlJob, String domain, CrawlJob.CrawlService service) {
+    public CrawlJob restartCrawlJob(CrawlJob crawlJob, String domain, CrawlJob.CrawlService service, boolean isValidationRequired) {
         List<CrawlRequest> crawlRequests;
         String heritrixJobId = crawlJob.getHeritrixJobId();
         CrawlJob.CrawlService currentService = crawlJob.getCrawlService();
@@ -56,7 +56,7 @@ public class CrawlService {
         crawlJobDAO.remove(crawlJob);
 
         // Create and start new crawl job
-        CrawlJob newJob = new CrawlJob(domain, service, crawlJob.isValidationEnabled());
+        CrawlJob newJob = new CrawlJob(domain, service, isValidationRequired);
         newJob.setCrawlRequests(crawlRequests);
         newJob.setUser(crawlJob.getUser());
         crawlJobDAO.save(newJob);

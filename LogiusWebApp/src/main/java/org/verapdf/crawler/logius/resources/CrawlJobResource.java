@@ -59,7 +59,7 @@ public class CrawlJobResource {
         UUID id = controllerHelper.getUserUUID(principal);
         CrawlJob crawlJob = crawlJobService.getCrawlJob(domain, id);
         CrawlJob.CrawlService service = crawlJob.getCrawlService();
-        return ResponseEntity.ok(crawlService.restartCrawlJob(crawlJob, domain, service));
+        return ResponseEntity.ok(crawlService.restartCrawlJob(crawlJob, domain, service, crawlJob.isValidationEnabled()));
     }
 
     @GetMapping("/{domain}")
