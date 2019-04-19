@@ -8,7 +8,6 @@ import java.util.Map;
 
 @Configuration
 public class FileTypesConfiguration {
-
     @Bean(name="fileTypes")
     public Map<String, String> fileTypes() {
         Map<String, String> fileTypes = new HashMap<>();

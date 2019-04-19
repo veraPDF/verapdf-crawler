@@ -147,5 +147,14 @@ public class AbstractDAO<E> {
         }
         return proxy;
     }
+
+    protected void setOffset(Query query, Integer start, Integer limit){
+        if (start != null) {
+            query.setFirstResult(start);
+        }
+        if (limit != null) {
+            query.setMaxResults(limit);
+        }
+    }
 }
 

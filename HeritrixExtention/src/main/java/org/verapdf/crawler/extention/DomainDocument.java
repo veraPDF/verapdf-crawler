@@ -4,6 +4,30 @@ import java.util.Date;
 
 public class DomainDocument {
 
+    public DocumentId getDocumentId() {
+        return documentId;
+    }
+
+    public void setDocumentId(DocumentId documentId) {
+        this.documentId = documentId;
+    }
+
+    public static class DocumentId {
+        private String documentUrl;
+
+        public DocumentId(String documentUrl) {
+            this.documentUrl = documentUrl;
+        }
+
+        public String getDocumentUrl() {
+            return documentUrl;
+        }
+
+        public void setDocumentUrl(String documentUrl) {
+            this.documentUrl = documentUrl;
+        }
+    }
+
     public static class CrawlJob {
         private String heritrixJobId;
 
@@ -23,7 +47,7 @@ public class DomainDocument {
         }
     }
 
-    private String url;
+    private DocumentId documentId;
 
     private CrawlJob crawlJob;
 
@@ -36,15 +60,7 @@ public class DomainDocument {
 
     public DomainDocument(String heritrixJobId, String url) {
         this.crawlJob = new CrawlJob(heritrixJobId);
-        this.url = url;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
+        this.documentId = new DocumentId(url);
     }
 
     public CrawlJob getCrawlJob() {

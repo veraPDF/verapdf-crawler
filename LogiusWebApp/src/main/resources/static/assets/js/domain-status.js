@@ -34,7 +34,19 @@ $(function () {
             callback();
         });
     }
+    function isGeneralJob() {
+        var urlParams = new URLSearchParams(window.location.search);
+        console.log(urlParams.get('isGeneralJob'));
+        return urlParams.get('isGeneralJob');
+    }
 
+    function createHeaders() {
+        var headers = {"Content-type": "application/json"};
+        if (isGeneralJob() === 'false'){
+            headers['Authorization'] =  'Bearer ' + localStorage.getItem('token')
+        }
+        return headers
+    }
     function loadJobStatus() {
         if (loadStatusTimeout) {
             clearTimeout(loadStatusTimeout);
@@ -43,6 +55,7 @@ $(function () {
         $.ajax({
             url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain") + "/status"),
             type: "GET",
+            headers: createHeaders(),
             success: function (result) {
                 jobStatusLoaded(result);
             },
@@ -161,7 +174,7 @@ $(function () {
             url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
             type: "PUT",
             data: JSON.stringify(putData),
-            headers: {"Content-type": "application/json"},
+            headers: createHeaders(),
             success: function (result) {
                 enableActions();
                 updateCrawlJob(result);
@@ -190,7 +203,7 @@ $(function () {
             type: "PUT",
             // async:false,
             data: JSON.stringify(putData),
-            headers: {"Content-type": "application/json"},
+            headers: createHeaders(),
             success: function (result) {
                 enableActions();
                 updateCrawlJob(result);
@@ -211,6 +224,7 @@ $(function () {
         $.ajax({
             url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
             type: "POST",
+            headers: createHeaders(),
             success: function (result) {
                 enableActions();
                 updateCrawlJob(result);

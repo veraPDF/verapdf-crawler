@@ -1,9 +1,10 @@
 $(function () {
-    var URL = "/api/crawl-jobs"
+    var URL = "/api/crawl-jobs";
     var rowTemplate = $("#crawl_job_list").children('tbody').children('tr').clone();
     var totalPagesAmount = 1;
     var limit = 10;
     var filter = "";
+    $("#job-list-checkbox").prop('checked', true);
     var paginationOpts = {
         totalPages: 1,
         visiblePages: 5,
@@ -13,8 +14,20 @@ $(function () {
         }
     };
 
+    function createHeaders() {
+        var headers = {"Content-type": "application/json"};
+        if (getUserJobs()){
+            headers['Authorization'] =  'Bearer ' + localStorage.getItem('token')
+        }
+        return headers
+    }
+
     function normalizeURL(url) {
         return url.replace(':', '%3A');
+    }
+
+    function getUserJobs(){
+        return $("#job-list-checkbox").is(':checked') && localStorage['token']
     }
 
     function loadAllJobs(limit, start, domainFilter, redrawPagintion) {
@@ -22,9 +35,11 @@ $(function () {
         if (domainFilter) {
             filter = '&domainFilter=' + domainFilter;
         }
+
         $.ajax({
             url: URL + '?limit=' + limit + '&start=' + start + filter,
             type: "GET",
+            headers: createHeaders(),
             success: function (result, textStatus, request) {
                 $("#crawl_job_list").children('tbody').empty();
                 if (Array.isArray(result)) {
@@ -56,7 +71,7 @@ $(function () {
     function appendCrawlJob(crawlJob) {
         var row = rowTemplate.clone();
         row.find('.domain').text(crawlJob.domain);
-        row.find('.domain').attr("href", "domain.html?domain=" + crawlJob.domain);
+        row.find('.domain').attr("href", "domain.html?domain=" + crawlJob.domain + (getUserJobs()? '&isGeneralJob=false':'&isGeneralJob=true'));
         row.children('.start').text(crawlJob.startTime);
         if (crawlJob.finishTime) {
             row.children('.end').text(crawlJob.finishTime);
@@ -90,7 +105,7 @@ $(function () {
             url: URL + "/" + normalizeURL(link.parent().siblings().first().text()),
             type: "PUT",
             data: JSON.stringify(putData),
-            headers: {"Content-type": "application/json"},
+            headers: createHeaders(),
             success: function (result) {
                 currRow.removeClass('disabled');
                 currRow.removeClass(oldStatus.toLowerCase());
@@ -124,7 +139,7 @@ $(function () {
             url: URL + "/" + normalizeURL(link.parent().siblings().first().text()),
             type: "PUT",
             data: JSON.stringify(putData),
-            headers: {"Content-type": "application/json"},
+            headers: createHeaders(),
             success: function (result) {
                 currRow.removeClass('disabled');
                 currRow.removeClass(oldStatus.toLowerCase());
@@ -139,6 +154,11 @@ $(function () {
 
     });
 
+    $("#job-list-checkbox").on("click", function (e) {
+        console.log($("#job-list-checkbox").is(':checked'));
+        loadAllJobs(limit, 0, '', true);
+    });
+
     $("#crawl_job_list").on("click", 'a.action-restart', function (e) {
         var currRow = $(this).parent().parent();
         if (currRow.hasClass('disabled')) {
@@ -150,6 +170,7 @@ $(function () {
         $.ajax({
             url: URL + "/" + normalizeURL($($(this).parent().siblings()[0]).children().text()),
             type: "POST",
+            headers: createHeaders(),
             success: function (result) {
                 currRow.removeClass('disabled');
                 currRow.removeClass(oldStatus.toLowerCase());

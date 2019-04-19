@@ -1,32 +1,42 @@
 package org.verapdf.crawler.logius.service;
 
 
-import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
+import org.verapdf.crawler.logius.core.email.SendEmail;
 import org.verapdf.crawler.logius.db.UserDao;
-import org.verapdf.crawler.logius.dto.PasswordUpdateDto;
-import org.verapdf.crawler.logius.dto.UserDto;
-import org.verapdf.crawler.logius.dto.UserInfoDto;
+import org.verapdf.crawler.logius.dto.ApiErrorDto;
+import org.verapdf.crawler.logius.dto.user.PasswordUpdateDto;
+import org.verapdf.crawler.logius.dto.user.UserDto;
+import org.verapdf.crawler.logius.dto.user.UserInfoDto;
 import org.verapdf.crawler.logius.exception.AlreadyExistsException;
+import org.verapdf.crawler.logius.exception.BadRequestException;
 import org.verapdf.crawler.logius.exception.IncorrectPasswordException;
 import org.verapdf.crawler.logius.exception.NotFoundException;
 import org.verapdf.crawler.logius.model.Role;
 import org.verapdf.crawler.logius.model.User;
 import org.verapdf.crawler.logius.tools.SecretKeyUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 public class UserService {
     private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
+    private final TokenService tokenService;
+    private final SendEmail sendEmail;
 
-    public UserService(UserDao userDao, PasswordEncoder passwordEncoder) {
+    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenService tokenService, SendEmail sendEmail) {
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
+        this.tokenService = tokenService;
+        this.sendEmail = sendEmail;
     }
 
     @Transactional
@@ -40,14 +50,17 @@ public class UserService {
     }
 
     @Transactional
-    public UserInfoDto save(UserDto dto) {
-        try {
-            User user = new User(dto.getEmail(), passwordEncoder.encode(dto.getPassword()));
-            user.setRole(Role.USER);
-            return saveUserWithUpdateSecret(user);
-        } catch (ConstraintViolationException e) {
+    public User registerUser(UserDto dto) {
+        if (userDao.getByEmail(dto.getEmail()) != null) {
             throw new AlreadyExistsException(String.format("user with email %s already exists", dto.getEmail()));
         }
+        User user = new User(dto.getEmail(), passwordEncoder.encode(dto.getPassword()));
+        user.setRole(Role.USER);
+        user.setValidationJobPriority(LocalDateTime.now());
+        user = saveUserWithUpdateSecret(user);
+        sendEmail.sendEmailConfirm(tokenService.encodeEmailVerificationToken(user), user.getEmail());
+        return user;
+
     }
 
     @Transactional
@@ -63,13 +76,18 @@ public class UserService {
         saveUserWithUpdateSecret(user);
     }
 
-    private UserInfoDto saveUserWithUpdateSecret(User user) {
+    private User saveUserWithUpdateSecret(User user) {
         user.setSecret(SecretKeyUtils.generateSecret());
-        return new UserInfoDto(userDao.save(user));
+        return userDao.save(user);
     }
 
-    private UserInfoDto saveUserWithoutUpdateSecret(User user) {
-        return new UserInfoDto(userDao.save(user));
+    @Transactional
+    public User findUserById(UUID uuid) {
+        User user = userDao.getById(uuid);
+        if (user == null) {
+            throw new NotFoundException(String.format("user with uuid %s not exists", uuid));
+        }
+        return user;
     }
 
     @Transactional
@@ -86,4 +104,37 @@ public class UserService {
         return userDao.count(emailFilter);
     }
 
+    @Transactional
+    public String confirmUserEmail(String token) {
+        String email = tokenService.getSubject(tokenService.decode(token));
+        User user = findUserByEmail(email);
+        tokenService.verify(token, user.getSecret());
+        user.setActivated(true);
+        saveUserWithUpdateSecret(user);
+        return tokenService.encode(user);
+    }
+
+    @Transactional
+    public void confirmResetPassword(UUID uuid, String password) {
+        User user = findUserById(uuid);
+        user.setPassword(passwordEncoder.encode(password));
+        saveUserWithUpdateSecret(user);
+    }
+
+    @Transactional
+    public void resetPassword(String email) {
+        User user = findUserByEmail(email);
+        String token = tokenService.encodePasswordToken(user);
+        sendEmail.sendPasswordResetToken(token, user.getEmail());
+    }
+
+    @Transactional
+    public void resendVerificationEmail(String email) {
+        User user = findUserByEmail(email);
+        if (user.isActivated()){
+            throw new BadRequestException("user already activated");
+        }
+        saveUserWithUpdateSecret(user);
+        sendEmail.sendEmailConfirm(tokenService.encodeEmailVerificationToken(user), user.getEmail());
+    }
 }

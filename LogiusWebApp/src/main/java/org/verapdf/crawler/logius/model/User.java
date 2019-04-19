@@ -1,6 +1,10 @@
 package org.verapdf.crawler.logius.model;
 
+import org.verapdf.crawler.logius.crawling.CrawlJob;
+
 import javax.persistence.*;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -10,17 +14,32 @@ public class User {
     @GeneratedValue
     @Column(columnDefinition = "uuid", updatable = false)
     private UUID id;
+
     @Column(unique = true)
     private String email;
+
     @Column
     private String password;
+
     @Column
     private boolean enabled;
+
+    @Column
+    private boolean activated;
+
     @Column
     private byte[] secret;
+
     @Column
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @OneToMany
+    @JoinColumn(name = "user_id")
+    private List<CrawlJob> crawlJobs;
+
+    @Column(name = "validation_job_priority")
+    private LocalDateTime validationJobPriority;
 
     public User() {
     }
@@ -29,6 +48,14 @@ public class User {
         this.email = email;
         this.password = password;
         this.enabled = true;
+    }
+
+    public List<CrawlJob> getCrawlJobs() {
+        return crawlJobs;
+    }
+
+    public void setCrawlJobs(List<CrawlJob> crawlJobs) {
+        this.crawlJobs = crawlJobs;
     }
 
     public UUID getId() {
@@ -77,5 +104,21 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public boolean isActivated() {
+        return activated;
+    }
+
+    public void setActivated(boolean activated) {
+        this.activated = activated;
+    }
+
+    public LocalDateTime getValidationJobPriority() {
+        return validationJobPriority;
+    }
+
+    public void setValidationJobPriority(LocalDateTime validationJobPriority) {
+        this.validationJobPriority = validationJobPriority;
     }
 }

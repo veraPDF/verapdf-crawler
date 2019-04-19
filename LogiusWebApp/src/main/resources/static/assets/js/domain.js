@@ -127,6 +127,20 @@ $(function () {
 
     var normalizedDomain = normalizeURL(getUrlParameter("domain"));
 
+    function isGeneralJob() {
+        var urlParams = new URLSearchParams(window.location.search);
+        console.log(urlParams.get('isGeneralJob'));
+        return urlParams.get('isGeneralJob');
+    }
+
+    function createHeaders() {
+        var headers = {"Content-type": "application/json"};
+        if (isGeneralJob() === 'false'){
+            headers['Authorization'] =  'Bearer ' + localStorage.getItem('token')
+        }
+        return headers
+    }
+
     // Error handler
     function reportError(response) {
         if (response.responseJSON) {
@@ -142,10 +156,13 @@ $(function () {
     var oldStatus;
 
     function loadCrawlJob() {
-        $.get("api/crawl-jobs/" + normalizedDomain).done(function (result) {
-            crawlJobLoaded(result);
-            //loadSummaryData();
-        }).fail(reportError);
+        $.ajax({
+            url: "api/crawl-jobs/" + normalizedDomain,
+            type: "GET",
+            headers: createHeaders(),
+            success: crawlJobLoaded,
+            error: reportError
+        });
     }
 
     function crawlJobLoaded(job) {
@@ -155,9 +172,9 @@ $(function () {
         }
 
         crawlJob = job;
-
+        console.log(crawlJob)
         main.addClass('status-' + crawlJob.status.toLowerCase());
-        if (crawlJob.validationEnabled){
+        if (crawlJob.validationEnabled) {
             $("#error-nav-pdfwam").removeAttr("style");
             $("#error-nav").removeAttr("style");
         }
@@ -166,7 +183,7 @@ $(function () {
 
         $('.job-date').text(crawlJob.finished ? 'Tested on ' + crawlJob.startTime + ' - ' + crawlJob.finishTime : 'Test started on ' + crawlJob.startTime);
 
-        $('.status-text').text(crawlJob.status).attr('href', 'domain-status.html?domain=' + crawlJob.domain);
+        $('.status-text').text(crawlJob.status).attr('href', 'domain-status.html?domain=' + crawlJob.domain+ "&isGeneralJob=" + isGeneralJob());
 
         // TODO: uncomment when emails edit is implemented
         // if (!crawlJob.finished) {
@@ -175,10 +192,34 @@ $(function () {
 
         $('.job-mails .label').text(crawlJob.finished ? 'Report sent to:' : 'Send report to:');
 
-        $('a.ods-report-link').attr('href', '/api/report/full.ods?domain=' + crawlJob.domain);
+        //$('a.ods-report-link').attr('href', '/api/report/full.ods?domain=' + crawlJob.domain);
 
         enableActions();
     }
+
+    $("button.ods-report-link").on('click', function () {
+        console.log(123123);
+        $.ajax({
+            url: '/api/report/full.ods?domain=' + crawlJob.domain,
+            type: "GET",
+            xhrFields: {
+                responseType: 'blob'
+            },
+            headers: createHeaders(),
+            success: function (data, status, xhr) {
+                var a = document.createElement('a');
+                var url = window.URL.createObjectURL(data);
+                a.href = url;
+                var header =  xhr.getResponseHeader('Content-Disposition');
+                var startIndex = header.indexOf("filename=") + 9;
+                var endIndex = header.length;
+                a.download = header.substring(startIndex, endIndex);
+                a.click();
+                window.URL.revokeObjectURL(url);
+            },
+            error: reportError
+        });
+    });
 
     function disableActions() {
         $('.action').addClass('disabled');
@@ -200,7 +241,7 @@ $(function () {
             url: "api/crawl-jobs/" + normalizedDomain,
             type: "PUT",
             data: JSON.stringify(crawlJob),
-            headers: {"Content-type": "application/json"},
+            headers: createHeaders(),
             success: crawlJobLoaded,
             error: reportError
         });
@@ -218,7 +259,7 @@ $(function () {
             url: "api/crawl-jobs/" + normalizedDomain,
             type: "PUT",
             data: JSON.stringify(crawlJob),
-            headers: {"Content-type": "application/json"},
+            headers:  createHeaders(),
             success: crawlJobLoaded,
             error: reportError
         });
@@ -234,12 +275,10 @@ $(function () {
         var params = {
             url: "api/crawl-jobs/" + normalizedDomain,
             type: "POST",
+            headers: createHeaders(),
             success: crawlJobLoaded,
             error: reportError
         };
-        if (localStorage['token']){
-            params['headers'] = {'Authorization': 'Bearer ' + localStorage['token']};
-        }
         console.log(params);
         $.ajax(params);
     });
@@ -250,7 +289,13 @@ $(function () {
     var mailsList = '';
 
     function loadCrawlRequests() {
-        $.get("api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")) + "/requests").done(crawlRequestsLoaded).fail(reportError);
+        $.ajax({
+            url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")) + "/requests",
+            type: "GET",
+            headers: createHeaders(),
+            success: crawlRequestsLoaded,
+            error: reportError
+        });
     }
 
     function crawlRequestsLoaded(requests) {
@@ -398,6 +443,7 @@ $(function () {
         $.ajax({
             url: url,
             type: "GET",
+            headers: createHeaders(),
             success: function (result) {
                 result = result['typeOfDocuments'];
                 $('.summary .pdf-documents .pdf').text(result['pdf']);
@@ -564,6 +610,7 @@ $(function () {
         $.ajax({
             url: url,
             type: "GET",
+            headers: createHeaders(),
             success: function (result) {
                 // Counts
                 //todo delete open and not open?
@@ -665,6 +712,7 @@ $(function () {
         $.ajax({
             url: url,
             type: 'GET',
+            headers: createHeaders(),
             success: function (result) {
                 var errorsChartData = {
                     labels: [],
@@ -952,6 +1000,7 @@ $(function () {
         $.ajax({
             url: url,
             type: 'GET',
+            headers: createHeaders(),
             success: function (result) {
                 var errorsChartData = {
                     labels: [],

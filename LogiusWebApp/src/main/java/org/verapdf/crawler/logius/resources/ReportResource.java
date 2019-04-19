@@ -6,9 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,10 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.verapdf.crawler.logius.core.reports.ReportsGenerator;
 import org.verapdf.crawler.logius.db.DocumentDAO;
 import org.verapdf.crawler.logius.document.DomainDocument;
+import org.verapdf.crawler.logius.dto.user.TokenUserDetails;
 import org.verapdf.crawler.logius.report.CrawlJobSummary;
 import org.verapdf.crawler.logius.report.ErrorStatistics;
 import org.verapdf.crawler.logius.report.PDFWamErrorStatistics;
 import org.verapdf.crawler.logius.report.PdfPropertyStatistics;
+import org.verapdf.crawler.logius.resources.util.ControllerHelper;
 import org.verapdf.crawler.logius.tools.DomainUtils;
 
 import javax.transaction.Transactional;
@@ -29,10 +31,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("api/report")
@@ -41,25 +42,29 @@ public class ReportResource {
     private static final Logger logger = LoggerFactory.getLogger(ReportResource.class);
     private static final int ODS_MAX_DOCUMENTS_SHOW = 100;
     private final DocumentDAO documentDAO;
+    private final ControllerHelper controllerHelper;
     private final ReportsGenerator reportsGenerator;
+
     @Autowired
-    public ReportResource(DocumentDAO documentDAO, ReportsGenerator reportsGenerator) {
+    public ReportResource(DocumentDAO documentDAO, ControllerHelper controllerHelper, ReportsGenerator reportsGenerator) {
         this.documentDAO = documentDAO;
+        this.controllerHelper = controllerHelper;
         this.reportsGenerator = reportsGenerator;
     }
 
     @GetMapping(value = "/summary", produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional
-    public CrawlJobSummary getSummary(@RequestParam("domain") String domain,
+    public CrawlJobSummary getSummary(@AuthenticationPrincipal TokenUserDetails principal, @RequestParam("domain") String domain,
                                       @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date documentsSince) {
+        UUID userId = controllerHelper.getUserUUID(principal);
         // PDF
-        Long pdfCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), null, documentsSince);
+        Long pdfCount = documentDAO.count(domain, userId, DomainDocument.DocumentTypeGroup.PDF.getTypes(), null, documentsSince);
         // Office Open XML
-        Long microsoftOfficeCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.MS_OFFICE.getTypes(),null, documentsSince);
+        Long microsoftOfficeCount = documentDAO.count(domain, userId, DomainDocument.DocumentTypeGroup.MS_OFFICE.getTypes(), null, documentsSince);
         // OO_XML_OFFICE
-        Long officeOpenXmlCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), null, documentsSince);
+        Long officeOpenXmlCount = documentDAO.count(domain, userId, DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), null, documentsSince);
         // Open Document format (ODF)
-        Long odfCount = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.OPEN_OFFICE.getTypes(), null, documentsSince);
+        Long odfCount = documentDAO.count(domain, userId, DomainDocument.DocumentTypeGroup.OPEN_OFFICE.getTypes(), null, documentsSince);
 
         CrawlJobSummary summary = new CrawlJobSummary();
         summary.addTypeOfDocumentCount(DomainDocument.DocumentTypeGroup.PDF, pdfCount);
@@ -71,19 +76,19 @@ public class ReportResource {
 
     @GetMapping(value = "/document-statistics", produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional
-    public PdfPropertyStatistics getDocumentStatistics(@RequestParam("domain") String domain,
+    public PdfPropertyStatistics getDocumentStatistics(@AuthenticationPrincipal TokenUserDetails principal, @RequestParam("domain") String domain,
                                                        @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date documentsSince) {
-
-        Long openPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince);
-        Long notOpenPdf = documentDAO.count(domain, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
+        UUID userId = controllerHelper.getUserUUID(principal);
+        Long openPdf = documentDAO.count(domain, userId, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.OPEN, documentsSince);
+        Long notOpenPdf = documentDAO.count(domain, userId, DomainDocument.DocumentTypeGroup.PDF.getTypes(), DomainDocument.BaseTestResult.NOT_OPEN, documentsSince);
         Long total = openPdf + notOpenPdf;
 
         List<PdfPropertyStatistics.ValueCount> flavourStatistics = documentDAO.getPropertyStatistic(
-                domain, documentsSince);
+                domain, userId, documentsSince);
         List<PdfPropertyStatistics.ValueCount> versionStatistics = documentDAO.getPropertyStatistics(
-                domain, PdfPropertyStatistics.VERSION_PROPERTY_NAME, documentsSince);
+                domain, userId, PdfPropertyStatistics.VERSION_PROPERTY_NAME, documentsSince);
         List<PdfPropertyStatistics.ValueCount> producerStatistics = documentDAO.getPropertyStatistics(
-                domain, PdfPropertyStatistics.PRODUCER_PROPERTY_NAME, documentsSince, true, PdfPropertyStatistics.TOP_PRODUCERS_COUNT);
+                domain, userId, PdfPropertyStatistics.PRODUCER_PROPERTY_NAME, documentsSince, true, PdfPropertyStatistics.TOP_PRODUCERS_COUNT);
 
         PdfPropertyStatistics statistics = new PdfPropertyStatistics();
         statistics.setOpenPdfDocumentsCount(openPdf);
@@ -98,14 +103,17 @@ public class ReportResource {
 
     @GetMapping(value = "/error-statistics", produces = MediaType.APPLICATION_JSON_VALUE)
     @Transactional
-    public ErrorStatistics getErrorStatistics(@RequestParam("domain") String domain,
+    public ErrorStatistics getErrorStatistics(@AuthenticationPrincipal TokenUserDetails principal,
+                                              @RequestParam("domain") String domain,
                                               @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date documentsSince,
                                               @RequestParam(value = "flavour", required = false) String flavour,
                                               @RequestParam(value = "version", required = false) String version,
                                               @RequestParam(value = "producer", required = false) String producer) {
 
+        UUID userId = controllerHelper.getUserUUID(principal);
+
         List<ErrorStatistics.ErrorCount> errorCounts = documentDAO.getErrorsStatistics(
-                domain, documentsSince, flavour, version, producer, ErrorStatistics.TOP_ERRORS_COUNT);
+                domain, userId, documentsSince, flavour, version, producer, ErrorStatistics.TOP_ERRORS_COUNT);
 
         ErrorStatistics errorStatistics = new ErrorStatistics();
         errorStatistics.setTopErrorStatistics(errorCounts);
@@ -115,37 +123,42 @@ public class ReportResource {
 
     @GetMapping("/pdfwam-statistics")
     @Transactional
-    public List<PDFWamErrorStatistics.ErrorCount> getDocumentPropertyStatistics(@RequestParam("domain") @NotNull String domain,
+    public List<PDFWamErrorStatistics.ErrorCount> getDocumentPropertyStatistics(@AuthenticationPrincipal TokenUserDetails principal,
+                                                                                @RequestParam("domain") @NotNull String domain,
                                                                                 @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate,
                                                                                 @RequestParam(value = "flavour", required = false) String flavour,
                                                                                 @RequestParam(value = "version", required = false) String version,
                                                                                 @RequestParam(value = "producer", required = false) String producer) {
-        return documentDAO.getPDFWamErrorsStatistics(domain, startDate, flavour, version, producer);
+        UUID userId = controllerHelper.getUserUUID(principal);
+        return documentDAO.getPDFWamErrorsStatistics(domain, userId, startDate, flavour, version, producer);
     }
 
 
     @GetMapping(value = "/full.ods")
     @Transactional
-    public ResponseEntity getFullReportAsOds(@RequestParam("domain") String domain,
+    public ResponseEntity getFullReportAsOds(@AuthenticationPrincipal TokenUserDetails principal,
+                                             @RequestParam("domain") String domain,
                                              @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate) {
+        UUID userId = controllerHelper.getUserUUID(principal);
+
         domain = DomainUtils.trimUrl(domain);
-        long compliantPDFA12Count = getDocumentsCount(domain, DomainDocument.DocumentTypeGroup.PDF,
+        long compliantPDFA12Count = getDocumentsCount(domain, userId, DomainDocument.DocumentTypeGroup.PDF,
                 DomainDocument.BaseTestResult.OPEN, startDate);
-        long odfCount = getDocumentsCount(domain, DomainDocument.DocumentTypeGroup.OPEN_OFFICE,
+        long odfCount = getDocumentsCount(domain, userId, DomainDocument.DocumentTypeGroup.OPEN_OFFICE,
                 null, startDate);
-        long invalidPDFA12Count = getDocumentsCount(domain, DomainDocument.DocumentTypeGroup.PDF,
+        long invalidPDFA12Count = getDocumentsCount(domain, userId, DomainDocument.DocumentTypeGroup.PDF,
                 DomainDocument.BaseTestResult.NOT_OPEN, startDate);
-        long msCount = getDocumentsCount(domain, DomainDocument.DocumentTypeGroup.MS_OFFICE,
+        long msCount = getDocumentsCount(domain, userId, DomainDocument.DocumentTypeGroup.MS_OFFICE,
                 null, startDate);
-        long ooXMLCount = getDocumentsCount(domain, DomainDocument.DocumentTypeGroup.OO_XML_OFFICE,
+        long ooXMLCount = getDocumentsCount(domain, userId, DomainDocument.DocumentTypeGroup.OO_XML_OFFICE,
                 null, startDate);
-        List<DomainDocument> invalidPDFDocuments = documentDAO.getDocuments(domain,
+        List<DomainDocument> invalidPDFDocuments = documentDAO.getDocuments(domain, userId,
                 DomainDocument.DocumentTypeGroup.PDF.getTypes(),
                 DomainDocument.BaseTestResult.NOT_OPEN, startDate, ODS_MAX_DOCUMENTS_SHOW);
-        List<String> microsoftDocuments = documentDAO.getDocumentsUrls(domain,
+        List<String> microsoftDocuments = documentDAO.getDocumentsUrls(domain, userId,
                 DomainDocument.DocumentTypeGroup.MS_OFFICE.getTypes(),
                 null, startDate, ODS_MAX_DOCUMENTS_SHOW);
-        List<String> openOfficeXMLDocuments = documentDAO.getDocumentsUrls(domain,
+        List<String> openOfficeXMLDocuments = documentDAO.getDocumentsUrls(domain, userId,
                 DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), null, startDate, ODS_MAX_DOCUMENTS_SHOW);
         try {
             File tempODS = reportsGenerator.generateODSReport(domain, startDate,
@@ -158,7 +171,7 @@ public class ReportResource {
             ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(path));
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType("application/octet-stream"))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + tempODS.getName() + "\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + tempODS.getName())
                     .body(resource);
 
         } catch (IOException e) {
@@ -167,10 +180,10 @@ public class ReportResource {
         return ResponseEntity.badRequest().build();
     }
 
-    private long getDocumentsCount(String domain, DomainDocument.DocumentTypeGroup documentGroup,
+    private long getDocumentsCount(String domain, UUID uuid, DomainDocument.DocumentTypeGroup documentGroup,
                                    DomainDocument.BaseTestResult testResult,
                                    Date start) {
-        Long count = documentDAO.count(domain, documentGroup.getTypes(),
+        Long count = documentDAO.count(domain, uuid, documentGroup.getTypes(),
                 testResult, start);
         return count == null ? 0 : count;
     }

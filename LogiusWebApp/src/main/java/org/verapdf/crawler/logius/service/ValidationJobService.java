@@ -12,6 +12,7 @@ import org.verapdf.crawler.logius.db.DocumentDAO;
 import org.verapdf.crawler.logius.db.ValidationErrorDAO;
 import org.verapdf.crawler.logius.db.ValidationJobDAO;
 import org.verapdf.crawler.logius.document.DomainDocument;
+import org.verapdf.crawler.logius.monitoring.ValidationQueueStatus;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 import org.verapdf.crawler.logius.validation.VeraPDFValidationResult;
 import org.verapdf.crawler.logius.validation.error.ValidationError;
@@ -19,7 +20,7 @@ import org.verapdf.crawler.logius.validation.error.ValidationError;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
-import java.io.File;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,6 @@ public class ValidationJobService {
     private final ValidationJobDAO validationJobDAO;
     private final ValidationErrorDAO validationErrorDAO;
     private final DocumentDAO documentDAO;
-    private ValidationJob currentJob;
 
     public ValidationJobService(ValidationJobDAO validationJobDAO,
                                 ValidationErrorDAO validationErrorDAO, DocumentDAO documentDAO) {
@@ -64,10 +64,17 @@ public class ValidationJobService {
     }
 
     @Transactional
+    public ValidationQueueStatus getValidationJobStatus(int limit) {
+        Long count = validationJobDAO.count(null);
+        List<ValidationJob> documents = validationJobDAO.getDocuments(null, limit);
+        return new ValidationQueueStatus(count, documents);
+    }
+
+    @Transactional
     public void clean() {
         List<ValidationJob> validationJobs = validationJobDAO.currentJobs();
         validationJobs.forEach(validationJob -> {
-            if (validationJob.getDocument().getCrawlJob().getStatus() == CrawlJob.Status.PAUSED) {
+            if (validationJob.getDocument().getDocumentId().getCrawlJob().getStatus() == CrawlJob.Status.PAUSED) {
                 validationJob.setStatus(ValidationJob.Status.PAUSED);
             } else {
                 validationJob.setStatus(ValidationJob.Status.NOT_STARTED);
@@ -81,25 +88,13 @@ public class ValidationJobService {
         ValidationJob job = validationJobDAO.next();
         if (job != null) {
             job.setStatus(ValidationJob.Status.IN_PROGRESS);
-        }
-        synchronized (ValidationJobService.class) {
-            this.currentJob = job;
+            job.getDocument().getDocumentId().getCrawlJob().getUser().setValidationJobPriority(LocalDateTime.now());
         }
         return job;
     }
 
     @Transactional
-    public ValidationJob retrieveCurrentJob() {
-        logger.debug("Getting current job");
-        ValidationJob job = validationJobDAO.current();
-        synchronized (ValidationJobService.class) {
-            this.currentJob = job;
-        }
-        return job;
-    }
-
-    @Transactional
-    public void saveResult(VeraPDFValidationResult result) {
+    public void saveResult(VeraPDFValidationResult result, ValidationJob currentJob) {
         boolean shouldCleanDB = false;
         try {
             if (!currentJob.getStatus().equals(ValidationJob.Status.ABORTED)) {
@@ -151,9 +146,5 @@ public class ValidationJobService {
         if (shouldCleanDB) {
             validationJobDAO.remove(job);
         }
-    }
-
-    public ValidationJob getCurrentJob() {
-        return currentJob;
     }
 }

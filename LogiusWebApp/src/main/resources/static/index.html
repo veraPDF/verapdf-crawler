@@ -47,6 +47,15 @@
     </nav>
 </header>
 <main class="main">
+    <p style="font-size: 15px">
+        This web application gives rough statistics on the document formats published on a given website.
+        It uses Bing search to take a sample of up to 1000 documents on the domain you enter and counts the number of
+        PDF, ODF, OOXML and Microsoft Ofice files found.
+        It also gives detailed information about the PDF versions and standards found.
+
+        To get more complete samples and more accurate statistics, please register. It's free but we reserve the right
+        to prevent abuse of this tool.
+    </p>
     <div class="main-form">
         <form class="form">
             <p class="form-group">
@@ -64,11 +73,13 @@
                 <input class="form-control" id="email_input" onkeypress="keyListener(event)" type="text">
             </p>
             <p style="display: none" id="bing-crawl-service-elem">
-                <input class="form-control checkbox-input" type="checkbox" style="display: none" id="bing-crawl-service">
+                <input class="form-control checkbox-input" type="checkbox" style="display: none"
+                       id="bing-crawl-service">
                 <label class="form-label check-label" for="bing-crawl-service">Use Heritrix for Crawling</label>
             </p>
             <p style="display: none" id="validation-required-elem">
-                <input class="form-control checkbox-input" type="checkbox" style="display: none" id="validation-required">
+                <input class="form-control checkbox-input" type="checkbox" style="display: none"
+                       id="validation-required">
                 <label class="form-label check-label" for="validation-required">Apply full PDF/A validation</label>
             </p>
             <p class="form-group">
@@ -78,6 +89,11 @@
 
         </form>
     </div>
+    <p style="font-size: 13px"> We record your e-mail address for no other purpose than providing you with access to
+        this application and sending you the results of your queries.<br>
+        We do not share your e-mail address with third parties. We do not keep your e-mail address when you unregister
+        for this application.
+    </p>
 </main>
 <footer class="footer"></footer>
 </body>

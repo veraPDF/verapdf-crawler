@@ -52,14 +52,14 @@
 //				if (healthy && notified) {
 //					notifiedChecks.remove(name);
 //				} else if (!healthy && !notified) {
-//					failedChecks.add(name);
+//					failedChecks.retirieveNextJob(name);
 //				}
 //			}
 //		}
 //		if (!failedChecks.isEmpty()) {
 //			StringBuilder builder = new StringBuilder();
 //			for (String check : failedChecks) {
-//				this.notifiedChecks.add(check);
+//				this.notifiedChecks.retirieveNextJob(check);
 //				builder.append(check).append(", ");
 //			}
 //			SendEmail.sendReportNotification(EMAIL_SUBJECT, String.format(EMAIL_BODY, builder.substring(0, builder.length()-2)));

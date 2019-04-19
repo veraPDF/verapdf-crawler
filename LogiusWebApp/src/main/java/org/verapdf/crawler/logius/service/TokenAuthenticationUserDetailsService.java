@@ -1,6 +1,7 @@
 package org.verapdf.crawler.logius.service;
 
 
+import com.auth0.jwt.interfaces.DecodedJWT;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.AuthenticationUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,8 +10,10 @@ import org.springframework.security.web.authentication.preauth.PreAuthenticatedA
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.db.UserDao;
-import org.verapdf.crawler.logius.dto.TokenUserDetails;
+import org.verapdf.crawler.logius.dto.user.TokenUserDetails;
 import org.verapdf.crawler.logius.model.User;
+
+import java.util.Arrays;
 
 @Service
 public class TokenAuthenticationUserDetailsService implements AuthenticationUserDetailsService<PreAuthenticatedAuthenticationToken> {
@@ -25,20 +28,24 @@ public class TokenAuthenticationUserDetailsService implements AuthenticationUser
 
     @Transactional
     @Override
-    public UserDetails loadUserDetails(PreAuthenticatedAuthenticationToken authentication) throws UsernameNotFoundException {
-        if (authentication.getPrincipal() != null && authentication.getPrincipal() instanceof String && authentication.getCredentials() instanceof String) {
-            try {
-                String token = (String) authentication.getPrincipal();
-                User user = userDao.getByEmail(tokenService.getSubject(token));
-                tokenService.verify(token, user.getSecret());
-                return new TokenUserDetails(user.getEmail(), user.getPassword(), user.isEnabled(), user.getRole(), token);
-
-            } catch (Exception ex) {
-                throw new UsernameNotFoundException("Token has been expired", ex);
-            }
-
-        } else {
+    public UserDetails loadUserDetails(PreAuthenticatedAuthenticationToken authentication) {
+        if (authentication.getPrincipal() == null
+                || !(authentication.getPrincipal() instanceof String)
+                || !(authentication.getCredentials() instanceof String)) {
             throw new UsernameNotFoundException("Could not retrieve user details for " + authentication.getPrincipal());
+        }
+        try {
+            String token = (String) authentication.getPrincipal();
+            DecodedJWT decodedToken = tokenService.decode(token);
+            User user = userDao.getByEmail(tokenService.getSubject(decodedToken));
+            tokenService.verify(token, user.getSecret());
+            String[] scopes = tokenService.getScopes(token);
+            boolean isActivated = Arrays.asList(scopes).contains("EMAIL_VERIFICATION") || user.isActivated();
+            return new TokenUserDetails(user.getId(), user.getEmail(), user.getPassword(),
+                    user.isEnabled(), isActivated, token, user.getRole(), tokenService.getScopes(token));
+
+        } catch (Exception ex) {
+            throw new UsernameNotFoundException("Token has been expired", ex);
         }
     }
 }

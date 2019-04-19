@@ -1,9 +1,11 @@
 package org.verapdf.crawler.logius.monitoring;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.verapdf.crawler.logius.dto.ValidationJobDto;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Maksim Bezrukov
@@ -11,14 +13,14 @@ import java.util.List;
 public class ValidationQueueStatus {
 
     private Long count;
-    private List<ValidationJob> topDocuments;
+    private List<ValidationJobDto> topDocuments;
 
     public ValidationQueueStatus() {
     }
 
     public ValidationQueueStatus(Long count, List<ValidationJob> topDocuments) {
         this.count = count;
-        this.topDocuments = topDocuments;
+        this.topDocuments = topDocuments.stream().map(ValidationJobDto::new).collect(Collectors.toList());
     }
 
     public Long getCount() {
@@ -29,11 +31,11 @@ public class ValidationQueueStatus {
         this.count = count;
     }
 
-    public List<ValidationJob> getTopDocuments() {
+    public List<ValidationJobDto> getTopDocuments() {
         return topDocuments;
     }
 
-    public void setTopDocuments(List<ValidationJob> documents) {
-        this.topDocuments = documents;
+    public void setTopDocuments(List<ValidationJobDto> topDocuments) {
+        this.topDocuments = topDocuments;
     }
 }

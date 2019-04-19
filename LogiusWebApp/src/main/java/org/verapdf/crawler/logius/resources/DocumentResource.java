@@ -4,6 +4,7 @@ package org.verapdf.crawler.logius.resources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,6 +17,8 @@ import org.verapdf.crawler.logius.db.ValidationJobDAO;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 @RestController
@@ -35,6 +38,7 @@ public class DocumentResource {
 
     private static void validatePdfFile(DomainDocument document, ValidationJobDAO validationJobDAO) {
         ValidationJob validationJob = new ValidationJob(document);
+        validationJob.setCreationDate(LocalDateTime.now());
         validationJobDAO.save(validationJob);
     }
 
@@ -49,7 +53,7 @@ public class DocumentResource {
     @PostMapping
     @Transactional
     public DomainDocument saveDocument(@RequestBody DomainDocument document) {
-        CrawlJob job = crawlJobDAO.getByHeritrixJobId(document.getCrawlJob().getHeritrixJobId());
+        CrawlJob job = crawlJobDAO.getByHeritrixJobId(document.getDocumentId().getCrawlJob().getHeritrixJobId());
         if (job == null) {
             return null;
         }
@@ -58,7 +62,7 @@ public class DocumentResource {
 
     @Transactional
     public DomainDocument saveDocument(DomainDocument document, CrawlJob job) {
-        document.setCrawlJob(job);
+        document.getDocumentId().setCrawlJob(job);
         documentDAO.save(document);
 
         switch (document.getContentType().toLowerCase()) {
@@ -79,7 +83,7 @@ public class DocumentResource {
                 validateMSOfficeFile(document);
                 break;
             default:
-                logger.warn("Unknown document type " + document.getContentType() + ". Document " + document.getUrl() + " won't be tested.");
+                logger.warn("Unknown document type " + document.getContentType() + ". Document " + document.getDocumentUrl() + " won't be tested.");
         }
 
         return document;

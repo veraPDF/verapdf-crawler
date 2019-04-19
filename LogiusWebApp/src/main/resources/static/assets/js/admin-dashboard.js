@@ -1,6 +1,6 @@
 $(function () {
     var USER_LIST_URL = "/api/user";
-    var USER_CHANGE_STATUS_URL = "/api/user/status";
+    var USER_CHANGE_STATUS_URL = "/api/user/";
     var rowTemplate = $("#user_list").children('tbody').children('tr').clone();
     var totalPagesAmount = 1;
     var limit = 10;
@@ -63,7 +63,7 @@ $(function () {
         row.find('.enabled').find('input').change(function () {
             $.ajax({
                 headers: {'Authorization': 'Bearer ' + localStorage['token']},
-                url: USER_CHANGE_STATUS_URL + "?email=" + user.email + "&status="  + $(this).is(':checked'),
+                url: USER_CHANGE_STATUS_URL + user.email + "/status"+ "?&status="  + $(this).is(':checked'),
                 type: "PUT",
                 error: function (result) {
                     reportError(result);

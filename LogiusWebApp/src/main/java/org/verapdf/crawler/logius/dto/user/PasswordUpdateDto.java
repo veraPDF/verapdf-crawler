@@ -1,4 +1,4 @@
-package org.verapdf.crawler.logius.dto;
+package org.verapdf.crawler.logius.dto.user;
 
 import org.verapdf.crawler.logius.tools.Constants;
 

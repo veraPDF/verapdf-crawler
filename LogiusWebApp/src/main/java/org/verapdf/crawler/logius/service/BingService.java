@@ -2,50 +2,40 @@ package org.verapdf.crawler.logius.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.resources.DocumentResource;
-import org.verapdf.crawler.logius.tools.HttpClientUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
 public class BingService {
     private static final Logger logger = LoggerFactory.getLogger(BingService.class);
-    private static SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
     private final CrawlJobService crawlJobService;
     private final DocumentResource documentResource;
-    private final Map<String, String> fileTypes;
+
+    @Value("${logius.bing.apiKey}")
     private String apiKey;
     private CrawlJob currentJob = null;
 
-    public BingService(@Value("${logius.bing.apiKey}") String apiKey,
-                       CrawlJobService crawlJobService,
-                       DocumentResource documentResource,
-                       @Qualifier("fileTypes") Map<String, String> fileTypes) {
-        this.apiKey = apiKey;
+    public BingService(CrawlJobService crawlJobService,
+                       DocumentResource documentResource) {
         this.crawlJobService = crawlJobService;
         this.documentResource = documentResource;
-        this.fileTypes = fileTypes;
     }
 
     @Transactional
@@ -74,46 +64,12 @@ public class BingService {
 
 
     public void processFile(String url, String fileType) {
-        try {
-            try (CloseableHttpClient client = HttpClients.createDefault()) {
-                HttpGet get = new HttpGet(url);
-                CloseableHttpResponse response = client.execute(get);
-                String contentType = null;
-                Header[] contentTypeHeaders = response.getHeaders("Content-Type");
-                if (contentTypeHeaders != null && contentTypeHeaders.length > 0) {
-                    String value = contentTypeHeaders[0].getValue();
-                    if (value != null) {
-                        if (value.startsWith("text")) {
-                            return;
-                        } else if (fileTypes.containsKey(value)) {
-                            contentType = fileTypes.get(value);
-                        }
-                    }
-                }
-                if (contentType == null) {
-                    contentType = FilenameUtils.getExtension(url);
-                }
-                if (contentType == null) {
-                    contentType = fileType;
-                }
-                DomainDocument domainDocument = new DomainDocument();
-                domainDocument.setUrl(url);
-                domainDocument.setCrawlJob(this.currentJob);
-                domainDocument.setContentType(contentType);
-                Header[] lastModHeaders = response.getHeaders("Last-Modified");
-                if (lastModHeaders != null && lastModHeaders.length > 0) {
-                    try {
-                        domainDocument.setLastModified(dateFormat.parse(lastModHeaders[0].getValue()));
-                    } catch (ParseException e) {
-                        logger.info("Fail to parse last modified date for " + url + ", lastModified won't be set for this document.");
-                    }
-                }
-                if (this.currentJob != null) {
-                    documentResource.saveDocument(domainDocument, this.currentJob);
-                }
-            }
-        } catch (Exception e) {
-            logger.error("Can't create url: " + url, e);
+        DomainDocument domainDocument = new DomainDocument();
+        domainDocument.getDocumentId().setDocumentUrl(url);
+        domainDocument.getDocumentId().setCrawlJob(this.currentJob);
+        domainDocument.setContentType(fileType);
+        if (this.currentJob != null) {
+            documentResource.saveDocument(domainDocument, this.currentJob);
         }
     }
 
@@ -178,5 +134,10 @@ public class BingService {
         if (this.currentJob != null && this.currentJob.getDomain().equals(job.getDomain())) {
             this.currentJob = null;
         }
+    }
+
+    @Scheduled(fixedDelayString = "#{${logius.bing.sleepDurationInSeconds}}")
+    public void initValidationQueue() {
+        checkNewJobs();
     }
 }

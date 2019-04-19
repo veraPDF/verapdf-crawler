@@ -1,17 +1,18 @@
 package org.verapdf.crawler.logius.service;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.verapdf.crawler.logius.tools.HttpClientUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
@@ -46,20 +47,26 @@ public class FileService {
     public File save(String url) {
         File file = null;
         try {
-            try (CloseableHttpClient client = HttpClients.createDefault()) {
+            try (CloseableHttpClient client = HttpClientUtils.createTrustAllHttpClient()) {
                 HttpGet get = new HttpGet(url);
                 CloseableHttpResponse response = client.execute(get);
                 String contentType = null;
                 Header[] contentTypeHeaders = response.getHeaders("Content-Type");
                 if (contentTypeHeaders != null && contentTypeHeaders.length > 0) {
                     String value = contentTypeHeaders[0].getValue();
-                    if (value != null) {
-                        if (value.startsWith("text")) {
-                            return null;
-                        } else if (fileTypes.containsKey(value)) {
-                            contentType = fileTypes.get(value);
-                        }
+                    if (value != null && value.startsWith("text")) {
+                        return null;
                     }
+                    if (fileTypes.keySet().contains(value)) {
+                        contentType = fileTypes.get(value);
+                    }
+                }
+                if (contentType == null) {
+                    String extension = FilenameUtils.getExtension(url);
+                    if (!fileTypes.values().contains(extension)) {
+                        return null;
+                    }
+                    contentType = extension;
                 }
                 file = File.createTempFile("logius", "." + contentType, baseTempFolder);
                 FileOutputStream fileOutputStream = new FileOutputStream(file);

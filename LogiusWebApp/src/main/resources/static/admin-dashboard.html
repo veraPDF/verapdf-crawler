@@ -20,6 +20,7 @@
     <script src="assets/js/user.js"></script>
     <script src="assets/js/admin-dashboard.js"></script>
     <script src="assets/vendor/jquery.twbsPagination.min.js"></script>
+    <script src="assets/js/status.js"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
     <!-- TODO: Set correct path -->
@@ -63,6 +64,7 @@
                 <tr>
                     <th class="col-user col-status" style="width:90%">Email</th>
                     <th class="col-enabled col-status">Enabled</th>
+                    <th class="col-enabled col-status">Locked</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -70,6 +72,11 @@
                     <td class="email status"></td>
                     <td class="enabled status">
                         <input class="checkbox-input" type="checkbox">
+                        <label class="check-label"  style="font-size: 22px; text-align: center;"></label>
+                    </td>
+                    <td class="locked status">
+                        <input class="checkbox-input-locked" type="checkbox">
+                        <label class="check-label"  style="font-size: 22px; text-align: center;"></label>
                     </td>
                 </tr>
                 </tbody>
@@ -79,8 +86,78 @@
             </nav>
         </div>
 
+
+        <!--HEALTH CHECK PANEL-->
         <div class="errors tab-pane fade" id="healthcheck" role="tabpanel">
-            HealthCheck tab panel
+            <div class="health-checks">
+                <h4>General health checks</h4>
+                <div class="loading">Loading...</div>
+                <!--<div>-->
+                    <!--<input class="input-button" id="heap-dump" name="button" type="submit" style="float: inherit; margin-left: 0px" value="Heap dump">-->
+                    <!--<input class="input-button" id="logs" name="button" type="submit" style="float: inherit; margin-left: 5px" value="Logs">-->
+                <!--</div>-->
+                <div class="loaded">
+                    <div class="template">
+                        <div class="check-name"></div>
+                        <div class="check-status"></div>
+                        <div class="check-message"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="active-domains-list">
+                <div class="loading">Loading active jobs...</div>
+                <div class="loaded">
+                    <form class="form-inline d-flex flex-nowrap justify-content-between">
+                        <h4><span class="active-jobs-count"></span> active job(s)</h4>
+                        <div class="domains-list-error"></div>
+                        <div class="input-group input-group-sm domain-filter">
+                            <input aria-label="Search domain" class="form-control" placeholder="Search domain" type="text">
+                            <span class="input-group-addon material-icons">search</span>
+                        </div>
+                    </form>
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th class="col-domain">Domain</th>
+                            <th class="col-heritrix-id">Heritrix ID</th>
+                            <th class="col-date">Start time</th>
+                            <th class="col-status">Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr class="template">
+                            <td class="domain"><a href="#"></a></td>
+                            <td class="heritrix-id"><a href="#" target="_blank"></a></td>
+                            <td class="start"></td>
+                            <td class="status"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <nav>
+                        <ul class="pagination pagination-sm justify-content-center" id="pagination-crawl-job-container"></ul>
+                    </nav>
+                </div>
+            </div>
+
+            <div class="validation-queue">
+                <div class="loading">Loading queue info...</div>
+                <div class="loaded">
+                    <h4><span class="validation-queue-size"></span> document(s) in validation queue</h4>
+                    <table class="table table-sm">
+                        <thead>
+                        <tr>
+                            <th>Top 10 documents</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr class="template">
+                            <td class="url"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </main>

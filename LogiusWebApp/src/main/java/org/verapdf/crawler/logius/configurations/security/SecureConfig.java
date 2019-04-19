@@ -2,7 +2,6 @@ package org.verapdf.crawler.logius.configurations.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -14,7 +13,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider;
@@ -75,6 +73,7 @@ public class SecureConfig {
     public class TokenAuthConfig extends WebSecurityConfigurerAdapter {
         private final TokenAuthenticationUserDetailsService service;
         private final AuthHandler authHandler;
+
         @Autowired
         public TokenAuthConfig(TokenAuthenticationUserDetailsService service, AuthHandler authHandler) {
             this.service = service;
@@ -83,8 +82,11 @@ public class SecureConfig {
 
         @Override
         protected void configure(HttpSecurity http) throws Exception {
-            http
-                    .authorizeRequests().antMatchers("/api/admin/**").hasAuthority("ADMIN")
+            http.authorizeRequests()
+                    .antMatchers("/api/user/password-reset-confirm").hasAuthority("RESET_PASSWORD")
+                    .antMatchers("/api/user/email-confirm").hasAuthority("EMAIL_VERIFICATION")
+                    .antMatchers("/api/admin/**").access("hasAuthority('GENERAL') and hasAuthority('ADMIN')")
+                    .antMatchers("/api/**").access("hasAuthority('GENERAL') or isAnonymous()")
                     .and()
                     .addFilterBefore(authFilter(), RequestHeaderAuthenticationFilter.class)
                     .authenticationProvider(preAuthProvider()).exceptionHandling().accessDeniedHandler(authHandler)

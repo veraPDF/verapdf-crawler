@@ -22,7 +22,7 @@ $(function () {
     var activeDomainsListContainer = $('.active-domains-list');
     var domainFilterElement = $('.domain-filter');
     var domainFilterInput = domainFilterElement.find('input');
-    var paginationContainer = $('#pagination-container');
+    var paginationContainer = $('#pagination-crawl-job-container');
     var validationQueueContainer = $('.validation-queue');
 
     // Health checks
@@ -30,7 +30,19 @@ $(function () {
         if (loadHealthChecksTimeout) {
             clearTimeout(loadHealthChecksTimeout);
         }
-        $.get('/api/healthcheck').done(renderHealthChecks);
+        $.ajax({
+            url: "/api/admin/health/info",
+            type: "GET",
+            headers: {
+                "Content-type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem("token")
+            },
+            success: function (result) {
+                renderHealthChecks(result);
+            }
+        });
+
+        //$.get('/api/healthcheck').done(renderHealthChecks);
     }
 
     function renderHealthChecks(healthchecks) {
@@ -44,7 +56,7 @@ $(function () {
             element.removeClass('template');
             element.find('.check-name').text(name);
 
-            if (healthcheck['healthy']) {
+            if (healthcheck) {
                 element.addClass('healthy');
                 element.find('.check-status').text('healthy');
             } else {
@@ -62,9 +74,18 @@ $(function () {
 
     // Heritrix settings (engine URL)
     function loadHeritrixSettings(callback) {
-        $.get('/api/heritrix').done(function (heritrix) {
-            heritrixEngineUrl = heritrix.engineUrl;
-            callback();
+        $.ajax({
+            url: "api/admin/health/info/heritrix",
+            type: "GET",
+            headers: {
+                "Content-type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem("token")
+            },
+            success: function (result) {
+                console.log(result.engineUrl);
+                heritrixEngineUrl = result.engineUrl;
+                callback();
+            }
         });
     }
 
@@ -80,8 +101,17 @@ $(function () {
         if (domainFilterInput.val() && domainFilterInput.val().trim().length > 0) {
             filter = '&domainFilter=' + domainFilterInput.val();
         }
-
-        $.get('/api/crawl-jobs?limit=' + limit + '&start=' + start + '&finished=false' + filter).done(renderActiveJobs);
+        $.ajax({
+            url: '/api/admin/health/info/active-jobs?limit=' + limit + '&start=' + start + filter,
+            type: "GET",
+            headers: {
+                "Content-type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem("token")
+            },
+            success: function (result, textStatus, request) {
+                renderActiveJobs(result['jobs'], textStatus, request);
+            }
+        });
     }
 
     function renderActiveJobs(jobs, textStatus, request) {
@@ -98,6 +128,7 @@ $(function () {
 
         } else {
             // If we have active jobs display related elements
+
             activeDomainsListContainer.find('.domain-filter').show();
             activeDomainsListContainer.find('table').show();
             activeDomainsListContainer.find('nav').show();
@@ -169,7 +200,17 @@ $(function () {
         if (loadValidationQueueTimeout) {
             clearTimeout(loadValidationQueueTimeout);
         }
-        $.get('/api/validation-service/queue-status').done(renderValidationQueueStatus);
+        $.ajax({
+            url: '/api/admin/health/info/queue-status',
+            type: "GET",
+            headers: {
+                "Content-type": "application/json",
+                "Authorization": "Bearer " + localStorage.getItem("token")
+            },
+            success: function (result) {
+                renderValidationQueueStatus(result);
+            }
+        });
     }
 
     function renderValidationQueueStatus(queueStatus) {

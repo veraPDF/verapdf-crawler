@@ -5,10 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.verapdf.crawler.logius.dto.PasswordUpdateDto;
-import org.verapdf.crawler.logius.dto.TokenUserDetails;
-import org.verapdf.crawler.logius.dto.UserDto;
-import org.verapdf.crawler.logius.dto.UserInfoDto;
+import org.verapdf.crawler.logius.dto.TokenDto;
+import org.verapdf.crawler.logius.dto.user.*;
 import org.verapdf.crawler.logius.service.UserService;
 
 import javax.validation.Valid;
@@ -60,8 +58,30 @@ public class UserResource {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity registerUser(@Valid @RequestBody UserDto signUpRequest) {
-        userService.save(signUpRequest);
+    public ResponseEntity registerUser(@RequestBody @Valid UserDto signUpRequest) {
+        userService.registerUser(signUpRequest);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @PostMapping("/email-confirm")
+    public TokenDto emailConfirm(@AuthenticationPrincipal TokenUserDetails principal) {
+        return new TokenDto(userService.confirmUserEmail(principal.getToken()));
+    }
+
+    @PostMapping("/email-resend")
+    public ResponseEntity emailResend(@Email @RequestParam(value = "email") String email) {
+        userService.resendVerificationEmail(email);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/password-reset")
+    public void resetPassword(@Email @RequestParam(value = "email") String email) {
+        userService.resetPassword(email);
+    }
+
+    @PostMapping("/password-reset-confirm")
+    public void passwordResetConfirm(@AuthenticationPrincipal TokenUserDetails principal,
+                                               @RequestBody @Valid PasswordResetDto passwordResetDto){
+        userService.confirmResetPassword(principal.getUuid(), passwordResetDto.getNewPassword());
     }
 }

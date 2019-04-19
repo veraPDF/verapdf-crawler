@@ -17,6 +17,7 @@ import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class UserDao extends AbstractDAO<User> {
@@ -34,6 +35,15 @@ public class UserDao extends AbstractDAO<User> {
         return uniqueResult(criteriaQuery);
     }
 
+    public User getById(UUID uuid) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<User> criteriaQuery = builder.createQuery(User.class);
+        Root<User> crawlJob = criteriaQuery.from(User.class);
+
+        criteriaQuery.where(builder.equal(crawlJob.get(User_.id), uuid));
+        return uniqueResult(criteriaQuery);
+    }
+
     public User save(User user) {
         return persist(user);
     }
@@ -47,12 +57,7 @@ public class UserDao extends AbstractDAO<User> {
             criteriaQuery.where(builder.like(rootEntry.get(User_.email), "%" + emailFilter + "%"));
         }
         Query<User> query = this.currentSession().createQuery(criteriaQuery);
-        if (start != null) {
-            query.setFirstResult(start);
-        }
-        if (limit != null) {
-            query.setMaxResults(limit);
-        }
+        setOffset(query, start, limit);
         return list(query);
     }
 

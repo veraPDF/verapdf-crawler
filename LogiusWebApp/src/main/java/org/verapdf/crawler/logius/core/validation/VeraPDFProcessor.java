@@ -191,7 +191,7 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
         }
     }
 
-    void stopProcess() {
+    public void stopProcess() {
         this.stopped = true;
         if (this.process != null && this.process.isAlive()) {
             this.process.destroy();
@@ -236,7 +236,7 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
             result = generateProblemResult(message, e);
         } catch (Throwable e) {
             String message = "Some problem in generating result";
-            logger.info(message, e);
+            logger.info(message, e, filePath.getAbsoluteFile());
             result = generateProblemResult(message, e);
         } finally {
             logger.info("Finished");
@@ -244,10 +244,10 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
                 logger.info("Report has not been deleted manually");
             }
         }
-        if (!stopped) {
-            return result;
+        if (stopped) {
+            return null;
         }
-        return null;
+        return result;
     }
 
     public void setValidationDisabled(boolean isValidationDisabled) {
