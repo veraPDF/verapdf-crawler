@@ -66,9 +66,9 @@ public class CrawlRequestService {
                 .map(crawlJob -> DomainUtils.trimUrl(crawlJob.getDomain())).collect(Collectors.toList());
     }
 
-    public void restartIfHasChanges(CrawlJob existingJob, CrawlJob.CrawlService crawlService, boolean isValidationRequared) {
-        if (crawlService != existingJob.getCrawlService() || existingJob.isValidationEnabled() != isValidationRequared) {
-            this.crawlService.restartCrawlJob(existingJob, existingJob.getDomain(), crawlService, isValidationRequared);
+    public void restartIfHasChanges(CrawlJob existingJob, CrawlJob.CrawlService crawlService, boolean isValidationRequired) {
+        if (crawlService != existingJob.getCrawlService() || existingJob.isValidationEnabled() != isValidationRequired) {
+            this.crawlService.restartCrawlJob(existingJob, crawlService, isValidationRequired);
         }
     }
 }

@@ -236,7 +236,7 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
             result = generateProblemResult(message, e);
         } catch (Throwable e) {
             String message = "Some problem in generating result";
-            logger.info(message, e);
+            logger.info(message, e, filePath.getAbsoluteFile());
             result = generateProblemResult(message, e);
         } finally {
             logger.info("Finished");

@@ -8,12 +8,10 @@ import java.util.Map;
 
 @Configuration
 public class FileTypesConfiguration {
-    //todo switch to contains
     @Bean(name="fileTypes")
     public Map<String, String> fileTypes() {
         Map<String, String> fileTypes = new HashMap<>();
         fileTypes.put("application/pdf", "pdf");
-        fileTypes.put("application/pdf;charset=UTF-8", "pdf");
         fileTypes.put("application/vnd.oasis.opendocument.text", "odt");
         fileTypes.put("application/vnd.oasis.opendocument.spreadsheet", "ods");
         fileTypes.put("application/vnd.oasis.opendocument.presentation", "odp");

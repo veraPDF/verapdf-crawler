@@ -9,10 +9,12 @@ import org.verapdf.crawler.logius.core.tasks.HeritrixCleanerTask;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.CrawlRequest;
 import org.verapdf.crawler.logius.db.CrawlJobDAO;
+import org.verapdf.crawler.logius.exception.NotFoundException;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class CrawlService {
@@ -33,7 +35,16 @@ public class CrawlService {
         this.queueManager = queueManager;
     }
 
-    public CrawlJob restartCrawlJob(CrawlJob crawlJob, String domain, CrawlJob.CrawlService service, boolean isValidationRequired) {
+    public CrawlJob restartCrawlJob(UUID userId, String domain){
+        CrawlJob crawlJob = crawlJobDAO.findByDomainAndUserId(domain, userId);
+        if (crawlJob == null){
+            throw new NotFoundException(String.format("crawl job with userId %s and domain %s not found", userId, domain));
+        }
+        return restartCrawlJob(crawlJob, crawlJob.getCrawlService(), crawlJob.isValidationEnabled());
+    }
+
+
+    public CrawlJob restartCrawlJob(CrawlJob crawlJob, CrawlJob.CrawlService service, boolean isValidationRequired) {
         List<CrawlRequest> crawlRequests;
         String heritrixJobId = crawlJob.getHeritrixJobId();
         CrawlJob.CrawlService currentService = crawlJob.getCrawlService();
@@ -49,14 +60,14 @@ public class CrawlService {
                 bingService.discardJob(crawlJob);
                 break;
             default:
-                throw new IllegalStateException("CrawlJob service can't be null");
+                throw new IllegalStateException("Unsupported CrawlJob service");
         }
 
         queueManager.abortTasks(crawlJob);
         crawlJobDAO.remove(crawlJob);
 
         // Create and start new crawl job
-        CrawlJob newJob = new CrawlJob(domain, service, isValidationRequired);
+        CrawlJob newJob = new CrawlJob(crawlJob.getDomain(), service, isValidationRequired);
         newJob.setCrawlRequests(crawlRequests);
         newJob.setUser(crawlJob.getUser());
         crawlJobDAO.save(newJob);
