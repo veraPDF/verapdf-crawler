@@ -25,22 +25,17 @@ import java.util.*;
 @Service
 public class BingService {
     private static final Logger logger = LoggerFactory.getLogger(BingService.class);
-    private static final long SLEEP_DURATION = 60 * 1000;
-    private static SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
     private final CrawlJobService crawlJobService;
     private final DocumentResource documentResource;
-    private final Map<String, String> fileTypes;
+
+    @Value("${logius.bing.apiKey}")
     private String apiKey;
     private CrawlJob currentJob = null;
 
-    public BingService(@Value("${logius.bing.apiKey}") String apiKey,
-                       CrawlJobService crawlJobService,
-                       DocumentResource documentResource,
-                       @Qualifier("fileTypes") Map<String, String> fileTypes) {
-        this.apiKey = apiKey;
+    public BingService(CrawlJobService crawlJobService,
+                       DocumentResource documentResource) {
         this.crawlJobService = crawlJobService;
         this.documentResource = documentResource;
-        this.fileTypes = fileTypes;
     }
 
     @Transactional
@@ -141,7 +136,7 @@ public class BingService {
         }
     }
 
-    @Scheduled(fixedDelay = SLEEP_DURATION)
+    @Scheduled(fixedDelayString = "#{${logius.bing.sleepDurationInSeconds}}")
     public void initValidationQueue() {
         checkNewJobs();
     }

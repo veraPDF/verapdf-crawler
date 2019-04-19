@@ -1,6 +1,7 @@
 package org.verapdf.crawler.logius.service;
 
 import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
@@ -13,8 +14,8 @@ import java.util.Set;
 
 @Service
 public class QueueManager {
-    private final static int THREAD_COUNT = 4;
-    private static final long SLEEP_DURATION = 60 * 1000;
+    @Value("${logius.validationJobQueue.threadCount}")
+    private int threadCount;
     private final Set<ValidatorTask> jobQueue = new LinkedHashSet<>();
     private ThreadPoolTaskExecutor service;
     private ValidationJobService validationJobService;
@@ -29,7 +30,7 @@ public class QueueManager {
     public void init() {
         validationJobService.clean();
         service = new ThreadPoolTaskExecutor();
-        service.setCorePoolSize(THREAD_COUNT);
+        service.setCorePoolSize(threadCount);
         service.initialize();
     }
 
@@ -50,7 +51,7 @@ public class QueueManager {
 
     public ValidatorTask retrieveNextJob() {
         synchronized (jobQueue) {
-            if (jobQueue.size() < THREAD_COUNT) {
+            if (jobQueue.size() < threadCount) {
                 ValidationJob job = validationJobService.retrieveNextJob();
                 if (job != null) {
                     ValidatorTask task = validatorTaskObjectFactory.getObject();
@@ -71,7 +72,7 @@ public class QueueManager {
         }
     }
 
-    @Scheduled(fixedDelay = SLEEP_DURATION)
+    @Scheduled(fixedDelayString = "#{${logius.validationJobQueue.sleepDurationInSeconds}}")
     public void initValidationQueue() {
         while (true) {
             ValidatorTask task = retrieveNextJob();

@@ -33,23 +33,23 @@ public class CrawlService {
         this.queueManager = queueManager;
     }
 
-    public CrawlJob restartCrawlJob(CrawlJob crawlJob) {
+    public CrawlJob restartCrawlJob(CrawlJob crawlJob, String domain, CrawlJob.CrawlService service) {
         List<CrawlRequest> crawlRequests;
-        String domain = crawlJob.getDomain();
-        CrawlJob.CrawlService service = crawlJob.getCrawlService();
         String heritrixJobId = crawlJob.getHeritrixJobId();
         CrawlJob.CrawlService currentService = crawlJob.getCrawlService();
         // Keep requests list to link to new job
         crawlRequests = new ArrayList<>(crawlJob.getCrawlRequests());
 
         // Tear crawl service
-        switch (currentService){
+        switch (currentService) {
             case HERITRIX:
                 heritrixCleanerTask.teardownAndClearHeritrixJob(heritrixJobId);
                 break;
             case BING:
                 bingService.discardJob(crawlJob);
                 break;
+            default:
+                throw new IllegalStateException("CrawlJob service can't be null");
         }
 
         queueManager.abortTasks(crawlJob);

@@ -244,10 +244,10 @@ public class VeraPDFProcessor implements Callable<VeraPDFValidationResult> {
                 logger.info("Report has not been deleted manually");
             }
         }
-        if (!stopped) {
-            return result;
+        if (stopped) {
+            return null;
         }
-        return null;
+        return result;
     }
 
     public void setValidationDisabled(boolean isValidationDisabled) {

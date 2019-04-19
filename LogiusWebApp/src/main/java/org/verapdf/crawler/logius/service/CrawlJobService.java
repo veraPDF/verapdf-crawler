@@ -115,16 +115,22 @@ public class CrawlJobService {
         CrawlJob crawlJob = getCrawlJob(domain, id);
         HeritrixCrawlJobStatus heritrixStatus = null;
         CrawlJob.CrawlService crawlService = crawlJob.getCrawlService();
-        if (crawlService == CrawlJob.CrawlService.HERITRIX) {
-            try {
-                heritrixStatus = heritrixClient.getHeritrixStatus(crawlJob.getHeritrixJobId());
-            } catch (Throwable e) {
-                logger.error("Error during obtaining heritrix status", e);
-                heritrixStatus = new HeritrixCrawlJobStatus("Unavailable: " + e.getMessage(), null, null);
-            }
-        } else if (crawlService == CrawlJob.CrawlService.BING) {
-            //TODO: fix this
-            heritrixStatus = null;
+
+        switch (crawlService) {
+            case HERITRIX:
+                try {
+                    heritrixStatus = heritrixClient.getHeritrixStatus(crawlJob.getHeritrixJobId());
+                } catch (Throwable e) {
+                    logger.error("Error during obtaining heritrix status", e);
+                    heritrixStatus = new HeritrixCrawlJobStatus("Unavailable: " + e.getMessage(), null, null);
+                }
+                break;
+            case BING:
+                //TODO: fix this
+                heritrixStatus = null;
+                break;
+            default:
+                throw new IllegalStateException("CrawlJob service can't be null");
         }
 
         UUID crawlJobId = crawlJob.getId();

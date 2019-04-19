@@ -5,13 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.verapdf.crawler.logius.core.email.SendEmail;
-import org.verapdf.crawler.logius.db.CrawlJobDAO;
-import org.verapdf.crawler.logius.dto.ApiErrorDto;
 import org.verapdf.crawler.logius.dto.TokenDto;
 import org.verapdf.crawler.logius.dto.user.*;
-import org.verapdf.crawler.logius.model.User;
-import org.verapdf.crawler.logius.service.TokenService;
 import org.verapdf.crawler.logius.service.UserService;
 
 import javax.validation.Valid;
@@ -64,7 +59,7 @@ public class UserResource {
 
     @PostMapping("/signup")
     public ResponseEntity registerUser(@RequestBody @Valid UserDto signUpRequest) {
-        userService.register(signUpRequest);
+        userService.registerUser(signUpRequest);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 

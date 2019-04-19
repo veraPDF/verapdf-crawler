@@ -50,7 +50,7 @@ public class UserService {
     }
 
     @Transactional
-    public User register(UserDto dto) {
+    public User registerUser(UserDto dto) {
         if (userDao.getByEmail(dto.getEmail()) != null) {
             throw new AlreadyExistsException(String.format("user with email %s already exists", dto.getEmail()));
         }

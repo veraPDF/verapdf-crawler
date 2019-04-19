@@ -104,6 +104,7 @@ public class DomainDocument {
     }
 
     public String getDocumentUrl() {
+        assert documentId != null : "documentId is null";
         return documentId.getDocumentUrl();
     }
 

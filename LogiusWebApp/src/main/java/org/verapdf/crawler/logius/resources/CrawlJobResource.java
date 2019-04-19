@@ -58,7 +58,8 @@ public class CrawlJobResource {
                                                     @PathVariable("domain") String domain) {
         UUID id = controllerHelper.getUserUUID(principal);
         CrawlJob crawlJob = crawlJobService.getCrawlJob(domain, id);
-        return ResponseEntity.ok(crawlService.restartCrawlJob(crawlJob));
+        CrawlJob.CrawlService service = crawlJob.getCrawlService();
+        return ResponseEntity.ok(crawlService.restartCrawlJob(crawlJob, domain, service));
     }
 
     @GetMapping("/{domain}")

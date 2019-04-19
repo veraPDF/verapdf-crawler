@@ -7,7 +7,9 @@ import javax.validation.constraints.Pattern;
 
 public class PasswordResetDto {
 
-    @Pattern(regexp = Constants.PASSWORD_PATTERN, message = "new password must be between 8 and 20 characters and include 0-9 a-z A-Z symbols")
+    @Pattern(regexp = Constants.PASSWORD_PATTERN, message = "Passwords must be 6 or more characters, " +
+            "contain a combination of uppercase and lowercase letters (A-Z or a-z), " +
+            "at least 1 number (0-9) and at least 1 special character(#$^ etc).")
     @NotNull
     private String newPassword;
 

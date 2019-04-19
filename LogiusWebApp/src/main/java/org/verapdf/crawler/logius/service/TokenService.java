@@ -50,7 +50,7 @@ public class TokenService {
     }
 
     public String encode(User user) {
-        return encode(user, jwtExpirationInMs);
+        return encode(user, jwtExpirationInMs, "GENERAL");
     }
 
     public String encodePasswordToken(User user) {

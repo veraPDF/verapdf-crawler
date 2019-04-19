@@ -68,7 +68,7 @@ public class CrawlRequestService {
 
     public void restartIfHasChanges(CrawlJob existingJob, CrawlJob.CrawlService crawlService, boolean isValidationRequared) {
         if (crawlService != existingJob.getCrawlService() || existingJob.isValidationEnabled() != isValidationRequared) {
-            this.crawlService.restartCrawlJob(existingJob);
+            this.crawlService.restartCrawlJob(existingJob, existingJob.getDomain(), crawlService);
         }
     }
 }
