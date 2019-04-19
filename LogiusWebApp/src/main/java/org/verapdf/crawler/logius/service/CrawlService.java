@@ -79,10 +79,9 @@ public class CrawlService {
 
     public void startCrawlJob(CrawlJob crawlJob) {
         try {
-            String heritrixJobId = crawlJob.getHeritrixJobId();
-            heritrixClient.createJob(heritrixJobId, crawlJob.getDomain());
-            heritrixClient.buildJob(heritrixJobId);
-            heritrixClient.launchJob(heritrixJobId);
+            heritrixClient.createJob(crawlJob);
+            heritrixClient.buildJob(crawlJob.getHeritrixJobId());
+            heritrixClient.launchJob(crawlJob.getHeritrixJobId());
             crawlJob.setStatus(CrawlJob.Status.RUNNING);
         } catch (Exception e) {
             logger.error("Failed to start crawling job for domain " + crawlJob.getDomain(), e);

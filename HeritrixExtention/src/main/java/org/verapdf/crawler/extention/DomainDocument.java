@@ -14,9 +14,11 @@ public class DomainDocument {
 
     public static class DocumentId {
         private String documentUrl;
+        private CrawlJob crawlJob;
 
-        public DocumentId(String documentUrl) {
+        public DocumentId(String documentUrl, CrawlJob crawlJob) {
             this.documentUrl = documentUrl;
+            this.crawlJob = crawlJob;
         }
 
         public String getDocumentUrl() {
@@ -25,6 +27,14 @@ public class DomainDocument {
 
         public void setDocumentUrl(String documentUrl) {
             this.documentUrl = documentUrl;
+        }
+
+        public CrawlJob getCrawlJob() {
+            return crawlJob;
+        }
+
+        public void setCrawlJob(CrawlJob crawlJob) {
+            this.crawlJob = crawlJob;
         }
     }
 
@@ -49,7 +59,6 @@ public class DomainDocument {
 
     private DocumentId documentId;
 
-    private CrawlJob crawlJob;
 
     private Date lastModified;
 
@@ -59,17 +68,9 @@ public class DomainDocument {
     }
 
     public DomainDocument(String heritrixJobId, String url) {
-        this.crawlJob = new CrawlJob(heritrixJobId);
-        this.documentId = new DocumentId(url);
+        this.documentId = new DocumentId(url, new CrawlJob(heritrixJobId));
     }
 
-    public CrawlJob getCrawlJob() {
-        return crawlJob;
-    }
-
-    public void setCrawlJob(CrawlJob crawlJob) {
-        this.crawlJob = crawlJob;
-    }
 
     public Date getLastModified() {
         return lastModified;

@@ -19,8 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ResourceUtils;
 import org.verapdf.common.GracefulHttpClient;
+import org.verapdf.crawler.logius.crawling.CrawlJob;
+import org.verapdf.crawler.logius.model.Role;
 import org.verapdf.crawler.logius.monitoring.HeritrixCrawlJobStatus;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -57,6 +58,8 @@ public class HeritrixClient {
     private final SSLConnectionSocketFactory sslConnectionSocketFactory;
     @Value("${logius.heritrix.configTemplatePath}")
     private String configTemplatePath;
+    @Value("${logius.heritrix.configAdminTemplatePath}")
+    private String adminConfigTemplatePath;
     @Value("${logius.heritrix.logiusAppUrl}")
     private String logiusAppUrl;
     @Value("${logius.heritrix.jobsFolder}")
@@ -135,14 +138,17 @@ public class HeritrixClient {
         postJobAction(heritrixJobId, "build");
     }
 
-    public String createJob(String heritrixJobId, String domain) throws IOException {
+    public String createJob(CrawlJob crawlJob) throws IOException {
+        String heritrixJobId = crawlJob.getHeritrixJobId();
+        String domain = crawlJob.getDomain();
+        boolean isAdmin = crawlJob.getUser() != null && crawlJob.getUser().getRole().equals(Role.ADMIN);
         doPost(this.engineUrl, "createpath=" + heritrixJobId + "&action=create");
 
         ArrayList<String> crawlUrls = new ArrayList<>();
         crawlUrls.add("https://" + domain);
         crawlUrls.add("http://" + domain);
 
-        File configurationFile = createCrawlConfiguration(heritrixJobId, crawlUrls);
+        File configurationFile = createCrawlConfiguration(heritrixJobId, isAdmin, crawlUrls);
         submitConfigFile(heritrixJobId, configurationFile);
         configurationFile.delete();
 
@@ -283,7 +289,7 @@ public class HeritrixClient {
 
     //<editor-fold desc="Private helpers">
 
-    private File createCrawlConfiguration(String heritrixJobId, List<String> crawlUrls) throws IOException {
+    private File createCrawlConfiguration(String heritrixJobId, boolean isAdmin, List<String> crawlUrls) throws IOException {
 
         StringBuilder sb = new StringBuilder();
         for (String url : crawlUrls) {
@@ -293,8 +299,7 @@ public class HeritrixClient {
             sb.append(" ").append(System.lineSeparator());
             sb.append(surt);
         }
-
-        File source = new File(configTemplatePath);
+        File source = new File(isAdmin ? adminConfigTemplatePath : configTemplatePath);
         File destination = File.createTempFile(heritrixJobId, ".cxml");
         Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
@@ -305,6 +310,8 @@ public class HeritrixClient {
         content = content.replace("${logiusOperatorContactUrl}", crawlUrls.get(0));
         content = content.replace("${logiusUrls}", sb.toString());
         content = content.replace("${logiusAppUrl}", logiusAppUrl);
+        content = content.replace("${isAdmin}", String.valueOf(isAdmin));
+
         Files.write(destination.toPath(), content.getBytes(charset));
         return destination;
     }

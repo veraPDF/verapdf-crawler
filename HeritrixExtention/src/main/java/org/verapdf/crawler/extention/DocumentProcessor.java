@@ -12,6 +12,8 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.archive.modules.CrawlURI;
+import org.archive.modules.ProcessResult;
+import org.archive.modules.deciderules.DecideResult;
 import org.archive.modules.writer.MirrorWriterProcessor;
 import org.verapdf.common.GracefulHttpClient;
 
@@ -23,6 +25,7 @@ import java.util.Map;
 public class DocumentProcessor extends MirrorWriterProcessor {
 
     private static final int MAX_RETRIES = 120;
+    private static final int MAX_NON_ADMIN_DOWNLOAD_COUNT = 10000;
     private static final long RETRY_INTERVAL = 30 * 1000;
     private static SimpleDateFormat loggingDateFormat = new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss.SSS]");
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
@@ -32,6 +35,7 @@ public class DocumentProcessor extends MirrorWriterProcessor {
     private String jobId;
 
     private String logiusUrl;
+    private boolean isAdmin;
     private Map<String, String> supportedContentTypes;
 
     public DocumentProcessor() {
@@ -40,11 +44,14 @@ public class DocumentProcessor extends MirrorWriterProcessor {
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
+    private static void log(String message) {
+        System.out.println(loggingDateFormat.format(new Date()) + " org.verapdf.crawler.extension.DocumentProcessor: " + message);
+    }
+
     @Override
     protected boolean shouldProcess(CrawlURI crawlURI) {
         try {
             // TODO: add crawlSince parameter, and compare here with Last-Modified value and do now download and process older files
-
             log("shouldProcess method invocation with uri " + crawlURI.getURI());
             String contentType = crawlURI.getContentType();
             if (supportedContentTypes.keySet().contains(contentType)) {
@@ -52,7 +59,6 @@ public class DocumentProcessor extends MirrorWriterProcessor {
             } else if (contentType != null && contentType.startsWith("text")) {
                 return false;
             }
-
             String extension = FilenameUtils.getExtension(crawlURI.getURI());
             return supportedContentTypes.values().contains(extension);
         } catch (Throwable e) {
@@ -119,8 +125,28 @@ public class DocumentProcessor extends MirrorWriterProcessor {
         }
     }
 
-    private static void log(String message) {
-        System.out.println(loggingDateFormat.format(new Date()) + " org.verapdf.crawler.extension.DocumentProcessor: " + message);
+    @Override
+    public ProcessResult process(CrawlURI uri)
+            throws InterruptedException {
+        if (!getEnabled()) {
+            return ProcessResult.PROCEED;
+        }
+
+        if (getShouldProcessRule().decisionFor(uri) == DecideResult.REJECT) {
+            innerRejectProcess(uri);
+            return ProcessResult.PROCEED;
+        }
+
+        if (shouldProcess(uri)) {
+            if (!isAdmin && uriCount.get() > MAX_NON_ADMIN_DOWNLOAD_COUNT) {
+                log("reached max count of downloaded documents, stopping job");
+                return ProcessResult.FINISH;
+            }
+            uriCount.incrementAndGet();
+            return innerProcessResult(uri);
+        } else {
+            return ProcessResult.PROCEED;
+        }
     }
 
     public String getJobId() {
@@ -145,5 +171,13 @@ public class DocumentProcessor extends MirrorWriterProcessor {
 
     public void setSupportedContentTypes(Map<String, String> supportedContentTypes) {
         this.supportedContentTypes = supportedContentTypes;
+    }
+
+    public boolean isAdmin() {
+        return isAdmin;
+    }
+
+    public void setAdmin(boolean admin) {
+        isAdmin = admin;
     }
 }
