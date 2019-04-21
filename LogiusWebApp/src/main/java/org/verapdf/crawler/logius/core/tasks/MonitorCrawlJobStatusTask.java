@@ -21,18 +21,10 @@ public class MonitorCrawlJobStatusTask extends AbstractTask {
     }
 
     @Override
-    protected void onStart() {
-    }
-
-    @Override
-    protected boolean onRepeat() {
-        String lastDomain = null;
-        while (isRunning()) {
+    protected void process() {
+        String lastDomain = "";
+        while (lastDomain != null) {
             lastDomain = monitoringCrawlJobStatusService.checkJobsBatch(lastDomain);
-            if (lastDomain == null) {
-                break;
-            }
         }
-        return true;
     }
 }

@@ -5,6 +5,7 @@ import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 import org.verapdf.crawler.logius.core.validation.PDFWamProcessor;
+import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.CrawlJob_;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.document.DomainDocument_;
@@ -44,6 +45,20 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
             }
         }
         return persist(document);
+    }
+
+    public List<String> findJobsByStatusAndDownloadCount(Role role, CrawlJob.CrawlService heritrix, long i) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<String> criteriaQuery = builder.createQuery(String.class);
+        Root<DomainDocument> job = criteriaQuery.from(DomainDocument.class);
+        criteriaQuery.where(
+                builder.equal(job.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.crawlService), heritrix),
+                builder.equal(job.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.role), role)
+                );
+        criteriaQuery.groupBy(job.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.heritrixJobId));
+        criteriaQuery.having(builder.greaterThan(builder.count(job.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.heritrixJobId)), i));
+        criteriaQuery.select(job.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.heritrixJobId));
+        return currentSession().createQuery(criteriaQuery).list();
     }
 
     public Long count(String domain, UUID uuid, List<String> documentTypes, DomainDocument.BaseTestResult testResult, Date startDate) {

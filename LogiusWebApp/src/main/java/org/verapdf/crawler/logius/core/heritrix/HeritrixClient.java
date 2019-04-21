@@ -58,8 +58,8 @@ public class HeritrixClient {
     private final SSLConnectionSocketFactory sslConnectionSocketFactory;
     @Value("${logius.heritrix.configTemplatePath}")
     private String configTemplatePath;
-    @Value("${logius.heritrix.configAdminTemplatePath}")
-    private String adminConfigTemplatePath;
+    @Value("${logius.heritrix.maxDocumentCount}")
+    private String maxDocumentsCount;
     @Value("${logius.heritrix.logiusAppUrl}")
     private String logiusAppUrl;
     @Value("${logius.heritrix.jobsFolder}")
@@ -299,7 +299,7 @@ public class HeritrixClient {
             sb.append(" ").append(System.lineSeparator());
             sb.append(surt);
         }
-        File source = new File(isAdmin ? adminConfigTemplatePath : configTemplatePath);
+        File source = new File(configTemplatePath);
         File destination = File.createTempFile(heritrixJobId, ".cxml");
         Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
@@ -310,7 +310,11 @@ public class HeritrixClient {
         content = content.replace("${logiusOperatorContactUrl}", crawlUrls.get(0));
         content = content.replace("${logiusUrls}", sb.toString());
         content = content.replace("${logiusAppUrl}", logiusAppUrl);
-        content = content.replace("${isAdmin}", String.valueOf(isAdmin));
+        if (isAdmin){
+            content = content.replace("${maxDocumentsCount}", "0");
+        } else {
+            content = content.replace("${maxDocumentsCount}", maxDocumentsCount);
+        }
 
         Files.write(destination.toPath(), content.getBytes(charset));
         return destination;

@@ -31,11 +31,7 @@ public class HeritrixCleanerTask extends AbstractTask {
     }
 
     @Override
-    protected void onStart() {
-    }
-
-    @Override
-    protected boolean onRepeat() {
+    protected void process() {
         if (!heritrixJobIds.isEmpty()) {
             // will create here another set for removing objects
             // this is necesary, because with iterator based solution we have to
@@ -52,7 +48,6 @@ public class HeritrixCleanerTask extends AbstractTask {
             }
             heritrixJobIds.removeAll(removed);
         }
-        return true;
     }
 
     public void teardownAndClearHeritrixJob(String heritrixJobId) {

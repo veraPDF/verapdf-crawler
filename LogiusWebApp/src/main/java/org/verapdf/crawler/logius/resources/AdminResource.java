@@ -14,20 +14,4 @@ import java.util.Map;
 @RestController
 @RequestMapping(value = "api/admin")
 public class AdminResource {
-    private final Map<String, AbstractTask> availableServices;
-
-    @Autowired
-    public AdminResource(Map<String, AbstractTask> availableServices) {
-        this.availableServices = availableServices;
-    }
-
-    @PostMapping("/service")
-    public ResponseEntity startService(@RequestParam("name") String name) {
-        AbstractTask service = availableServices.get(name);
-        if (service == null) {
-            return ResponseEntity.notFound().build();
-        }
-        service.start();
-        return ResponseEntity.ok().build();
-    }
 }

@@ -25,26 +25,16 @@ import java.util.stream.Collectors;
 @Component
 @RestControllerEndpoint(id = "info")
 public class HealthCheckController {
-    private final Map<String, AbstractTask> tasks;
     private final CrawlJobService crawlJobService;
     private final ValidationJobService validationJobService;
     private final HeritrixClient heritrix;
-    private ValidationJobDAO validationJobDAO;
 
-    public HealthCheckController(Map<String, AbstractTask> tasks, ValidationJobService validationJobService,
-                                 CrawlJobService crawlJobService, HeritrixClient heritrix, ValidationJobDAO validationJobDAO) {
-        this.tasks = tasks;
+    public HealthCheckController(ValidationJobService validationJobService,
+                                 CrawlJobService crawlJobService,
+                                 HeritrixClient heritrix) {
         this.crawlJobService = crawlJobService;
         this.validationJobService = validationJobService;
         this.heritrix = heritrix;
-        this.validationJobDAO = validationJobDAO;
-    }
-
-    @GetMapping
-    public Map<String, Boolean> getTaskStatusesInfo() {
-        Map<String, Boolean> taskStatues = new HashMap<>();
-        tasks.forEach((key, value) -> taskStatues.put(key, value.isRunning()));
-        return taskStatues;
     }
 
     @GetMapping("/active-jobs")
@@ -57,7 +47,6 @@ public class HealthCheckController {
         return ResponseEntity.ok().header("X-Total-Count", String.valueOf(count)).body(activeJobs);
     }
 
-    @Transactional
     @GetMapping("/queue-status")
     public ValidationQueueStatus getQueueStatus() {
         return validationJobService.getValidationJobStatus(10);

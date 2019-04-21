@@ -30,11 +30,7 @@ public class ODSCleanerTask extends AbstractTask {
     }
 
     @Override
-    protected void onStart() {
-    }
-
-    @Override
-    protected boolean onRepeat() {
+    protected void process() {
         File odsTempFolder = new File(this.odsTempFolder);
         if (odsTempFolder.exists() && odsTempFolder.isDirectory()) {
             long currentTimeInMillis = System.currentTimeMillis();
@@ -42,7 +38,6 @@ public class ODSCleanerTask extends AbstractTask {
                 checkFile(ods, currentTimeInMillis);
             }
         }
-        return true;
     }
 
     private void checkFile(File file, long currentTimeInMillis) {
