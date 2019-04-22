@@ -4,8 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-import org.verapdf.crawler.logius.core.email.SendEmail;
+import org.verapdf.crawler.logius.core.email.SendEmailService;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,8 +23,8 @@ public class ODSCleanerTask extends AbstractTask {
     private static final long FILE_LIFETIME_IN_MILLIS = 7 * 24 * 60 * 60 * 1000;
     private String odsTempFolder;
 
-    public ODSCleanerTask(@Value("${logius.reports.odsTempFolder}") String odsTempFolder, SendEmail sendEmail) {
-        super("ODSCleanerService", SLEEP_DURATION, sendEmail);
+    public ODSCleanerTask(@Value("${logius.reports.odsTempFolder}") String odsTempFolder, SendEmailService sendEmailService) {
+        super("ODSCleanerService", SLEEP_DURATION, sendEmailService);
         this.odsTempFolder = odsTempFolder;
     }
 

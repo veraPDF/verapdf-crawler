@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.verapdf.crawler.logius.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.logius.core.tasks.AbstractTask;
+import org.verapdf.crawler.logius.core.tasks.TaskStatus;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.HeritrixSettings;
 import org.verapdf.crawler.logius.monitoring.ValidationQueueStatus;
@@ -16,6 +17,7 @@ import org.verapdf.crawler.logius.service.ValidationJobService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -24,12 +26,12 @@ public class HealthCheckController {
     private final CrawlJobService crawlJobService;
     private final ValidationJobService validationJobService;
     private final HeritrixClient heritrix;
-    private final Map<String, AbstractTask> tasks;
+    private List<AbstractTask> tasks;
 
     public HealthCheckController(ValidationJobService validationJobService,
                                  CrawlJobService crawlJobService,
                                  HeritrixClient heritrix,
-                                 Map<String, AbstractTask> tasks) {
+                                 List<AbstractTask> tasks) {
         this.crawlJobService = crawlJobService;
         this.validationJobService = validationJobService;
         this.heritrix = heritrix;
@@ -37,10 +39,10 @@ public class HealthCheckController {
     }
 
     @GetMapping
-    public Map<String, Boolean> getTaskStatusesInfo() {
-        Map<String, Boolean> taskStatues = new HashMap<>();
-        tasks.forEach((key, value) -> taskStatues.put(key, !value.isLastProcessFailed()));
-        return taskStatues;
+    public List<TaskStatus> getTaskStatusesInfo() {
+        return tasks.stream()
+                .map(AbstractTask::getTaskStatus)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/active-jobs")

@@ -2,9 +2,7 @@ package org.verapdf.crawler.logius.core.tasks;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.logius.core.email.SendEmail;
-
-import java.time.LocalDateTime;
+import org.verapdf.crawler.logius.core.email.SendEmailService;
 
 /**
  * @author Maksim Bezrukov
@@ -17,62 +15,39 @@ public abstract class AbstractTask implements Runnable {
     private static final String EMAIL_SUBJECT = "Logius health checks fails";
     private static final String EMAIL_BODY = "Service %s stopped, stop reason: %s";
 
-    private final String serviceName;
     private final long sleepTime;
-    private final SendEmail sendEmail;
-    private String stopReason;
-    private LocalDateTime lastSuccess;
-    private LocalDateTime lastError;
-    private boolean lastProcessFailed;
+    private final SendEmailService sendEmailService;
+    private TaskStatus taskStatus;
 
-    protected AbstractTask(String serviceName, long sleepTime, SendEmail sendEmail) {
-        this.sendEmail = sendEmail;
-        this.serviceName = serviceName;
+    protected AbstractTask(String serviceName, long sleepTime, SendEmailService sendEmailService) {
+        this.sendEmailService = sendEmailService;
         this.sleepTime = sleepTime;
+        this.taskStatus = new TaskStatus(serviceName);
     }
 
     @Override
     public void run() {
-        logger.info(this.serviceName + " started");
+        logger.info(taskStatus.getServiceName() + " started");
         try {
             process();
-            lastSuccess = LocalDateTime.now();
-            lastProcessFailed = false;
+            taskStatus.processSuccess();
         } catch (Throwable e) {
-            logger.error("Fatal error, stopping " + this.serviceName, e);
-            this.stopReason = e.getMessage();
-            lastError = LocalDateTime.now();
-            if (!lastProcessFailed) {
-                lastProcessFailed = true;
-                sendEmail.sendReportNotification(EMAIL_SUBJECT, String.format(EMAIL_BODY, this.serviceName, this.stopReason));
+            logger.error("Fatal error, stopping " + taskStatus.getServiceName(), e);
+            taskStatus.processError(e);
+            if (!taskStatus.isErrorNotified()) {
+                sendEmailService.sendReportNotification(EMAIL_SUBJECT, String.format(EMAIL_BODY, taskStatus.getServiceName() , taskStatus.getStopReason()));
+                taskStatus.setErrorNotified(true);
             }
         }
     }
 
     protected abstract void process() throws Throwable;
 
-    public boolean isLastProcessFailed() {
-        return lastProcessFailed;
-    }
-
-    public String getServiceName() {
-        return serviceName;
-    }
-
-    public String getStopReason() {
-        return stopReason;
-    }
-
-
     public long getSleepTime() {
         return sleepTime;
     }
 
-    public LocalDateTime getLastError() {
-        return lastError;
-    }
-
-    public LocalDateTime getLastSuccess() {
-        return lastSuccess;
+    public TaskStatus getTaskStatus() {
+        return taskStatus;
     }
 }

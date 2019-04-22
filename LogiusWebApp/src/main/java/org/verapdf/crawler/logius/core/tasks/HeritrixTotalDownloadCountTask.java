@@ -4,12 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.verapdf.crawler.logius.core.email.SendEmail;
+import org.verapdf.crawler.logius.core.email.SendEmailService;
 import org.verapdf.crawler.logius.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.logius.model.Role;
 import org.verapdf.crawler.logius.service.DocumentService;
 
-import java.io.IOException;
 import java.util.List;
 
 import static org.verapdf.crawler.logius.crawling.CrawlJob.CrawlService.HERITRIX;
@@ -23,7 +22,7 @@ public class HeritrixTotalDownloadCountTask extends AbstractTask {
     private final HeritrixClient heritrixClient;
     private final DocumentService documentService;
 
-    public HeritrixTotalDownloadCountTask(HeritrixClient heritrixClient, SendEmail email, DocumentService documentService) {
+    public HeritrixTotalDownloadCountTask(HeritrixClient heritrixClient, SendEmailService email, DocumentService documentService) {
         super("HeritrixTotalDownloadCountTask", SLEEP_DURATION, email);
         this.heritrixClient = heritrixClient;
         this.documentService = documentService;

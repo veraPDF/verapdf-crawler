@@ -52,8 +52,8 @@ public class HeritrixClient {
     private static final int POST_MAX_CONNECTION_RETRIES = 5;
     private static final long GET_CONNECTION_INTERVAL = 5 * 1000;
     private static final int GET_MAX_CONNECTION_RETRIES = 2;
-    private static final String ZERO = "";
-
+    private static final String ZERO = "0";
+    private static final Charset CHARSET = StandardCharsets.UTF_8;
     private static final String STATUS_DESCRIPTION_XPATH = "/job/statusDescription";
     private final CredentialsProvider credsProvider;
     private final SSLConnectionSocketFactory sslConnectionSocketFactory;
@@ -306,10 +306,7 @@ public class HeritrixClient {
         }
         File source = new File(configTemplatePath);
         File destination = File.createTempFile(heritrixJobId, ".cxml");
-
-        Charset charset = StandardCharsets.UTF_8;
-
-        String content = new String(Files.readAllBytes(source.toPath()), charset);
+        String content = new String(Files.readAllBytes(source.toPath()), CHARSET);
         String maxCount = isAdmin ? ZERO : maxDocumentsCount;
         content = content.replace("${logiusHeritrixJobId}", heritrixJobId);
         content = content.replace("${logiusOperatorContactUrl}", crawlUrls.get(0));
@@ -317,7 +314,7 @@ public class HeritrixClient {
         content = content.replace("${logiusAppUrl}", logiusAppUrl);
         content = content.replace("${maxDocumentsCount}", maxCount);
 
-        Files.write(destination.toPath(), content.getBytes(charset));
+        Files.write(destination.toPath(), content.getBytes(CHARSET));
         return destination;
     }
 

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class SendEmail {
+public class SendEmailService {
     private static final String SUBJECT = "Crawling finished for %s";
     private static final String EMAIL_VERIFICATION_SUBJECT = "Email verification";
     private static final String EMAIL_VERIFICATION_BODY = "Email verification\nLink: %s";
@@ -31,7 +31,7 @@ public class SendEmail {
     private String emailFrom;
 
     @Autowired
-    public SendEmail(JavaMailSender mailSender) {
+    public SendEmailService(JavaMailSender mailSender) {
         this.emailSender = mailSender;
     }
 
