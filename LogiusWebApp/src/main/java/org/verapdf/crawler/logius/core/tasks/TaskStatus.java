@@ -13,6 +13,13 @@ public class TaskStatus {
         this.serviceName = serviceName;
     }
 
+    public boolean isHasError(){
+        if (lastError == null){
+            return true;
+        }
+        return lastSuccess == null || lastSuccess.isAfter(lastError);
+    }
+
     public String getServiceName() {
         return serviceName;
     }
