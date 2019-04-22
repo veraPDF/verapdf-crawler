@@ -22,6 +22,8 @@ import javax.persistence.criteria.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.verapdf.crawler.logius.crawling.CrawlJob.Status.FINISHED;
+
 @Repository
 public class DocumentDAO extends AbstractDAO<DomainDocument> {
 
@@ -47,16 +49,17 @@ public class DocumentDAO extends AbstractDAO<DomainDocument> {
         return persist(document);
     }
 
-    public List<String> findJobsByStatusAndDownloadCount(Role role, CrawlJob.CrawlService heritrix, long i) {
+    public List<String> findNotFinishedJobsByUserRoleAndServiceAndDownloadCount(Role role, CrawlJob.CrawlService service, long count) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<String> criteriaQuery = builder.createQuery(String.class);
         Root<DomainDocument> job = criteriaQuery.from(DomainDocument.class);
         criteriaQuery.where(
-                builder.equal(job.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.crawlService), heritrix),
+                builder.notEqual(job.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.status), FINISHED),
+                builder.equal(job.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.crawlService), service),
                 builder.equal(job.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.role), role)
                 );
         criteriaQuery.groupBy(job.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.heritrixJobId));
-        criteriaQuery.having(builder.greaterThan(builder.count(job.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.heritrixJobId)), i));
+        criteriaQuery.having(builder.greaterThan(builder.count(job.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.heritrixJobId)), count));
         criteriaQuery.select(job.get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.heritrixJobId));
         return currentSession().createQuery(criteriaQuery).list();
     }

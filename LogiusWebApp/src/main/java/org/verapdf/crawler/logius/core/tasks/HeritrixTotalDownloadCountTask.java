@@ -31,8 +31,8 @@ public class HeritrixTotalDownloadCountTask extends AbstractTask {
 
 
     @Override
-    protected void process() throws IOException {
-        List<String> crawlJobs = documentService.findNotFinishedJobsByUserRoleAndStatusAndDownloadCount(Role.USER, HERITRIX, maxDownloadDocumentCount);
+    protected void process() {
+        List<String> crawlJobs = documentService.findNotFinishedJobsByUserRoleAndServiceAndDownloadCount(Role.USER, HERITRIX, maxDownloadDocumentCount);
         for (String heritrixJobId : crawlJobs) {
             heritrixClient.terminateJob(heritrixJobId);
         }

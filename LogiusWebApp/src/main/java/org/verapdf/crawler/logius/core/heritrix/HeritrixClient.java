@@ -52,6 +52,7 @@ public class HeritrixClient {
     private static final int POST_MAX_CONNECTION_RETRIES = 5;
     private static final long GET_CONNECTION_INTERVAL = 5 * 1000;
     private static final int GET_MAX_CONNECTION_RETRIES = 2;
+    private static final String ZERO = "";
 
     private static final String STATUS_DESCRIPTION_XPATH = "/job/statusDescription";
     private final CredentialsProvider credsProvider;
@@ -122,8 +123,12 @@ public class HeritrixClient {
         postJobAction(heritrixJobId, "pause");
     }
 
-    public void terminateJob(String heritrixJobId) throws IOException {
-        postJobAction(heritrixJobId, "terminate");
+    public void terminateJob(String heritrixJobId) {
+        try {
+            postJobAction(heritrixJobId, "terminate");
+        }catch (IOException e){
+            logger.error("Terminate heritrix job error: ", e);
+        }
     }
 
     public void teardownJob(String heritrixJobId) throws IOException {
@@ -141,7 +146,7 @@ public class HeritrixClient {
     public String createJob(CrawlJob crawlJob) throws IOException {
         String heritrixJobId = crawlJob.getHeritrixJobId();
         String domain = crawlJob.getDomain();
-        boolean isAdmin = crawlJob.getUser() != null && crawlJob.getUser().getRole().equals(Role.ADMIN);
+        boolean isAdmin = crawlJob.getUser().getRole() == Role.ADMIN;
         doPost(this.engineUrl, "createpath=" + heritrixJobId + "&action=create");
 
         ArrayList<String> crawlUrls = new ArrayList<>();
@@ -301,20 +306,16 @@ public class HeritrixClient {
         }
         File source = new File(configTemplatePath);
         File destination = File.createTempFile(heritrixJobId, ".cxml");
-        Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         Charset charset = StandardCharsets.UTF_8;
 
-        String content = new String(Files.readAllBytes(destination.toPath()), charset);
+        String content = new String(Files.readAllBytes(source.toPath()), charset);
+        String maxCount = isAdmin ? ZERO : maxDocumentsCount;
         content = content.replace("${logiusHeritrixJobId}", heritrixJobId);
         content = content.replace("${logiusOperatorContactUrl}", crawlUrls.get(0));
         content = content.replace("${logiusUrls}", sb.toString());
         content = content.replace("${logiusAppUrl}", logiusAppUrl);
-        if (isAdmin){
-            content = content.replace("${maxDocumentsCount}", "0");
-        } else {
-            content = content.replace("${maxDocumentsCount}", maxDocumentsCount);
-        }
+        content = content.replace("${maxDocumentsCount}", maxCount);
 
         Files.write(destination.toPath(), content.getBytes(charset));
         return destination;

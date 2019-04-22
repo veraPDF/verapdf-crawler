@@ -17,7 +17,7 @@ public class DocumentService {
     }
 
     @Transactional
-    public List<String> findNotFinishedJobsByUserRoleAndStatusAndDownloadCount(Role role, CrawlJob.CrawlService service, int limit) {
-        return documentDAO.findJobsByStatusAndDownloadCount(role, service, limit);
+    public List<String> findNotFinishedJobsByUserRoleAndServiceAndDownloadCount(Role role, CrawlJob.CrawlService service, int limit) {
+        return documentDAO.findNotFinishedJobsByUserRoleAndServiceAndDownloadCount(role, service, limit);
     }
 }

@@ -3,23 +3,19 @@ package org.verapdf.crawler.logius.resources;
 import org.springframework.boot.actuate.endpoint.web.annotation.RestControllerEndpoint;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.verapdf.crawler.logius.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.logius.core.tasks.AbstractTask;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.HeritrixSettings;
-import org.verapdf.crawler.logius.db.ValidationJobDAO;
 import org.verapdf.crawler.logius.monitoring.ValidationQueueStatus;
 import org.verapdf.crawler.logius.service.CrawlJobService;
 import org.verapdf.crawler.logius.service.ValidationJobService;
-import org.verapdf.crawler.logius.validation.ValidationJob;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 
 @Component
@@ -28,13 +24,23 @@ public class HealthCheckController {
     private final CrawlJobService crawlJobService;
     private final ValidationJobService validationJobService;
     private final HeritrixClient heritrix;
+    private final Map<String, AbstractTask> tasks;
 
     public HealthCheckController(ValidationJobService validationJobService,
                                  CrawlJobService crawlJobService,
-                                 HeritrixClient heritrix) {
+                                 HeritrixClient heritrix,
+                                 Map<String, AbstractTask> tasks) {
         this.crawlJobService = crawlJobService;
         this.validationJobService = validationJobService;
         this.heritrix = heritrix;
+        this.tasks = tasks;
+    }
+
+    @GetMapping
+    public Map<String, Boolean> getTaskStatusesInfo() {
+        Map<String, Boolean> taskStatues = new HashMap<>();
+        tasks.forEach((key, value) -> taskStatues.put(key, !value.isLastProcessFailed()));
+        return taskStatues;
     }
 
     @GetMapping("/active-jobs")

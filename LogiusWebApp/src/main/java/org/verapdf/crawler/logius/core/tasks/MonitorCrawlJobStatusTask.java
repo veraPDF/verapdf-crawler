@@ -1,7 +1,6 @@
 package org.verapdf.crawler.logius.core.tasks;
 
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.verapdf.crawler.logius.core.email.SendEmail;
 import org.verapdf.crawler.logius.service.MonitoringCrawlJobStatusService;
 
@@ -22,9 +21,9 @@ public class MonitorCrawlJobStatusTask extends AbstractTask {
 
     @Override
     protected void process() {
-        String lastDomain = "";
-        while (lastDomain != null) {
+        String lastDomain = null;
+        do {
             lastDomain = monitoringCrawlJobStatusService.checkJobsBatch(lastDomain);
-        }
+        } while (lastDomain != null);
     }
 }
