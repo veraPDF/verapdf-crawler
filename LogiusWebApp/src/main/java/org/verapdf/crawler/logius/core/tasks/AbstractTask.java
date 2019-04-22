@@ -39,6 +39,7 @@ public abstract class AbstractTask implements Runnable {
             lastSuccess = LocalDateTime.now();
             lastProcessFailed = false;
         } catch (Throwable e) {
+            logger.error("Fatal error, stopping " + this.serviceName, e);
             this.stopReason = e.getMessage();
             lastError = LocalDateTime.now();
             if (!lastProcessFailed) {
