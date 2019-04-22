@@ -15,9 +15,12 @@ public class TaskStatus {
 
     public boolean isHasError(){
         if (lastError == null){
+            return false;
+        }
+        if (lastSuccess == null){
             return true;
         }
-        return lastSuccess == null || lastSuccess.isAfter(lastError);
+        return lastError.isAfter(lastSuccess);
     }
 
     public String getServiceName() {
