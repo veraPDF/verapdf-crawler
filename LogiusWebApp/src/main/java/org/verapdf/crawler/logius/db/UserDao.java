@@ -6,6 +6,7 @@ import org.hibernate.query.Query;
 import org.springframework.stereotype.Service;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.CrawlJob_;
+import org.verapdf.crawler.logius.model.Role;
 import org.verapdf.crawler.logius.model.User;
 import org.verapdf.crawler.logius.model.User_;
 
@@ -49,12 +50,15 @@ public class UserDao extends AbstractDAO<User> {
     }
 
 
-    public List<User> getUsers(String emailFilter, Integer start, Integer limit) {
+    public List<User> getUsersByEmailAndRole(String emailFilter, Role role, Integer start, Integer limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<User> criteriaQuery = builder.createQuery(User.class);
         Root<User> rootEntry = criteriaQuery.from(User.class);
         if (emailFilter != null) {
             criteriaQuery.where(builder.like(rootEntry.get(User_.email), "%" + emailFilter + "%"));
+        }
+        if (role != null) {
+            criteriaQuery.where(builder.equal(rootEntry.get(User_.role), role));
         }
         Query<User> query = this.currentSession().createQuery(criteriaQuery);
         setOffset(query, start, limit);

@@ -45,6 +45,14 @@ public class UserResource {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/{email}/verification-status")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity updateVerificationStatus(@PathVariable("email") @Email String email,
+                                       @RequestParam("status") boolean status) {
+        userService.updateEmailVerificationStatus(email, status);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity getAllUsers(

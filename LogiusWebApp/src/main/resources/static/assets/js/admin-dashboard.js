@@ -63,7 +63,19 @@ $(function () {
         row.find('.enabled').find('input').change(function () {
             $.ajax({
                 headers: {'Authorization': 'Bearer ' + localStorage['token']},
-                url: USER_CHANGE_STATUS_URL + user.email + "/status"+ "?&status="  + $(this).is(':checked'),
+                url: USER_CHANGE_STATUS_URL + user.email + "/status?&status="  + $(this).is(':checked'),
+                type: "PUT",
+                error: function (result) {
+                    reportError(result);
+                }
+            });
+        });
+
+        row.find('.locked').find('input').prop("checked", user.activated);
+        row.find('.locked').find('input').change(function () {
+            $.ajax({
+                headers: {'Authorization': 'Bearer ' + localStorage['token']},
+                url: USER_CHANGE_STATUS_URL + user.email + "/verification-status?&status="  + $(this).is(':checked'),
                 type: "PUT",
                 error: function (result) {
                     reportError(result);

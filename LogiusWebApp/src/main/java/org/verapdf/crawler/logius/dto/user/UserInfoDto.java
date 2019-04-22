@@ -6,10 +6,12 @@ public class UserInfoDto {
     private String email;
     private String role;
     private boolean isEnabled;
+    private boolean isActivated;
 
     public UserInfoDto(User user) {
         this.email = user.getEmail();
         this.isEnabled = user.isEnabled();
+        this.isActivated = user.isActivated();
     }
 
     public UserInfoDto(TokenUserDetails userPrincipal) {
@@ -40,5 +42,9 @@ public class UserInfoDto {
 
     public void setEnabled(boolean enabled) {
         isEnabled = enabled;
+    }
+
+    public boolean isActivated() {
+        return isActivated;
     }
 }

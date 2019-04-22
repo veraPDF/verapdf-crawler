@@ -1,12 +1,13 @@
 package org.verapdf.crawler.logius.db;
 
 import org.hibernate.SessionFactory;
+import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
 import org.springframework.stereotype.Repository;
-import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.CrawlJob_;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.document.DomainDocument_;
+import org.verapdf.crawler.logius.dto.ValidationJobDto;
 import org.verapdf.crawler.logius.model.DocumentId;
 import org.verapdf.crawler.logius.model.DocumentId_;
 import org.verapdf.crawler.logius.model.User_;
@@ -15,7 +16,10 @@ import org.verapdf.crawler.logius.validation.ValidationJob_;
 
 import javax.persistence.criteria.*;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Repository
 public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
@@ -93,6 +97,16 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
             criteriaQuery.where(builder.equal(job.get(ValidationJob_.document).get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.id), id));
         }
         return currentSession().createQuery(criteriaQuery).getSingleResult();
+    }
+
+    public List<ValidationJobDto> getDocuments() {
+        NativeQuery query = currentSession()
+                .createSQLQuery("select document_url, validation_status from select_jobs_in_queue");
+        List<Object[]> rows = query.list();
+        return rows.stream()
+                .map(row -> new ValidationJobDto(row[0].toString(),
+                        ValidationJob.Status.valueOf(row[1].toString()))).collect(Collectors.toList());
+
     }
 
     public List<ValidationJob> getDocuments(UUID id, Integer limit) {

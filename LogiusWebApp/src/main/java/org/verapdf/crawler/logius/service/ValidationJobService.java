@@ -12,6 +12,7 @@ import org.verapdf.crawler.logius.db.DocumentDAO;
 import org.verapdf.crawler.logius.db.ValidationErrorDAO;
 import org.verapdf.crawler.logius.db.ValidationJobDAO;
 import org.verapdf.crawler.logius.document.DomainDocument;
+import org.verapdf.crawler.logius.dto.ValidationJobDto;
 import org.verapdf.crawler.logius.monitoring.ValidationQueueStatus;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 import org.verapdf.crawler.logius.validation.VeraPDFValidationResult;
@@ -66,8 +67,11 @@ public class ValidationJobService {
     @Transactional
     public ValidationQueueStatus getValidationJobStatus(int limit) {
         Long count = validationJobDAO.count(null);
-        List<ValidationJob> documents = validationJobDAO.getDocuments(null, limit);
-        return new ValidationQueueStatus(count, documents);
+        List<ValidationJobDto> documents = validationJobDAO.getDocuments();
+        ValidationQueueStatus validationQueueStatus = new ValidationQueueStatus();
+        validationQueueStatus.setCount(count);
+        validationQueueStatus.setTopDocuments(documents);
+        return validationQueueStatus;
     }
 
     @Transactional

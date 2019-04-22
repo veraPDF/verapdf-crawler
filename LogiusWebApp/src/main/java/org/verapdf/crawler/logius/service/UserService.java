@@ -5,6 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.core.email.SendEmailService;
+import org.verapdf.crawler.logius.core.email.SendEmail;
 import org.verapdf.crawler.logius.db.UserDao;
 import org.verapdf.crawler.logius.dto.user.PasswordUpdateDto;
 import org.verapdf.crawler.logius.dto.user.UserDto;
@@ -62,7 +63,7 @@ public class UserService {
 
     @Transactional
     public List<UserInfoDto> getUsers(String emailFilter, Integer start, Integer limit) {
-        return userDao.getUsers(emailFilter, start, limit).stream()
+        return userDao.getUsersByEmailAndRole(emailFilter, Role.USER, start, limit).stream()
                 .map(UserInfoDto::new).collect(Collectors.toList());
     }
 
@@ -72,6 +73,14 @@ public class UserService {
         user.setEnabled(status);
         saveUserWithUpdateSecret(user);
     }
+
+    @Transactional
+    public void updateEmailVerificationStatus(String email, boolean status) {
+        User user = findUserByEmail(email);
+        user.setActivated(status);
+        saveUserWithUpdateSecret(user);
+    }
+
 
     private User saveUserWithUpdateSecret(User user) {
         user.setSecret(SecretKeyUtils.generateSecret());
