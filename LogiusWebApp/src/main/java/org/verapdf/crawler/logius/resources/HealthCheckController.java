@@ -17,6 +17,7 @@ import org.verapdf.crawler.logius.service.ValidationJobService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -39,9 +40,9 @@ public class HealthCheckController {
 
     @GetMapping
     public Map<String, TaskStatusDto> getTaskStatusesInfo() {
-        Map<String, TaskStatusDto> taskStatuses = new HashMap<>();
-        tasks.forEach(task -> taskStatuses.put(task.getServiceName(), new TaskStatusDto(task.getTaskStatus())));
-        return taskStatuses;
+	    return tasks.stream()
+	                .collect(Collectors.toMap(AbstractTask::getServiceName,
+	                                          item -> new TaskStatusDto(item.getTaskStatus())));
     }
 
     @GetMapping("/active-jobs")

@@ -6,18 +6,16 @@ import java.time.LocalDateTime;
 
 public class TaskStatusDto {
     private String stopReasonMessage;
-    private LocalDateTime lastSuccessDate;
-    private LocalDateTime lastErrorDate;
-    private boolean isLastError;
+    private LocalDateTime lastSuccessTime;
+    private LocalDateTime lastErrorTime;
+    private boolean isLastProcessFailed;
     private boolean isRunning;
 
     public TaskStatusDto(TaskStatus taskStatus) {
-        this.stopReasonMessage = taskStatus.getStopReasonException() == null ? null : taskStatus
-                .getStopReasonException()
-                .getMessage();
-        this.lastSuccessDate = taskStatus.getLastSuccess();
-        this.lastErrorDate = taskStatus.getLastError();
-        this.isLastError = taskStatus.isHasError();
+        this.stopReasonMessage = taskStatus.getLastExceptionMessage();
+        this.lastSuccessTime = taskStatus.getLastSuccessTime();
+        this.lastErrorTime = taskStatus.getLastErrorTime();
+        this.isLastProcessFailed = taskStatus.isLastProcessFailed();
         this.isRunning = taskStatus.isRunning();
     }
 
@@ -29,28 +27,28 @@ public class TaskStatusDto {
         this.stopReasonMessage = stopReasonMessage;
     }
 
-    public LocalDateTime getLastSuccessDate() {
-        return lastSuccessDate;
+    public LocalDateTime getLastSuccessTime() {
+        return lastSuccessTime;
     }
 
-    public void setLastSuccessDate(LocalDateTime lastSuccessDate) {
-        this.lastSuccessDate = lastSuccessDate;
+    public void setLastSuccessTime(LocalDateTime lastSuccessTime) {
+        this.lastSuccessTime = lastSuccessTime;
     }
 
-    public LocalDateTime getLastErrorDate() {
-        return lastErrorDate;
+    public LocalDateTime getLastErrorTime() {
+        return lastErrorTime;
     }
 
-    public void setLastErrorDate(LocalDateTime lastErrorDate) {
-        this.lastErrorDate = lastErrorDate;
+    public void setLastErrorTime(LocalDateTime lastErrorTime) {
+        this.lastErrorTime = lastErrorTime;
     }
 
-    public boolean isLastError() {
-        return isLastError;
+    public boolean isLastProcessFailed() {
+        return isLastProcessFailed;
     }
 
-    public void setLastError(boolean lastError) {
-        isLastError = lastError;
+    public void setLastProcessFailed(boolean lastProcessFailed) {
+        isLastProcessFailed = lastProcessFailed;
     }
 
     public boolean isRunning() {

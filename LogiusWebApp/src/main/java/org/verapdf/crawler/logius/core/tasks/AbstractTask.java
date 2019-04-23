@@ -20,12 +20,13 @@ public abstract class AbstractTask implements Runnable, BeanNameAware {
     private final SendEmailService sendEmailService;
     private TaskStatus taskStatus;
     private String serviceName;
-    private boolean isErrorNotified;
+    private boolean isNotificationRequired;
 
     protected AbstractTask(long sleepTime, SendEmailService sendEmailService) {
         this.sendEmailService = sendEmailService;
         this.sleepTime = sleepTime;
         this.taskStatus = new TaskStatus();
+        this.isNotificationRequired = true;
     }
 
     @Override
@@ -36,12 +37,13 @@ public abstract class AbstractTask implements Runnable, BeanNameAware {
             process();
             taskStatus.processSuccess();
             logger.info(serviceName + " processed successfully");
+            isNotificationRequired = true;
         } catch (Throwable e) {
             logger.error("Fatal error, stopping " + serviceName, e);
             taskStatus.processError(e);
-            if (!isErrorNotified) {
-                sendEmailService.sendReportNotification(EMAIL_SUBJECT, String.format(EMAIL_BODY, serviceName, taskStatus.getStopReasonException()));
-                isErrorNotified = true;
+            if (isNotificationRequired) {
+                sendEmailService.sendReportNotification(EMAIL_SUBJECT, String.format(EMAIL_BODY, serviceName, taskStatus.getLastException()));
+                isNotificationRequired = false;
             }
         }
     }

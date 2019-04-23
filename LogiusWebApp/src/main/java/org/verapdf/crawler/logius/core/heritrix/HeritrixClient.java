@@ -261,18 +261,6 @@ public class HeritrixClient {
         }
     }
 
-    private void postJobAction(String heritrixJobId, String action, String... args) {
-        String params = "&" + String.join("&", args);
-        doPost(this.baseJobUrl + heritrixJobId, "action=" + action + params);
-//        try {
-//            String params = "&" + String.join("&", args);
-//            doPost(this.baseJobUrl + heritrixJobId, "action=" + action + params);
-//        } catch (IOException e) {
-//            logger.error("Can't " + action + " heritrix job: " + heritrixJobId, e);
-//            throw new HeritrixException(e.getMessage());
-//        }
-    }
-
     private void postJobAction(String heritrixJobId, String action) {
         doPost(this.baseJobUrl + heritrixJobId, "action=" + action);
     }
@@ -286,8 +274,8 @@ public class HeritrixClient {
                 response.close();
             }
         } catch (IOException e) {
-            logger.error("Can't execute post request to heritrix " + e);
-            throw new HeritrixException(e.getMessage());
+            logger.error("Can't execute post request to heritrix ", e);
+            throw new HeritrixException(e);
         }
     }
 

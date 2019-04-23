@@ -3,40 +3,43 @@ package org.verapdf.crawler.logius.core.tasks;
 import java.time.LocalDateTime;
 
 public class TaskStatus {
-    private Throwable stopReasonException;
-    private LocalDateTime lastSuccess;
-    private LocalDateTime lastError;
-    private boolean  isRunning;
+    private Throwable lastException;
+    private LocalDateTime lastSuccessTime;
+    private LocalDateTime lastErrorTime;
+    private boolean isRunning;
 
-
-    public boolean isHasError(){
-        if (lastError == null){
+    public boolean isLastProcessFailed(){
+        if (lastErrorTime == null){
             return false;
         }
-        return lastSuccess == null || lastError.isAfter(lastSuccess);
+        return lastSuccessTime == null || lastErrorTime.isAfter(lastSuccessTime);
     }
 
     public void processSuccess() {
-        lastSuccess = LocalDateTime.now();
         isRunning = false;
+	    lastSuccessTime = LocalDateTime.now();
     }
 
     public void processError(Throwable e) {
-        stopReasonException = e;
-        lastError = LocalDateTime.now();
         isRunning = false;
+        lastException = e;
+	    lastErrorTime = LocalDateTime.now();
     }
 
-    public LocalDateTime getLastSuccess() {
-        return lastSuccess;
+    public LocalDateTime getLastSuccessTime() {
+        return lastSuccessTime;
     }
 
-    public LocalDateTime getLastError() {
-        return lastError;
+    public LocalDateTime getLastErrorTime() {
+        return lastErrorTime;
     }
 
-    public Throwable getStopReasonException() {
-        return stopReasonException;
+    public Throwable getLastException() {
+        return lastException;
+    }
+
+    public String getLastExceptionMessage(){
+    	return lastException == null ? null : lastException.getMessage();
     }
 
     public boolean isRunning() {
