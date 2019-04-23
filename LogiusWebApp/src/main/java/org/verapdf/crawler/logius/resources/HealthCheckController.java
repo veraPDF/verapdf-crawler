@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.verapdf.crawler.logius.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.logius.core.tasks.AbstractTask;
-import org.verapdf.crawler.logius.core.tasks.TaskStatus;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.HeritrixSettings;
+import org.verapdf.crawler.logius.dto.TaskStatusDto;
 import org.verapdf.crawler.logius.monitoring.ValidationQueueStatus;
 import org.verapdf.crawler.logius.service.CrawlJobService;
 import org.verapdf.crawler.logius.service.ValidationJobService;
@@ -17,7 +17,6 @@ import org.verapdf.crawler.logius.service.ValidationJobService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 
 @Component
@@ -39,10 +38,10 @@ public class HealthCheckController {
     }
 
     @GetMapping
-    public List<TaskStatus> getTaskStatusesInfo() {
-        return tasks.stream()
-                .map(AbstractTask::getTaskStatus)
-                .collect(Collectors.toList());
+    public Map<String, TaskStatusDto> getTaskStatusesInfo() {
+        Map<String, TaskStatusDto> taskStatuses = new HashMap<>();
+        tasks.forEach(task -> taskStatuses.put(task.getServiceName(), new TaskStatusDto(task.getTaskStatus())));
+        return taskStatuses;
     }
 
     @GetMapping("/active-jobs")

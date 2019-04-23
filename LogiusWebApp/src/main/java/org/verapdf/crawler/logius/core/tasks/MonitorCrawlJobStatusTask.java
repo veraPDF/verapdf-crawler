@@ -15,7 +15,7 @@ public class MonitorCrawlJobStatusTask extends AbstractTask {
     private final MonitoringCrawlJobStatusService monitoringCrawlJobStatusService;
 
     public MonitorCrawlJobStatusTask(MonitoringCrawlJobStatusService monitoringCrawlJobStatusService, SendEmailService sendEmailService) {
-        super("MonitorCrawlJobStatusTask", SLEEP_DURATION, sendEmailService);
+        super(SLEEP_DURATION, sendEmailService);
         this.monitoringCrawlJobStatusService = monitoringCrawlJobStatusService;
     }
 

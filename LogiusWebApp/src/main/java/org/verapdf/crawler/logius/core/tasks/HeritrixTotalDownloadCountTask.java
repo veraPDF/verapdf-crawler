@@ -23,7 +23,7 @@ public class HeritrixTotalDownloadCountTask extends AbstractTask {
     private final DocumentService documentService;
 
     public HeritrixTotalDownloadCountTask(HeritrixClient heritrixClient, SendEmailService email, DocumentService documentService) {
-        super("HeritrixTotalDownloadCountTask", SLEEP_DURATION, email);
+        super(SLEEP_DURATION, email);
         this.heritrixClient = heritrixClient;
         this.documentService = documentService;
     }

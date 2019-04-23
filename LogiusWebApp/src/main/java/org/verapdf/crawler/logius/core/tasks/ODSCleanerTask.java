@@ -24,7 +24,7 @@ public class ODSCleanerTask extends AbstractTask {
     private String odsTempFolder;
 
     public ODSCleanerTask(@Value("${logius.reports.odsTempFolder}") String odsTempFolder, SendEmailService sendEmailService) {
-        super("ODSCleanerService", SLEEP_DURATION, sendEmailService);
+        super(SLEEP_DURATION, sendEmailService);
         this.odsTempFolder = odsTempFolder;
     }
 

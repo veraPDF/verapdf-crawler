@@ -25,7 +25,7 @@ public class HeritrixCleanerTask extends AbstractTask {
     private final Set<String> heritrixJobIds = Collections.synchronizedSet(new HashSet<>());
 
     public HeritrixCleanerTask(HeritrixClient heritrixClient, SendEmailService email) {
-        super("HeritrixCleanerTask", SLEEP_DURATION, email);
+        super(SLEEP_DURATION, email);
         this.heritrixClient = heritrixClient;
     }
 
@@ -50,11 +50,7 @@ public class HeritrixCleanerTask extends AbstractTask {
     }
 
     public void teardownAndClearHeritrixJob(String heritrixJobId) {
-        try {
-            heritrixClient.teardownJob(heritrixJobId);
-        } catch (IOException e) {
-            logger.error("Can't teardown heritrix job: " + heritrixJobId, e);
-        }
+        heritrixClient.teardownJob(heritrixJobId);
         this.heritrixJobIds.add(heritrixJobId);
     }
 }

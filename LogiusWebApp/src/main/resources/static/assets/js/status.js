@@ -38,9 +38,6 @@ $(function () {
                 "Authorization": "Bearer " + localStorage.getItem("token")
             },
             success: function (result) {
-                result = result.map(function (key, value) {
-                    return {'name': key['serviceName'], 'isHealthy': !key['errorNotified']};
-                });
                 renderHealthChecks(result);
             }
         });
@@ -58,9 +55,9 @@ $(function () {
             console.log(healthcheck)
             var element = template.clone();
             element.removeClass('template');
-            element.find('.check-name').text(healthcheck['name']);
+            element.find('.check-name').text(name);
 
-            if (healthcheck['isHealthy']) {
+            if (!healthcheck['lastError']) {
                 element.addClass('healthy');
                 element.find('.check-status').text('healthy');
             } else {

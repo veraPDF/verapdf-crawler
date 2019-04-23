@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.verapdf.common.GracefulHttpClient;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
+import org.verapdf.crawler.logius.exception.HeritrixException;
 import org.verapdf.crawler.logius.model.Role;
 import org.verapdf.crawler.logius.monitoring.HeritrixCrawlJobStatus;
 import org.w3c.dom.Document;
@@ -39,7 +40,6 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,7 +53,7 @@ public class HeritrixClient {
     private static final long GET_CONNECTION_INTERVAL = 5 * 1000;
     private static final int GET_MAX_CONNECTION_RETRIES = 2;
     private static final String ZERO = "0";
-    private static final Charset CHARSET = StandardCharsets.UTF_8;
+    private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
     private static final String STATUS_DESCRIPTION_XPATH = "/job/statusDescription";
     private final CredentialsProvider credsProvider;
     private final SSLConnectionSocketFactory sslConnectionSocketFactory;
@@ -115,31 +115,27 @@ public class HeritrixClient {
         }
     }
 
-    public void unpauseJob(String heritrixJobId) throws IOException {
+    public void unpauseJob(String heritrixJobId) {
         postJobAction(heritrixJobId, "unpause");
     }
 
-    public void pauseJob(String heritrixJobId) throws IOException {
+    public void pauseJob(String heritrixJobId) {
         postJobAction(heritrixJobId, "pause");
     }
 
     public void terminateJob(String heritrixJobId) {
-        try {
-            postJobAction(heritrixJobId, "terminate");
-        }catch (IOException e){
-            logger.error("Terminate heritrix job error: ", e);
-        }
+        postJobAction(heritrixJobId, "terminate");
     }
 
-    public void teardownJob(String heritrixJobId) throws IOException {
+    public void teardownJob(String heritrixJobId) {
         postJobAction(heritrixJobId, "teardown");
     }
 
-    public void launchJob(String heritrixJobId) throws IOException {
+    public void launchJob(String heritrixJobId) {
         postJobAction(heritrixJobId, "launch");
     }
 
-    public void buildJob(String heritrixJobId) throws IOException {
+    public void buildJob(String heritrixJobId) {
         postJobAction(heritrixJobId, "build");
     }
 
@@ -265,16 +261,33 @@ public class HeritrixClient {
         }
     }
 
-    private void postJobAction(String heritrixJobId, String action) throws IOException {
+    private void postJobAction(String heritrixJobId, String action, String... args) {
+        String params = "&" + String.join("&", args);
+        doPost(this.baseJobUrl + heritrixJobId, "action=" + action + params);
+//        try {
+//            String params = "&" + String.join("&", args);
+//            doPost(this.baseJobUrl + heritrixJobId, "action=" + action + params);
+//        } catch (IOException e) {
+//            logger.error("Can't " + action + " heritrix job: " + heritrixJobId, e);
+//            throw new HeritrixException(e.getMessage());
+//        }
+    }
+
+    private void postJobAction(String heritrixJobId, String action) {
         doPost(this.baseJobUrl + heritrixJobId, "action=" + action);
     }
 
-    private void doPost(String path, String entity) throws IOException {
-        HttpPost post = new HttpPost(path);
-        post.setEntity(new StringEntity(entity));
-        try (CloseableHttpClient httpClient = buildHttpClient(POST_MAX_CONNECTION_RETRIES, POST_CONNECTION_INTERVAL)) {
-            CloseableHttpResponse response = httpClient.execute(post);
-            response.close();
+    private void doPost(String path, String entity) {
+        try {
+            HttpPost post = new HttpPost(path);
+            post.setEntity(new StringEntity(entity));
+            try (CloseableHttpClient httpClient = buildHttpClient(POST_MAX_CONNECTION_RETRIES, POST_CONNECTION_INTERVAL)) {
+                CloseableHttpResponse response = httpClient.execute(post);
+                response.close();
+            }
+        } catch (IOException e) {
+            logger.error("Can't execute post request to heritrix " + e);
+            throw new HeritrixException(e.getMessage());
         }
     }
 
@@ -306,7 +319,7 @@ public class HeritrixClient {
         }
         File source = new File(configTemplatePath);
         File destination = File.createTempFile(heritrixJobId, ".cxml");
-        String content = new String(Files.readAllBytes(source.toPath()), CHARSET);
+        String content = new String(Files.readAllBytes(source.toPath()), DEFAULT_CHARSET);
         String maxCount = isAdmin ? ZERO : maxDocumentsCount;
         content = content.replace("${logiusHeritrixJobId}", heritrixJobId);
         content = content.replace("${logiusOperatorContactUrl}", crawlUrls.get(0));
@@ -314,7 +327,7 @@ public class HeritrixClient {
         content = content.replace("${logiusAppUrl}", logiusAppUrl);
         content = content.replace("${maxDocumentsCount}", maxCount);
 
-        Files.write(destination.toPath(), content.getBytes(CHARSET));
+        Files.write(destination.toPath(), content.getBytes(DEFAULT_CHARSET));
         return destination;
     }
 

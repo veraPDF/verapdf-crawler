@@ -3,50 +3,28 @@ package org.verapdf.crawler.logius.core.tasks;
 import java.time.LocalDateTime;
 
 public class TaskStatus {
-    private final String serviceName;
-    private String stopReason;
+    private Throwable stopReasonException;
     private LocalDateTime lastSuccess;
     private LocalDateTime lastError;
-    private boolean isErrorNotified = false;
+    private boolean  isRunning;
 
-    public TaskStatus(String serviceName) {
-        this.serviceName = serviceName;
-    }
 
     public boolean isHasError(){
         if (lastError == null){
             return false;
         }
-        if (lastSuccess == null){
-            return true;
-        }
-        return lastError.isAfter(lastSuccess);
-    }
-
-    public String getServiceName() {
-        return serviceName;
+        return lastSuccess == null || lastError.isAfter(lastSuccess);
     }
 
     public void processSuccess() {
         lastSuccess = LocalDateTime.now();
-        isErrorNotified = false;
+        isRunning = false;
     }
 
     public void processError(Throwable e) {
-        stopReason = e.getMessage();
+        stopReasonException = e;
         lastError = LocalDateTime.now();
-    }
-
-    public boolean isErrorNotified() {
-        return isErrorNotified;
-    }
-
-    public void setErrorNotified(boolean errorNotified) {
-        this.isErrorNotified = errorNotified;
-    }
-
-    public String getStopReason() {
-        return stopReason;
+        isRunning = false;
     }
 
     public LocalDateTime getLastSuccess() {
@@ -55,5 +33,17 @@ public class TaskStatus {
 
     public LocalDateTime getLastError() {
         return lastError;
+    }
+
+    public Throwable getStopReasonException() {
+        return stopReasonException;
+    }
+
+    public boolean isRunning() {
+        return isRunning;
+    }
+
+    public void processStarted() {
+        this.isRunning = true;
     }
 }

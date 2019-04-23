@@ -2,13 +2,14 @@ package org.verapdf.crawler.logius.core.tasks;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.BeanNameAware;
 import org.verapdf.crawler.logius.core.email.SendEmailService;
 
 /**
  * @author Maksim Bezrukov
  */
 
-public abstract class AbstractTask implements Runnable {
+public abstract class AbstractTask implements Runnable, BeanNameAware {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractTask.class);
 
@@ -18,25 +19,29 @@ public abstract class AbstractTask implements Runnable {
     private final long sleepTime;
     private final SendEmailService sendEmailService;
     private TaskStatus taskStatus;
+    private String serviceName;
+    private boolean isErrorNotified;
 
-    protected AbstractTask(String serviceName, long sleepTime, SendEmailService sendEmailService) {
+    protected AbstractTask(long sleepTime, SendEmailService sendEmailService) {
         this.sendEmailService = sendEmailService;
         this.sleepTime = sleepTime;
-        this.taskStatus = new TaskStatus(serviceName);
+        this.taskStatus = new TaskStatus();
     }
 
     @Override
     public void run() {
-        logger.info(taskStatus.getServiceName() + " started");
+        logger.info(serviceName + " started");
+        taskStatus.processStarted();
         try {
             process();
             taskStatus.processSuccess();
+            logger.info(serviceName + " processed successfully");
         } catch (Throwable e) {
-            logger.error("Fatal error, stopping " + taskStatus.getServiceName(), e);
+            logger.error("Fatal error, stopping " + serviceName, e);
             taskStatus.processError(e);
-            if (!taskStatus.isErrorNotified()) {
-                sendEmailService.sendReportNotification(EMAIL_SUBJECT, String.format(EMAIL_BODY, taskStatus.getServiceName() , taskStatus.getStopReason()));
-                taskStatus.setErrorNotified(true);
+            if (!isErrorNotified) {
+                sendEmailService.sendReportNotification(EMAIL_SUBJECT, String.format(EMAIL_BODY, serviceName, taskStatus.getStopReasonException()));
+                isErrorNotified = true;
             }
         }
     }
@@ -49,5 +54,14 @@ public abstract class AbstractTask implements Runnable {
 
     public TaskStatus getTaskStatus() {
         return taskStatus;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    @Override
+    public void setBeanName(String name) {
+        this.serviceName = name;
     }
 }

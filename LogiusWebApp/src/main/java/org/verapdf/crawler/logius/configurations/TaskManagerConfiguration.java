@@ -16,7 +16,7 @@ public class TaskManagerConfiguration {
     @Bean("taskManager")
     public ThreadPoolTaskScheduler threadPoolTaskScheduler(List<AbstractTask> availableServices){
         ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-        threadPoolTaskScheduler.setBeanName("taskManager");
+        threadPoolTaskScheduler.setThreadNamePrefix("taskManager-");
         threadPoolTaskScheduler.setPoolSize(availableServices.size());
         threadPoolTaskScheduler.initialize();
         availableServices.forEach(service ->
