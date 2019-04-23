@@ -16,8 +16,6 @@ import org.verapdf.crawler.logius.validation.ValidationJob_;
 
 import javax.persistence.criteria.*;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -104,8 +102,9 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
                 .createSQLQuery("select document_url, validation_status from select_jobs_in_queue");
         List<Object[]> rows = query.list();
         return rows.stream()
-                .map(row -> new ValidationJobDto(row[0].toString(),
-                        ValidationJob.Status.valueOf(row[1].toString()))).collect(Collectors.toList());
+                   .map(row -> new ValidationJobDto(row[0].toString(),
+                                                    ValidationJob.Status.valueOf(row[1].toString())))
+                   .collect(Collectors.toList());
 
     }
 

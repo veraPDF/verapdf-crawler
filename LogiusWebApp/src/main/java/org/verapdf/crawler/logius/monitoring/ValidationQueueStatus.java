@@ -21,7 +21,9 @@ public class ValidationQueueStatus {
 
     public ValidationQueueStatus(Long count, List<ValidationJob> topDocuments) {
         this.count = count;
-        this.topDocuments = topDocuments.stream().map(ValidationJobDto::new).collect(Collectors.toList());
+        this.topDocuments = topDocuments.stream()
+                                        .map(ValidationJobDto::new)
+                                        .collect(Collectors.toList());
     }
 
     public Long getCount() {

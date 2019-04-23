@@ -5,7 +5,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.core.email.SendEmailService;
-import org.verapdf.crawler.logius.core.email.SendEmail;
 import org.verapdf.crawler.logius.db.UserDao;
 import org.verapdf.crawler.logius.dto.user.PasswordUpdateDto;
 import org.verapdf.crawler.logius.dto.user.UserDto;
