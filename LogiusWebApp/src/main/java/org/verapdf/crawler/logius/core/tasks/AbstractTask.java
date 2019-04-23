@@ -2,82 +2,68 @@ package org.verapdf.crawler.logius.core.tasks;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.verapdf.crawler.logius.core.email.SendEmail;
+import org.springframework.beans.factory.BeanNameAware;
+import org.verapdf.crawler.logius.core.email.SendEmailService;
 
 /**
  * @author Maksim Bezrukov
  */
 
-public abstract class AbstractTask implements Runnable {
+public abstract class AbstractTask implements Runnable, BeanNameAware {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractTask.class);
 
     private static final String EMAIL_SUBJECT = "Logius health checks fails";
     private static final String EMAIL_BODY = "Service %s stopped, stop reason: %s";
 
-    private final String serviceName;
     private final long sleepTime;
-    private final SendEmail sendEmail;
-    private boolean running;
-    private String stopReason;
+    private final SendEmailService sendEmailService;
+    private TaskStatus taskStatus;
+    private String serviceName;
+    private boolean isNotificationRequired;
 
-    protected AbstractTask(String serviceName, long sleepTime, SendEmail sendEmail) {
-        this.sendEmail = sendEmail;
-        this.running = false;
-        this.serviceName = serviceName;
+    protected AbstractTask(long sleepTime, SendEmailService sendEmailService) {
+        this.sendEmailService = sendEmailService;
         this.sleepTime = sleepTime;
+        this.taskStatus = new TaskStatus();
+        this.isNotificationRequired = true;
+    }
 
-        if (!running) {
-            running = true;
-            stopReason = null;
-            new Thread(this, "Thread-" + this.serviceName).start();
+    @Override
+    public void run() {
+        logger.info(serviceName + " started");
+        taskStatus.processStarted();
+        try {
+            process();
+            taskStatus.processSuccess();
+            logger.info(serviceName + " processed successfully");
+            isNotificationRequired = true;
+        } catch (Throwable e) {
+            logger.error("Fatal error, stopping " + serviceName, e);
+            taskStatus.processError(e);
+            if (isNotificationRequired) {
+                sendEmailService.sendReportNotification(EMAIL_SUBJECT, String.format(EMAIL_BODY, serviceName, taskStatus.getLastException()));
+                isNotificationRequired = false;
+            }
         }
+    }
+
+    protected abstract void process() throws Throwable;
+
+    public long getSleepTime() {
+        return sleepTime;
+    }
+
+    public TaskStatus getTaskStatus() {
+        return taskStatus;
     }
 
     public String getServiceName() {
         return serviceName;
     }
 
-    public boolean isRunning() {
-        return running;
-    }
-
-    public String getStopReason() {
-        return stopReason;
-    }
-
-    public void start() {
-        if (!running) {
-            running = true;
-            stopReason = null;
-            new Thread(this, "Thread-" + this.serviceName).start();
-        }
-    }
-
     @Override
-    public void run() {
-        logger.info(this.serviceName + " started");
-        try {
-            onStart();
-            while (running) {
-                if (onRepeat()) {
-                    Thread.sleep(this.sleepTime);
-                }
-            }
-        } catch (Throwable e) {
-            logger.error("Fatal error, stopping " + this.serviceName, e);
-            this.stopReason = e.getMessage();
-
-            sendEmail.sendReportNotification(EMAIL_SUBJECT, String.format(EMAIL_BODY, this.serviceName, this.stopReason));
-        } finally {
-            running = false;
-        }
+    public void setBeanName(String name) {
+        this.serviceName = name;
     }
-
-    protected abstract void onStart() throws Throwable;
-
-    /**
-     * @return true if we have to sleep after action has been finished
-     */
-    protected abstract boolean onRepeat() throws Throwable;
 }

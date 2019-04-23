@@ -19,8 +19,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ResourceUtils;
 import org.verapdf.common.GracefulHttpClient;
+import org.verapdf.crawler.logius.crawling.CrawlJob;
+import org.verapdf.crawler.logius.exception.HeritrixException;
+import org.verapdf.crawler.logius.model.Role;
 import org.verapdf.crawler.logius.monitoring.HeritrixCrawlJobStatus;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -38,7 +40,6 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,12 +52,15 @@ public class HeritrixClient {
     private static final int POST_MAX_CONNECTION_RETRIES = 5;
     private static final long GET_CONNECTION_INTERVAL = 5 * 1000;
     private static final int GET_MAX_CONNECTION_RETRIES = 2;
-
+    private static final String ZERO = "0";
+    private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
     private static final String STATUS_DESCRIPTION_XPATH = "/job/statusDescription";
     private final CredentialsProvider credsProvider;
     private final SSLConnectionSocketFactory sslConnectionSocketFactory;
     @Value("${logius.heritrix.configTemplatePath}")
     private String configTemplatePath;
+    @Value("${logius.heritrix.maxDocumentCount}")
+    private String maxDocumentsCount;
     @Value("${logius.heritrix.logiusAppUrl}")
     private String logiusAppUrl;
     @Value("${logius.heritrix.jobsFolder}")
@@ -111,38 +115,41 @@ public class HeritrixClient {
         }
     }
 
-    public void unpauseJob(String heritrixJobId) throws IOException {
+    public void unpauseJob(String heritrixJobId) {
         postJobAction(heritrixJobId, "unpause");
     }
 
-    public void pauseJob(String heritrixJobId) throws IOException {
+    public void pauseJob(String heritrixJobId) {
         postJobAction(heritrixJobId, "pause");
     }
 
-    public void terminateJob(String heritrixJobId) throws IOException {
+    public void terminateJob(String heritrixJobId) {
         postJobAction(heritrixJobId, "terminate");
     }
 
-    public void teardownJob(String heritrixJobId) throws IOException {
+    public void teardownJob(String heritrixJobId) {
         postJobAction(heritrixJobId, "teardown");
     }
 
-    public void launchJob(String heritrixJobId) throws IOException {
+    public void launchJob(String heritrixJobId) {
         postJobAction(heritrixJobId, "launch");
     }
 
-    public void buildJob(String heritrixJobId) throws IOException {
+    public void buildJob(String heritrixJobId) {
         postJobAction(heritrixJobId, "build");
     }
 
-    public String createJob(String heritrixJobId, String domain) throws IOException {
+    public String createJob(CrawlJob crawlJob) throws IOException {
+        String heritrixJobId = crawlJob.getHeritrixJobId();
+        String domain = crawlJob.getDomain();
+        boolean isAdmin = crawlJob.getUser().getRole() == Role.ADMIN;
         doPost(this.engineUrl, "createpath=" + heritrixJobId + "&action=create");
 
         ArrayList<String> crawlUrls = new ArrayList<>();
         crawlUrls.add("https://" + domain);
         crawlUrls.add("http://" + domain);
 
-        File configurationFile = createCrawlConfiguration(heritrixJobId, crawlUrls);
+        File configurationFile = createCrawlConfiguration(heritrixJobId, isAdmin, crawlUrls);
         submitConfigFile(heritrixJobId, configurationFile);
         configurationFile.delete();
 
@@ -254,16 +261,21 @@ public class HeritrixClient {
         }
     }
 
-    private void postJobAction(String heritrixJobId, String action) throws IOException {
+    private void postJobAction(String heritrixJobId, String action) {
         doPost(this.baseJobUrl + heritrixJobId, "action=" + action);
     }
 
-    private void doPost(String path, String entity) throws IOException {
-        HttpPost post = new HttpPost(path);
-        post.setEntity(new StringEntity(entity));
-        try (CloseableHttpClient httpClient = buildHttpClient(POST_MAX_CONNECTION_RETRIES, POST_CONNECTION_INTERVAL)) {
-            CloseableHttpResponse response = httpClient.execute(post);
-            response.close();
+    private void doPost(String path, String entity) {
+        try {
+            HttpPost post = new HttpPost(path);
+            post.setEntity(new StringEntity(entity));
+            try (CloseableHttpClient httpClient = buildHttpClient(POST_MAX_CONNECTION_RETRIES, POST_CONNECTION_INTERVAL)) {
+                CloseableHttpResponse response = httpClient.execute(post);
+                response.close();
+            }
+        } catch (IOException e) {
+            logger.error("Can't execute heritrix post request with path " + path, e);
+            throw new HeritrixException(e);
         }
     }
 
@@ -283,7 +295,7 @@ public class HeritrixClient {
 
     //<editor-fold desc="Private helpers">
 
-    private File createCrawlConfiguration(String heritrixJobId, List<String> crawlUrls) throws IOException {
+    private File createCrawlConfiguration(String heritrixJobId, boolean isAdmin, List<String> crawlUrls) throws IOException {
 
         StringBuilder sb = new StringBuilder();
         for (String url : crawlUrls) {
@@ -293,19 +305,17 @@ public class HeritrixClient {
             sb.append(" ").append(System.lineSeparator());
             sb.append(surt);
         }
-
         File source = new File(configTemplatePath);
         File destination = File.createTempFile(heritrixJobId, ".cxml");
-        Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-        Charset charset = StandardCharsets.UTF_8;
-
-        String content = new String(Files.readAllBytes(destination.toPath()), charset);
+        String content = new String(Files.readAllBytes(source.toPath()), DEFAULT_CHARSET);
+        String maxCount = isAdmin ? ZERO : maxDocumentsCount;
         content = content.replace("${logiusHeritrixJobId}", heritrixJobId);
         content = content.replace("${logiusOperatorContactUrl}", crawlUrls.get(0));
         content = content.replace("${logiusUrls}", sb.toString());
         content = content.replace("${logiusAppUrl}", logiusAppUrl);
-        Files.write(destination.toPath(), content.getBytes(charset));
+        content = content.replace("${maxDocumentsCount}", maxCount);
+
+        Files.write(destination.toPath(), content.getBytes(DEFAULT_CHARSET));
         return destination;
     }
 

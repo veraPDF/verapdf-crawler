@@ -1,14 +1,11 @@
 package org.verapdf.crawler.logius.service;
 
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.HttpClientErrorException;
-import org.verapdf.crawler.logius.core.email.SendEmail;
+import org.verapdf.crawler.logius.core.email.SendEmailService;
 import org.verapdf.crawler.logius.db.UserDao;
-import org.verapdf.crawler.logius.dto.ApiErrorDto;
 import org.verapdf.crawler.logius.dto.user.PasswordUpdateDto;
 import org.verapdf.crawler.logius.dto.user.UserDto;
 import org.verapdf.crawler.logius.dto.user.UserInfoDto;
@@ -30,13 +27,13 @@ public class UserService {
     private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
-    private final SendEmail sendEmail;
+    private final SendEmailService sendEmailService;
 
-    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenService tokenService, SendEmail sendEmail) {
+    public UserService(UserDao userDao, PasswordEncoder passwordEncoder, TokenService tokenService, SendEmailService sendEmailService) {
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
-        this.sendEmail = sendEmail;
+        this.sendEmailService = sendEmailService;
     }
 
     @Transactional
@@ -58,7 +55,7 @@ public class UserService {
         user.setRole(Role.USER);
         user.setValidationJobPriority(LocalDateTime.now());
         user = saveUserWithUpdateSecret(user);
-        sendEmail.sendEmailConfirm(tokenService.encodeEmailVerificationToken(user), user.getEmail());
+        sendEmailService.sendEmailConfirm(tokenService.encodeEmailVerificationToken(user), user.getEmail());
         return user;
 
     }
@@ -125,7 +122,7 @@ public class UserService {
     public void resetPassword(String email) {
         User user = findUserByEmail(email);
         String token = tokenService.encodePasswordToken(user);
-        sendEmail.sendPasswordResetToken(token, user.getEmail());
+        sendEmailService.sendPasswordResetToken(token, user.getEmail());
     }
 
     @Transactional
@@ -135,6 +132,6 @@ public class UserService {
             throw new BadRequestException("user already activated");
         }
         saveUserWithUpdateSecret(user);
-        sendEmail.sendEmailConfirm(tokenService.encodeEmailVerificationToken(user), user.getEmail());
+        sendEmailService.sendEmailConfirm(tokenService.encodeEmailVerificationToken(user), user.getEmail());
     }
 }

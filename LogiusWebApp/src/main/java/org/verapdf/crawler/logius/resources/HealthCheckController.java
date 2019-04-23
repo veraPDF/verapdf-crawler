@@ -3,18 +3,16 @@ package org.verapdf.crawler.logius.resources;
 import org.springframework.boot.actuate.endpoint.web.annotation.RestControllerEndpoint;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.verapdf.crawler.logius.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.logius.core.tasks.AbstractTask;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.HeritrixSettings;
-import org.verapdf.crawler.logius.db.ValidationJobDAO;
+import org.verapdf.crawler.logius.dto.TaskStatusDto;
 import org.verapdf.crawler.logius.monitoring.ValidationQueueStatus;
 import org.verapdf.crawler.logius.service.CrawlJobService;
 import org.verapdf.crawler.logius.service.ValidationJobService;
-import org.verapdf.crawler.logius.validation.ValidationJob;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,26 +23,26 @@ import java.util.stream.Collectors;
 @Component
 @RestControllerEndpoint(id = "info")
 public class HealthCheckController {
-    private final Map<String, AbstractTask> tasks;
     private final CrawlJobService crawlJobService;
     private final ValidationJobService validationJobService;
     private final HeritrixClient heritrix;
-    private ValidationJobDAO validationJobDAO;
+    private List<AbstractTask> tasks;
 
-    public HealthCheckController(Map<String, AbstractTask> tasks, ValidationJobService validationJobService,
-                                 CrawlJobService crawlJobService, HeritrixClient heritrix, ValidationJobDAO validationJobDAO) {
-        this.tasks = tasks;
+    public HealthCheckController(ValidationJobService validationJobService,
+                                 CrawlJobService crawlJobService,
+                                 HeritrixClient heritrix,
+                                 List<AbstractTask> tasks) {
         this.crawlJobService = crawlJobService;
         this.validationJobService = validationJobService;
         this.heritrix = heritrix;
-        this.validationJobDAO = validationJobDAO;
+        this.tasks = tasks;
     }
 
     @GetMapping
-    public Map<String, Boolean> getTaskStatusesInfo() {
-        Map<String, Boolean> taskStatues = new HashMap<>();
-        tasks.forEach((key, value) -> taskStatues.put(key, value.isRunning()));
-        return taskStatues;
+    public Map<String, TaskStatusDto> getTaskStatusesInfo() {
+	    return tasks.stream()
+	                .collect(Collectors.toMap(AbstractTask::getServiceName,
+	                                          item -> new TaskStatusDto(item.getTaskStatus())));
     }
 
     @GetMapping("/active-jobs")
@@ -57,7 +55,6 @@ public class HealthCheckController {
         return ResponseEntity.ok().header("X-Total-Count", String.valueOf(count)).body(activeJobs);
     }
 
-    @Transactional
     @GetMapping("/queue-status")
     public ValidationQueueStatus getQueueStatus() {
         return validationJobService.getValidationJobStatus(10);

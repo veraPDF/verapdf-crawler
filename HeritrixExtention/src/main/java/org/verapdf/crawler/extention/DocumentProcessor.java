@@ -32,6 +32,7 @@ public class DocumentProcessor extends MirrorWriterProcessor {
     private String jobId;
 
     private String logiusUrl;
+
     private Map<String, String> supportedContentTypes;
 
     public DocumentProcessor() {
@@ -40,11 +41,14 @@ public class DocumentProcessor extends MirrorWriterProcessor {
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
+    private static void log(String message) {
+        System.out.println(loggingDateFormat.format(new Date()) + " org.verapdf.crawler.extension.DocumentProcessor: " + message);
+    }
+
     @Override
     protected boolean shouldProcess(CrawlURI crawlURI) {
         try {
             // TODO: add crawlSince parameter, and compare here with Last-Modified value and do now download and process older files
-
             log("shouldProcess method invocation with uri " + crawlURI.getURI());
             String contentType = crawlURI.getContentType();
             if (supportedContentTypes.keySet().contains(contentType)) {
@@ -52,7 +56,6 @@ public class DocumentProcessor extends MirrorWriterProcessor {
             } else if (contentType != null && contentType.startsWith("text")) {
                 return false;
             }
-
             String extension = FilenameUtils.getExtension(crawlURI.getURI());
             return supportedContentTypes.values().contains(extension);
         } catch (Throwable e) {
@@ -119,9 +122,6 @@ public class DocumentProcessor extends MirrorWriterProcessor {
         }
     }
 
-    private static void log(String message) {
-        System.out.println(loggingDateFormat.format(new Date()) + " org.verapdf.crawler.extension.DocumentProcessor: " + message);
-    }
 
     public String getJobId() {
         return jobId;
@@ -146,4 +146,5 @@ public class DocumentProcessor extends MirrorWriterProcessor {
     public void setSupportedContentTypes(Map<String, String> supportedContentTypes) {
         this.supportedContentTypes = supportedContentTypes;
     }
+
 }

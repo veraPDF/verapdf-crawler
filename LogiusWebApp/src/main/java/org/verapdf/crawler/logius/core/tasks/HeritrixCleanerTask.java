@@ -3,8 +3,7 @@ package org.verapdf.crawler.logius.core.tasks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-import org.verapdf.crawler.logius.core.email.SendEmail;
+import org.verapdf.crawler.logius.core.email.SendEmailService;
 import org.verapdf.crawler.logius.core.heritrix.HeritrixClient;
 import org.xml.sax.SAXException;
 
@@ -25,17 +24,13 @@ public class HeritrixCleanerTask extends AbstractTask {
     private final HeritrixClient heritrixClient;
     private final Set<String> heritrixJobIds = Collections.synchronizedSet(new HashSet<>());
 
-    public HeritrixCleanerTask(HeritrixClient heritrixClient, SendEmail email) {
-        super("HeritrixCleanerTask", SLEEP_DURATION, email);
+    public HeritrixCleanerTask(HeritrixClient heritrixClient, SendEmailService email) {
+        super(SLEEP_DURATION, email);
         this.heritrixClient = heritrixClient;
     }
 
     @Override
-    protected void onStart() {
-    }
-
-    @Override
-    protected boolean onRepeat() {
+    protected void process() {
         if (!heritrixJobIds.isEmpty()) {
             // will create here another set for removing objects
             // this is necesary, because with iterator based solution we have to
@@ -52,15 +47,10 @@ public class HeritrixCleanerTask extends AbstractTask {
             }
             heritrixJobIds.removeAll(removed);
         }
-        return true;
     }
 
     public void teardownAndClearHeritrixJob(String heritrixJobId) {
-        try {
-            heritrixClient.teardownJob(heritrixJobId);
-        } catch (IOException e) {
-            logger.error("Can't teardown heritrix job: " + heritrixJobId, e);
-        }
+        heritrixClient.teardownJob(heritrixJobId);
         this.heritrixJobIds.add(heritrixJobId);
     }
 }

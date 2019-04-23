@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.verapdf.crawler.logius.core.email.SendEmail;
+import org.verapdf.crawler.logius.core.email.SendEmailService;
 import org.verapdf.crawler.logius.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.logius.core.tasks.MonitorCrawlJobStatusTask;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
@@ -26,16 +26,16 @@ public class MonitoringCrawlJobStatusService {
     private final HeritrixClient heritrixClient;
     private final BingService bingService;
     private final ValidationJobDAO validationJobDAO;
-    private final SendEmail sendEmail;
+    private final SendEmailService sendEmailService;
     private final CrawlRequestDAO crawlRequestDAO;
 
     public MonitoringCrawlJobStatusService(CrawlJobDAO crawlJobDAO, HeritrixClient heritrixClient, BingService bingService,
-                                           ValidationJobDAO validationJobDAO, SendEmail sendEmail, CrawlRequestDAO crawlRequestDAO) {
+                                           ValidationJobDAO validationJobDAO, SendEmailService sendEmailService, CrawlRequestDAO crawlRequestDAO) {
         this.crawlJobDAO = crawlJobDAO;
         this.heritrixClient = heritrixClient;
         this.bingService = bingService;
         this.validationJobDAO = validationJobDAO;
-        this.sendEmail = sendEmail;
+        this.sendEmailService = sendEmailService;
         this.crawlRequestDAO = crawlRequestDAO;
     }
 
@@ -91,7 +91,7 @@ public class MonitoringCrawlJobStatusService {
         for (CrawlRequest request : crawlRequests) {
             request.setFinished(true);
             if (request.getEmailAddress() != null) {
-                sendEmail.sendFinishNotification(request);
+                sendEmailService.sendFinishNotification(request);
             }
         }
     }

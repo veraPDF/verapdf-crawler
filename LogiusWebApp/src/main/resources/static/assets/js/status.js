@@ -52,11 +52,12 @@ $(function () {
 
         var template = loaded.find('.template');
         $.each(healthchecks, function (name, healthcheck) {
+            console.log(healthcheck)
             var element = template.clone();
             element.removeClass('template');
             element.find('.check-name').text(name);
 
-            if (healthcheck) {
+            if (!healthcheck['lastError']) {
                 element.addClass('healthy');
                 element.find('.check-status').text('healthy');
             } else {
