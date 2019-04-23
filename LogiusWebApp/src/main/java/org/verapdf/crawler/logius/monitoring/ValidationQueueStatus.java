@@ -1,11 +1,9 @@
 package org.verapdf.crawler.logius.monitoring;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.verapdf.crawler.logius.dto.ValidationJobDto;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
