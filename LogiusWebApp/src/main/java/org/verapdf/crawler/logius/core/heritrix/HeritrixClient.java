@@ -274,7 +274,7 @@ public class HeritrixClient {
                 response.close();
             }
         } catch (IOException e) {
-            logger.error("Can't execute post request to heritrix ", e);
+            logger.error("Can't execute heritrix post request with path " + path, e);
             throw new HeritrixException(e);
         }
     }
