@@ -67,7 +67,7 @@ public class ValidationJobService {
     @Transactional
     public ValidationQueueStatus getValidationJobStatus(int limit) {
         Long count = validationJobDAO.count(null);
-        List<ValidationJobDto> documents = validationJobDAO.getDocuments();
+        List<ValidationJobDto> documents = validationJobDAO.getDocuments(limit);
         ValidationQueueStatus validationQueueStatus = new ValidationQueueStatus();
         validationQueueStatus.setCount(count);
         validationQueueStatus.setTopDocuments(documents);

@@ -50,7 +50,7 @@ public class UserDao extends AbstractDAO<User> {
     }
 
 
-    public List<User> getUsersByEmailAndRole(String emailFilter, Role role, Integer start, Integer limit) {
+    public List<User> getUsers(String emailFilter, Role role, Integer start, Integer limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<User> criteriaQuery = builder.createQuery(User.class);
         Root<User> rootEntry = criteriaQuery.from(User.class);
