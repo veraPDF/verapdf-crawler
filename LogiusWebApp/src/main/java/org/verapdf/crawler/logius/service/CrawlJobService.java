@@ -35,6 +35,7 @@ public class CrawlJobService {
         this.crawlJobDAO = crawlJobDAO;
         this.validationJobDAO = validationJobDAO;
         this.heritrixClient = heritrixClient;
+        //this.crawlService = crawlService;
     }
 
     @Transactional
@@ -82,6 +83,12 @@ public class CrawlJobService {
 
         return crawlJob;
     }
+
+//    @Transactional
+//    public void cancelCrawlJob(UUID id, String domain) {
+//        CrawlJob crawlJob = getCrawlJob(domain, id);
+//        crawlService.discardJob(crawlJob, crawlJob.getCrawlService(), crawlJob.getHeritrixJobId());
+//    }
 
     @Transactional
     public CrawlJob getCrawlJob(String domain, UUID userId) {
