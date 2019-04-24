@@ -3,6 +3,7 @@ package org.verapdf.crawler.logius.resources;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -50,6 +51,16 @@ public class CrawlJobResource {
         long totalCount = crawlJobService.count(domainFilter, id, finished);
         List<CrawlJob> crawlJobs = crawlJobService.find(domainFilter, id, finished, startParam, limitParam);
         return ResponseEntity.ok().header("X-Total-Count", String.valueOf(totalCount)).body(crawlJobs);
+    }
+
+    @PreAuthorize("isFullyAuthenticated()")
+    @DeleteMapping("/{domain}")
+    @Transactional
+    public ResponseEntity cancelCrawlJob(@AuthenticationPrincipal TokenUserDetails principal,
+                                                    @PathVariable("domain") String domain) {
+        UUID id = controllerHelper.getUserUUID(principal);
+       // crawlJobService.cancelCrawlJob(id, domain);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{domain}")

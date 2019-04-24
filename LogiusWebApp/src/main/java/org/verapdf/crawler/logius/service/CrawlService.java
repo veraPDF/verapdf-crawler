@@ -4,6 +4,7 @@ package org.verapdf.crawler.logius.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.core.heritrix.HeritrixClient;
 import org.verapdf.crawler.logius.core.tasks.HeritrixCleanerTask;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
@@ -43,16 +44,8 @@ public class CrawlService {
         return restartCrawlJob(crawlJob, crawlJob.getCrawlService(), crawlJob.isValidationEnabled());
     }
 
-
-    public CrawlJob restartCrawlJob(CrawlJob crawlJob, CrawlJob.CrawlService service, boolean isValidationRequired) {
-        List<CrawlRequest> crawlRequests;
-        String heritrixJobId = crawlJob.getHeritrixJobId();
-        CrawlJob.CrawlService currentService = crawlJob.getCrawlService();
-        // Keep requests list to link to new job
-        crawlRequests = new ArrayList<>(crawlJob.getCrawlRequests());
-
-        // Tear crawl service
-        switch (currentService) {
+    public void discardJob(CrawlJob crawlJob, CrawlJob.CrawlService service,  String heritrixJobId){
+        switch (service) {
             case HERITRIX:
                 heritrixCleanerTask.teardownAndClearHeritrixJob(heritrixJobId);
                 break;
@@ -65,6 +58,15 @@ public class CrawlService {
 
         queueManager.abortTasks(crawlJob);
         crawlJobDAO.remove(crawlJob);
+    }
+
+    public CrawlJob restartCrawlJob(CrawlJob crawlJob, CrawlJob.CrawlService service, boolean isValidationRequired) {
+        List<CrawlRequest> crawlRequests;
+        String heritrixJobId = crawlJob.getHeritrixJobId();
+        CrawlJob.CrawlService currentService = crawlJob.getCrawlService();
+        // Keep requests list to link to new job
+        crawlRequests = new ArrayList<>(crawlJob.getCrawlRequests());
+        discardJob(crawlJob, currentService, heritrixJobId);
 
         // Create and start new crawl job
         CrawlJob newJob = new CrawlJob(crawlJob.getDomain(), service, isValidationRequired);
