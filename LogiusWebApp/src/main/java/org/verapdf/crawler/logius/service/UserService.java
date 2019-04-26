@@ -57,7 +57,6 @@ public class UserService {
         user = saveUserWithUpdateSecret(user);
         sendEmailService.sendEmailConfirm(tokenService.encodeEmailVerificationToken(user), user.getEmail());
         return user;
-
     }
 
     @Transactional
@@ -74,9 +73,12 @@ public class UserService {
     }
 
     @Transactional
-    public void updateEmailVerificationStatus(String email, boolean status) {
+    public void verifyUserEmail(String email) {
         User user = findUserByEmail(email);
-        user.setActivated(status);
+        if (user.isActivated()){
+            throw new BadRequestException("user already activated");
+        }
+        user.setActivated(true);
         saveUserWithUpdateSecret(user);
     }
 

@@ -75,7 +75,7 @@ $(function () {
         row.find('.locked').find('input').change(function () {
             $.ajax({
                 headers: {'Authorization': 'Bearer ' + localStorage['token']},
-                url: USER_CHANGE_STATUS_URL + user.email + "/verification-status?&status="  + $(this).is(':checked'),
+                url: USER_CHANGE_STATUS_URL + user.email + "/verify-email",
                 type: "PUT",
                 error: function (result) {
                     reportError(result);
