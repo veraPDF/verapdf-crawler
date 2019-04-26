@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.verapdf.crawler.logius.core.email.SendEmailService;
 import org.verapdf.crawler.logius.core.heritrix.HeritrixClient;
+import org.verapdf.crawler.logius.exception.HeritrixException;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -41,8 +42,8 @@ public class HeritrixCleanerTask extends AbstractTask {
                     if (heritrixClient.deleteJobFolder(id)) {
                         removed.add(id);
                     }
-                } catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException e) {
-                    logger.error("Error during heritrix job deleting", e);
+                } catch (Throwable e) {
+                    throw new HeritrixException(e);
                 }
             }
             heritrixJobIds.removeAll(removed);

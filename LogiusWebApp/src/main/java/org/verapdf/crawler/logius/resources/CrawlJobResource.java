@@ -14,7 +14,6 @@ import org.verapdf.crawler.logius.monitoring.CrawlJobStatus;
 import org.verapdf.crawler.logius.resources.util.ControllerHelper;
 import org.verapdf.crawler.logius.service.CrawlJobService;
 import org.verapdf.crawler.logius.service.CrawlRequestService;
-import org.verapdf.crawler.logius.service.CrawlService;
 import org.xml.sax.SAXException;
 
 import javax.validation.constraints.NotNull;
@@ -29,14 +28,12 @@ import java.util.UUID;
 public class CrawlJobResource {
     private final CrawlJobService crawlJobService;
     private final CrawlRequestService crawlRequestService;
-    private final CrawlService crawlService;
     private final ControllerHelper controllerHelper;
 
-    public CrawlJobResource(CrawlJobService crawlJobService, CrawlRequestService crawlRequestService, CrawlService crawlService,
+    public CrawlJobResource(CrawlJobService crawlJobService, CrawlRequestService crawlRequestService,
                             ControllerHelper controllerHelper) {
         this.crawlJobService = crawlJobService;
         this.crawlRequestService = crawlRequestService;
-        this.crawlService = crawlService;
         this.controllerHelper = controllerHelper;
     }
 
@@ -68,7 +65,7 @@ public class CrawlJobResource {
     public ResponseEntity<CrawlJob> restartCrawlJob(@AuthenticationPrincipal TokenUserDetails principal,
                                                     @PathVariable("domain") String domain) {
         UUID id = controllerHelper.getUserUUID(principal);
-        return ResponseEntity.ok(crawlService.restartCrawlJob(id, domain));
+        return ResponseEntity.ok(crawlJobService.restartCrawlJob(id, domain));
     }
 
 

@@ -3,6 +3,7 @@ package org.verapdf.crawler.logius.core.tasks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanNameAware;
+import org.verapdf.common.RetryFailedException;
 import org.verapdf.crawler.logius.core.email.SendEmailService;
 
 /**

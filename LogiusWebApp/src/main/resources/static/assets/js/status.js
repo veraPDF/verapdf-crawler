@@ -57,7 +57,7 @@ $(function () {
             element.removeClass('template');
             element.find('.check-name').text(name);
 
-            if (!healthcheck['lastError']) {
+            if (!healthcheck['lastProcessFailed']) {
                 element.addClass('healthy');
                 element.find('.check-status').text('healthy');
             } else {
