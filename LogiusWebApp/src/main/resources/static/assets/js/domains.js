@@ -76,6 +76,10 @@ $(function () {
         if (crawlJob.finishTime) {
             row.children('.end').text(crawlJob.finishTime);
         }
+        if (getUserJobs()){
+            var cancel = row.find('.action-cancel');
+            cancel.removeAttr('style');
+        }
         row.children('.status').text(crawlJob.status);
         row.addClass(crawlJob.status.toLowerCase());
         $("#crawl_job_list").children('tbody').append(row);
@@ -120,6 +124,26 @@ $(function () {
 
     });
 
+    $("#crawl_job_list").on("click", 'a.action-cancel', function (e) {
+        var link = $(this);
+        var currRow = $(this).parent().parent();
+        if (currRow.hasClass('disabled')) {
+            return;
+        }
+        currRow.addClass('disabled');
+        $.ajax({
+            url: URL + "/" + normalizeURL(link.parent().siblings().first().text()),
+            type: "DELETE",
+            headers: createHeaders(),
+            success: function () {
+                currRow.remove();
+            },
+            error: function (result) {
+                reportError(result);
+            }
+        });
+    });
+
     $("#crawl_job_list").on("click", 'a.action-pause', function (e) {
         var link = $(this);
         var currRow = $(this).parent().parent();
@@ -151,7 +175,6 @@ $(function () {
                 reportError(result);
             }
         });
-
     });
 
     $("#job-list-checkbox").on("click", function (e) {

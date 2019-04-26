@@ -56,7 +56,7 @@ public class CrawlJobResource {
     public ResponseEntity cancelCrawlJob(@AuthenticationPrincipal TokenUserDetails principal,
                                                     @PathVariable("domain") String domain) {
         UUID id = controllerHelper.getUserUUID(principal);
-       // crawlJobService.cancelCrawlJob(id, domain);
+        crawlJobService.cancelCrawlJob(id, domain);
         return ResponseEntity.noContent().build();
     }
 

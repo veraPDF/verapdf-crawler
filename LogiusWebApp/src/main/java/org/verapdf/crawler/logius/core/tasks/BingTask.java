@@ -11,7 +11,7 @@ import org.verapdf.crawler.logius.service.CrawlJobService;
 @Component
 public class BingTask extends AbstractTask {
 	private static final Logger logger = LoggerFactory.getLogger(BingTask.class);
-	private static final long SLEEP_DURATION = 1000;
+	private static final long SLEEP_DURATION = 60 * 1000;
 	private final CrawlJobService crawlJobService;
 	private final BingService bingService;
 
