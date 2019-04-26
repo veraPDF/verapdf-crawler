@@ -94,11 +94,11 @@ public class CrawlJobService {
         return crawlJob;
     }
 
-//    @Transactional
-//    public void cancelCrawlJob(UUID id, String domain) {
-//        CrawlJob crawlJob = getCrawlJob(domain, id);
-//        crawlService.discardJob(crawlJob, crawlJob.getCrawlService(), crawlJob.getHeritrixJobId());
-//    }
+    @Transactional
+    public void cancelCrawlJob(UUID id, String domain) {
+        CrawlJob crawlJob = getCrawlJob(domain, id);
+        discardJob(crawlJob, crawlJob.getCrawlService(), crawlJob.getHeritrixJobId());
+    }
 
     @Transactional
     public CrawlJob getCrawlJob(String domain, UUID userId) {
@@ -166,7 +166,7 @@ public class CrawlJobService {
         return restartCrawlJob(crawlJob, crawlJob.getCrawlService(), crawlJob.isValidationEnabled());
     }
 
-    public void discardJob(CrawlJob crawlJob, CrawlJob.CrawlService service,  String heritrixJobId){
+    private void discardJob(CrawlJob crawlJob, CrawlJob.CrawlService service,  String heritrixJobId){
         switch (service) {
             case HERITRIX:
                 heritrixCleanerTask.teardownAndClearHeritrixJob(heritrixJobId);
