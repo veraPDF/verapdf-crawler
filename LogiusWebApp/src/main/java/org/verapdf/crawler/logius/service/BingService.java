@@ -8,39 +8,34 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
+import org.verapdf.crawler.logius.db.CrawlJobDAO;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.resources.DocumentResource;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
 public class BingService {
     private static final Logger logger = LoggerFactory.getLogger(BingService.class);
-    private final CrawlJobService crawlJobService;
     private final DocumentResource documentResource;
 
     @Value("${logius.bing.apiKey}")
     private String apiKey;
     private CrawlJob currentJob = null;
-
-    public BingService(CrawlJobService crawlJobService,
-                       DocumentResource documentResource) {
-        this.crawlJobService = crawlJobService;
+    public BingService(DocumentResource documentResource) {
         this.documentResource = documentResource;
     }
 
     @Transactional
-    public boolean checkNewJobs() {
-        this.currentJob = crawlJobService.getNewBingJob();
+    public boolean startNewJob(CrawlJob currentJob) {
+        this.currentJob = currentJob;
         if (this.currentJob != null) {
             processFileType("pdf");
             processFileType("odt");
@@ -134,10 +129,5 @@ public class BingService {
         if (this.currentJob != null && this.currentJob.getDomain().equals(job.getDomain())) {
             this.currentJob = null;
         }
-    }
-
-    @Scheduled(fixedDelayString = "#{${logius.bing.sleepDurationInSeconds}}")
-    public void initValidationQueue() {
-        checkNewJobs();
     }
 }

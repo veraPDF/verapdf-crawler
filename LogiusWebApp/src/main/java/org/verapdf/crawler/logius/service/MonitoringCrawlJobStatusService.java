@@ -12,6 +12,7 @@ import org.verapdf.crawler.logius.crawling.CrawlRequest;
 import org.verapdf.crawler.logius.db.CrawlJobDAO;
 import org.verapdf.crawler.logius.db.CrawlRequestDAO;
 import org.verapdf.crawler.logius.db.ValidationJobDAO;
+import org.verapdf.crawler.logius.exception.HeritrixException;
 
 import java.util.Date;
 import java.util.List;
@@ -81,8 +82,8 @@ public class MonitoringCrawlJobStatusService {
             logger.info("Crawling complete for " + job.getDomain());
             return true;
         } catch (Exception e) {
-            logger.error("Fail to check status of job for " + job.getDomain(), e);
-            return false;
+            logger.error("Fail to check status of job for " + job.getDomain());
+            throw new HeritrixException(e);
         }
     }
 
