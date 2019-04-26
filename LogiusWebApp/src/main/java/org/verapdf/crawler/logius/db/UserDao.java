@@ -17,7 +17,6 @@ import java.util.UUID;
 
 @Service
 public class UserDao extends AbstractDAO<User> {
-    private List<Role> excludedRoles = Arrays.asList(Role.ADMIN, Role.ANONYMOUS);
 
     public UserDao(SessionFactory sessionFactory) {
         super(sessionFactory);
@@ -53,7 +52,7 @@ public class UserDao extends AbstractDAO<User> {
         if (emailFilter != null) {
             criteriaQuery.where(builder.like(rootEntry.get(User_.email), "%" + emailFilter + "%"));
         }
-        criteriaQuery.where(builder.not(rootEntry.get(User_.role).in(excludedRoles)));
+        criteriaQuery.where(builder.not(rootEntry.get(User_.role).in(Arrays.asList(Role.ADMIN, Role.ANONYMOUS))));
         Query<User> query = this.currentSession().createQuery(criteriaQuery);
         setOffset(query, start, limit);
         return list(query);
