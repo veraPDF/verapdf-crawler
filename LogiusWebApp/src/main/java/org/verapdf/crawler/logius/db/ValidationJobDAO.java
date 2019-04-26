@@ -21,6 +21,30 @@ import java.util.stream.Collectors;
 
 @Repository
 public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
+    private final static String SELECT_VALIDATION_JOB_QUEUE  = "(select d.document_url, pvjq.validation_status, c.validation_job_priority," +
+                                                               " crawl_jobs.start_time, pvjq.creation_date " +
+                                                               " from crawl_jobs " +
+                                                               "        join client c on crawl_jobs.user_id = c.id " +
+                                                               "        join documents d on crawl_jobs.id = d.document_id " +
+                                                               "        join pdf_validation_jobs_queue pvjq on" +
+                                                               " d.document_id = pvjq.document_id and d.document_url = pvjq.document_url " +
+                                                               " where pvjq.validation_status = 'IN_PROGRESS') " +
+                                                               "union " +
+                                                               "(select distinct on (c.id) d.document_url, " +
+                                                               "                           pvjq.validation_status, " +
+                                                               "                           c.validation_job_priority, " +
+                                                               "                           crawl_jobs.start_time, " +
+                                                               "                           pvjq.creation_date " +
+                                                               " from crawl_jobs " +
+                                                               "        join client c on crawl_jobs.user_id = c.id " +
+                                                               "        join documents d on crawl_jobs.id = d.document_id " +
+                                                               "        join pdf_validation_jobs_queue pvjq on" +
+                                                               " d.document_id = pvjq.document_id and d.document_url = pvjq.document_url " +
+                                                               " where pvjq.validation_status = 'NOT_STARTED' " +
+                                                               " order by c.id, c.validation_job_priority, crawl_jobs.start_time, pvjq.creation_date) " +
+                                                               "order by validation_status, validation_job_priority, start_time, creation_date ";
+
+
     public ValidationJobDAO(SessionFactory sessionFactory) {
         super(sessionFactory);
     }
@@ -99,27 +123,7 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
     }
 
     public List<ValidationJobDto> getDocuments(int limit) {
-        NativeQuery query = currentSession()
-                .createSQLQuery("(select d.document_url, pvjq.validation_status, c.validation_job_priority, crawl_jobs.start_time, pvjq.creation_date\n" +
-                                " from crawl_jobs\n" +
-                                "        join client c on crawl_jobs.user_id = c.id\n" +
-                                "        join documents d on crawl_jobs.id = d.document_id\n" +
-                                "        join pdf_validation_jobs_queue pvjq on d.document_id = pvjq.document_id and d.document_url = pvjq.document_url\n" +
-                                " where pvjq.validation_status = 'IN_PROGRESS')\n" +
-                                "union\n" +
-                                "(select distinct on (c.id) d.document_url,\n" +
-                                "                           pvjq.validation_status,\n" +
-                                "                           c.validation_job_priority,\n" +
-                                "                           crawl_jobs.start_time,\n" +
-                                "                           pvjq.creation_date\n" +
-                                " from crawl_jobs\n" +
-                                "        join client c on crawl_jobs.user_id = c.id\n" +
-                                "        join documents d on crawl_jobs.id = d.document_id\n" +
-                                "        join pdf_validation_jobs_queue pvjq on d.document_id = pvjq.document_id and d.document_url = pvjq.document_url\n" +
-                                " where pvjq.validation_status = 'NOT_STARTED'\n" +
-                                " order by c.id, c.validation_job_priority, crawl_jobs.start_time, pvjq.creation_date)\n" +
-                                "order by validation_status, validation_job_priority, start_time, creation_date")
-                .setMaxResults(limit);
+        NativeQuery query = currentSession().createSQLQuery(SELECT_VALIDATION_JOB_QUEUE).setMaxResults(limit);
         List<Object[]> rows = query.list();
         return rows.stream()
                    .map(row -> new ValidationJobDto(row[0].toString(), ValidationJob.Status.valueOf(row[1].toString())))
