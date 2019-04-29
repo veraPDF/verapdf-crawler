@@ -133,7 +133,6 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         return rows.stream()
                    .map(row -> new ValidationJobDto(row[0].toString(), ValidationJob.Status.valueOf(row[1].toString())))
                    .collect(Collectors.toList());
-
     }
 
     public List<ValidationJob> getDocuments(UUID id, Integer limit) {
