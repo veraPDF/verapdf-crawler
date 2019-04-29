@@ -45,6 +45,13 @@ public class UserResource {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/{email}/verify-email")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity verifyUserEmail(@PathVariable("email") @Email String email) {
+        userService.verifyUserEmail(email);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping
     @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity getAllUsers(

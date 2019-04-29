@@ -1,12 +1,13 @@
 package org.verapdf.crawler.logius.db;
 
 import org.hibernate.SessionFactory;
+import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
 import org.springframework.stereotype.Repository;
-import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.CrawlJob_;
 import org.verapdf.crawler.logius.document.DomainDocument;
 import org.verapdf.crawler.logius.document.DomainDocument_;
+import org.verapdf.crawler.logius.dto.ValidationJobDto;
 import org.verapdf.crawler.logius.model.DocumentId;
 import org.verapdf.crawler.logius.model.DocumentId_;
 import org.verapdf.crawler.logius.model.User_;
@@ -16,9 +17,39 @@ import org.verapdf.crawler.logius.validation.ValidationJob_;
 import javax.persistence.criteria.*;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Repository
 public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
+    private final static String SELECT_VALIDATION_JOB_QUEUE  = "select * " +
+                                                               "from ((select d.document_url, " +
+                                                               "              pvjq.validation_status, " +
+                                                               "              c.validation_job_priority, " +
+                                                               "              crawl_jobs.start_time, " +
+                                                               "              pvjq.creation_date " +
+                                                               "       from crawl_jobs " +
+                                                               "              join client c on crawl_jobs.user_id = c.id " +
+                                                               "              join documents d on crawl_jobs.id = d.document_id " +
+                                                               "              join pdf_validation_jobs_queue pvjq " +
+                                                               "                   on d.document_id = pvjq.document_id and d.document_url = pvjq.document_url " +
+                                                               "       where pvjq.validation_status = 'IN_PROGRESS') " +
+                                                               "      union " +
+                                                               "      (select distinct on (c.id) d.document_url, " +
+                                                               "                                 pvjq.validation_status, " +
+                                                               "                                 c.validation_job_priority, " +
+                                                               "                                 crawl_jobs.start_time, " +
+                                                               "                                 pvjq.creation_date " +
+                                                               "       from crawl_jobs " +
+                                                               "              join client c on crawl_jobs.user_id = c.id " +
+                                                               "              join documents d on crawl_jobs.id = d.document_id " +
+                                                               "              join pdf_validation_jobs_queue pvjq " +
+                                                               "                   on d.document_id = pvjq.document_id and d.document_url = pvjq.document_url " +
+                                                               "       where pvjq.validation_status = 'NOT_STARTED' " +
+                                                               "       order by c.id, c.validation_job_priority, crawl_jobs.start_time, pvjq.creation_date)) as un " +
+                                                               "order by array_position(array['IN_PROGRESS', 'NOT_STARTED']\\:\\:varchar[], validation_status), validation_job_priority, " +
+                                                               "         start_time, creation_date ";
+
+
     public ValidationJobDAO(SessionFactory sessionFactory) {
         super(sessionFactory);
     }
@@ -68,7 +99,8 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
                 builder.isNotNull(jobRoot.get(ValidationJob_.documentId).get(DocumentId_.documentUrl))
         ));
         criteriaQuery.orderBy(builder.asc(jobRoot.get(ValidationJob_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.user).get(User_.validationJobPriority)),
-                builder.asc(jobRoot.get(ValidationJob_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.startTime)));
+                builder.asc(jobRoot.get(ValidationJob_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.startTime)),
+                              builder.asc(jobRoot.get(ValidationJob_.creationDate)));
         return criteriaQuery;
     }
 
@@ -93,6 +125,14 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
             criteriaQuery.where(builder.equal(job.get(ValidationJob_.document).get(DomainDocument_.documentId).get(DocumentId_.crawlJob).get(CrawlJob_.id), id));
         }
         return currentSession().createQuery(criteriaQuery).getSingleResult();
+    }
+
+    public List<ValidationJobDto> getDocuments(int limit) {
+        NativeQuery query = currentSession().createSQLQuery(SELECT_VALIDATION_JOB_QUEUE).setMaxResults(limit);
+        List<Object[]> rows = query.list();
+        return rows.stream()
+                   .map(row -> new ValidationJobDto(row[0].toString(), ValidationJob.Status.valueOf(row[1].toString())))
+                   .collect(Collectors.toList());
     }
 
     public List<ValidationJob> getDocuments(UUID id, Integer limit) {

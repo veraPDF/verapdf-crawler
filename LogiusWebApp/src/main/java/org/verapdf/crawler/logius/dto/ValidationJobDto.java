@@ -11,6 +11,11 @@ public class ValidationJobDto {
         this.id = job.getDocumentUrl();
     }
 
+    public ValidationJobDto(String url, ValidationJob.Status status) {
+        this.status = status;
+        this.id = url;
+    }
+
     public ValidationJob.Status getStatus() {
         return status;
     }

@@ -1,6 +1,5 @@
 package org.verapdf.crawler.logius.monitoring;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.verapdf.crawler.logius.dto.ValidationJobDto;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 
@@ -20,7 +19,9 @@ public class ValidationQueueStatus {
 
     public ValidationQueueStatus(Long count, List<ValidationJob> topDocuments) {
         this.count = count;
-        this.topDocuments = topDocuments.stream().map(ValidationJobDto::new).collect(Collectors.toList());
+        this.topDocuments = topDocuments.stream()
+                                        .map(ValidationJobDto::new)
+                                        .collect(Collectors.toList());
     }
 
     public Long getCount() {

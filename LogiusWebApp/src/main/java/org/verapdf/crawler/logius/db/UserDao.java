@@ -4,17 +4,13 @@ package org.verapdf.crawler.logius.db;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
 import org.springframework.stereotype.Service;
-import org.verapdf.crawler.logius.crawling.CrawlJob;
-import org.verapdf.crawler.logius.crawling.CrawlJob_;
+import org.verapdf.crawler.logius.model.Role;
 import org.verapdf.crawler.logius.model.User;
 import org.verapdf.crawler.logius.model.User_;
 
-import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -49,13 +45,14 @@ public class UserDao extends AbstractDAO<User> {
     }
 
 
-    public List<User> getUsers(String emailFilter, Integer start, Integer limit) {
+    public List<User> getUsers(String emailFilter,Integer start, Integer limit) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<User> criteriaQuery = builder.createQuery(User.class);
         Root<User> rootEntry = criteriaQuery.from(User.class);
         if (emailFilter != null) {
             criteriaQuery.where(builder.like(rootEntry.get(User_.email), "%" + emailFilter + "%"));
         }
+        criteriaQuery.where(builder.not(rootEntry.get(User_.role).in(Arrays.asList(Role.ADMIN, Role.ANONYMOUS))));
         Query<User> query = this.currentSession().createQuery(criteriaQuery);
         setOffset(query, start, limit);
         return list(query);

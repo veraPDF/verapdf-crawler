@@ -57,13 +57,14 @@ public class UserService {
         user = saveUserWithUpdateSecret(user);
         sendEmailService.sendEmailConfirm(tokenService.encodeEmailVerificationToken(user), user.getEmail());
         return user;
-
     }
 
     @Transactional
     public List<UserInfoDto> getUsers(String emailFilter, Integer start, Integer limit) {
-        return userDao.getUsers(emailFilter, start, limit).stream()
-                .map(UserInfoDto::new).collect(Collectors.toList());
+        return userDao.getUsers(emailFilter, start, limit)
+                      .stream()
+                      .map(UserInfoDto::new)
+                      .collect(Collectors.toList());
     }
 
     @Transactional
@@ -72,6 +73,17 @@ public class UserService {
         user.setEnabled(status);
         saveUserWithUpdateSecret(user);
     }
+
+    @Transactional
+    public void verifyUserEmail(String email) {
+        User user = findUserByEmail(email);
+        if (user.isActivated()){
+            throw new BadRequestException("user already activated");
+        }
+        user.setActivated(true);
+        saveUserWithUpdateSecret(user);
+    }
+
 
     private User saveUserWithUpdateSecret(User user) {
         user.setSecret(SecretKeyUtils.generateSecret());

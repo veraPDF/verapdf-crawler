@@ -60,6 +60,7 @@ public class CrawlJobResource {
         return ResponseEntity.ok(crawlService.restartCrawlJob(id, domain));
     }
 
+
     @GetMapping("/{domain}")
     public ResponseEntity<CrawlJob> getCrawl(@AuthenticationPrincipal TokenUserDetails principal,
                                              @PathVariable("domain") String domain) {
