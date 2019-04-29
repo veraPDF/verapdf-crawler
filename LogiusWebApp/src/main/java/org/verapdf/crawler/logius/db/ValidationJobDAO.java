@@ -91,6 +91,7 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         return criteriaQuery;
     }
 
+
     private CriteriaQuery<ValidationJob> buildValidationJobWithStatusQueryAndMaxPriority(ValidationJob.Status status) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<ValidationJob> criteriaQuery = builder.createQuery(ValidationJob.class);
