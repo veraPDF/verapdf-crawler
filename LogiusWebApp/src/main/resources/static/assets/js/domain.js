@@ -172,7 +172,6 @@ $(function () {
         }
 
         crawlJob = job;
-        console.log(crawlJob)
         main.addClass('status-' + crawlJob.status.toLowerCase());
         if (crawlJob.validationEnabled) {
             $("#error-nav-pdfwam").removeAttr("style");
@@ -198,7 +197,6 @@ $(function () {
     }
 
     $("button.ods-report-link").on('click', function () {
-        console.log(123123);
         $.ajax({
             url: '/api/report/full.ods?domain=' + crawlJob.domain,
             type: "GET",
