@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 @Repository
 public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
-    private final static String SELECT_VALIDATION_JOB_QUEUE  = "select *\n" +
+    private final static String SELECT_VALIDATION_JOB_QUEUE  = "select * " +
                                                                "from ((select d.document_url, " +
                                                                "              pvjq.validation_status, " +
                                                                "              c.validation_job_priority, " +
