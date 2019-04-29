@@ -46,7 +46,7 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
                                                                "                   on d.document_id = pvjq.document_id and d.document_url = pvjq.document_url " +
                                                                "       where pvjq.validation_status = 'NOT_STARTED' " +
                                                                "       order by c.id, c.validation_job_priority, crawl_jobs.start_time, pvjq.creation_date)) as un " +
-                                                               "order by array_position(array[cast('IN_PROGRESS' as varchar), cast('NOT_STARTED' as varchar)], validation_status), validation_job_priority, " +
+                                                               "order by array_position(array['IN_PROGRESS', 'NOT_STARTED']\\:\\:varchar[], validation_status), validation_job_priority, " +
                                                                "         start_time, creation_date ";
 
 
