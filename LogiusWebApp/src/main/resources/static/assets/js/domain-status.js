@@ -51,7 +51,6 @@ $(function () {
         if (loadStatusTimeout) {
             clearTimeout(loadStatusTimeout);
         }
-
         $.ajax({
             url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain") + "/status"),
             type: "GET",
@@ -67,7 +66,9 @@ $(function () {
 
         $('.status-loading').hide();
         $('.status-loaded').show();
-
+        if (isGeneralJob() === 'false'){
+            $('#cancel').removeAttr('style');
+        }
         // Job details
         updateCrawlJob(jobStatus.crawlJob);
 
