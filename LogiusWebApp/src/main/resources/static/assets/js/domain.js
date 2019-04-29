@@ -141,6 +141,27 @@ $(function () {
         return headers
     }
 
+    $("#action-cancel").on('click', function () {
+        if (!crawlJob || $("#action-cancel").hasClass('disabled')) {
+            return;
+        }
+        disableActions();
+
+        $.ajax({
+            url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
+            type: "DELETE",
+            headers: createHeaders(),
+            success: function (result) {
+                $(location).attr('href', '/')
+            },
+            error: function (response) {
+                enableActions();
+                reportError(response);
+            }
+        });
+
+    });
+
     // Error handler
     function reportError(response) {
         if (response.responseJSON) {
@@ -156,6 +177,9 @@ $(function () {
     var oldStatus;
 
     function loadCrawlJob() {
+        if (isGeneralJob() === 'false'){
+            $('#cancel').removeAttr('style');
+        }
         $.ajax({
             url: "api/crawl-jobs/" + normalizedDomain,
             type: "GET",
