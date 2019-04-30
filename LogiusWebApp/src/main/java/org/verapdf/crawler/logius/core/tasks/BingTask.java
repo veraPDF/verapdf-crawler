@@ -44,21 +44,29 @@ public class BingTask extends AbstractTask {
 	}
 
 	@Override
-	protected void process() {
+	protected void process() throws InterruptedException {
 		if (currentJob != null) {
 			return;
 		}
-		List<CrawlJob> newJob = crawlJobDAO.findByStatus(CrawlJob.Status.NEW, CrawlJob.CrawlService.BING, null, 1);
-		if (newJob != null && !newJob.isEmpty()) {
-			CrawlJob crawlJob = newJob.get(0);
-			crawlJob.setStatus(CrawlJob.Status.RUNNING);
-			currentJob = crawlJob;
-			ALLOWED_FILE_TYPES.forEach(this::processFileType);
+		try {
+			List<CrawlJob> newJob = crawlJobDAO.findByStatus(CrawlJob.Status.NEW, CrawlJob.CrawlService.BING, null, 1);
+			if (newJob != null && !newJob.isEmpty()) {
+				CrawlJob crawlJob = newJob.get(0);
+				crawlJob.setStatus(CrawlJob.Status.RUNNING);
+				currentJob = crawlJob;
+
+				for (String ALLOWED_FILE_TYPE : ALLOWED_FILE_TYPES) {
+					processFileType(ALLOWED_FILE_TYPE);
+				}
+				currentJob = null;
+			}
+		} catch (Throwable e) {
 			currentJob = null;
+			throw e;
 		}
 	}
 
-	private void processFileType(String fileType) {
+	private void processFileType(String fileType) throws InterruptedException {
 		Set<String> pdfs = obtainURLs(fileType);
 		for (String url : pdfs) {
 			if (this.currentJob != null) {
@@ -67,7 +75,7 @@ public class BingTask extends AbstractTask {
 		}
 	}
 
-	private Set<String> obtainURLs(String fileType) {
+	private Set<String> obtainURLs(String fileType) throws InterruptedException {
 		Set<String> result = new HashSet<>();
 		int offset = 0;
 		if (this.currentJob != null) {
@@ -82,7 +90,7 @@ public class BingTask extends AbstractTask {
 					currentEstimations = obtainResults(result, urlWithoutOffset, this.apiKey, offset);
 					offset += 50;
 					Thread.sleep(10);
-				} catch (IOException | InterruptedException e) {
+				} catch (IOException e) {
 					logger.error("Some error during links obtaining", e);
 				}
 			}
@@ -95,26 +103,28 @@ public class BingTask extends AbstractTask {
 		HttpGet request = new HttpGet(urlWithoutOffset + offset);
 		request.addHeader("Ocp-Apim-Subscription-Key", key);
 		HttpResponse response = client.execute(request);
-		if (response.getStatusLine().getStatusCode() == 200) {
-			try (InputStream is = response.getEntity().getContent()) {
-				ObjectMapper mapper = new ObjectMapper();
-				JsonNode rootNode = mapper.readValue(is, JsonNode.class);
-				JsonNode webPages = rootNode.get("webPages");
-				if (webPages != null) {
-					JsonNode value = webPages.get("value");
-					Iterator<JsonNode> it = value.elements();
-					while (it.hasNext()) {
-						JsonNode next = it.next();
-						JsonNode url = next.get("url");
-						if (url.isTextual()) {
-							resultsSet.add(url.asText());
-						}
-					}
-					JsonNode totalEstimatedMatches = webPages.get("totalEstimatedMatches");
-					if (totalEstimatedMatches.isInt()) {
-						return totalEstimatedMatches.asInt();
-					}
+		if (response.getStatusLine().getStatusCode() != 200) {
+			return 0;
+		}
+		try (InputStream is = response.getEntity().getContent()) {
+			ObjectMapper mapper = new ObjectMapper();
+			JsonNode rootNode = mapper.readValue(is, JsonNode.class);
+			JsonNode webPages = rootNode.get("webPages");
+			if (webPages == null) {
+				return 0;
+			}
+			JsonNode value = webPages.get("value");
+			Iterator<JsonNode> it = value.elements();
+			while (it.hasNext()) {
+				JsonNode next = it.next();
+				JsonNode url = next.get("url");
+				if (url.isTextual()) {
+					resultsSet.add(url.asText());
 				}
+			}
+			JsonNode totalEstimatedMatches = webPages.get("totalEstimatedMatches");
+			if (totalEstimatedMatches.isInt()) {
+				return totalEstimatedMatches.asInt();
 			}
 		}
 		return 0;
