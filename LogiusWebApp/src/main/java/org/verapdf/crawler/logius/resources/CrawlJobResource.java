@@ -52,7 +52,6 @@ public class CrawlJobResource {
 
     @PreAuthorize("isFullyAuthenticated()")
     @DeleteMapping("/{domain}")
-    @Transactional
     public ResponseEntity cancelCrawlJob(@AuthenticationPrincipal TokenUserDetails principal,
                                                     @PathVariable("domain") String domain) {
         UUID id = controllerHelper.getUserUUID(principal);
