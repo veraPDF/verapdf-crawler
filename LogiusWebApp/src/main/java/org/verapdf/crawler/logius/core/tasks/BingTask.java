@@ -54,15 +54,12 @@ public class BingTask extends AbstractTask {
 				CrawlJob crawlJob = newJob.get(0);
 				crawlJob.setStatus(CrawlJob.Status.RUNNING);
 				currentJob = crawlJob;
-
 				for (String ALLOWED_FILE_TYPE : ALLOWED_FILE_TYPES) {
 					processFileType(ALLOWED_FILE_TYPE);
 				}
-				currentJob = null;
 			}
-		} catch (Throwable e) {
+		} finally {
 			currentJob = null;
-			throw e;
 		}
 	}
 
@@ -123,11 +120,8 @@ public class BingTask extends AbstractTask {
 				}
 			}
 			JsonNode totalEstimatedMatches = webPages.get("totalEstimatedMatches");
-			if (totalEstimatedMatches.isInt()) {
-				return totalEstimatedMatches.asInt();
-			}
+			return totalEstimatedMatches.isInt() ? totalEstimatedMatches.asInt() : 0;
 		}
-		return 0;
 	}
 
 	public CrawlJob getCurrentJob() {
