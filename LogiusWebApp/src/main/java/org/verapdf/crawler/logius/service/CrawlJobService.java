@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.core.heritrix.HeritrixClient;
+import org.verapdf.crawler.logius.core.tasks.BingTask;
 import org.verapdf.crawler.logius.core.tasks.HeritrixCleanerTask;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.CrawlRequest;
@@ -35,29 +36,19 @@ public class CrawlJobService {
     private final ValidationJobDAO validationJobDAO;
     private final HeritrixClient heritrixClient;
     private final HeritrixCleanerTask heritrixCleanerTask;
-    private final BingService bingService;
+    private final BingTask bingTask;
     private final QueueManager queueManager;
 
-    public CrawlJobService(CrawlJobDAO crawlJobDAO, ValidationJobDAO validationJobDAO, HeritrixClient heritrixClient, HeritrixCleanerTask heritrixCleanerTask, BingService bingService, QueueManager queueManager) {
+    public CrawlJobService(CrawlJobDAO crawlJobDAO, ValidationJobDAO validationJobDAO, HeritrixClient heritrixClient,
+                           HeritrixCleanerTask heritrixCleanerTask, BingTask bingTask, QueueManager queueManager) {
         this.crawlJobDAO = crawlJobDAO;
         this.validationJobDAO = validationJobDAO;
         this.heritrixClient = heritrixClient;
         this.heritrixCleanerTask = heritrixCleanerTask;
-        this.bingService = bingService;
+        this.bingTask = bingTask;
         this.queueManager = queueManager;
     }
 
-
-    @Transactional
-    public CrawlJob getNewBingJob() {
-        List<CrawlJob> newJob = crawlJobDAO.findByStatus(CrawlJob.Status.NEW, CrawlJob.CrawlService.BING, null, 1);
-        if (newJob != null && !newJob.isEmpty()) {
-            CrawlJob crawlJob = newJob.get(0);
-            crawlJob.setStatus(CrawlJob.Status.RUNNING);
-            return crawlJob;
-        }
-        return null;
-    }
 
     @Transactional
     public List<CrawlJob> findNotFinishedJobs(String domainFilter, int start, int limit) {
@@ -172,7 +163,7 @@ public class CrawlJobService {
                 heritrixCleanerTask.teardownAndClearHeritrixJob(heritrixJobId);
                 break;
             case BING:
-                bingService.discardJob(crawlJob);
+                bingTask.discardJob(crawlJob);
                 break;
             default:
                 throw new IllegalStateException("Unsupported CrawlJob service");
