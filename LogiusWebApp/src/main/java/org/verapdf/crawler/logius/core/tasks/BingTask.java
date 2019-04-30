@@ -3,6 +3,7 @@ package org.verapdf.crawler.logius.core.tasks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.core.email.SendEmailService;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.service.BingService;
@@ -21,6 +22,7 @@ public class BingTask extends AbstractTask {
 		this.bingService = bingService;
 	}
 
+	@Transactional
 	@Override
 	protected void process() {
 		CrawlJob crawlJob = crawlJobService.getNewBingJob();
