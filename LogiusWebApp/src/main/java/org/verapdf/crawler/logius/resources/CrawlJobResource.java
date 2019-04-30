@@ -3,6 +3,7 @@ package org.verapdf.crawler.logius.resources;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -13,7 +14,6 @@ import org.verapdf.crawler.logius.monitoring.CrawlJobStatus;
 import org.verapdf.crawler.logius.resources.util.ControllerHelper;
 import org.verapdf.crawler.logius.service.CrawlJobService;
 import org.verapdf.crawler.logius.service.CrawlRequestService;
-import org.verapdf.crawler.logius.service.CrawlService;
 import org.xml.sax.SAXException;
 
 import javax.validation.constraints.NotNull;
@@ -28,14 +28,12 @@ import java.util.UUID;
 public class CrawlJobResource {
     private final CrawlJobService crawlJobService;
     private final CrawlRequestService crawlRequestService;
-    private final CrawlService crawlService;
     private final ControllerHelper controllerHelper;
 
-    public CrawlJobResource(CrawlJobService crawlJobService, CrawlRequestService crawlRequestService, CrawlService crawlService,
+    public CrawlJobResource(CrawlJobService crawlJobService, CrawlRequestService crawlRequestService,
                             ControllerHelper controllerHelper) {
         this.crawlJobService = crawlJobService;
         this.crawlRequestService = crawlRequestService;
-        this.crawlService = crawlService;
         this.controllerHelper = controllerHelper;
     }
 
@@ -52,12 +50,21 @@ public class CrawlJobResource {
         return ResponseEntity.ok().header("X-Total-Count", String.valueOf(totalCount)).body(crawlJobs);
     }
 
+    @PreAuthorize("isFullyAuthenticated()")
+    @DeleteMapping("/{domain}")
+    public ResponseEntity cancelCrawlJob(@AuthenticationPrincipal TokenUserDetails principal,
+                                                    @PathVariable("domain") String domain) {
+        UUID id = controllerHelper.getUserUUID(principal);
+        crawlJobService.cancelCrawlJob(id, domain);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/{domain}")
     @Transactional
     public ResponseEntity<CrawlJob> restartCrawlJob(@AuthenticationPrincipal TokenUserDetails principal,
                                                     @PathVariable("domain") String domain) {
         UUID id = controllerHelper.getUserUUID(principal);
-        return ResponseEntity.ok(crawlService.restartCrawlJob(id, domain));
+        return ResponseEntity.ok(crawlJobService.restartCrawlJob(id, domain));
     }
 
 

@@ -26,7 +26,7 @@ $(document).ready(function () {
                 },
                 success: function (accountInfo) {
                     localStorage['email'] = accountInfo.email;
-                    $("<li>{}({})</li>".format(accountInfo.email, accountInfo.role)).appendTo(div);
+                    $("<li>{}</li>".format(accountInfo.email)).appendTo(div);
                     if (accountInfo.role === 'ADMIN') {
                         $("<li><a href=\"/admin-dashboard.html\">Admin dashboard</a></li>").appendTo(div);
                     }
@@ -48,6 +48,7 @@ $(document).ready(function () {
                 },
                 error: function (error) {
                     localStorage.removeItem('token');
+                    localStorage.removeItem('email');
                     $(location).attr('href', '/index.html')
                 }
             });

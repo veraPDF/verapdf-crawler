@@ -20,15 +20,13 @@ public class CrawlRequestService {
     private final CrawlJobDAO crawlJobDAO;
     private final CrawlJobService crawlJobService;
     private final UserService userService;
-    private final CrawlService crawlService;
 
     public CrawlRequestService(CrawlRequestDAO crawlRequestDAO, CrawlJobDAO crawlJobDAO, CrawlJobService crawlJobService,
-                               UserService userService, CrawlService crawlService) {
+                               UserService userService) {
         this.crawlRequestDAO = crawlRequestDAO;
         this.crawlJobDAO = crawlJobDAO;
         this.crawlJobService = crawlJobService;
         this.userService = userService;
-        this.crawlService = crawlService;
     }
 
     @Transactional
@@ -55,7 +53,7 @@ public class CrawlRequestService {
             newJob.getCrawlRequests().add(crawlRequest);
             newJob.setUser(user);
             if (crawlService == CrawlJob.CrawlService.HERITRIX) {
-                this.crawlService.startCrawlJob(newJob);
+                crawlJobService.startCrawlJob(newJob);
             }
         }
         return crawlRequest;
@@ -68,7 +66,7 @@ public class CrawlRequestService {
 
     public void restartIfHasChanges(CrawlJob existingJob, CrawlJob.CrawlService crawlService, boolean isValidationRequired) {
         if (crawlService != existingJob.getCrawlService() || existingJob.isValidationEnabled() != isValidationRequired) {
-            this.crawlService.restartCrawlJob(existingJob, crawlService, isValidationRequired);
+            crawlJobService.restartCrawlJob(existingJob, crawlService, isValidationRequired);
         }
     }
 }

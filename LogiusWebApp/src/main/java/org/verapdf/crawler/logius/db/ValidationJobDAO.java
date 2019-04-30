@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+
 @Repository
 public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
     private final static String SELECT_VALIDATION_JOB_QUEUE  = "select * " +
@@ -89,6 +90,7 @@ public class ValidationJobDAO extends AbstractDAO<ValidationJob> {
         ));
         return criteriaQuery;
     }
+
 
     private CriteriaQuery<ValidationJob> buildValidationJobWithStatusQueryAndMaxPriority(ValidationJob.Status status) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();

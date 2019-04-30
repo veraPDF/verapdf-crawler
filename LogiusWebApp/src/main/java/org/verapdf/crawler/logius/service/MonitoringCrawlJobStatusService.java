@@ -6,12 +6,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.verapdf.crawler.logius.core.email.SendEmailService;
 import org.verapdf.crawler.logius.core.heritrix.HeritrixClient;
+import org.verapdf.crawler.logius.core.tasks.BingTask;
 import org.verapdf.crawler.logius.core.tasks.MonitorCrawlJobStatusTask;
 import org.verapdf.crawler.logius.crawling.CrawlJob;
 import org.verapdf.crawler.logius.crawling.CrawlRequest;
 import org.verapdf.crawler.logius.db.CrawlJobDAO;
 import org.verapdf.crawler.logius.db.CrawlRequestDAO;
 import org.verapdf.crawler.logius.db.ValidationJobDAO;
+import org.verapdf.crawler.logius.exception.HeritrixException;
 
 import java.util.Date;
 import java.util.List;
@@ -24,16 +26,17 @@ public class MonitoringCrawlJobStatusService {
     private static final int BATCH_SIZE = 20;
     private final CrawlJobDAO crawlJobDAO;
     private final HeritrixClient heritrixClient;
-    private final BingService bingService;
+    private final BingTask bingTask;
     private final ValidationJobDAO validationJobDAO;
     private final SendEmailService sendEmailService;
     private final CrawlRequestDAO crawlRequestDAO;
 
-    public MonitoringCrawlJobStatusService(CrawlJobDAO crawlJobDAO, HeritrixClient heritrixClient, BingService bingService,
-                                           ValidationJobDAO validationJobDAO, SendEmailService sendEmailService, CrawlRequestDAO crawlRequestDAO) {
+    public MonitoringCrawlJobStatusService(CrawlJobDAO crawlJobDAO, HeritrixClient heritrixClient,
+                                           BingTask bingTask, ValidationJobDAO validationJobDAO,
+                                           SendEmailService sendEmailService, CrawlRequestDAO crawlRequestDAO) {
         this.crawlJobDAO = crawlJobDAO;
         this.heritrixClient = heritrixClient;
-        this.bingService = bingService;
+        this.bingTask = bingTask;
         this.validationJobDAO = validationJobDAO;
         this.sendEmailService = sendEmailService;
         this.crawlRequestDAO = crawlRequestDAO;
@@ -62,7 +65,7 @@ public class MonitoringCrawlJobStatusService {
                     return false;
                 }
             } else if (service == CrawlJob.CrawlService.BING) {
-                CrawlJob currentJob = bingService.getCurrentJob();
+                CrawlJob currentJob = bingTask.getCurrentJob();
                 if (currentJob != null && currentJob.getDomain().equals(job.getDomain())) {
                     return false;
                 }
@@ -81,8 +84,8 @@ public class MonitoringCrawlJobStatusService {
             logger.info("Crawling complete for " + job.getDomain());
             return true;
         } catch (Exception e) {
-            logger.error("Fail to check status of job for " + job.getDomain(), e);
-            return false;
+            logger.error("Fail to check status of job for " + job.getDomain());
+            throw new HeritrixException(e);
         }
     }
 

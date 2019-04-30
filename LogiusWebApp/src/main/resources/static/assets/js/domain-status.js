@@ -51,7 +51,6 @@ $(function () {
         if (loadStatusTimeout) {
             clearTimeout(loadStatusTimeout);
         }
-
         $.ajax({
             url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain") + "/status"),
             type: "GET",
@@ -67,7 +66,9 @@ $(function () {
 
         $('.status-loading').hide();
         $('.status-loaded').show();
-
+        if (isGeneralJob() === 'false'){
+            $('#cancel').removeAttr('style');
+        }
         // Job details
         updateCrawlJob(jobStatus.crawlJob);
 
@@ -228,6 +229,27 @@ $(function () {
             success: function (result) {
                 enableActions();
                 updateCrawlJob(result);
+            },
+            error: function (response) {
+                enableActions();
+                reportError(response);
+            }
+        });
+
+    });
+
+    $("#action-cancel").on('click', function () {
+        if (!crawlJob || $("#action-cancel").hasClass('disabled')) {
+            return;
+        }
+        disableActions();
+
+        $.ajax({
+            url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
+            type: "DELETE",
+            headers: createHeaders(),
+            success: function (result) {
+                $(location).attr('href', '/')
             },
             error: function (response) {
                 enableActions();
