@@ -21,6 +21,7 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Map;
 
 @Service
@@ -49,6 +50,8 @@ public class FileService {
 
 	public File downloadFile(ValidationJob job) throws DownloadFileProcessingException {
 		String url = job.getDocumentUrl();
+		File file = null;
+		FileOutputStream fileOutputStream = null;
 		try (CloseableHttpClient client = HttpClientUtils.createTrustAllHttpClient()) {
 			HttpGet get = new HttpGet(url);
 			CloseableHttpResponse response = client.execute(get);
@@ -57,18 +60,26 @@ public class FileService {
 			if (!contentType.equals(job.getDocument().getContentType())){
 				throw new IncorrectContentTypeException("Content types are not equals");
 			}
-			File file = File.createTempFile("logius", "." + contentType, baseTempFolder);
-			try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
-				IOUtils.copy(response.getEntity().getContent(), fileOutputStream);
-				return file;
-			}
+			file = File.createTempFile("logius", "." + contentType, baseTempFolder);
+			fileOutputStream = new FileOutputStream(file);
+			IOUtils.copy(response.getEntity().getContent(), fileOutputStream);
+			fileOutputStream.close();
+			return file;
 		} catch (Exception e) {
 			logger.error("Can't create url: " + url, e);
+			deleteFile(file);
+			if (fileOutputStream != null){
+				try {
+					fileOutputStream.close();
+				} catch (IOException ee) {
+					throw new DownloadFileProcessingException(ee);
+				}
+			}
 			throw new DownloadFileProcessingException(e);
 		}
 	}
 
-	public String getFileExtension(Header contentTypeHeader, String url) throws IncorrectContentTypeException {
+	public String getFileExtension(Header contentTypeHeader,String url) throws IncorrectContentTypeException {
 		if (contentTypeHeader == null || contentTypeHeader.getValue().startsWith("text")) {
 			throw new IncorrectContentTypeException("ContentType is null or start with text");
 		}
