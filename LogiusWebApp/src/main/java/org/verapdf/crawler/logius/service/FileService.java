@@ -54,7 +54,7 @@ public class FileService {
 			CloseableHttpResponse response = client.execute(get);
 			Header contentTypeHeader = response.getFirstHeader("Content-Type");
 			String contentType = getFileExtension(contentTypeHeader, url);
-			if (contentType.equals(job.getDocument().getContentType())){
+			if (!contentType.equals(job.getDocument().getContentType())){
 				throw new IncorrectContentTypeException("Content types are not equals");
 			}
 			File file = File.createTempFile("logius", "." + contentType, baseTempFolder);
