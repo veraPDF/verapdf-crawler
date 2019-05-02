@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.verapdf.crawler.logius.core.validation.PDFProcessorAdapter;
 import org.verapdf.crawler.logius.core.validation.VeraPDFProcessor;
+import org.verapdf.crawler.logius.exception.DownloadFileProcessingException;
 import org.verapdf.crawler.logius.validation.ValidationJob;
 import org.verapdf.crawler.logius.validation.VeraPDFValidationResult;
 
@@ -59,14 +60,12 @@ public class ValidatorTask implements Callable<VeraPDFValidationResult> {
             logger.info("Validating " + job.getDocumentUrl());
             File file = null;
             try {
-                file = fileService.downloadFile(job.getDocumentUrl());
-                if (file == null) {
-                    return saveErrorResult("Can't create url: " + job.getDocumentUrl());
-                }
+                file = fileService.downloadFile(job);
                 return processJob(file, job);
-
-            } finally {
-                fileService.removeFile(file);
+            } catch (DownloadFileProcessingException e){
+                return saveErrorResult("Can't create url: " + job.getDocumentUrl());
+            }  finally{
+                fileService.deleteFile(file);
             }
         }
         return null;
