@@ -44,7 +44,7 @@ public class FileService {
         }
     }
 
-    public File save(String url) {
+    public File downloadFile(String url) {
         File file = null;
         try {
             try (CloseableHttpClient client = HttpClientUtils.createTrustAllHttpClient()) {
