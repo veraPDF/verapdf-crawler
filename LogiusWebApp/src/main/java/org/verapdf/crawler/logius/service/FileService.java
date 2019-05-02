@@ -21,7 +21,6 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Map;
 
 @Service
@@ -54,11 +53,7 @@ public class FileService {
 		try (CloseableHttpClient client = HttpClientUtils.createTrustAllHttpClient()) {
 			HttpGet get = new HttpGet(url);
 			CloseableHttpResponse response = client.execute(get);
-			Header contentTypeHeader = response.getFirstHeader("Content-Type");
-			String contentType = getFileExtension(contentTypeHeader, url);
-			if (!contentType.equals(job.getDocument().getContentType())){
-				throw new IncorrectContentTypeException("Content types are not equals");
-			}
+			String contentType = getFileType(response, job);
 			file = File.createTempFile("logius", "." + contentType, baseTempFolder);
 			try (FileOutputStream fileOutputStream = new FileOutputStream(file)){
 				IOUtils.copy(response.getEntity().getContent(), fileOutputStream);
@@ -71,16 +66,25 @@ public class FileService {
 		}
 	}
 
-	public String getFileExtension(Header contentTypeHeader,String url) throws IncorrectContentTypeException {
-		if (contentTypeHeader == null || contentTypeHeader.getValue().startsWith("text")) {
-			throw new IncorrectContentTypeException("ContentType is null or start with text");
+	private String getFileType(CloseableHttpResponse response, ValidationJob job) throws IncorrectContentTypeException{
+		String fileType = getFileType(response, job.getDocumentUrl());
+		if (fileType.equals(job.getDocument().getContentType())) {
+			return fileType;
 		}
-		String value = contentTypeHeader.getValue();
-		for (String fileType : fileTypes.keySet()) {
-			if (value.startsWith(fileType)) {
-				return fileTypes.get(fileType);
+		throw new IncorrectContentTypeException("Content types are not equals");
+	}
+
+	private String getFileType(CloseableHttpResponse response, String url) throws IncorrectContentTypeException {
+		Header contentTypeHeader = response.getFirstHeader("Content-Type");
+		if (contentTypeHeader != null && !contentTypeHeader.getValue().startsWith("text")) {
+			String value = contentTypeHeader.getValue();
+			for (String fileType : fileTypes.keySet()) {
+				if (value.startsWith(fileType)) {
+					return fileTypes.get(fileType);
+				}
 			}
 		}
+
 		String extension = FilenameUtils.getExtension(url);
 		if (fileTypes.values().contains(extension)){
 			return extension;

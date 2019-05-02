@@ -56,19 +56,19 @@ public class ValidatorTask implements Callable<VeraPDFValidationResult> {
     }
 
     public VeraPDFValidationResult call() {
-        if (job != null) {
-            logger.info("Validating " + job.getDocumentUrl());
-            File file = null;
-            try {
-                file = fileService.downloadFile(job);
-                return processJob(file, job);
-            } catch (DownloadFileProcessingException e){
-                return saveErrorResult("Can't create url: " + job.getDocumentUrl());
-            }  finally{
-                fileService.deleteFile(file);
-            }
+        if (job == null) {
+            return null;
         }
-        return null;
+        logger.info("Validating " + job.getDocumentUrl());
+        File file = null;
+        try {
+            file = fileService.downloadFile(job);
+            return processJob(file, job);
+        } catch (DownloadFileProcessingException e){
+            return saveErrorResult("Can't create url: " + job.getDocumentUrl());
+        }  finally{
+            fileService.deleteFile(file);
+        }
     }
 
 
