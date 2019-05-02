@@ -60,7 +60,7 @@ public class FileService {
                         }
                         for (String fileType: fileTypes.keySet()) {
                             if (value.startsWith(fileType)){
-                                contentType = fileTypes.get(value);
+                                contentType = fileTypes.get(fileType);
                                 break;
                             }
                         }
