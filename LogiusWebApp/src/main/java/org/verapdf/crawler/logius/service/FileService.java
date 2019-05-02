@@ -54,11 +54,16 @@ public class FileService {
                 Header[] contentTypeHeaders = response.getHeaders("Content-Type");
                 if (contentTypeHeaders != null && contentTypeHeaders.length > 0) {
                     String value = contentTypeHeaders[0].getValue();
-                    if (value != null && value.startsWith("text")) {
-                        return null;
-                    }
-                    if (fileTypes.keySet().contains(value)) {
-                        contentType = fileTypes.get(value);
+                    if (value != null){
+                        if (value.startsWith("text")){
+                            return null;
+                        }
+                        for (String fileType: fileTypes.keySet()) {
+                            if (value.startsWith(fileType)){
+                                contentType = fileTypes.get(value);
+                                break;
+                            }
+                        }
                     }
                 }
                 if (contentType == null) {

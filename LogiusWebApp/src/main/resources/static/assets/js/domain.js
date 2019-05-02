@@ -220,7 +220,8 @@ $(function () {
         enableActions();
     }
 
-    $("button.ods-report-link").on('click', function () {
+    $("a.ods-report-link").on('click', function (e) {
+        e.preventDefault();
         $.ajax({
             url: '/api/report/full.ods?domain=' + crawlJob.domain,
             type: "GET",
@@ -229,18 +230,24 @@ $(function () {
             },
             headers: createHeaders(),
             success: function (data, status, xhr) {
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
                 var header =  xhr.getResponseHeader('Content-Disposition');
                 var startIndex = header.indexOf("filename=") + 9;
                 var endIndex = header.length;
-                a.download = header.substring(startIndex, endIndex);
-                a.click();
-                window.URL.revokeObjectURL(url);
+                if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                    window.navigator.msSaveOrOpenBlob(data, header.substring(startIndex, endIndex));
+                }
+                else {
+                    var a = document.createElement('a');
+                    var url = window.URL.createObjectURL(data);
+                    a.href = url;
+                    a.download = header.substring(startIndex, endIndex);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                }
             },
             error: reportError
         });
+
     });
 
     function disableActions() {
