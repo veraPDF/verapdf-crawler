@@ -6,7 +6,4 @@ public class IncorrectContentTypeException extends Exception {
 		super(message);
 	}
 
-	public IncorrectContentTypeException(Throwable e) {
-		super(e);
-	}
 }
