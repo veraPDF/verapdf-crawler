@@ -51,7 +51,6 @@ public class FileService {
 	public File downloadFile(ValidationJob job) throws DownloadFileProcessingException {
 		String url = job.getDocumentUrl();
 		File file = null;
-		FileOutputStream fileOutputStream = null;
 		try (CloseableHttpClient client = HttpClientUtils.createTrustAllHttpClient()) {
 			HttpGet get = new HttpGet(url);
 			CloseableHttpResponse response = client.execute(get);
@@ -61,20 +60,13 @@ public class FileService {
 				throw new IncorrectContentTypeException("Content types are not equals");
 			}
 			file = File.createTempFile("logius", "." + contentType, baseTempFolder);
-			fileOutputStream = new FileOutputStream(file);
-			IOUtils.copy(response.getEntity().getContent(), fileOutputStream);
-			fileOutputStream.close();
+			try (FileOutputStream fileOutputStream = new FileOutputStream(file)){
+				IOUtils.copy(response.getEntity().getContent(), fileOutputStream);
+			}
 			return file;
 		} catch (Exception e) {
 			logger.error("Can't create url: " + url, e);
 			deleteFile(file);
-			if (fileOutputStream != null){
-				try {
-					fileOutputStream.close();
-				} catch (IOException ee) {
-					throw new DownloadFileProcessingException(ee);
-				}
-			}
 			throw new DownloadFileProcessingException(e);
 		}
 	}
