@@ -49,6 +49,24 @@ public class CrawlJobService {
         this.queueManager = queueManager;
     }
 
+    @Transactional
+    public CrawlJob getCrawlJob(String domain, UUID userId) {
+        domain = DomainUtils.trimUrl(domain);
+        CrawlJob job = crawlJobDAO.findByDomainAndUserId(domain, userId);
+        if (job == null) {
+            throw new NotFoundException(String.format("crawl job with domain %s not found", domain));
+        }
+        return job;
+    }
+
+    @Transactional
+    public CrawlJob getCrawlJob(UUID id) {
+        CrawlJob job = crawlJobDAO.findById(id);
+        if (job == null) {
+            throw new NotFoundException(String.format("crawl job with uuid %s not found", id));
+        }
+        return job;
+    }
 
     @Transactional
     public List<CrawlJob> findNotFinishedJobs(String domainFilter, int start, int limit) {
@@ -73,31 +91,6 @@ public class CrawlJobService {
     }
 
     @Transactional
-    public CrawlJob update(CrawlJob update, CrawlJob crawlJob) throws IOException, XPathExpressionException,
-            SAXException, ParserConfigurationException {
-
-        String heritrixJobId = crawlJob.getHeritrixJobId();
-        CrawlJob.CrawlService service = crawlJob.getCrawlService();
-        if (crawlJob.getStatus() == CrawlJob.Status.RUNNING && update.getStatus() == CrawlJob.Status.PAUSED) {
-            if (service == CrawlJob.CrawlService.HERITRIX && !heritrixClient.isJobFinished(heritrixJobId)) {
-                heritrixClient.pauseJob(heritrixJobId);
-            }
-            validationJobDAO.pause(crawlJob.getId());
-            crawlJob.setStatus(CrawlJob.Status.PAUSED);
-        }
-        if (crawlJob.getStatus() == CrawlJob.Status.PAUSED && update.getStatus() == CrawlJob.Status.RUNNING) {
-            if (service == CrawlJob.CrawlService.HERITRIX && !heritrixClient.isJobFinished(heritrixJobId)) {
-                heritrixClient.unpauseJob(heritrixJobId);
-            }
-            validationJobDAO.unpause(crawlJob.getId());
-            crawlJob.setStatus(CrawlJob.Status.RUNNING);
-        }
-
-        return crawlJob;
-    }
-
-
-    @Transactional
     public void cancelCrawlJob(UUID id) {
         CrawlJob crawlJob = getCrawlJob(id);
         discardJob(crawlJob, crawlJob.getCrawlService(), crawlJob.getHeritrixJobId());
@@ -107,25 +100,6 @@ public class CrawlJobService {
     public void cancelCrawlJob(UUID id, String domain) {
         CrawlJob crawlJob = getCrawlJob(domain, id);
         discardJob(crawlJob, crawlJob.getCrawlService(), crawlJob.getHeritrixJobId());
-    }
-
-    @Transactional
-    public CrawlJob getCrawlJob(String domain, UUID userId) {
-        domain = DomainUtils.trimUrl(domain);
-        CrawlJob job = crawlJobDAO.findByDomainAndUserId(domain, userId);
-        if (job == null) {
-            throw new NotFoundException(String.format("crawl job with domain %s not found", domain));
-        }
-        return job;
-    }
-
-    @Transactional
-    public CrawlJob getCrawlJob(UUID id) {
-        CrawlJob job = crawlJobDAO.findById(id);
-        if (job == null) {
-            throw new NotFoundException(String.format("crawl job with uuid %s not found", id));
-        }
-        return job;
     }
 
     @Transactional
@@ -157,6 +131,79 @@ public class CrawlJobService {
         return getStatus(crawlJob);
     }
 
+    @Transactional
+    public CrawlJob restartCrawlJob(UUID id) {
+        CrawlJob crawlJob = getCrawlJob(id);
+        return restartCrawlJob(crawlJob, crawlJob.getCrawlService(), crawlJob.isValidationEnabled());
+    }
+
+    @Transactional
+    public CrawlJob restartCrawlJob(UUID userId, String domain){
+        CrawlJob crawlJob = crawlJobDAO.findByDomainAndUserId(domain, userId);
+        if (crawlJob == null){
+            throw new NotFoundException(String.format("crawl job with userId %s and domain %s not found", userId, domain));
+        }
+        return restartCrawlJob(crawlJob, crawlJob.getCrawlService(), crawlJob.isValidationEnabled());
+    }
+
+    @Transactional
+    public CrawlJob restartCrawlJob(CrawlJob crawlJob, CrawlJob.CrawlService service, boolean isValidationRequired) {
+        List<CrawlRequest> crawlRequests;
+        String heritrixJobId = crawlJob.getHeritrixJobId();
+        CrawlJob.CrawlService currentService = crawlJob.getCrawlService();
+        // Keep requests list to link to new job
+        crawlRequests = new ArrayList<>(crawlJob.getCrawlRequests());
+        discardJob(crawlJob, currentService, heritrixJobId);
+
+        // Create and start new crawl job
+        CrawlJob newJob = new CrawlJob(crawlJob.getDomain(), service, isValidationRequired);
+        newJob.setCrawlRequests(crawlRequests);
+        newJob.setUser(crawlJob.getUser());
+        crawlJobDAO.save(newJob);
+        if (service == CrawlJob.CrawlService.HERITRIX) {
+            startCrawlJob(newJob);
+        }
+        return newJob;
+    }
+
+    private void discardJob(CrawlJob crawlJob, CrawlJob.CrawlService service,  String heritrixJobId){
+        switch (service) {
+            case HERITRIX:
+                heritrixCleanerTask.teardownAndClearHeritrixJob(heritrixJobId);
+                break;
+            case BING:
+                bingTask.discardJob(crawlJob);
+                break;
+            default:
+                throw new IllegalStateException("Unsupported CrawlJob service");
+        }
+
+        queueManager.abortTasks(crawlJob);
+        crawlJobDAO.remove(crawlJob);
+    }
+
+    private CrawlJob update(CrawlJob update, CrawlJob crawlJob) throws IOException, XPathExpressionException,
+                                                                       SAXException, ParserConfigurationException {
+
+        String heritrixJobId = crawlJob.getHeritrixJobId();
+        CrawlJob.CrawlService service = crawlJob.getCrawlService();
+        if (crawlJob.getStatus() == CrawlJob.Status.RUNNING && update.getStatus() == CrawlJob.Status.PAUSED) {
+            if (service == CrawlJob.CrawlService.HERITRIX && !heritrixClient.isJobFinished(heritrixJobId)) {
+                heritrixClient.pauseJob(heritrixJobId);
+            }
+            validationJobDAO.pause(crawlJob.getId());
+            crawlJob.setStatus(CrawlJob.Status.PAUSED);
+        }
+        if (crawlJob.getStatus() == CrawlJob.Status.PAUSED && update.getStatus() == CrawlJob.Status.RUNNING) {
+            if (service == CrawlJob.CrawlService.HERITRIX && !heritrixClient.isJobFinished(heritrixJobId)) {
+                heritrixClient.unpauseJob(heritrixJobId);
+            }
+            validationJobDAO.unpause(crawlJob.getId());
+            crawlJob.setStatus(CrawlJob.Status.RUNNING);
+        }
+
+        return crawlJob;
+    }
 
     private CrawlJobStatus getStatus(CrawlJob crawlJob){
         HeritrixCrawlJobStatus heritrixStatus = null;
@@ -185,55 +232,6 @@ public class CrawlJobService {
         crawlJob.getCrawlRequests().forEach(crawlRequest -> crawlRequest.getCrawlJobs().size());
 
         return new CrawlJobStatus(crawlJob, heritrixStatus, new ValidationQueueStatus(count, topDocuments));
-    }
-
-    @Transactional
-    public CrawlJob restartCrawlJob(UUID id) {
-        CrawlJob crawlJob = getCrawlJob(id);
-        return restartCrawlJob(crawlJob, crawlJob.getCrawlService(), crawlJob.isValidationEnabled());
-    }
-
-    public CrawlJob restartCrawlJob(UUID userId, String domain){
-        CrawlJob crawlJob = crawlJobDAO.findByDomainAndUserId(domain, userId);
-        if (crawlJob == null){
-            throw new NotFoundException(String.format("crawl job with userId %s and domain %s not found", userId, domain));
-        }
-        return restartCrawlJob(crawlJob, crawlJob.getCrawlService(), crawlJob.isValidationEnabled());
-    }
-
-    private void discardJob(CrawlJob crawlJob, CrawlJob.CrawlService service,  String heritrixJobId){
-        switch (service) {
-            case HERITRIX:
-                heritrixCleanerTask.teardownAndClearHeritrixJob(heritrixJobId);
-                break;
-            case BING:
-                bingTask.discardJob(crawlJob);
-                break;
-            default:
-                throw new IllegalStateException("Unsupported CrawlJob service");
-        }
-
-        queueManager.abortTasks(crawlJob);
-        crawlJobDAO.remove(crawlJob);
-    }
-
-    public CrawlJob restartCrawlJob(CrawlJob crawlJob, CrawlJob.CrawlService service, boolean isValidationRequired) {
-        List<CrawlRequest> crawlRequests;
-        String heritrixJobId = crawlJob.getHeritrixJobId();
-        CrawlJob.CrawlService currentService = crawlJob.getCrawlService();
-        // Keep requests list to link to new job
-        crawlRequests = new ArrayList<>(crawlJob.getCrawlRequests());
-        discardJob(crawlJob, currentService, heritrixJobId);
-
-        // Create and start new crawl job
-        CrawlJob newJob = new CrawlJob(crawlJob.getDomain(), service, isValidationRequired);
-        newJob.setCrawlRequests(crawlRequests);
-        newJob.setUser(crawlJob.getUser());
-        crawlJobDAO.save(newJob);
-        if (service == CrawlJob.CrawlService.HERITRIX) {
-            startCrawlJob(newJob);
-        }
-        return newJob;
     }
 
     public void startCrawlJob(CrawlJob crawlJob) {
