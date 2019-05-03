@@ -66,30 +66,35 @@ public class FileService {
 		}
 	}
 
-	private String getFileType(CloseableHttpResponse response, ValidationJob job) throws IncorrectContentTypeException{
-		String fileType = getFileType(response, job.getDocumentUrl());
-		if (fileType.equals(job.getDocument().getContentType())) {
-			return fileType;
-		}
-		throw new IncorrectContentTypeException("Content types are not equals");
-	}
-
-	private String getFileType(CloseableHttpResponse response, String url) throws IncorrectContentTypeException {
+	private String getFileType(CloseableHttpResponse response, ValidationJob job) throws IncorrectContentTypeException {
+		String url = job.getDocumentUrl();
 		Header contentTypeHeader = response.getFirstHeader("Content-Type");
-		if (contentTypeHeader != null && !contentTypeHeader.getValue().startsWith("text")) {
+		String fileType = null;
+		if (contentTypeHeader != null){
+			if (contentTypeHeader.getValue().startsWith("text")) {
+				throw new IncorrectContentTypeException("Incorrect content type");
+			}
 			String value = contentTypeHeader.getValue();
-			for (String fileType : fileTypes.keySet()) {
-				if (value.startsWith(fileType)) {
-					return fileTypes.get(fileType);
+			for (String allowedContentType : fileTypes.keySet()) {
+				if (value.startsWith(allowedContentType)) {
+					fileType = fileTypes.get(allowedContentType);
 				}
 			}
 		}
 
-		String extension = FilenameUtils.getExtension(url);
-		if (fileTypes.values().contains(extension)){
-			return extension;
+		if (fileType == null){
+			String extension = FilenameUtils.getExtension(url);
+			if (fileTypes.values().contains(extension)){
+				fileType = extension;
+			}
 		}
-		throw new IncorrectContentTypeException(String.format("Content type is null for url %s", url));
+		if (fileType == null){
+			throw new IncorrectContentTypeException(String.format("Content type is null for url %s", url));
+		}
+		if (fileType.equals(job.getDocument().getContentType())) {
+			return fileType;
+		}
+		throw new IncorrectContentTypeException("Content types are not equals");
 	}
 
 	public void deleteFile(File file) {
