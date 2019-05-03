@@ -61,9 +61,20 @@ public class CrawlJobService {
     }
 
     @Transactional
-    public CrawlJob update(CrawlJob update, UUID id) throws IOException, XPathExpressionException,
+    public CrawlJob update(CrawlJob update) throws SAXException, ParserConfigurationException, XPathExpressionException, IOException {
+        CrawlJob job = getCrawlJob(update.getId());
+        return update(update, job);
+    }
+
+    @Transactional
+    public CrawlJob update(CrawlJob update, UUID id) throws SAXException, ParserConfigurationException, XPathExpressionException, IOException {
+        CrawlJob job = getCrawlJob(update.getDomain(), id);
+        return update(update, job);
+    }
+
+    @Transactional
+    public CrawlJob update(CrawlJob update, CrawlJob crawlJob) throws IOException, XPathExpressionException,
             SAXException, ParserConfigurationException {
-        CrawlJob crawlJob = getCrawlJob(update.getDomain(), id);
 
         String heritrixJobId = crawlJob.getHeritrixJobId();
         CrawlJob.CrawlService service = crawlJob.getCrawlService();
@@ -85,6 +96,13 @@ public class CrawlJobService {
         return crawlJob;
     }
 
+
+    @Transactional
+    public void cancelCrawlJob(UUID id) {
+        CrawlJob crawlJob = getCrawlJob(id);
+        discardJob(crawlJob, crawlJob.getCrawlService(), crawlJob.getHeritrixJobId());
+    }
+
     @Transactional
     public void cancelCrawlJob(UUID id, String domain) {
         CrawlJob crawlJob = getCrawlJob(domain, id);
@@ -97,6 +115,15 @@ public class CrawlJobService {
         CrawlJob job = crawlJobDAO.findByDomainAndUserId(domain, userId);
         if (job == null) {
             throw new NotFoundException(String.format("crawl job with domain %s not found", domain));
+        }
+        return job;
+    }
+
+    @Transactional
+    public CrawlJob getCrawlJob(UUID id) {
+        CrawlJob job = crawlJobDAO.findById(id);
+        if (job == null) {
+            throw new NotFoundException(String.format("crawl job with uuid %s not found", id));
         }
         return job;
     }
@@ -119,8 +146,19 @@ public class CrawlJobService {
     }
 
     @Transactional
+    public CrawlJobStatus getFullJobStatus(UUID id) {
+        CrawlJob crawlJob = getCrawlJob(id);
+        return getStatus(crawlJob);
+    }
+
+    @Transactional
     public CrawlJobStatus getFullJobStatus(String domain, UUID id) {
         CrawlJob crawlJob = getCrawlJob(domain, id);
+        return getStatus(crawlJob);
+    }
+
+
+    private CrawlJobStatus getStatus(CrawlJob crawlJob){
         HeritrixCrawlJobStatus heritrixStatus = null;
         CrawlJob.CrawlService crawlService = crawlJob.getCrawlService();
 
@@ -147,6 +185,12 @@ public class CrawlJobService {
         crawlJob.getCrawlRequests().forEach(crawlRequest -> crawlRequest.getCrawlJobs().size());
 
         return new CrawlJobStatus(crawlJob, heritrixStatus, new ValidationQueueStatus(count, topDocuments));
+    }
+
+    @Transactional
+    public CrawlJob restartCrawlJob(UUID id) {
+        CrawlJob crawlJob = getCrawlJob(id);
+        return restartCrawlJob(crawlJob, crawlJob.getCrawlService(), crawlJob.isValidationEnabled());
     }
 
     public CrawlJob restartCrawlJob(UUID userId, String domain){

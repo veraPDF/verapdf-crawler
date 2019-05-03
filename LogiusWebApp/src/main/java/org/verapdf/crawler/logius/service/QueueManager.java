@@ -1,5 +1,7 @@
 package org.verapdf.crawler.logius.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,6 +22,7 @@ public class QueueManager {
     private ThreadPoolTaskExecutor service;
     private ValidationJobService validationJobService;
     private ObjectFactory<ValidatorTask> validatorTaskObjectFactory;
+    private static final Logger logger = LoggerFactory.getLogger(DocumentService.class);
 
     public QueueManager(ValidationJobService validationJobService, ObjectFactory<ValidatorTask> validatorTaskObjectFactory) {
         this.validationJobService = validationJobService;
@@ -37,13 +40,17 @@ public class QueueManager {
     public void process(ValidatorTask current) {
         if (current != null) {
             service.submitListenable(current)
-                    .completable().thenAccept(result -> {
+                   .completable().thenAccept(result -> {
                 synchronized (jobQueue) {
-                    if (!ValidationJob.Status.ABORTED.equals(current.getValidationJob().getStatus())) {
-                        validationJobService.saveResult(result, current.getValidationJob());
-                    }
-                    jobQueue.remove(current);
-                    process(retrieveNextJob());
+	                try {
+		                if (ValidationJob.Status.ABORTED != current.getValidationJob().getStatus()) {
+			                validationJobService.saveResult(result, current.getValidationJob());
+		                }
+	                } finally {
+		                jobQueue.remove(current);
+		                logger.info("current task with id " + current.getValidationJob().getDocument().getDocumentId() + " cleaned, queue size: " + jobQueue.size());
+		                process(retrieveNextJob());
+	                }
                 }
             });
         }
@@ -57,6 +64,7 @@ public class QueueManager {
                     ValidatorTask task = validatorTaskObjectFactory.getObject();
                     task.setValidationJob(job);
                     jobQueue.add(task);
+                    logger.info("add new task with id: " + task.getValidationJob().getDocument().getDocumentId());
                     return task;
                 }
             }
@@ -75,6 +83,7 @@ public class QueueManager {
     @Scheduled(fixedDelayString = "#{${logius.validationJobQueue.sleepDurationInSeconds}}")
     public void initValidationQueue() {
         while (true) {
+            logger.info("count of threads: " + jobQueue.size());
             ValidatorTask task = retrieveNextJob();
             if (task == null) {
                 break;
