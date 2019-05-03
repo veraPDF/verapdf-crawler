@@ -37,13 +37,16 @@ public class QueueManager {
     public void process(ValidatorTask current) {
         if (current != null) {
             service.submitListenable(current)
-                    .completable().thenAccept(result -> {
+                   .completable().thenAccept(result -> {
                 synchronized (jobQueue) {
-                    if (!ValidationJob.Status.ABORTED.equals(current.getValidationJob().getStatus())) {
-                        validationJobService.saveResult(result, current.getValidationJob());
-                    }
-                    jobQueue.remove(current);
-                    process(retrieveNextJob());
+	                try {
+		                if (ValidationJob.Status.ABORTED != current.getValidationJob().getStatus()) {
+			                validationJobService.saveResult(result, current.getValidationJob());
+		                }
+	                } finally {
+		                jobQueue.remove(current);
+		                process(retrieveNextJob());
+	                }
                 }
             });
         }

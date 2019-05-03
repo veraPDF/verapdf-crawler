@@ -171,7 +171,7 @@ $(function () {
 
     function createCrawlJobRow(item, template) {
         var element = template.clone().removeClass('template');
-        element.find('.domain a').text(item.domain).attr('href', 'domain-status.html?domain=' + item.domain);
+        element.find('.domain a').text(item.domain).attr('href', 'domain-status.html?id=' + item.id);
         element.find('.heritrix-id a').text(item.heritrixJobId).attr('href', heritrixEngineUrl + '/job/' + item.heritrixJobId);
         element.find('.start').text(item.startTime);
 

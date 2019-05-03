@@ -5,6 +5,15 @@ $(function () {
     var loadStatusTimeout;
     var actionsEnabled = true;
 
+
+    function getParamater() {
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('domain')) {
+            return "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain"));
+        }
+        return "api/admin/crawl-jobs/" +  normalizeURL(getUrlParameter("id"));
+    }
+
     function normalizeURL(url) {
         return url.replace(':', '%3A');
     }
@@ -34,25 +43,33 @@ $(function () {
             callback();
         });
     }
+
     function isGeneralJob() {
         var urlParams = new URLSearchParams(window.location.search);
-        console.log(urlParams.get('isGeneralJob'));
+        console.log(urlParams.get('isGeneralJob') || urlParams.get("id"));
         return urlParams.get('isGeneralJob');
+    }
+
+    function isAdminRequest() {
+        var urlParams = new URLSearchParams(window.location.search);
+        console.log(urlParams.get('isGeneralJob') || urlParams.get("id"));
+        return urlParams.get("id");
     }
 
     function createHeaders() {
         var headers = {"Content-type": "application/json"};
-        if (isGeneralJob() === 'false'){
-            headers['Authorization'] =  'Bearer ' + localStorage.getItem('token')
+        if (isGeneralJob() === 'false' || isAdminRequest()) {
+            headers['Authorization'] = 'Bearer ' + localStorage.getItem('token')
         }
         return headers
     }
+
     function loadJobStatus() {
         if (loadStatusTimeout) {
             clearTimeout(loadStatusTimeout);
         }
         $.ajax({
-            url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain") + "/status"),
+            url: getParamater() + "/status",
             type: "GET",
             headers: createHeaders(),
             success: function (result) {
@@ -66,7 +83,7 @@ $(function () {
 
         $('.status-loading').hide();
         $('.status-loaded').show();
-        if (isGeneralJob() === 'false'){
+        if (isGeneralJob() === 'false' || isAdminRequest()) {
             $('#cancel').removeAttr('style');
         }
         // Job details
@@ -172,7 +189,7 @@ $(function () {
         putData.status = 'RUNNING';
 
         $.ajax({
-            url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
+            url: getParamater(),
             type: "PUT",
             data: JSON.stringify(putData),
             headers: createHeaders(),
@@ -194,13 +211,14 @@ $(function () {
         disableActions();
 
         var putData = {};//Object.assign({}, currentDomain);
+        putData.id = crawlJob.id;
         putData.domain = crawlJob.domain;
         putData.startTime = crawlJob.startTime;
         putData.finishTime = crawlJob.finishTime;
         putData.status = 'PAUSED';
 
         $.ajax({
-            url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
+            url: getParamater(),
             type: "PUT",
             // async:false,
             data: JSON.stringify(putData),
@@ -223,7 +241,7 @@ $(function () {
         disableActions();
 
         $.ajax({
-            url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
+            url: getParamater(),
             type: "POST",
             headers: createHeaders(),
             success: function (result) {
@@ -245,7 +263,7 @@ $(function () {
         disableActions();
 
         $.ajax({
-            url: "api/crawl-jobs/" + normalizeURL(getUrlParameter("domain")),
+            url: getParamater(),
             type: "DELETE",
             headers: createHeaders(),
             success: function (result) {

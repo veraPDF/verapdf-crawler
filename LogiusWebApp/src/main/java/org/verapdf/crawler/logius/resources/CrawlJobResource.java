@@ -82,7 +82,7 @@ public class CrawlJobResource {
                                                    @RequestBody @NotNull CrawlJob update) throws IOException,
             XPathExpressionException, SAXException, ParserConfigurationException {
         UUID id = controllerHelper.getUserUUID(principal);
-        CrawlJob updatedCrawlJob = crawlJobService.update(update, id);
+        CrawlJob updatedCrawlJob = crawlJobService.update(update, domain, id);
         return ResponseEntity.ok(updatedCrawlJob);
     }
 

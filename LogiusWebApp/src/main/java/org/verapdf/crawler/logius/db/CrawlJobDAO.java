@@ -121,6 +121,16 @@ public class CrawlJobDAO extends AbstractDAO<CrawlJob> {
         return list(criteriaQuery);
     }
 
+    public CrawlJob findById(UUID id) {
+        CriteriaBuilder builder = currentSession().getCriteriaBuilder();
+        CriteriaQuery<CrawlJob> criteriaQuery = builder.createQuery(CrawlJob.class);
+        Root<CrawlJob> crawlJob = criteriaQuery.from(CrawlJob.class);
+
+        criteriaQuery.where(builder.equal(crawlJob.get(CrawlJob_.id), id));
+        List<CrawlJob> crawlJobs = this.currentSession().createQuery(criteriaQuery).getResultList();
+        return crawlJobs.isEmpty() ? null : crawlJobs.get(0);
+    }
+
     public CrawlJob findByDomainAndUserId(String domain, UUID uuid) {
         CriteriaBuilder builder = currentSession().getCriteriaBuilder();
         CriteriaQuery<CrawlJob> criteriaQuery = builder.createQuery(CrawlJob.class);
