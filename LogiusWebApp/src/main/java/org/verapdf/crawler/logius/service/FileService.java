@@ -84,17 +84,16 @@ public class FileService {
 
 		if (fileType == null){
 			String extension = FilenameUtils.getExtension(url);
-			if (fileTypes.values().contains(extension)){
-				fileType = extension;
+			if (extension == null || !fileTypes.values().contains(extension)){
+				throw new IncorrectContentTypeException(String.format("Content type is missing or unknown for url %s", url));
 			}
+			fileType = extension;
 		}
-		if (fileType == null){
-			throw new IncorrectContentTypeException(String.format("Content type is null for url %s", url));
+		String jobContentType = job.getDocument().getContentType();
+		if (jobContentType != null && !jobContentType.equals(fileType)) {
+			throw new IncorrectContentTypeException("Content types are not equals");
 		}
-		if (fileType.equals(job.getDocument().getContentType())) {
-			return fileType;
-		}
-		throw new IncorrectContentTypeException("Content types are not equals");
+		return fileType;
 	}
 
 	public void deleteFile(File file) {
