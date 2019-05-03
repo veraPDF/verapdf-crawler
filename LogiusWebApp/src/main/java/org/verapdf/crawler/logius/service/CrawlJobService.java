@@ -79,14 +79,14 @@ public class CrawlJobService {
     }
 
     @Transactional
-    public CrawlJob update(CrawlJob update) throws SAXException, ParserConfigurationException, XPathExpressionException, IOException {
-        CrawlJob job = getCrawlJob(update.getId());
+    public CrawlJob update(CrawlJob update, UUID crawlJobId) throws SAXException, ParserConfigurationException, XPathExpressionException, IOException {
+        CrawlJob job = getCrawlJob(crawlJobId);
         return update(update, job);
     }
 
     @Transactional
-    public CrawlJob update(CrawlJob update, UUID id) throws SAXException, ParserConfigurationException, XPathExpressionException, IOException {
-        CrawlJob job = getCrawlJob(update.getDomain(), id);
+    public CrawlJob update(CrawlJob update, String domain, UUID userId) throws SAXException, ParserConfigurationException, XPathExpressionException, IOException {
+        CrawlJob job = getCrawlJob(domain, userId);
         return update(update, job);
     }
 

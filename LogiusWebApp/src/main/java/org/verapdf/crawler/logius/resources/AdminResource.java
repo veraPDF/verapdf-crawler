@@ -43,7 +43,7 @@ public class AdminResource {
 	                                                      XPathExpressionException,
 	                                                      SAXException,
 	                                                      ParserConfigurationException {
-		CrawlJob updatedCrawlJob = crawlJobService.update(update);
+		CrawlJob updatedCrawlJob = crawlJobService.update(update, id);
 		return ResponseEntity.ok(updatedCrawlJob);
 	}
 
