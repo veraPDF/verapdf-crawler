@@ -93,7 +93,7 @@ public class MonitoringCrawlJobStatusService {
         List<CrawlRequest> crawlRequests = crawlRequestDAO.findActiveRequestsWithoutActiveJobs();
         for (CrawlRequest request : crawlRequests) {
             request.setFinished(true);
-            if (request.getEmailAddress() != null) {
+            if (request.getEmailAddress() != null && !request.getCrawlJobs().isEmpty()) {
                 sendEmailService.sendFinishNotification(request);
             }
         }
