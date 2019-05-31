@@ -230,19 +230,25 @@ $(function () {
             },
             headers: createHeaders(),
             success: function (data, status, xhr) {
-                var header =  xhr.getResponseHeader('Content-Disposition');
+                var header = xhr.getResponseHeader('Content-Disposition');
                 var startIndex = header.indexOf("filename=") + 9;
                 var endIndex = header.length;
-                if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-                    window.navigator.msSaveOrOpenBlob(data, header.substring(startIndex, endIndex));
-                }
-                else {
-                    var a = document.createElement('a');
-                    var url = window.URL.createObjectURL(data);
-                    a.href = url;
-                    a.download = header.substring(startIndex, endIndex);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
+                var blob = new Blob([data], {type: data.type});
+                if (navigator.appVersion.toString().indexOf('.NET') > 0) //For IE
+                {
+                    window.navigator.msSaveOrOpenBlob(blob, "filename.ext");
+                } else if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
+                    var link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = header.substring(startIndex, endIndex);
+                    document.body.appendChild(link);//For FireFox <a> tag event
+                    //not working
+                    link.click();
+                } else {
+                    var link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = header.substring(startIndex, endIndex);
+                    link.click();
                 }
             },
             error: reportError
