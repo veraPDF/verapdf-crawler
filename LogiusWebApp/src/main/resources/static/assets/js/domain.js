@@ -1,4 +1,5 @@
 $(function () {
+    var reportDate = $("#summary-date-input");
     var FLAVOURS = {
         'PDF/A': {
             displayName: 'PDF/A',
@@ -222,8 +223,13 @@ $(function () {
 
     $("a.ods-report-link").on('click', function (e) {
         e.preventDefault();
+        var url = '/api/report/full.ods?domain=' + crawlJob.domain;
+        var startDate = reportDate[0].value;
+        if (startDate !== "") {
+            url += "&startDate=" + startDate;
+        }
         $.ajax({
-            url: '/api/report/full.ods?domain=' + crawlJob.domain,
+            url: url,
             type: "GET",
             xhrFields: {
                 responseType: 'blob'
@@ -426,15 +432,19 @@ $(function () {
         switch (e.target.text) {
             case "Summary":
                 loadSummaryData();
+                reportDate = summaryDateInput;
                 break;
             case "Documents":
                 loadDocumentsData();
+                reportDate = documentsDateInput;
                 break;
             case "Common PDF/A errors":
                 loadErrorsData();
+                reportDate = errorsDateInput;
                 break;
             case "Common PDF/UA errors":
                 loadPDFWamErrorsData();
+                reportDate = pdfwamErrorsDateInput;
                 break;
         }
     });
