@@ -40,7 +40,6 @@ import java.util.UUID;
 public class ReportResource {
     // todo: clarify if we need multi-domain statistics (even if not, we use domain as a query param rather than path param to easy migrate in the future)
     private static final Logger logger = LoggerFactory.getLogger(ReportResource.class);
-    private static final int ODS_MAX_DOCUMENTS_SHOW = 100;
     private final DocumentDAO documentDAO;
     private final ControllerHelper controllerHelper;
     private final ReportsGenerator reportsGenerator;
@@ -154,12 +153,12 @@ public class ReportResource {
                 null, startDate);
         List<DomainDocument> invalidPDFDocuments = documentDAO.getDocuments(domain, userId,
                 DomainDocument.DocumentTypeGroup.PDF.getTypes(),
-                DomainDocument.BaseTestResult.NOT_OPEN, startDate, ODS_MAX_DOCUMENTS_SHOW);
+                DomainDocument.BaseTestResult.NOT_OPEN, startDate, null);
         List<String> microsoftDocuments = documentDAO.getDocumentsUrls(domain, userId,
                 DomainDocument.DocumentTypeGroup.MS_OFFICE.getTypes(),
-                null, startDate, ODS_MAX_DOCUMENTS_SHOW);
+                null, startDate, null);
         List<String> openOfficeXMLDocuments = documentDAO.getDocumentsUrls(domain, userId,
-                DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), null, startDate, ODS_MAX_DOCUMENTS_SHOW);
+                DomainDocument.DocumentTypeGroup.OO_XML_OFFICE.getTypes(), null, startDate, null);
         try {
             File tempODS = reportsGenerator.generateODSReport(domain, startDate,
                     compliantPDFA12Count, odfCount,
