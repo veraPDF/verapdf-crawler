@@ -360,16 +360,15 @@ $(function () {
         //
         // $('span.job-mails-list').text(mailsList);
         // $('textarea.job-mails-list').val(mailsList);
-        console.log(requests);
-        var minDate = null;
-        if (requests.length !== 0){
+        if (requests.length !== 0) {
+            var minDate;
             var req = requests[0];
             for (var i = 1; i < requests.length; i++) {
                 if (req.creationDate < requests[i].creationDate) {
                     req = requests[i]
                 }
             }
-            minDate = req.crawlSinceTime == null? '2015-01-01' : req.crawlSinceTime;
+            minDate = req.crawlSinceTime == null ? '2015-01-01' : req.crawlSinceTime;
             summaryDateInput.val(minDate);
             documentsDateInput.val(minDate);
             errorsDateInput.val(minDate);
