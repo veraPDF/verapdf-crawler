@@ -1,4 +1,5 @@
 $(function () {
+    var reportDate = $("#summary-date-input");
     var FLAVOURS = {
         'PDF/A': {
             displayName: 'PDF/A',
@@ -222,8 +223,13 @@ $(function () {
 
     $("a.ods-report-link").on('click', function (e) {
         e.preventDefault();
+        var url = '/api/report/full.ods?domain=' + crawlJob.domain;
+        var startDate = reportDate[0].value;
+        if (startDate !== "") {
+            url += "&startDate=" + startDate;
+        }
         $.ajax({
-            url: '/api/report/full.ods?domain=' + crawlJob.domain,
+            url: url,
             type: "GET",
             xhrFields: {
                 responseType: 'blob'
@@ -354,24 +360,21 @@ $(function () {
         //
         // $('span.job-mails-list').text(mailsList);
         // $('textarea.job-mails-list').val(mailsList);
-        console.log(requests);
-        var minDate = null;
-        for (var i in requests) {
-            var crawlSinceTime = requests[i].crawlSinceTime;
-            if (crawlSinceTime == null) {
-                crawlSinceTime = '2015-01-01';
+        if (requests.length !== 0) {
+            var minDate;
+            var req = requests[0];
+            for (var i = 1; i < requests.length; i++) {
+                if (req.creationDate < requests[i].creationDate) {
+                    req = requests[i]
+                }
             }
-            if (minDate == null || minDate > crawlSinceTime) {
-                minDate = crawlSinceTime;
-            }
-        }
-        if (minDate != null) {
+            minDate = req.crawlSinceTime == null ? '2015-01-01' : req.crawlSinceTime;
             summaryDateInput.val(minDate);
             documentsDateInput.val(minDate);
             errorsDateInput.val(minDate);
             pdfwamErrorsDateInput.val(minDate);
+            loadSummaryData();
         }
-        loadSummaryData();
     }
 
     var emailTextArea = $('.job-mails textarea.job-mails-list').tooltip({
@@ -426,15 +429,19 @@ $(function () {
         switch (e.target.text) {
             case "Summary":
                 loadSummaryData();
+                reportDate = summaryDateInput;
                 break;
             case "Documents":
                 loadDocumentsData();
+                reportDate = documentsDateInput;
                 break;
             case "Common PDF/A errors":
                 loadErrorsData();
+                reportDate = errorsDateInput;
                 break;
             case "Common PDF/UA errors":
                 loadPDFWamErrorsData();
+                reportDate = pdfwamErrorsDateInput;
                 break;
         }
     });

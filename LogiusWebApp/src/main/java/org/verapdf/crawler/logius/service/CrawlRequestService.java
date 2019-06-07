@@ -10,6 +10,8 @@ import org.verapdf.crawler.logius.model.User;
 import org.verapdf.crawler.logius.tools.DomainUtils;
 
 import javax.transaction.Transactional;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -41,7 +43,7 @@ public class CrawlRequestService {
     public CrawlRequest createCrawlRequest(CrawlRequest crawlRequest, UUID userId, CrawlJob.CrawlService crawlService, boolean isValidationRequared) {
         List<String> domains = extractDomains(crawlRequest);
         crawlRequest = crawlRequestDAO.save(crawlRequest);
-
+        crawlRequest.setCreationDate(Instant.now());
         for (CrawlJob existingJob : crawlJobDAO.findByDomainsAndUserId(domains, userId)) {
             restartIfHasChanges(existingJob, crawlService, isValidationRequared);
             domains.remove(existingJob.getDomain());
