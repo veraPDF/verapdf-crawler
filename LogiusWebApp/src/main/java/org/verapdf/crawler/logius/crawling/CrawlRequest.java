@@ -87,12 +87,12 @@ public class CrawlRequest {
         this.crawlSinceTime = crawlSinceTime;
     }
 
-	public Instant getCreationDate() {
-		return creationDate;
-	}
+    public Instant getCreationDate() {
+        return creationDate;
+    }
 
-	public void setCreationDate(Instant creationDate) {
-		this.creationDate = creationDate;
-	}
+    public void setCreationDate(Instant creationDate) {
+        this.creationDate = creationDate;
+    }
 
 }
