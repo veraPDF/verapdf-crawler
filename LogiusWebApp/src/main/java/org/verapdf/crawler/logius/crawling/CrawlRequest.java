@@ -6,6 +6,7 @@ import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
@@ -32,6 +33,9 @@ public class CrawlRequest {
     @Temporal(TemporalType.DATE)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date crawlSinceTime;
+
+    @Column(name = "creation_date")
+    private Instant creationDate;
 
     public CrawlRequest() {
     }
@@ -82,4 +86,13 @@ public class CrawlRequest {
     public void setCrawlSinceTime(Date crawlSinceTime) {
         this.crawlSinceTime = crawlSinceTime;
     }
+
+	public Instant getCreationDate() {
+		return creationDate;
+	}
+
+	public void setCreationDate(Instant creationDate) {
+		this.creationDate = creationDate;
+	}
+
 }

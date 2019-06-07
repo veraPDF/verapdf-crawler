@@ -362,22 +362,20 @@ $(function () {
         // $('textarea.job-mails-list').val(mailsList);
         console.log(requests);
         var minDate = null;
-        for (var i in requests) {
-            var crawlSinceTime = requests[i].crawlSinceTime;
-            if (crawlSinceTime == null) {
-                crawlSinceTime = '2015-01-01';
+        if (requests.length !== 0){
+            var req = requests[0];
+            for (var i = 1; i < requests.length; i++) {
+                if (req.creationDate < requests[i].creationDate) {
+                    req = requests[i]
+                }
             }
-            if (minDate == null || minDate > crawlSinceTime) {
-                minDate = crawlSinceTime;
-            }
-        }
-        if (minDate != null) {
+            minDate = req.crawlSinceTime == null? '2015-01-01' : req.crawlSinceTime;
             summaryDateInput.val(minDate);
             documentsDateInput.val(minDate);
             errorsDateInput.val(minDate);
             pdfwamErrorsDateInput.val(minDate);
+            loadSummaryData();
         }
-        loadSummaryData();
     }
 
     var emailTextArea = $('.job-mails textarea.job-mails-list').tooltip({

@@ -45,6 +45,7 @@ CREATE TABLE crawl_job_requests
   is_finished  BOOLEAN      DEFAULT false,
   report_email VARCHAR(255) DEFAULT NULL,
   crawl_since  DATE         DEFAULT NULL,
+  creation_date  TIMESTAMP  DEFAULT NULL,
   PRIMARY KEY (id)
 );
 
