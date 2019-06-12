@@ -42,12 +42,12 @@ public class CrawlRequestService {
     @Transactional
     public CrawlRequest createCrawlRequest(CrawlRequest crawlRequest, UUID userId, CrawlJob.CrawlService crawlService, boolean isValidationRequared) {
         List<String> domains = extractDomains(crawlRequest);
-        crawlRequest = crawlRequestDAO.save(crawlRequest);
         crawlRequest.setCreationDate(Instant.now());
+        crawlRequest = crawlRequestDAO.save(crawlRequest);
         for (CrawlJob existingJob : crawlJobDAO.findByDomainsAndUserId(domains, userId)) {
-            restartIfHasChanges(existingJob, crawlService, isValidationRequared);
+            CrawlJob job = restartIfHasChanges(existingJob, crawlService, isValidationRequared);
             domains.remove(existingJob.getDomain());
-            existingJob.getCrawlRequests().add(crawlRequest);
+            job.getCrawlRequests().add(crawlRequest);
         }
         User user = userId == null ? null : userService.findUserById(userId);
         for (String domain : domains) {
@@ -66,9 +66,10 @@ public class CrawlRequestService {
                 .map(crawlJob -> DomainUtils.trimUrl(crawlJob.getDomain())).collect(Collectors.toList());
     }
 
-    public void restartIfHasChanges(CrawlJob existingJob, CrawlJob.CrawlService crawlService, boolean isValidationRequired) {
+    public CrawlJob restartIfHasChanges(CrawlJob existingJob, CrawlJob.CrawlService crawlService, boolean isValidationRequired) {
         if (crawlService != existingJob.getCrawlService() || existingJob.isValidationEnabled() != isValidationRequired) {
-            crawlJobService.restartCrawlJob(existingJob, crawlService, isValidationRequired);
+            return crawlJobService.restartCrawlJob(existingJob, crawlService, isValidationRequired);
         }
+        return existingJob;
     }
 }

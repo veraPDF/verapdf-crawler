@@ -7,6 +7,7 @@ import org.hibernate.annotations.GenericGenerator;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -30,21 +31,12 @@ public class CrawlRequest {
     private String emailAddress;
 
     @Column(name = "crawl_since")
-    @Temporal(TemporalType.DATE)
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private Date crawlSinceTime;
+    private LocalDate crawlSinceTime;
 
     @Column(name = "creation_date")
     private Instant creationDate;
 
     public CrawlRequest() {
-    }
-
-    public CrawlRequest(String id, String emailAddress, Date crawlSinceTime) {
-        this.id = id;
-        this.emailAddress = emailAddress;
-        this.finished = false;
-        this.crawlSinceTime = crawlSinceTime;
     }
 
     public String getId() {
@@ -79,11 +71,11 @@ public class CrawlRequest {
         this.emailAddress = emailAddress;
     }
 
-    public Date getCrawlSinceTime() {
+    public LocalDate getCrawlSinceTime() {
         return crawlSinceTime;
     }
 
-    public void setCrawlSinceTime(Date crawlSinceTime) {
+    public void setCrawlSinceTime(LocalDate crawlSinceTime) {
         this.crawlSinceTime = crawlSinceTime;
     }
 
