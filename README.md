@@ -12,24 +12,18 @@ In order to install Logius crawler you'll need
  * [Python 2.x](https://www.python.org/downloads/)
  * [PDFWam checker](https://gitlab.tingtun.no/eiii_source/pdfwam/)
 
+### Configuring database
+
+   Logius application requires connection to PostgreSQL database to store information about crawl jobs, validation jobs and processed documents.
+   Connection parameters should be set in application.properties file. [database schema script](LogiusWebApp/src/main/resources/sql/schema.sql) 
+   and [pdf properties script](LogiusWebApp/src/main/resources/sql/pdf_properties_base_settings.sql) should be executed before first application start.
+
+
 ### Configuring Logius application
   
   * update properties in [application properties](LogiusWebApp/src/main/resources/application.properties)
   * update email for admin in [sql schema](LogiusWebApp/src/main/resources/sql/schema.sql)
    
-### Configuring database
-   Logius application requires connection to PostgreSQL database to store information about crawl jobs, validation jobs and processed documents.
-   Connection parameters are set in application.properties file. [database schema script](LogiusWebApp/src/main/resources/sql/schema.sql) 
-   and [pdf properties script](LogiusWebApp/src/main/resources/sql/pdf_properties_base_settings.sql) should be executed before first application start.
-
-### Starting Heritrix
-
-Heritrix should be started before the Logius application. Heritrix run command:
-
-	heritrix_directory/bin/heritrix -a your_login:your_password -p 8443
-
-where your_login and your_password are the Heritrix credentials defined in application.properties.
-
 ### Installing Logius web application
 
 LogiusWebApp and HeritrixExtension modules has to be built. That can be done by using the next command in project root directory:
@@ -39,7 +33,16 @@ LogiusWebApp and HeritrixExtension modules has to be built. That can be done by 
 At the end of this operation files "LogiusWebApp", "HeritrixExtention" will be created. The "HeritrixExtention" should be moved to "lib" directory inside Heritrix.
 The "LogiusWebApp" is a main Logius application jar file.
 
+### Starting Heritrix
+
+Heritrix should be started before the Logius application. Heritrix run command:
+
+	heritrix_directory/bin/heritrix -a your_login:your_password -p 8443
+
+where your_login and your_password are the Heritrix credentials defined in application.properties.
+
 ### Running Logius application
+
 The next command will start the Logius application:
 
 	java -jar "your_directory/LogiusWebApp/target/LogiusWebApp-1.0-SNAPSHOT.jar"
