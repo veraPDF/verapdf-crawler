@@ -368,7 +368,7 @@ $(function () {
                     req = requests[i]
                 }
             }
-            minDate = req.crawlSinceTime == null ? '2015-01-01' : req.crawlSinceTime;
+            minDate = req.crawlSinceTime == null ? '2015-01-01' : "" + req.crawlSinceTime;
             summaryDateInput.val(minDate);
             documentsDateInput.val(minDate);
             errorsDateInput.val(minDate);
